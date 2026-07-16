@@ -329,6 +329,11 @@ class CassetteProvider(LLMProvider):
         self.store_dir = store_dir
         self.mode = mode
         self.store_dir.mkdir(parents=True, exist_ok=True)
+        # Observability for the eval gate + nightly drift report.
+        self.hits: int = 0
+        self.misses: int = 0
+        self.recorded: int = 0
+        self.drift: list[dict[str, Any]] = []
 
     def complete_json(
         self,
@@ -340,12 +345,31 @@ class CassetteProvider(LLMProvider):
     ) -> dict[str, Any]:
         key = _prompt_hash(system, user, schema)
         path = self.store_dir / f"{key}.json"
-        if self.mode == "replay" and path.exists():
-            return json.loads(path.read_text(encoding="utf-8"))["response"]
+        cached: dict[str, Any] | None = None
+        if path.exists():
+            cached = json.loads(path.read_text(encoding="utf-8")).get("response")
+
+        # Pure replay: serve from cassette when present.
+        if self.mode == "replay" and cached is not None:
+            self.hits += 1
+            return cached
+
+        self.misses += 1
         result = self.inner.complete_json(
             system=system, user=user, schema=schema, model=model
         )
         if self.mode in {"record", "live"}:
+            # Drift detection: a live re-record whose response differs from the
+            # committed cassette is a signal the pinned model has moved.
+            if self.mode == "live" and cached is not None and cached != result:
+                self.drift.append(
+                    {
+                        "key": key,
+                        "user": _normalize(user)[:200],
+                        "recorded": cached,
+                        "live": result,
+                    }
+                )
             path.write_text(
                 json.dumps(
                     {"system": system, "user": user, "response": result},
@@ -354,7 +378,18 @@ class CassetteProvider(LLMProvider):
                 ),
                 encoding="utf-8",
             )
+            self.recorded += 1
         return result
+
+    def drift_report(self) -> dict[str, Any]:
+        return {
+            "mode": self.mode,
+            "hits": self.hits,
+            "misses": self.misses,
+            "recorded": self.recorded,
+            "drift_count": len(self.drift),
+            "drift": self.drift,
+        }
 
 
 def _prompt_hash(system: str, user: str, schema: dict[str, Any] | None) -> str:
@@ -379,6 +414,27 @@ def _parse_json_content(content: str) -> dict[str, Any]:
         if not m:
             raise
         return json.loads(m.group(0))
+
+
+def build_eval_provider(
+    cassette_dir: Path, *, live_llm: bool = False
+) -> CassetteProvider:
+    """Provider for the eval runner.
+
+    Default (CI/PR): cassette *replay* over a deterministic heuristic inner, so
+    the corpus is free and reproducible. ``live_llm=True`` (nightly) wraps the
+    real API provider and re-records in ``live`` mode, surfacing drift vs the
+    committed cassettes. Falls back to the heuristic when no API key is present
+    so the nightly job degrades gracefully instead of hard-failing.
+    """
+    if live_llm:
+        real = OpenAICompatibleProvider()
+        inner: LLMProvider = real if real.api_key else HeuristicProvider()
+        mode = "live" if real.api_key else "replay"
+    else:
+        inner = HeuristicProvider()
+        mode = "replay"
+    return CassetteProvider(inner, cassette_dir, mode=mode)
 
 
 def get_default_provider(*, cassette_dir: Path | None = None) -> LLMProvider:

@@ -1,0 +1,62 @@
+name: nightly-eval
+
+# Nightly (and on-demand) live-LLM eval replay against a PINNED model.
+#
+# Unlike the per-PR gate (which uses deterministic cassette replay and is free),
+# this job re-records cassettes against the live model and reports drift. It is
+# intentionally NOT a per-PR gate: model non-determinism must never block PRs.
+#
+# Pinned model: set DOMAIN_EXPERT_LLM_MODEL below and keep it pinned; bumping it
+# is a deliberate, reviewed change. A drift report artifact is uploaded so model
+# movement is visible without failing the build.
+#
+# Release gate (documented, enforced by the eval scorecard):
+#   - `false_completed_actions` must be 0 across the corpus (a system claiming an
+#     action applied that did not is release-blocking at zero occurrences).
+#   - Run `domain-expert eval --full` on the pinned model + `pack validate` on
+#     bundled packs + `scripts/leakscan.py` before tagging a release.
+
+on:
+  schedule:
+    - cron: "0 7 * * *" # 07:00 UTC nightly
+  workflow_dispatch:
+    inputs:
+      model:
+        description: "Pinned model to replay against (overrides default)"
+        required: false
+        default: "gpt-4o-mini"
+
+jobs:
+  live-replay:
+    runs-on: ubuntu-latest
+    env:
+      # Pinned model — bumping this is a deliberate, reviewed change.
+      DOMAIN_EXPERT_LLM_MODEL: ${{ github.event.inputs.model || 'gpt-4o-mini' }}
+      DOMAIN_EXPERT_LLM: openai_compatible
+      DOMAIN_EXPERT_LLM_API_KEY: ${{ secrets.DOMAIN_EXPERT_LLM_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Live-LLM eval replay + drift report
+        # `--live-llm` re-records cassettes and captures drift vs the committed
+        # recordings. Falls back to the deterministic heuristic (no drift) when
+        # no API key is configured, so the job degrades gracefully.
+        run: |
+          export DOMAIN_EXPERT_HOME="$(mktemp -d)"
+          domain-expert init
+          domain-expert eval --full --live-llm --no-baseline \
+            > eval-drift-report.json || echo "drift or accuracy delta recorded"
+          cat eval-drift-report.json
+      - name: Upload drift report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-drift-report
+          path: eval-drift-report.json
+          if-no-files-found: warn

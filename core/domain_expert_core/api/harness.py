@@ -189,7 +189,7 @@ class HarnessAPI:
             "note": "run pack validate after editing examples",
         }
 
-    def eval_routing(self, cases_path: Path | None = None) -> dict[str, Any]:
+    def _default_cases_path(self, cases_path: Path | None) -> Path:
         from domain_expert_core.packs.loader import bundled_packs_root
 
         path = cases_path or (
@@ -197,7 +197,16 @@ class HarnessAPI:
         )
         # bundled_packs_root is .../packs; parent is repo root
         if not path.exists():
-            path = Path(__file__).resolve().parents[3] / "examples" / "synthetic" / "routing_eval.jsonl"
+            path = (
+                Path(__file__).resolve().parents[3]
+                / "examples"
+                / "synthetic"
+                / "routing_eval.jsonl"
+            )
+        return path
+
+    def eval_routing(self, cases_path: Path | None = None) -> dict[str, Any]:
+        path = self._default_cases_path(cases_path)
         report = run_eval(path, workspace=self.workspace)
         return {
             "total": report.total,
@@ -210,6 +219,82 @@ class HarnessAPI:
                 if not s.ok
             ][:20],
         }
+
+    def eval_full(
+        self,
+        cases_path: Path | None = None,
+        *,
+        packs: list[str] | None = None,
+        live_llm: bool = False,
+        use_baseline: bool = True,
+        baseline_path: Path | None = None,
+    ) -> dict[str, Any]:
+        """Full replay: routing/field/disposition/calibration scorecards +
+        regression diff vs the committed baseline snapshot (plan §10.2/§10.3)."""
+        from domain_expert_core.evals.baseline import diff_baseline, load_baseline
+        from domain_expert_core.evals.scoring import score_report
+        from domain_expert_core.llm.provider import build_eval_provider
+
+        path = self._default_cases_path(cases_path)
+        provider = build_eval_provider(
+            self.workspace.home / "cassettes", live_llm=live_llm
+        )
+        report = run_eval(path, workspace=self.workspace, packs=packs, llm=provider)
+        score = score_report(report)
+        out: dict[str, Any] = {
+            "cases": str(path),
+            "accuracy": report.accuracy,
+            "scorecard": score.to_dict(),
+            "cassette": provider.drift_report(),
+            "failures": [
+                {"id": s.case_id, "detail": s.detail}
+                for s in report.scores
+                if not s.ok
+            ][:20],
+        }
+        if not use_baseline:
+            out["regression"] = {"has_regression": False, "note": "baseline diff skipped"}
+            return out
+        baseline = load_baseline(baseline_path)
+        if baseline is not None:
+            out["regression"] = diff_baseline(score, baseline).to_dict()
+        else:
+            out["regression"] = {"has_regression": False, "note": "no baseline committed"}
+        return out
+
+    def eval_update_baseline(
+        self,
+        cases_path: Path | None = None,
+        *,
+        packs: list[str] | None = None,
+        baseline_path: Path | None = None,
+    ) -> dict[str, Any]:
+        from domain_expert_core.evals.baseline import save_baseline
+        from domain_expert_core.evals.scoring import score_report
+
+        path = self._default_cases_path(cases_path)
+        report = run_eval(path, workspace=self.workspace, packs=packs)
+        score = score_report(report)
+        written = save_baseline(score, baseline_path)
+        return {"baseline_path": str(written), "snapshot": score.to_baseline()}
+
+    def eval_backfill(self, *, dry_run: bool = False) -> dict[str, Any]:
+        from domain_expert_core.evals.backfill import backfill_corrections
+
+        return backfill_corrections(self.workspace, dry_run=dry_run).to_dict()
+
+    def eval_export(
+        self,
+        out_path: Path,
+        *,
+        sanitize: bool = True,
+        source: str | None = "correction",
+    ) -> dict[str, Any]:
+        from domain_expert_core.evals.export import export_cases
+
+        return export_cases(
+            self.workspace, out_path=out_path, sanitize=sanitize, source=source
+        ).to_dict()
 
     def correct(
         self,

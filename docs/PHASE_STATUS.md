@@ -11,7 +11,7 @@ Tracking implementation of `docs/OPEN_SOURCE_HARNESS_PLAN.md`.
 | P4 Projections & review API | **Done** | ProjectionCoordinator (outbox/drain/watermarks/retry + serve loop), managed-region markdown adapter, direct-query block data, projection lag in health, receipts pending→refreshed, enriched review queue (filters/diffs/bulk/SLO) |
 | P5 App shell | **Done** | Vite+React SPA served from FastAPI static mount; nine built-in blocks + registry; global surfaces (home/capture feed/review queue/health); detail provenance chain; correction dialogs (amend/move/merge/undo/mark-wrong); custom-block side-load + in-app docs; teaching empty states |
 | P6 Domain wizard | **Done** | Wizard engine (goal→interview→generate→validate→dry-run→test-drive→hardening), resumable sessions, archetype+generic proposal generator, `new_domain`/`wizard_reply` API, CLI `new-domain` + `wizard reply`, HTTP endpoints, pack authoring style guide |
-| P7 Eval framework | Skeleton in P2 | Full scoring/calibration/export in P7 |
+| P7 Eval framework | **Done** | Cassette drift + `--live-llm`; frozen-clock audit (lint+test); full scoring (routing/field/disposition/calibration) + per-pack scorecards + committed baseline + regression diff; `eval backfill`/`eval export --sanitize`; PR replay gate + nightly live-LLM stub; curated contract-case set |
 | P8 Packs & hermes-agent adapter | Partial | `plants` + `sourdough` synthetic packs; food/travel demo packs TBD |
 | P9 Docs & launch | Not started | |
 
@@ -49,6 +49,19 @@ Tracking implementation of `docs/OPEN_SOURCE_HARNESS_PLAN.md`.
 - Also fixed a latent P2 router crash (`new_ulid` imported conditionally inside `_persist` but used on the unfiled never-drop path) that any unroutable capture could trigger; hoisted the import. This unblocked 4 previously-red P5 app-shell tests.
 - Full suite green: **66 passed** (`python -m pytest`). `ruff check core tests scripts` clean. `python scripts/leakscan.py` OK. Wizard modules pyright-clean (remaining pyright warnings are pre-existing `int(cur.lastrowid)` casts in P2 `router.py`).
 
+## P7 gate evidence
+
+- **Deliberately-breakable regression path** (`tests/contract/test_eval_regression.py::test_break_then_restore_regression`): score the pristine synthetic corpus → committed baseline; mutate one **sourdough** fixture's expected `operation` so routing misses → `diff_baseline` reports `has_regression` with the legible per-pack line `sourdough: routing_accuracy 0.886 -> …`, and the drop is **isolated to that pack** (`plants` unaffected); restore the fixture → green. This is the "break a heuristic on a branch → CI fails with a per-pack diff; restore → green" gate (§10.3).
+- **Full scoring + scorecards** (`test_eval_scoring.py`): routing accuracy, per-field precision/recall/F1, disposition accuracy, and confidence-bucket **calibration curves** per pack; overall + per-pack scorecards serialized to a compact committed baseline (`examples/synthetic/eval_baseline.json`, 65 cases, routing 0.938, **0 false-completed-action cases**). Fresh replay diffs clean against the committed baseline (the PR gate).
+- **False-completed-action = release-blocking at zero** (`test_zero_false_completed_actions_on_negatives`, `test_false_completed_action_is_release_blocking`): every negative case is checked for any real-domain `auto_apply` span (zero across the corpus); an injected count of 1 fails the baseline diff.
+- **Cassette store**: normalized prompt-hash keys, `replay`/`record`/`live` modes; `live` mode re-records and accumulates a **drift report** (recorded-vs-live diffs) surfaced via `eval --live-llm`. Deterministic replay over the heuristic inner keeps the PR gate free and reproducible.
+- **Frozen-clock audit** (`scripts/clock_audit.py` + `tests/unit/test_clock_audit.py`): bans bare `datetime.now()`/`datetime.utcnow()`/`time.time()`/`time.monotonic()` anywhere under `core/` except the injectable clock provider (`clock.py`); the audit is green today and the guard-the-guard test proves it catches an injected violation. Wired as a CI step.
+- **Correction→corpus backfill** (`eval backfill`, `test_backfill_creates_eval_cases_from_pre_p3_corrections`): synthesizes `eval_case` rows from pre-P3 `correction_event` rows that lack them (expected = corrected `right_json`, input = original capture text); idempotent (re-runs create nothing new); `--dry-run` supported.
+- **Sanitized export** (`eval export --sanitize`, `test_export_sanitizes_pii`): strips secrets + PII (email/URL/phone/handle/IP/home-paths) from correction-derived cases and emits contribution-ready JSONL plus a redaction report for the human diff-review step (§10.4).
+- **Curated contract-case set** (`tests/contract/test_curated_contract.py`): the five named invariants — approval-executes-exactly-once, never-drop ladder, multi-domain fan-out, idempotent re-capture, projection convergence — collected as one self-contained gate that runs alongside the corpus replay (§10.1/§10.3).
+- **CI wiring**: `.github/workflows/ci.yml` adds a frozen-clock audit step and an **eval corpus replay regression gate** (`domain-expert eval --full --min-accuracy 0.9`, fails on any per-pack regression or false-completed-action increase vs the committed baseline). `.github/workflows/nightly-eval.yml` is the on-demand/scheduled **live-LLM** job against a **pinned model** (`gpt-4o-mini`, bumping is a reviewed change), uploads a drift-report artifact, degrades gracefully without an API key, and documents the release gate (zero false-completed-action cases + pinned-model replay + leak scan).
+- Full suite green: **82 passed** (`python -m pytest`, +16 P7 tests). `ruff check core tests scripts` clean. `python scripts/clock_audit.py` OK. `python scripts/leakscan.py` OK. New P7 modules (`evals/*`, cassette provider, CLI, audit script) are pyright-clean (remaining pyright errors are pre-existing `int(cur.lastrowid)` casts in P2/P3 modules).
+
 ## Quick commands
 
 ```bash
@@ -60,7 +73,12 @@ domain-expert correct "that bake was 80% hydration not 75"
 domain-expert review list
 domain-expert review stats
 domain-expert projections drain
-domain-expert eval
+domain-expert eval                          # deterministic cassette replay (routing gate)
+domain-expert eval --full                   # per-pack scorecards + regression diff vs baseline
+domain-expert eval --full --update-baseline # rewrite committed baseline snapshot
+domain-expert eval --full --live-llm --no-baseline  # nightly: re-record + drift report
+domain-expert eval backfill                 # pre-P3 corrections -> eval_case rows
+domain-expert eval export --out contrib.jsonl --sanitize  # PII-stripped contribution
 
 # P6 — guided domain creation
 domain-expert new-domain "I want to track my sourdough journey" \

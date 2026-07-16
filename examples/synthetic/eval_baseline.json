@@ -1,0 +1,24 @@
+{
+  "overall": {
+    "false_completed_actions": 0,
+    "routing_accuracy": 0.9385,
+    "total": 65
+  },
+  "packs": {
+    "plants": {
+      "disposition_accuracy": 1.0,
+      "false_completed_actions": 0,
+      "field_f1": 0.6441,
+      "routing_accuracy": 0.8857,
+      "routing_total": 35
+    },
+    "sourdough": {
+      "disposition_accuracy": 1.0,
+      "false_completed_actions": 0,
+      "field_f1": 0.5352,
+      "routing_accuracy": 0.8857,
+      "routing_total": 35
+    }
+  },
+  "version": 1
+}

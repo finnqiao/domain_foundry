@@ -24,8 +24,20 @@ jobs:
         run: ruff check core tests scripts
       - name: Pyright
         run: pyright
+      - name: Frozen-clock audit
+        # No bare datetime.now()/utcnow() outside the injectable clock provider.
+        run: python scripts/clock_audit.py
       - name: Pytest
         run: pytest
+      - name: Eval corpus replay (regression gate)
+        # PR gate: deterministic cassette replay of the synthetic corpus, scored
+        # per pack and diffed against the committed baseline snapshot. Fails on
+        # any per-pack regression (routing/field/disposition) or any increase in
+        # false-completed-action cases (release-blocking at zero, plan §10.3).
+        run: |
+          export DOMAIN_EXPERT_HOME="$(mktemp -d)"
+          domain-expert init
+          domain-expert eval --full --min-accuracy 0.9
       - name: Leakscan
         run: python scripts/leakscan.py
 

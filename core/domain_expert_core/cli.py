@@ -108,20 +108,102 @@ def serve_cmd(
     run_server(ctx.obj["home"], host=host, port=port, api_token=token)
 
 
-@app.command("eval")
-def eval_cmd(
+eval_app = typer.Typer(
+    help="Replay eval corpus, scorecards, baselines, backfill, export",
+    invoke_without_command=True,
+    no_args_is_help=False,
+)
+app.add_typer(eval_app, name="eval")
+
+
+@eval_app.callback()
+def eval_main(
     ctx: typer.Context,
     cases: Path | None = typer.Option(
         None, "--cases", help="JSONL eval cases (default: synthetic routing set)"
     ),
     min_accuracy: float = typer.Option(0.9, "--min-accuracy"),
+    full: bool = typer.Option(
+        False, "--full", help="Full scorecards + regression diff vs baseline"
+    ),
+    live_llm: bool = typer.Option(
+        False, "--live-llm", help="Re-record cassettes against the live model + report drift"
+    ),
+    update_baseline: bool = typer.Option(
+        False, "--update-baseline", help="Rewrite the committed baseline snapshot and exit"
+    ),
+    no_baseline: bool = typer.Option(
+        False, "--no-baseline", help="Skip the regression diff (report scores only)"
+    ),
 ) -> None:
-    """Replay routing eval fixtures (cassette/heuristic)."""
+    """Replay the eval corpus (cassette replay by default).
+
+    With no subcommand this runs the corpus. `--full` prints per-pack
+    scorecards and fails on any regression vs the committed baseline.
+    """
+    if ctx.invoked_subcommand is not None:
+        return
     api = HarnessAPI(ctx.obj["home"])
-    report = api.eval_routing(cases)
+
+    if update_baseline:
+        result = api.eval_update_baseline(cases)
+        typer.echo(json.dumps(result, indent=2))
+        return
+
+    if not full and not live_llm:
+        report = api.eval_routing(cases)
+        typer.echo(json.dumps(report, indent=2))
+        if report["accuracy"] < min_accuracy:
+            raise typer.Exit(code=1)
+        return
+
+    report = api.eval_full(
+        cases,
+        live_llm=live_llm,
+        use_baseline=not no_baseline,
+    )
     typer.echo(json.dumps(report, indent=2))
+    failed = False
     if report["accuracy"] < min_accuracy:
+        typer.echo(f"accuracy {report['accuracy']:.3f} < {min_accuracy}", err=True)
+        failed = True
+    if not no_baseline and report.get("regression", {}).get("has_regression"):
+        typer.echo("eval regression vs baseline detected", err=True)
+        failed = True
+    if report["cassette"].get("drift_count"):
+        typer.echo(
+            f"cassette drift: {report['cassette']['drift_count']} prompt(s) changed",
+            err=True,
+        )
+    if failed:
         raise typer.Exit(code=1)
+
+
+@eval_app.command("backfill")
+def eval_backfill_cmd(
+    ctx: typer.Context,
+    dry_run: bool = typer.Option(False, "--dry-run", help="Report without writing"),
+) -> None:
+    """Backfill eval_case rows from pre-P3 corrections (plan §10.1)."""
+    api = HarnessAPI(ctx.obj["home"])
+    typer.echo(json.dumps(api.eval_backfill(dry_run=dry_run), indent=2))
+
+
+@eval_app.command("export")
+def eval_export_cmd(
+    ctx: typer.Context,
+    out: Path = typer.Option(..., "--out", "-o", help="Destination JSONL path"),
+    sanitize: bool = typer.Option(
+        True, "--sanitize/--no-sanitize", help="Strip PII/secrets for contribution"
+    ),
+    source: str | None = typer.Option(
+        "correction", "--source", help="eval_case source filter (blank = all)"
+    ),
+) -> None:
+    """Export sanitized eval cases for community contribution (plan §10.4)."""
+    api = HarnessAPI(ctx.obj["home"])
+    report = api.eval_export(out, sanitize=sanitize, source=source or None)
+    typer.echo(json.dumps(report, indent=2))
 
 
 @app.command("correct")

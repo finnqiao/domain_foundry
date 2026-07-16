@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from domain_expert_core.llm.provider import HeuristicProvider
+from domain_expert_core.llm.provider import HeuristicProvider, LLMProvider
 from domain_expert_core.packs.registry import PackRegistry
 from domain_expert_core.paths import Workspace
 from domain_expert_core.routing.router import Router
@@ -126,6 +126,7 @@ def run_eval(
     *,
     workspace: Workspace | None = None,
     packs: list[str] | None = None,
+    llm: LLMProvider | None = None,
 ) -> EvalReport:
     ws = workspace or Workspace()
     ws.ensure_layout()
@@ -141,7 +142,7 @@ def run_eval(
             registry.reload()
     registry.ensure_schemas_applied()
 
-    router = Router(ws, registry=registry, llm=HeuristicProvider(), cost_cap=999)
+    router = Router(ws, registry=registry, llm=llm or HeuristicProvider(), cost_cap=999)
     cases = load_cases(cases_path)
     report = EvalReport()
     for case in cases:
