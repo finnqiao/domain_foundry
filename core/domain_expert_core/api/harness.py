@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -367,8 +368,228 @@ class HarnessAPI:
         except BlockDataError as exc:
             return {"error": str(exc)}
 
-    def new_domain(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
-        raise NotImplementedError("new_domain() arrives in P6")
+    # -------------------------------------------------------- app shell (P5)
+    def pack_cards(self) -> list[dict[str, Any]]:
+        """Installed packs as home cards: icon, title, views, live object counts."""
+        self.packs.reload()
+        cards: list[dict[str, Any]] = []
+        counts = self._object_counts_by_domain()
+        for pack in self.packs.list():
+            app_cfg = pack.projections.app or {}
+            views = self.block_data.views(pack.name)
+            cards.append(
+                {
+                    "name": pack.name,
+                    "title": pack.manifest.title,
+                    "description": pack.manifest.description,
+                    "icon": app_cfg.get("icon") or "📦",
+                    "version": pack.version,
+                    "objects": list(pack.objects),
+                    "views": [
+                        {"id": v.get("id"), "title": v.get("title"), "block": v.get("block")}
+                        for v in views
+                    ],
+                    "object_count": sum(
+                        counts.get((pack.name, ot), 0) for ot in pack.objects
+                    ),
+                }
+            )
+        return cards
 
-    def wizard_reply(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
-        raise NotImplementedError("wizard_reply() arrives in P6")
+    def pack_catalog(self) -> list[dict[str, Any]]:
+        """Bundled packs available to install (for the home 'add domain' picker)."""
+        from domain_expert_core.packs.loader import load_pack
+
+        self.packs.reload()
+        installed = {p.name for p in self.packs.list()}
+        out: list[dict[str, Any]] = []
+        for path in self.packs.bundled_catalog():
+            try:
+                pack = load_pack(path, validate=False)
+            except Exception:
+                continue
+            if pack.name.startswith("_"):
+                continue
+            app_cfg = pack.projections.app or {}
+            out.append(
+                {
+                    "name": pack.name,
+                    "title": pack.manifest.title,
+                    "description": pack.manifest.description,
+                    "icon": app_cfg.get("icon") or "📦",
+                    "version": pack.version,
+                    "installed": pack.name in installed,
+                }
+            )
+        return sorted(out, key=lambda c: c["name"])
+
+    def activate_pack(self, name: str) -> dict[str, Any]:
+        pack = self.packs.activate_bundled(name)
+        return {"name": pack.name, "version": pack.version, "title": pack.manifest.title}
+
+    def _object_counts_by_domain(self) -> dict[tuple[str, str], int]:
+        counts: dict[tuple[str, str], int] = {}
+        conn = connect_ro(self.workspace.ledger_db)
+        try:
+            rows = conn.execute(
+                """
+                SELECT domain, object_type, COUNT(*) AS n
+                FROM canonical_object
+                WHERE status = 'active'
+                GROUP BY domain, object_type
+                """
+            ).fetchall()
+            for r in rows:
+                counts[(str(r["domain"]), str(r["object_type"]))] = int(r["n"])
+        finally:
+            conn.close()
+        return counts
+
+    def object_detail(
+        self, domain: str, object_type: str, object_uid: str
+    ) -> dict[str, Any]:
+        """Detail view payload: fields + revision history + provenance chain + links.
+
+        Provenance chain (plan §5, §9.4): capture text → interpretation
+        (confidence) → revisions. Read-only; the app is a client with no
+        privileged write path.
+        """
+        from domain_expert_core.apply.engine import load_domain_row
+
+        row = load_domain_row(
+            self.workspace.domains_db, domain, object_type, object_uid
+        )
+        if row is None:
+            return {"error": f"object not found: {object_uid}"}
+        fields = {
+            k: v
+            for k, v in row.items()
+            if k not in {"id", "object_uid", "entry_id", "tombstoned"}
+        }
+        conn = connect_ro(self.workspace.ledger_db)
+        try:
+            co = conn.execute(
+                "SELECT uid, domain, object_type, status, natural_key, "
+                "created_at, updated_at FROM canonical_object WHERE uid = ?",
+                (object_uid,),
+            ).fetchone()
+            revisions = [
+                {
+                    "revision": r["revision"],
+                    "changed_fields": json.loads(r["changed_fields_json"] or "{}"),
+                    "actor": r["actor"],
+                    "actor_channel": r["actor_channel"],
+                    "created_at": r["created_at"],
+                }
+                for r in conn.execute(
+                    "SELECT revision, changed_fields_json, actor, actor_channel, "
+                    "created_at FROM object_revision WHERE object_uid = ? "
+                    "ORDER BY revision ASC",
+                    (object_uid,),
+                ).fetchall()
+            ]
+            entry_id = row.get("entry_id")
+            capture: dict[str, Any] | None = None
+            interpretations: list[dict[str, Any]] = []
+            if entry_id:
+                cap = conn.execute(
+                    """
+                    SELECT c.raw_text, c.channel, c.captured_at, e.status,
+                           e.routing_confidence, e.domain, e.object_type
+                    FROM entry e
+                    JOIN capture_event c ON c.id = e.capture_event_id
+                    WHERE e.id = ?
+                    """,
+                    (entry_id,),
+                ).fetchone()
+                if cap:
+                    capture = {
+                        "entry_id": entry_id,
+                        "raw_text": cap["raw_text"],
+                        "channel": cap["channel"],
+                        "captured_at": cap["captured_at"],
+                        "status": cap["status"],
+                        "routing_confidence": cap["routing_confidence"],
+                    }
+                interpretations = [
+                    {
+                        "version": i["version"],
+                        "interpreter": i["interpreter"],
+                        "confidence": i["confidence"],
+                        "status": i["status"],
+                        "payload": json.loads(i["payload_json"] or "{}"),
+                        "created_at": i["created_at"],
+                    }
+                    for i in conn.execute(
+                        "SELECT version, interpreter, confidence, status, "
+                        "payload_json, created_at FROM interpretation "
+                        "WHERE entry_id = ? ORDER BY version ASC",
+                        (entry_id,),
+                    ).fetchall()
+                ]
+            links = [
+                {
+                    "relation": ln["relationship"],
+                    "to_uid": ln["target_id"],
+                    "confidence": ln["confidence"],
+                }
+                for ln in conn.execute(
+                    """
+                    SELECT relationship, target_id, confidence
+                    FROM source_link
+                    WHERE source_type = 'canonical_object' AND source_id = ?
+                      AND target_type = 'canonical_object'
+                    """,
+                    (object_uid,),
+                ).fetchall()
+            ]
+        finally:
+            conn.close()
+        return {
+            "object_uid": object_uid,
+            "domain": domain,
+            "object_type": object_type,
+            "status": co["status"] if co else "active",
+            "created_at": co["created_at"] if co else None,
+            "updated_at": co["updated_at"] if co else None,
+            "fields": fields,
+            "revisions": revisions,
+            "capture": capture,
+            "interpretations": interpretations,
+            "links": links,
+        }
+
+    def health_panel(self) -> dict[str, Any]:
+        """Health report enriched for the app panel: + LLM spend today."""
+        from domain_expert_core.routing.cost import CostGuard
+
+        report = self.health().model_dump()
+        guard = CostGuard(self.workspace.ledger_db)
+        report["llm_spend"] = {
+            "today_usd": guard.spent_today(),
+            "daily_cap_usd": guard.config.daily_usd_cap,
+        }
+        return report
+
+    # -------------------------------------------------------- wizard (P6, §6)
+    @property
+    def wizard(self):  # type: ignore[no-untyped-def]
+        wiz = getattr(self, "_wizard", None)
+        if wiz is None:
+            from domain_expert_core.wizard.engine import WizardEngine
+
+            wiz = WizardEngine(self)
+            self._wizard = wiz
+        return wiz
+
+    def new_domain(self, goal_text: str, *, test_drive: int = 5) -> dict[str, Any]:
+        """Start the guided domain-creation wizard from a plain-language goal."""
+        return self.wizard.new_domain(goal_text, test_drive=test_drive)
+
+    def wizard_reply(self, session_id: str, text: str) -> dict[str, Any]:
+        """Continue a wizard session (interview answer, capture, or edit)."""
+        return self.wizard.wizard_reply(session_id, text)
+
+    def wizard_suggest(self, domain: str) -> dict[str, Any] | None:
+        """Suggest a hardening edit when a domain has repeated corrections (§8.4)."""
+        return self.wizard.suggest_hardening(domain)

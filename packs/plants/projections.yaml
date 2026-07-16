@@ -3,5 +3,8 @@ app:
   views:
     - {id: care, title: "Care log", block: timeline, object: care_event, config: {date_field: noted_at}}
     - {id: plants, title: "Plants", block: list, object: plant, config: {group_by: status}}
+    - {id: find, title: "Find", block: search, objects: [care_event], config: {facets: [action, soil_moisture]}}
+    - {id: history, title: "History", block: history, object: care_event, config: {date_field: noted_at, period: week}}
+    - {id: stats, title: "Activity", block: stats, object: care_event, config: {measures: [{field: action, agg: distribution}]}}
 markdown:
   folder: "Plants"

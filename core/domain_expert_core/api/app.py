@@ -30,6 +30,43 @@ class CaptureBody(BaseModel):
     attachments: list[dict[str, Any]] | None = None
 
 
+class NewDomainBody(BaseModel):
+    goal_text: str
+    test_drive: int = 5
+
+
+class WizardReplyBody(BaseModel):
+    text: str
+
+
+class ActivatePackBody(BaseModel):
+    name: str
+
+
+class CorrectBody(BaseModel):
+    text: str | None = None
+    entry_id: str | None = None
+    object_uid: str | None = None
+    action: str | None = None
+    fields: dict[str, Any] | None = None
+    merge_into_uid: str | None = None
+    target_domain: str | None = None
+    channel: str = "web"
+
+
+class BulkResolveBody(BaseModel):
+    approval_ids: list[str]
+    decision: str
+    note: str | None = None
+    resolver: str = "user"
+
+
+class ResolveBody(BaseModel):
+    decision: str
+    note: str | None = None
+    resolver: str = "user"
+
+
 def create_app(
     home: Path | None = None,
     *,
@@ -73,6 +110,13 @@ def create_app(
         _auth(authorization)
         return api.health().model_dump()
 
+    @app.get("/api/health")
+    def health_panel(
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(authorization)
+        return api.health_panel()
+
     @app.post("/api/capture")
     def capture(
         body: CaptureBody,
@@ -106,16 +150,6 @@ def create_app(
             limit=limit,
         )
         return {"rows": [r.model_dump() for r in rows]}
-
-    class CorrectBody(BaseModel):
-        text: str | None = None
-        entry_id: str | None = None
-        object_uid: str | None = None
-        action: str | None = None
-        fields: dict[str, Any] | None = None
-        merge_into_uid: str | None = None
-        target_domain: str | None = None
-        channel: str = "web"
 
     @app.post("/api/correct")
     def correct(
@@ -172,12 +206,6 @@ def create_app(
         _auth(authorization)
         return api.review_diff(approval_id)
 
-    class BulkResolveBody(BaseModel):
-        approval_ids: list[str]
-        decision: str
-        note: str | None = None
-        resolver: str = "user"
-
     @app.post("/api/review/bulk-resolve")
     def review_bulk_resolve(
         body: BulkResolveBody,
@@ -190,6 +218,51 @@ def create_app(
             note=body.note,
             resolver=body.resolver,
         )
+
+    @app.get("/api/packs")
+    def packs_list(
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(authorization)
+        return {"packs": api.pack_cards()}
+
+    @app.get("/api/packs/catalog")
+    def packs_catalog(
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(authorization)
+        return {"catalog": api.pack_catalog()}
+
+    @app.post("/api/packs/activate")
+    def packs_activate(
+        body: ActivatePackBody,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(authorization)
+        try:
+            return api.activate_pack(body.name)
+        except FileNotFoundError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    @app.get("/api/objects/{domain}/{object_type}/{object_uid}")
+    def object_detail(
+        domain: str,
+        object_type: str,
+        object_uid: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(authorization)
+        result = api.object_detail(domain, object_type, object_uid)
+        if "error" in result:
+            raise HTTPException(status_code=404, detail=result["error"])
+        return result
+
+    @app.get("/api/eval")
+    def eval_routing(
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(authorization)
+        return api.eval_routing()
 
     @app.get("/api/blocks/{domain}/views")
     def block_views(
@@ -227,11 +300,6 @@ def create_app(
             entry_id=entry_id, change_request_id=change_request_id
         )
 
-    class ResolveBody(BaseModel):
-        decision: str
-        note: str | None = None
-        resolver: str = "user"
-
     @app.post("/api/review/{approval_id}/resolve")
     def review_resolve(
         approval_id: str,
@@ -245,6 +313,42 @@ def create_app(
             note=body.note,
             resolver=body.resolver,
         )
+
+    # Side-loaded custom blocks (dev path, plan §9.3): built ESM dropped into
+    # ~/.domain_expert/blocks/ is served read-only; the SPA imports its index at
+    # startup. Custom blocks are trusted code (documented in docs/custom-blocks.md).
+    blocks_dir = api.workspace.blocks_dir
+    if blocks_dir.is_dir():
+        app.mount(
+            "/custom-blocks",
+            StaticFiles(directory=blocks_dir, check_dir=False),
+            name="custom-blocks",
+        )
+
+    @app.post("/api/wizard")
+    def wizard_new_domain(
+        body: NewDomainBody,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(authorization)
+        return api.new_domain(body.goal_text, test_drive=body.test_drive)
+
+    @app.post("/api/wizard/{session_id}/reply")
+    def wizard_reply(
+        session_id: str,
+        body: WizardReplyBody,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(authorization)
+        return api.wizard_reply(session_id, body.text)
+
+    @app.get("/api/wizard/{domain}/suggest")
+    def wizard_suggest(
+        domain: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(authorization)
+        return {"suggestion": api.wizard_suggest(domain)}
 
     spa_index = _REPO_APP_DIST / "index.html"
     if spa_index.is_file():

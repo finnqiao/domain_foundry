@@ -354,6 +354,8 @@ class Router:
         interpreter: str,
         clarification: str | None,
     ) -> None:
+        from domain_expert_core.ids import new_ulid
+
         ts = now_iso()
         conn = connect_rw(self.ws.ledger_db)
         try:
@@ -448,8 +450,6 @@ class Router:
                 span_cr.append((s, cr_id))
                 # auto_apply is executed by ApplyPipeline; only review/confirm enqueue
                 if s.disposition in {"review", "confirm"}:
-                    from domain_expert_core.ids import new_ulid
-
                     conn.execute(
                         """
                         INSERT INTO approval_queue (

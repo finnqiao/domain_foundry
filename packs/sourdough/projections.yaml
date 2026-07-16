@@ -2,8 +2,11 @@ app:
   icon: "🍞"
   views:
     - {id: bakes, title: "Bakes", block: timeline, object: bake, config: {date_field: baked_at}}
+    - {id: find, title: "Find", block: search, objects: [bake], config: {facets: [flour_mix, result]}}
+    - {id: stats, title: "Progress", block: stats, object: bake, config: {measures: [{field: result, agg: distribution}, {field: hydration, agg: trend}]}}
+    - {id: history, title: "History", block: history, object: bake, config: {date_field: baked_at, period: month}}
+    - {id: plan, title: "Plan", block: planner, object: bake, config: {date_field: baked_at, status_field: result}}
     - {id: starters, title: "Starters", block: list, object: starter, config: {group_by: status}}
-    - {id: stats, title: "Progress", block: stats, object: bake, config: {measures: [{field: result, agg: distribution}]}}
 markdown:
   folder: "Sourdough"
   note_template:

@@ -259,5 +259,55 @@ def pack_new_cmd(
     typer.echo(json.dumps(info, indent=2))
 
 
+@app.command("new-domain")
+def new_domain_cmd(
+    ctx: typer.Context,
+    goal: str = typer.Argument(..., help="Plain-language goal, e.g. 'track my sourdough journey'"),
+    reply: list[str] = typer.Option(
+        [], "--reply", "-r", help="Scripted wizard replies (repeatable): interview answers, sample captures, edits"
+    ),
+    test_drive: int = typer.Option(5, "--test-drive", help="Test-drive capture budget"),
+) -> None:
+    """Guided domain creation (plan §6). Prints each wizard turn as JSON.
+
+    With no --reply, prints the proposal + interview questions and pauses. Pass
+    --reply 'skip' to accept defaults and generate, then more --reply values to
+    test-drive or harden the domain.
+    """
+    api = HarnessAPI(ctx.obj["home"])
+    turn = api.new_domain(goal, test_drive=test_drive)
+    typer.echo(json.dumps(turn, indent=2, ensure_ascii=False))
+    session_id = turn["session_id"]
+    for text in reply:
+        turn = api.wizard_reply(session_id, text)
+        typer.echo(json.dumps(turn, indent=2, ensure_ascii=False))
+
+
+wizard_app = typer.Typer(help="Resume / drive domain-creation wizard sessions")
+app.add_typer(wizard_app, name="wizard")
+
+
+@wizard_app.command("reply")
+def wizard_reply_cmd(
+    ctx: typer.Context,
+    session_id: str = typer.Argument(...),
+    text: str = typer.Argument(...),
+) -> None:
+    """Send one reply to an existing wizard session."""
+    api = HarnessAPI(ctx.obj["home"])
+    turn = api.wizard_reply(session_id, text)
+    typer.echo(json.dumps(turn, indent=2, ensure_ascii=False))
+
+
+@wizard_app.command("suggest")
+def wizard_suggest_cmd(
+    ctx: typer.Context,
+    domain: str = typer.Argument(...),
+) -> None:
+    """Show a repeated-correction hardening suggestion for a domain (§8.4)."""
+    api = HarnessAPI(ctx.obj["home"])
+    typer.echo(json.dumps(api.wizard_suggest(domain), indent=2, ensure_ascii=False))
+
+
 if __name__ == "__main__":
     app()

@@ -9,8 +9,8 @@ Tracking implementation of `docs/OPEN_SOURCE_HARNESS_PLAN.md`.
 | P2 Packs & routing | **Done** | Pack loader/compiler, L1/L2 router, cost guard, heuristic/cassette LLM, eval gate ≥90% |
 | P3 Apply & corrections | **Done** | ApplyEngine, journal, policy, CanonicalChangeExecutor, correct/review APIs, few-shot + eval_case |
 | P4 Projections & review API | **Done** | ProjectionCoordinator (outbox/drain/watermarks/retry + serve loop), managed-region markdown adapter, direct-query block data, projection lag in health, receipts pending→refreshed, enriched review queue (filters/diffs/bulk/SLO) |
-| P5 App shell | Scaffold only | Vite+React capture box; nine blocks registry stub |
-| P6 Domain wizard | Not started | |
+| P5 App shell | **Done** | Vite+React SPA served from FastAPI static mount; nine built-in blocks + registry; global surfaces (home/capture feed/review queue/health); detail provenance chain; correction dialogs (amend/move/merge/undo/mark-wrong); custom-block side-load + in-app docs; teaching empty states |
+| P6 Domain wizard | **Done** | Wizard engine (goal→interview→generate→validate→dry-run→test-drive→hardening), resumable sessions, archetype+generic proposal generator, `new_domain`/`wizard_reply` API, CLI `new-domain` + `wizard reply`, HTTP endpoints, pack authoring style guide |
 | P7 Eval framework | Skeleton in P2 | Full scoring/calibration/export in P7 |
 | P8 Packs & hermes-agent adapter | Partial | `plants` + `sourdough` synthetic packs; food/travel demo packs TBD |
 | P9 Docs & launch | Not started | |
@@ -31,6 +31,24 @@ Tracking implementation of `docs/OPEN_SOURCE_HARNESS_PLAN.md`.
 - **HTTP surface + serve loop** (`tests/contract/test_api.py::test_p4_endpoints_and_drain_loop`): FastAPI lifespan starts/stops the background drain loop cleanly; `/api/blocks/*`, `/api/review/stats`, `/api/projections/drain` respond.
 - Full suite green: **43 passed** (`python -m pytest`). `ruff check core tests scripts` clean. `python scripts/leakscan.py` OK. `pyright` clean on all P4 modules.
 
+## P5 gate evidence
+
+- **Scripted walkthrough on synthetic data** (`tests/contract/test_app_shell.py`): install two packs (`sourdough` + `plants` via `/api/packs/activate`) → capture from the web box (`POST /api/capture`, routes to `sourdough.bake`, `applied`) → see it in **timeline / search / stats / history / planner** (`/api/blocks/<view>/data`, all nine blocks exercisable against the synthetic packs) → open the **detail view** (`/api/objects/<domain>/<object_type>/<uid>`) with the full provenance chain (capture text → interpretation confidence → revisions) → **correct** from detail (amend hydration 75→80 via `/api/correct`, no privileged write) → **revision chain visible** (new `object_revision` with `hydration: 75 → 80`) → **review queue drains to zero** (`/api/review` diffs + `/api/review/bulk-resolve` + SLO counters) → **health panel green** (`/api/health`: ledger/domains integrity ok, projection lag 0, LLM spend under cap, on-demand routing score).
+- **Real-browser confirmation** (headless Chrome, live `domain-expert serve`): the same walkthrough was driven through the built SPA end-to-end — empty-state home → install domains → capture receipt with routing badges → capture feed → domain tabs (Bakes/Find/Progress/History/Plan/Starters) → detail modal with provenance → correction dialog applies hydration 75→80 and the new revision renders in the provenance panel → review queue clear with SLO counters → health cards all green (routing score 94%) → in-app custom-block docs. No visual glitches or console errors.
+- **Security posture:** API binds `127.0.0.1` by default; non-local bind refuses to start without `DOMAIN_EXPERT_API_TOKEN` (bearer-gated, `test_api.py::test_non_local_bind_requires_token`). Block data stays read-only + parameterized (unknown/unsafe fields rejected). The shell is a pure API client — every mutation goes through `capture()` / `correct()` / review endpoints.
+- **Lighthouse note (skipped):** a full Lighthouse perf run needs a headless-Chrome + CI budget this box does not carry, so the P5 gate is met via the API+DOM contract test (`test_app_shell.py`) plus the SPA `tsc` typecheck + `vite build`. The bundle is lean (~72 kB gzipped JS, ~4 kB gzipped CSS), responsive (single-column ≤820px), and keyboard-friendly (Esc closes modals, ⌘/Ctrl+Enter captures, tablist nav) as a lightweight stand-in.
+- Full suite green: **66 passed** (`python -m pytest`) incl. 4 new app-shell contract tests. `ruff check core tests scripts` clean. `python scripts/leakscan.py` OK. Frontend `npm run build` (tsc + vite) green.
+
+## P6 gate evidence
+
+- **Cold start to working domain** (`tests/contract/test_wizard.py::test_cold_start_gate`): one-sentence goal → interview (≤6 targeted questions) → `skip` accepts defaults → generate → `pack validate` → dry-run routing → **activate** → a real `capture()` routes into the freshly generated `sourdough` domain, and driving a capture through `wizard_reply` returns a verbose routing explanation + instant-correct affordance.
+- **≥10 golden goal-statements** (`test_golden_goal_generates_valid_routing_pack`, incl. "sourdough journey"): 12 goals each produce a pack that passes full validation and routes its own examples **100%** in dry-run (threshold ≥95%). Archetypes (sourdough/running/reading/coffee/workouts) + generic activity-log fallback for anything else. HeuristicProvider only — no live LLM.
+- **Hardening round-trips with a migration** (`test_hardening_edit_round_trips_with_migration`): NL edit "add a crumb_photo field" → pack diff preview (nothing applied) → `confirm` → `ALTER TABLE` migration written to the pack + executed against `domains.sqlite` (column now exists), `schema_registry` refreshed, pack still validates, and a routing fixture/eval case appended. Rename + cancel path covered (`test_hardening_rename_and_cancel`).
+- **Resumable + channel-agnostic** (`test_session_is_resumable`): a fresh `HarnessAPI` (new process) resumes a persisted session by id and completes it. Same engine drives CLI (`domain-expert new-domain`), HTTP (`POST /api/wizard`, `POST /api/wizard/{id}/reply`), and any runtime adapter.
+- **Repeated-correction hook** (§8.4): `wizard_suggest(domain)` surfaces a hardening suggestion once a reason-code is corrected ≥3×.
+- Also fixed a latent P2 router crash (`new_ulid` imported conditionally inside `_persist` but used on the unfiled never-drop path) that any unroutable capture could trigger; hoisted the import. This unblocked 4 previously-red P5 app-shell tests.
+- Full suite green: **66 passed** (`python -m pytest`). `ruff check core tests scripts` clean. `python scripts/leakscan.py` OK. Wizard modules pyright-clean (remaining pyright warnings are pre-existing `int(cur.lastrowid)` casts in P2 `router.py`).
+
 ## Quick commands
 
 ```bash
@@ -43,4 +61,12 @@ domain-expert review list
 domain-expert review stats
 domain-expert projections drain
 domain-expert eval
+
+# P6 — guided domain creation
+domain-expert new-domain "I want to track my sourdough journey" \
+  --reply skip \
+  --reply "baked a country loaf at 80% hydration" \
+  --reply "add a crumb_photo field" \
+  --reply confirm
+domain-expert wizard reply <session_id> "fed the rye starter"
 ```

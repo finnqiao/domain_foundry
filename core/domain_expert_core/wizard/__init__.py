@@ -1,3 +1,20 @@
-"""Guided domain creation (P6)."""
+"""Guided domain creation + hardening loop (plan §6, P6)."""
 
-__all__: list[str] = []
+from __future__ import annotations
+
+from domain_expert_core.wizard.blueprint import build_blueprint, render_files, write_pack
+from domain_expert_core.wizard.engine import WizardEngine
+from domain_expert_core.wizard.hardening import apply_plan, build_plan, looks_like_edit
+from domain_expert_core.wizard.session import WizardSession, WizardSessionStore
+
+__all__ = [
+    "WizardEngine",
+    "WizardSession",
+    "WizardSessionStore",
+    "build_blueprint",
+    "render_files",
+    "write_pack",
+    "build_plan",
+    "apply_plan",
+    "looks_like_edit",
+]
