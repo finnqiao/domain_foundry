@@ -85,6 +85,61 @@ def create_app(home: Path | None = None, *, api_token: str | None = None) -> Fas
         )
         return {"rows": [r.model_dump() for r in rows]}
 
+    class CorrectBody(BaseModel):
+        text: str | None = None
+        entry_id: str | None = None
+        object_uid: str | None = None
+        action: str | None = None
+        fields: dict[str, Any] | None = None
+        merge_into_uid: str | None = None
+        target_domain: str | None = None
+        channel: str = "web"
+
+    @app.post("/api/correct")
+    def correct(
+        body: CorrectBody,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(authorization)
+        return api.correct(
+            text=body.text,
+            entry_id=body.entry_id,
+            object_uid=body.object_uid,
+            action=body.action,
+            fields=body.fields,
+            merge_into_uid=body.merge_into_uid,
+            target_domain=body.target_domain,
+            channel=body.channel,
+        )
+
+    @app.get("/api/review")
+    def review_list(
+        status: str = "pending",
+        domain: str | None = None,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(authorization)
+        return {"items": api.review_list(status=status, domain=domain)}
+
+    class ResolveBody(BaseModel):
+        decision: str
+        note: str | None = None
+        resolver: str = "user"
+
+    @app.post("/api/review/{approval_id}/resolve")
+    def review_resolve(
+        approval_id: str,
+        body: ResolveBody,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(authorization)
+        return api.review_resolve(
+            approval_id,
+            decision=body.decision,
+            note=body.note,
+            resolver=body.resolver,
+        )
+
     spa_index = _REPO_APP_DIST / "index.html"
     if spa_index.is_file():
         app.mount("/assets", StaticFiles(directory=_REPO_APP_DIST / "assets"), name="assets")

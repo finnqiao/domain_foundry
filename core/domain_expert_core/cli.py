@@ -124,6 +124,61 @@ def eval_cmd(
         raise typer.Exit(code=1)
 
 
+@app.command("correct")
+def correct_cmd(
+    ctx: typer.Context,
+    text: str | None = typer.Argument(None, help="Natural-language correction"),
+    entry_id: str | None = typer.Option(None, "--entry-id"),
+    object_uid: str | None = typer.Option(None, "--object-uid"),
+    action: str | None = typer.Option(
+        None, "--action", help="amend|move|merge|undo|mark_wrong"
+    ),
+    merge_into: str | None = typer.Option(None, "--merge-into"),
+    domain: str | None = typer.Option(None, "--domain", help="Target domain for move"),
+) -> None:
+    """Apply a one-message correction (NL or explicit)."""
+    api = HarnessAPI(ctx.obj["home"])
+    receipt = api.correct(
+        text=text,
+        entry_id=entry_id,
+        object_uid=object_uid,
+        action=action,
+        merge_into_uid=merge_into,
+        target_domain=domain,
+    )
+    typer.echo(json.dumps(receipt, indent=2))
+    if receipt.get("error"):
+        raise typer.Exit(code=1)
+
+
+review_app = typer.Typer(help="Approval queue")
+app.add_typer(review_app, name="review")
+
+
+@review_app.command("list")
+def review_list_cmd(
+    ctx: typer.Context,
+    status: str = typer.Option("pending", "--status"),
+    domain: str | None = typer.Option(None, "--domain"),
+) -> None:
+    api = HarnessAPI(ctx.obj["home"])
+    typer.echo(json.dumps(api.review_list(status=status, domain=domain), indent=2))
+
+
+@review_app.command("resolve")
+def review_resolve_cmd(
+    ctx: typer.Context,
+    approval_id: str = typer.Argument(...),
+    decision: str = typer.Option(..., "--decision", "-d", help="approved|denied|expired"),
+    note: str | None = typer.Option(None, "--note"),
+) -> None:
+    api = HarnessAPI(ctx.obj["home"])
+    receipt = api.review_resolve(approval_id, decision=decision, note=note)
+    typer.echo(json.dumps(receipt, indent=2))
+    if receipt.get("error"):
+        raise typer.Exit(code=1)
+
+
 @pack_app.command("list")
 def pack_list_cmd(ctx: typer.Context) -> None:
     api = HarnessAPI(ctx.obj["home"])

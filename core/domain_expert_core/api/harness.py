@@ -5,6 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from domain_expert_core.apply.executor import CanonicalChangeExecutor
+from domain_expert_core.apply.pipeline import ApplyPipeline, list_approvals
+from domain_expert_core.corrections.service import CorrectionService
 from domain_expert_core.evals.runner import run_eval
 from domain_expert_core.ledger.capture import CaptureService
 from domain_expert_core.ledger.migrate import init_workspace
@@ -26,6 +29,13 @@ class HarnessAPI:
         self.captures = CaptureService(self.workspace)
         self.packs = PackRegistry(self.workspace)
         self.router = Router(self.workspace, registry=self.packs)
+        self.executor = CanonicalChangeExecutor(self.workspace, registry=self.packs)
+        self.pipeline = ApplyPipeline(
+            self.workspace, registry=self.packs, executor=self.executor
+        )
+        self.corrections = CorrectionService(
+            self.workspace, registry=self.packs, executor=self.executor
+        )
 
     def init(self) -> dict[str, int]:
         versions = init_workspace(self.workspace.home)
@@ -63,10 +73,20 @@ class HarnessAPI:
 
         # Invariant 1: interpretation is staged *after* durable capture insert
         routed = self.router.route_entry(receipt.entry_id, text, channel=channel)
+        # P3: auto_apply dispositions execute exactly once; review stays queued
+        pipe = self.pipeline.process_entry(receipt.entry_id, channel=channel)
+
+        # Refresh routed dispositions/status from DB after apply
+        status = pipe.status  # type: ignore[assignment]
+        projection = "pending" if pipe.receipts else "n/a"
+        if pipe.receipts and all(r.applied or r.replayed for r in pipe.receipts):
+            if not pipe.pending_approvals:
+                projection = "pending"  # outbox stub until P4 drain
+
         return CaptureReceipt(
             entry_id=receipt.entry_id,
             capture_event_id=receipt.capture_event_id,
-            status=routed.status,  # type: ignore[arg-type]
+            status=status,  # type: ignore[arg-type]
             routed=[
                 RoutedSpan(
                     domain=s.domain,
@@ -77,7 +97,7 @@ class HarnessAPI:
                 )
                 for s in routed.spans
             ],
-            projection_status="n/a",
+            projection_status=projection,  # type: ignore[arg-type]
             idempotent_replay=False,
             summary=receipt.summary,
         )
@@ -176,15 +196,60 @@ class HarnessAPI:
             ][:20],
         }
 
-    # --- stubs for later phases ---------------------------------------------
-    def correct(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
-        raise NotImplementedError("correct() arrives in P3")
+    def correct(
+        self,
+        text: str | None = None,
+        entry_id: str | None = None,
+        object_uid: str | None = None,
+        action: str | None = None,
+        fields: dict[str, Any] | None = None,
+        merge_into_uid: str | None = None,
+        target_domain: str | None = None,
+        channel: str = "cli",
+    ) -> dict[str, Any]:
+        receipt = self.corrections.correct(
+            text=text,
+            entry_id=entry_id,
+            object_uid=object_uid,
+            action=action,
+            fields=fields,
+            merge_into_uid=merge_into_uid,
+            target_domain=target_domain,
+            channel=channel,
+        )
+        return receipt.to_dict()
 
-    def review_list(self, *args: Any, **kwargs: Any) -> list[dict[str, Any]]:
-        raise NotImplementedError("review_list() arrives in P3/P4")
+    def review_list(
+        self, status: str = "pending", domain: str | None = None
+    ) -> list[dict[str, Any]]:
+        return list_approvals(self.workspace, status=status, domain=domain)
 
-    def review_resolve(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
-        raise NotImplementedError("review_resolve() arrives in P3")
+    def review_resolve(
+        self,
+        approval_id: str,
+        decision: str,
+        note: str | None = None,
+        resolver: str = "user",
+    ) -> dict[str, Any]:
+        receipt = self.executor.resolve_approval(
+            approval_id, decision=decision, note=note, resolver=resolver
+        )
+        # Refresh entry status after resolve
+        conn_entry = None
+        try:
+            from domain_expert_core.security.store import connect_rw
+
+            conn = connect_rw(self.workspace.ledger_db)
+            conn_entry = conn.execute(
+                "SELECT entry_id FROM change_request WHERE id = ?",
+                (receipt.change_request_id,),
+            ).fetchone()
+            conn.close()
+        except Exception:
+            conn_entry = None
+        if conn_entry and conn_entry["entry_id"]:
+            self.pipeline.process_entry(str(conn_entry["entry_id"]))
+        return receipt.to_dict()
 
     def new_domain(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
         raise NotImplementedError("new_domain() arrives in P6")

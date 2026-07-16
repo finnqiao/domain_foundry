@@ -7,11 +7,12 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from domain_expert_core.clock import now_iso
-from domain_expert_core.ids import new_ulid
+from domain_expert_core.interpret.fewshot import load_fewshot_bank
 from domain_expert_core.llm.provider import HeuristicProvider, LLMProvider, get_default_provider
 from domain_expert_core.packs.models import DomainPack
 from domain_expert_core.packs.registry import PackRegistry
 from domain_expert_core.paths import Workspace
+from domain_expert_core.policy.evaluator import evaluate_policy
 from domain_expert_core.routing.cost import CostGuard, CostGuardConfig
 from domain_expert_core.routing.l1 import L1Matcher, L1Result
 from domain_expert_core.security.store import connect_rw
@@ -261,29 +262,24 @@ class Router:
             return "unfiled", "unfiled_card"
         if any(s.disposition == "ledger_only" for s in spans):
             return "ledger_only", "ledger_only"
-        if any(s.disposition == "review" for s in spans):
+        if any(s.disposition in {"review", "confirm"} for s in spans):
             return "review", None
-        # Routed & pending apply (ApplyEngine is P3)
+        if spans and all(s.disposition == "auto_apply" for s in spans):
+            # Pipeline will confirm applied after CanonicalChangeExecutor runs
+            return "applied", None
         return "review", None
 
     def _policy_action(self, pack: DomainPack, span: CaptureSpan, channel: str) -> str:
-        # evaluate pack policy defaults
-        action = "auto_apply"
-        for row in sorted(pack.policy.defaults, key=lambda r: 0):
-            if row.operation and row.operation != span.operation and row.operation != "*":
-                continue
-            if row.object_type and row.object_type != span.object_type:
-                continue
-            if row.match and row.match.get("channel") and row.match["channel"] != channel:
-                continue
-            if row.min_confidence is not None and span.confidence < row.min_confidence:
-                return "review"
-            action = row.action
-        if span.operation == "delete":
-            return "review"
-        # Until ApplyEngine (P3), auto_apply still lands in review queue dispositionally
-        # but we record intended action on the change_request payload.
-        return action
+        decision = evaluate_policy(
+            self.ws.ledger_db,
+            domain=pack.name,
+            operation=span.operation,
+            object_type=span.object_type,
+            channel=channel,
+            confidence=span.confidence,
+            pack=pack,
+        )
+        return decision.action
 
     def _build_context(self, text: str, packs: list[DomainPack], l1: L1Result) -> dict[str, Any]:
         shortlisted = set(l1.packs_matched) or {p.name for p in packs}
@@ -305,6 +301,7 @@ class Router:
                     "llm_hints": pack.routing.llm_hints,
                 }
             )
+        fewshot = load_fewshot_bank(self.ws)
         return {
             "text": text,
             "packs": pack_payloads,
@@ -319,6 +316,7 @@ class Router:
             ],
             "l1_confidence": l1.confidence,
             "l1_reason": l1.reason,
+            "fewshot": fewshot.get("examples") or [],
         }
 
     def _l1_fields(self, text: str, pack: DomainPack, object_type: str) -> dict[str, Any]:
@@ -448,8 +446,10 @@ class Router:
                 )
                 cr_id = int(cur.lastrowid)
                 span_cr.append((s, cr_id))
-                if s.disposition in {"review", "auto_apply", "confirm"}:
-                    # Until P3 apply, all routed ops are visible in the approval queue
+                # auto_apply is executed by ApplyPipeline; only review/confirm enqueue
+                if s.disposition in {"review", "confirm"}:
+                    from domain_expert_core.ids import new_ulid
+
                     conn.execute(
                         """
                         INSERT INTO approval_queue (
