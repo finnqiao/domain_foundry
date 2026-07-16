@@ -1,3 +1,17 @@
-"""LLM provider abstraction (P2)."""
+"""LLM provider abstraction."""
 
-__all__: list[str] = []
+from domain_expert_core.llm.provider import (
+    CassetteProvider,
+    HeuristicProvider,
+    LLMProvider,
+    OpenAICompatibleProvider,
+    get_default_provider,
+)
+
+__all__ = [
+    "LLMProvider",
+    "HeuristicProvider",
+    "OpenAICompatibleProvider",
+    "CassetteProvider",
+    "get_default_provider",
+]

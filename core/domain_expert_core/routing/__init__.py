@@ -1,3 +1,5 @@
-"""L1 rules + L2 LLM routing (P2)."""
+"""L1 rules + L2 LLM routing."""
 
-__all__: list[str] = []
+from domain_expert_core.routing.router import Router, RouteResult
+
+__all__ = ["Router", "RouteResult"]

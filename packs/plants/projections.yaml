@@ -1,0 +1,7 @@
+app:
+  icon: "🪴"
+  views:
+    - {id: care, title: "Care log", block: timeline, object: care_event, config: {date_field: noted_at}}
+    - {id: plants, title: "Plants", block: list, object: plant, config: {group_by: status}}
+markdown:
+  folder: "Plants"

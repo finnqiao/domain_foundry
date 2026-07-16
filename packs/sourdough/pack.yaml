@@ -1,0 +1,9 @@
+name: sourdough
+version: 0.1.0
+title: "Sourdough Journey"
+description: "Track starters, bakes, experiments, and what you learn."
+author: "domain_expert"
+license: MIT
+core_compat: ">=0.1,<2"
+interpretation: structured
+aliases: [bread, baking.sourdough]

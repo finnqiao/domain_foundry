@@ -1,0 +1,16 @@
+objects:
+  care_event:
+    title_field: plant_name
+    fields:
+      plant_name: {type: text, required: true}
+      action: {type: enum, values: [water, fertilize, repot, prune, mist, observe], allow_other: true}
+      noted_at: {type: datetime, required: true, default: capture_time}
+      soil_moisture: {type: enum, values: [dry, damp, wet], allow_other: true}
+      notes: {type: text, long: true}
+  plant:
+    title_field: plant_name
+    fields:
+      plant_name: {type: text, required: true}
+      species: {type: text}
+      location: {type: text}
+      status: {type: enum, values: [thriving, ok, struggling, dormant], allow_other: true}

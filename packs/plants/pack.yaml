@@ -1,0 +1,9 @@
+name: plants
+version: 0.1.0
+title: "Plant Care"
+description: "Track watering, repotting, and observations for houseplants."
+author: "domain_expert"
+license: MIT
+core_compat: ">=0.1,<2"
+interpretation: simple
+aliases: [plant, houseplants]

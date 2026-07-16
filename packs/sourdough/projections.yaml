@@ -1,0 +1,8 @@
+app:
+  icon: "🍞"
+  views:
+    - {id: bakes, title: "Bakes", block: timeline, object: bake, config: {date_field: baked_at}}
+    - {id: starters, title: "Starters", block: list, object: starter, config: {group_by: status}}
+    - {id: stats, title: "Progress", block: stats, object: bake, config: {measures: [{field: result, agg: distribution}]}}
+markdown:
+  folder: "Sourdough"

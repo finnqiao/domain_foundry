@@ -1,0 +1,2 @@
+care_event: [create, update, correct, delete]
+plant: [create, update, correct, merge, delete]

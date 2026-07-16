@@ -1,4 +1,4 @@
-"""domain-expert CLI: init, capture, query, health, serve."""
+"""domain-expert CLI: init, capture, query, health, serve, pack, eval."""
 
 from __future__ import annotations
 
@@ -17,6 +17,8 @@ app = typer.Typer(
     help="Local-first personal agent harness — capture → structured domain data.",
     no_args_is_help=True,
 )
+pack_app = typer.Typer(help="Manage Domain Packs")
+app.add_typer(pack_app, name="pack")
 
 
 def _home(home: Path | None) -> Path:
@@ -61,7 +63,7 @@ def capture_cmd(
     channel: str = typer.Option("cli", "--channel", "-c"),
     source_ref: str | None = typer.Option(None, "--source-ref", "-s"),
 ) -> None:
-    """Capture text into the ledger (capture-first, never-drop)."""
+    """Capture text into the ledger (capture-first, then route)."""
     api = HarnessAPI(ctx.obj["home"])
     receipt = api.capture(text, channel=channel, source_ref=source_ref)
     typer.echo(json.dumps(receipt.model_dump(), indent=2))
@@ -104,6 +106,63 @@ def serve_cmd(
 ) -> None:
     """Run local FastAPI daemon (API + future SPA)."""
     run_server(ctx.obj["home"], host=host, port=port, api_token=token)
+
+
+@app.command("eval")
+def eval_cmd(
+    ctx: typer.Context,
+    cases: Path | None = typer.Option(
+        None, "--cases", help="JSONL eval cases (default: synthetic routing set)"
+    ),
+    min_accuracy: float = typer.Option(0.9, "--min-accuracy"),
+) -> None:
+    """Replay routing eval fixtures (cassette/heuristic)."""
+    api = HarnessAPI(ctx.obj["home"])
+    report = api.eval_routing(cases)
+    typer.echo(json.dumps(report, indent=2))
+    if report["accuracy"] < min_accuracy:
+        raise typer.Exit(code=1)
+
+
+@pack_app.command("list")
+def pack_list_cmd(ctx: typer.Context) -> None:
+    api = HarnessAPI(ctx.obj["home"])
+    typer.echo(json.dumps(api.pack_list(), indent=2))
+
+
+@pack_app.command("validate")
+def pack_validate_cmd(
+    ctx: typer.Context,
+    name: str | None = typer.Argument(None),
+) -> None:
+    api = HarnessAPI(ctx.obj["home"])
+    errors = api.pack_validate(name)
+    if errors:
+        for e in errors:
+            typer.echo(e, err=True)
+        raise typer.Exit(code=1)
+    typer.echo("OK")
+
+
+@pack_app.command("add")
+def pack_add_cmd(
+    ctx: typer.Context,
+    src: Path = typer.Argument(..., exists=True, file_okay=False),
+    force: bool = typer.Option(False, "--force"),
+) -> None:
+    api = HarnessAPI(ctx.obj["home"])
+    info = api.pack_add(src, force=force)
+    typer.echo(json.dumps(info, indent=2))
+
+
+@pack_app.command("new")
+def pack_new_cmd(
+    ctx: typer.Context,
+    name: str = typer.Argument(...),
+) -> None:
+    api = HarnessAPI(ctx.obj["home"])
+    info = api.pack_new(name)
+    typer.echo(json.dumps(info, indent=2))
 
 
 if __name__ == "__main__":

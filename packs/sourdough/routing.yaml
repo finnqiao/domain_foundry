@@ -1,0 +1,47 @@
+rules:
+  - match: "(bak(?:ed|ing)|loaf|boule|batard|crumb)"
+    object: bake
+    confidence_boost: 0.1
+  - match: "(hydration|\\bbulk\\s*(?:ferment|\\d)|oven\\s*spring)"
+    object: bake
+    confidence_boost: 0.08
+  - match: "(starter|levain)\\b"
+    object: starter
+    confidence_boost: 0.1
+  - match: "(fed|feed(?:ing)?)\\s+(?:the\\s+)?(?:\\w+\\s+)?starter"
+    object: starter
+    confidence_boost: 0.1
+  - match: "(sourdough|levain|preferment)"
+    object: bake
+    confidence_boost: 0.05
+
+examples:
+  - text: "baked a 75% hydration country loaf, bulk 5h, came out great"
+    expect: {object: bake, operation: create, fields: {hydration: 75, bulk_hours: 5, result: great}}
+  - text: "fed the rye starter"
+    expect: {object: starter, operation: update}
+  - text: "80% hydration batard, bulk 4 hours, dense crumb"
+    expect: {object: bake, operation: create, fields: {hydration: 80, bulk_hours: 4, result: dense}}
+  - text: "levain doubled in 4h"
+    expect: {object: starter, operation: update}
+  - text: "baked a boule with 20% rye, good oven spring"
+    expect: {object: bake, operation: create, fields: {flour_mix: "20% rye", result: good}}
+  - text: "starter is dormant after vacation"
+    expect: {object: starter, operation: update, fields: {status: dormant}}
+  - text: "sourdough sandwich loaf hydration 70%"
+    expect: {object: bake, operation: create, fields: {hydration: 70}}
+  - text: "bulk fermented 6h then shaped"
+    expect: {object: bake, operation: create, fields: {bulk_hours: 6}}
+  - text: "fed wheat starter this morning"
+    expect: {object: starter, operation: update}
+  - text: "crumb was open and glossy — great bake"
+    expect: {object: bake, operation: create, fields: {result: great}}
+
+negative_examples:
+  - text: "the app build is toast"
+  - text: "please note the PR failed CI"
+  - text: "bulk insert into the database"
+
+llm_hints: >
+  Hydration is baker's percentage. "Doubled in 4h" describes the starter, not bulk.
+  Prefer starter when the message is about feeding or levain activity.

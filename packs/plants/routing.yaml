@@ -1,0 +1,50 @@
+rules:
+  - match: "(water(?:ed|ing)?|soak(?:ed)?|irrigat)"
+    object: care_event
+    confidence_boost: 0.1
+  - match: "(repot(?:ted|ting)?|new\\s+pot)"
+    object: care_event
+    confidence_boost: 0.1
+  - match: "(fertiliz|feed(?:ing)?\\s+the\\s+plant|nutrient)"
+    object: care_event
+    confidence_boost: 0.08
+  - match: "(prune|trimmed|mist(?:ed)?)"
+    object: care_event
+    confidence_boost: 0.05
+  - match: "(monstera|pothos|ficus|snake\\s+plant|zz\\s+plant|calathea|fern|succulent|houseplant)"
+    object: care_event
+    confidence_boost: 0.08
+  - match: "(new\\s+plant|bought\\s+a|added\\s+a)[:\\s]+\\w+"
+    object: plant
+    confidence_boost: 0.15
+
+examples:
+  - text: "watered the monstera, soil still damp"
+    expect: {object: care_event, operation: create, fields: {plant_name: monstera, action: water, soil_moisture: damp}}
+  - text: "repotted the pothos into a bigger pot"
+    expect: {object: care_event, operation: create, fields: {plant_name: pothos, action: repot}}
+  - text: "fertilized the ficus this morning"
+    expect: {object: care_event, operation: create, fields: {action: fertilize}}
+  - text: "mistakenly overwatered the fern yesterday"
+    expect: {object: care_event, operation: create, fields: {plant_name: fern, action: water}}
+  - text: "snake plant looks thriving on the sill"
+    expect: {object: care_event, operation: create}
+  - text: "pruned yellow leaves on the zz plant"
+    expect: {object: care_event, operation: create, fields: {action: prune}}
+  - text: "misted the calathea after dry air"
+    expect: {object: care_event, operation: create, fields: {action: mist}}
+  - text: "bought a new monstera for the living room"
+    expect: {object: plant, operation: create, fields: {plant_name: monstera}}
+  - text: "plant care: soil is dry, watered lightly"
+    expect: {object: care_event, operation: create, fields: {action: water, soil_moisture: dry}}
+  - text: "houseplant checkup — pothos needs water"
+    expect: {object: care_event, operation: create, fields: {plant_name: pothos, action: water}}
+
+negative_examples:
+  - text: "the app build is toast"
+  - text: "deploy the release candidate tonight"
+  - text: "merge the feature flag behind a gate"
+
+llm_hints: >
+  Care events are timestamped actions. Prefer care_event over plant unless the
+  message is clearly about acquiring or naming a plant.
