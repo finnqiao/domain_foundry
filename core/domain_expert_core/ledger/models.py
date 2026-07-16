@@ -53,9 +53,18 @@ class StoreHealth(BaseModel):
     schema_version: int = 0
 
 
+class ProjectionLagReport(BaseModel):
+    pending: int = 0
+    failed: int = 0
+    oldest_pending_age_seconds: float | None = None
+    oldest_pending_at: str | None = None
+    by_adapter: dict[str, Any] = Field(default_factory=dict)
+
+
 class HealthReport(BaseModel):
     ok: bool
     ledger: StoreHealth
     domains: StoreHealth
     entry_counts: dict[str, int] = Field(default_factory=dict)
     last_capture_at: str | None = None
+    projection_lag: ProjectionLagReport = Field(default_factory=ProjectionLagReport)

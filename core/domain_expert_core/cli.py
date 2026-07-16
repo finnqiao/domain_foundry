@@ -179,6 +179,45 @@ def review_resolve_cmd(
         raise typer.Exit(code=1)
 
 
+@review_app.command("stats")
+def review_stats_cmd(
+    ctx: typer.Context,
+    domain: str | None = typer.Option(None, "--domain"),
+) -> None:
+    """SLO counters: pending, overdue, oldest pending age."""
+    api = HarnessAPI(ctx.obj["home"])
+    typer.echo(json.dumps(api.review_stats(domain=domain), indent=2))
+
+
+projections_app = typer.Typer(help="Projection coordinator (outbox drain)")
+app.add_typer(projections_app, name="projections")
+
+
+@projections_app.command("drain")
+def projections_drain_cmd(ctx: typer.Context) -> None:
+    """Drain the projection outbox until convergence (markdown + app feeds)."""
+    api = HarnessAPI(ctx.obj["home"])
+    typer.echo(json.dumps(api.drain_projections(), indent=2))
+
+
+@projections_app.command("status")
+def projections_status_cmd(
+    ctx: typer.Context,
+    entry_id: str | None = typer.Option(None, "--entry-id"),
+    change_request_id: int | None = typer.Option(None, "--change-request-id"),
+) -> None:
+    """Report projection convergence (pending|refreshed) for an entry / CR."""
+    api = HarnessAPI(ctx.obj["home"])
+    typer.echo(
+        json.dumps(
+            api.projection_status(
+                entry_id=entry_id, change_request_id=change_request_id
+            ),
+            indent=2,
+        )
+    )
+
+
 @pack_app.command("list")
 def pack_list_cmd(ctx: typer.Context) -> None:
     api = HarnessAPI(ctx.obj["home"])

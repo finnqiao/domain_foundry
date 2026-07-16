@@ -6,3 +6,5 @@ app:
     - {id: stats, title: "Progress", block: stats, object: bake, config: {measures: [{field: result, agg: distribution}]}}
 markdown:
   folder: "Sourdough"
+  note_template:
+    bake: bake_note.md.j2

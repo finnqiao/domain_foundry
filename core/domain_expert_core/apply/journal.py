@@ -254,19 +254,23 @@ def insert_source_link(
 def schedule_projection_stub(
     ledger_conn,
     *,
-    adapter: str,
+    adapter: str | None = None,
     object_key: str,
     change_request_id: int | None,
     now: str,
     reason: str = "canonical_apply",
 ) -> None:
-    """Enqueue projection work (P4 drains it)."""
-    ledger_conn.execute(
-        """
-        INSERT INTO projection_outbox (
-            adapter, object_key, watermark, reason, change_request_id,
-            status, attempts, created_at, updated_at
-        ) VALUES (?, ?, NULL, ?, ?, 'pending', 0, ?, ?)
-        """,
-        (adapter, object_key, reason, change_request_id, now, now),
+    """Fan a canonical commit out to every projection adapter (invariant 11).
+
+    The `adapter` argument is retained for call-site compatibility but ignored:
+    the ProjectionCoordinator owns the adapter set (app_feed + markdown).
+    """
+    from domain_expert_core.projections.coordinator import schedule_projections
+
+    schedule_projections(
+        ledger_conn,
+        object_key=object_key,
+        change_request_id=change_request_id,
+        now=now,
+        reason=reason,
     )

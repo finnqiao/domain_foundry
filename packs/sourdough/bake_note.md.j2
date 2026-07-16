@@ -1,0 +1,11 @@
+# {{ fields.loaf_name }}
+
+- **Baked:** {{ fields.baked_at }}
+{% if fields.flour_mix %}- **Flour mix:** {{ fields.flour_mix }}{% endif %}
+{% if fields.hydration %}- **Hydration:** {{ fields.hydration }}%{% endif %}
+{% if fields.bulk_hours %}- **Bulk:** {{ fields.bulk_hours }}h{% endif %}
+{% if fields.result %}- **Result:** {{ fields.result }}{% endif %}
+{% if fields.notes %}
+
+{{ fields.notes }}
+{% endif %}

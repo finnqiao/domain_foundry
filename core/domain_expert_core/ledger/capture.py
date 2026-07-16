@@ -15,6 +15,7 @@ from domain_expert_core.ledger.models import (
     CaptureReceipt,
     EntryRow,
     HealthReport,
+    ProjectionLagReport,
     RoutedSpan,
     StoreHealth,
 )
@@ -317,12 +318,16 @@ class CaptureService:
             fk_violations=domains["fk_violations"],
             schema_version=domains_ver,
         )
+        from domain_expert_core.projections.coordinator import projection_lag
+
+        lag = projection_lag(self.ws.ledger_db)
         return HealthReport(
             ok=ledger_h.ok and domains_h.ok,
             ledger=ledger_h,
             domains=domains_h,
             entry_counts=counts,
             last_capture_at=last_capture,
+            projection_lag=ProjectionLagReport(**lag),
         )
 
 

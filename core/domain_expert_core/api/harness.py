@@ -7,6 +7,12 @@ from typing import Any
 
 from domain_expert_core.apply.executor import CanonicalChangeExecutor
 from domain_expert_core.apply.pipeline import ApplyPipeline, list_approvals
+from domain_expert_core.apply.review import (
+    resolve_bulk,
+    review_diff,
+    review_items,
+    review_stats,
+)
 from domain_expert_core.corrections.service import CorrectionService
 from domain_expert_core.evals.runner import run_eval
 from domain_expert_core.ledger.capture import CaptureService
@@ -15,7 +21,13 @@ from domain_expert_core.ledger.models import CaptureReceipt, EntryRow, HealthRep
 from domain_expert_core.packs.loader import load_pack
 from domain_expert_core.packs.registry import PackRegistry
 from domain_expert_core.paths import Workspace
+from domain_expert_core.projections.blockdata import BlockDataError, BlockDataService
+from domain_expert_core.projections.coordinator import (
+    ProjectionCoordinator,
+    projection_status_for_change_request,
+)
 from domain_expert_core.routing.router import Router
+from domain_expert_core.security.store import connect_ro
 
 
 class HarnessAPI:
@@ -36,6 +48,8 @@ class HarnessAPI:
         self.corrections = CorrectionService(
             self.workspace, registry=self.packs, executor=self.executor
         )
+        self.projections = ProjectionCoordinator(self.workspace, registry=self.packs)
+        self.block_data = BlockDataService(self.workspace, registry=self.packs)
 
     def init(self) -> dict[str, int]:
         versions = init_workspace(self.workspace.home)
@@ -220,9 +234,52 @@ class HarnessAPI:
         return receipt.to_dict()
 
     def review_list(
-        self, status: str = "pending", domain: str | None = None
+        self,
+        status: str = "pending",
+        domain: str | None = None,
+        *,
+        operation: str | None = None,
+        object_type: str | None = None,
+        overdue_only: bool = False,
+        include_diff: bool = False,
     ) -> list[dict[str, Any]]:
-        return list_approvals(self.workspace, status=status, domain=domain)
+        # `include_diff=False` keeps the P3 shape (basic list); pass any of the
+        # extra filters or include_diff to get the enriched P4 view.
+        if not (operation or object_type or overdue_only or include_diff):
+            return list_approvals(self.workspace, status=status, domain=domain)
+        return review_items(
+            self.workspace,
+            status=status,
+            domain=domain,
+            operation=operation,
+            object_type=object_type,
+            overdue_only=overdue_only,
+            include_diff=include_diff,
+        )
+
+    def review_stats(self, domain: str | None = None) -> dict[str, Any]:
+        return review_stats(self.workspace, domain=domain)
+
+    def review_diff(self, approval_id: str) -> dict[str, Any]:
+        return review_diff(self.workspace, approval_id)
+
+    def review_resolve_bulk(
+        self,
+        approval_ids: list[str],
+        decision: str,
+        note: str | None = None,
+        resolver: str = "user",
+    ) -> dict[str, Any]:
+        result = resolve_bulk(
+            self.executor,
+            approval_ids,
+            decision=decision,
+            note=note,
+            resolver=resolver,
+        )
+        for item in result["results"]:
+            self._refresh_entry_after_resolve(item.get("change_request_id"))
+        return result
 
     def review_resolve(
         self,
@@ -234,22 +291,81 @@ class HarnessAPI:
         receipt = self.executor.resolve_approval(
             approval_id, decision=decision, note=note, resolver=resolver
         )
-        # Refresh entry status after resolve
-        conn_entry = None
-        try:
-            from domain_expert_core.security.store import connect_rw
+        self._refresh_entry_after_resolve(receipt.change_request_id)
+        return receipt.to_dict()
 
+    def _refresh_entry_after_resolve(self, change_request_id: int | None) -> None:
+        if not change_request_id:
+            return
+        from domain_expert_core.security.store import connect_rw
+
+        try:
             conn = connect_rw(self.workspace.ledger_db)
-            conn_entry = conn.execute(
+            row = conn.execute(
                 "SELECT entry_id FROM change_request WHERE id = ?",
-                (receipt.change_request_id,),
+                (change_request_id,),
             ).fetchone()
             conn.close()
         except Exception:
-            conn_entry = None
-        if conn_entry and conn_entry["entry_id"]:
-            self.pipeline.process_entry(str(conn_entry["entry_id"]))
-        return receipt.to_dict()
+            row = None
+        if row and row["entry_id"]:
+            self.pipeline.process_entry(str(row["entry_id"]))
+
+    # ------------------------------------------------------------- projections
+    def drain_projections(
+        self, *, adapters: list[str] | None = None, limit: int = 100
+    ) -> dict[str, Any]:
+        report = self.projections.drain_until_empty(limit=limit)
+        return report.to_dict()
+
+    def projection_status(
+        self,
+        *,
+        entry_id: str | None = None,
+        change_request_id: int | None = None,
+    ) -> dict[str, Any]:
+        """Report projection convergence for an entry or change request."""
+        conn = connect_ro(self.workspace.ledger_db)
+        try:
+            cr_ids: list[int] = []
+            if change_request_id is not None:
+                cr_ids = [int(change_request_id)]
+            elif entry_id is not None:
+                cr_ids = [
+                    int(r["id"])
+                    for r in conn.execute(
+                        "SELECT id FROM change_request WHERE entry_id = ?",
+                        (entry_id,),
+                    ).fetchall()
+                ]
+            statuses = [
+                projection_status_for_change_request(conn, cr) for cr in cr_ids
+            ]
+        finally:
+            conn.close()
+        if not statuses:
+            return {"projection_status": "n/a", "change_requests": []}
+        if any(s == "pending" for s in statuses):
+            overall = "pending"
+        elif all(s == "refreshed" for s in statuses):
+            overall = "refreshed"
+        else:
+            overall = "n/a"
+        return {
+            "projection_status": overall,
+            "change_requests": list(zip(cr_ids, statuses, strict=False)),
+        }
+
+    def block_views(self, domain: str) -> list[dict[str, Any]]:
+        return self.block_data.views(domain)
+
+    def block_view_data(
+        self, domain: str, view_id: str, limit: int = 100
+    ) -> dict[str, Any]:
+        try:
+            return self.block_data.view_data(domain, view_id, limit=limit)
+        except BlockDataError as exc:
+            return {"error": str(exc)}
 
     def new_domain(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
         raise NotImplementedError("new_domain() arrives in P6")
