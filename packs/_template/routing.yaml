@@ -1,0 +1,26 @@
+rules:
+  - match: "(note|remember|jot)\\b"
+    object: note
+    confidence_boost: 0.05
+
+examples:
+  - text: "note: starter doubled in 4 hours"
+    expect: {object: note, operation: create, fields: {title: "starter doubled in 4 hours"}}
+  - text: "remember to feed at 8am"
+    expect: {object: note, operation: create}
+  - text: "jot down crumb was open and glossy"
+    expect: {object: note, operation: create}
+  - text: "note the oven spring looked weak"
+    expect: {object: note, operation: create}
+  - text: "remember hydration felt sticky at 78%"
+    expect: {object: note, operation: create}
+  - text: "jot: used 20% rye"
+    expect: {object: note, operation: create}
+  - text: "note — bulk was 5 hours"
+    expect: {object: note, operation: create}
+  - text: "remember cold retard overnight"
+    expect: {object: note, operation: create}
+
+negative_examples:
+  - text: "please note the PR failed CI"
+  - text: "remember to push the release tag"

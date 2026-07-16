@@ -1,0 +1,9 @@
+name: example
+version: 0.1.0
+title: "Example Domain"
+description: "Scaffold pack — replace with your domain."
+author: "you"
+license: MIT
+core_compat: ">=0.1,<2"
+interpretation: simple
+aliases: []

@@ -1,0 +1,7 @@
+app:
+  icon: "📝"
+  views:
+    - {id: notes, title: "Notes", block: list, object: note, config: {sort: noted_at}}
+markdown:
+  folder: "Example"
+  note_template: null

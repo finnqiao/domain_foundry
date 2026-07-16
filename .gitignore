@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+*.egg
+
+# Node / Vite
+node_modules/
+app/dist/
+*.local
+
+# Local runtime data (never commit)
+.domain_expert/
+*.sqlite
+*.sqlite3
+*.db
+
+# Secrets & env
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Pack-local correction corpora (user-generated)
+packs/**/evals/corrections.jsonl
+
+# Test / tool artifacts
+.hypothesis/
+*.log

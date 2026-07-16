@@ -1,0 +1,7 @@
+objects:
+  note:
+    title_field: title
+    fields:
+      title: {type: text, required: true}
+      body: {type: text, long: true}
+      noted_at: {type: datetime, required: true, default: capture_time}
