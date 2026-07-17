@@ -33,8 +33,8 @@ the `hermes_agent.plugins` entry-point group, exposing capture / query / correct
 / review / new_domain over the harness's local HTTP API. There's a capture-first
 `SKILL.md` guidance fragment to drop into the agent's system prompt, and a
 conformance test that runs a scripted capture → correct → review session against
-a live local stack. Supported range is pinned (`>=0.4,<0.7`) and gated by that
-test.
+a live local stack. Supported range is `>=0.4,<1` (loose upper bound so
+`hermes update` stays friendly); conformance tests gate the exercised surface.
 
 The core is runtime-agnostic (stable HTTP contract), so an MCP adapter is the
 same shape — anyone can write one against the documented endpoints.

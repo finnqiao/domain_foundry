@@ -124,6 +124,9 @@ first two hours clear for replies:
 
 ## Human gates summary (nothing below is done by the build)
 
+Step-by-step handoff: [`docs/HANDOFF.md`](docs/HANDOFF.md).
+Synthetic UI evidence: [`docs/assets/evidence/`](docs/assets/evidence/).
+
 - 🔒 Name availability/trademark checks (provisional name **Domain Foundry** already applied).
 - 🔒 PyPI publish (core + adapter) and GitHub release/tag push.
 - 🔒 Show HN / lobste.rs / Nous posts + awesome-list PRs.

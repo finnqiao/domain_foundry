@@ -29,7 +29,7 @@ Almanac, Fieldbook, Waypost, Lorebook, Tally — plus **Domain Foundry**.
 | Workspace | `~/.domain_foundry/` |
 | Env prefix | `DOMAIN_FOUNDRY_*` |
 | hermes entry-point | `domain_foundry` |
-| GitHub (placeholder until org exists) | `https://github.com/domain-foundry/domain_foundry` |
+| GitHub (provisional; live under finnqiao until Domain Foundry org is owned) | `https://github.com/finnqiao/domain_foundry` |
 
 Availability (PyPI / GitHub org / docs domain) and trademark sanity remain a
 **human gate** before publish — see [`LAUNCH_CHECKLIST.md`](../../LAUNCH_CHECKLIST.md).

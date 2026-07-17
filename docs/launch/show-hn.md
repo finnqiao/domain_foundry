@@ -11,7 +11,7 @@
 
 ## URL
 
-`https://github.com/domain-foundry/domain_foundry`
+`https://github.com/finnqiao/domain_foundry`
 
 ## Text
 

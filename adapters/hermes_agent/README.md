@@ -20,23 +20,38 @@ guidance lives in [`SKILL.md`](./SKILL.md) and is also exported as
 
 ## Supported hermes-agent versions
 
-**`>=0.4,<0.7`** (`SUPPORTED_HERMES_AGENT`). The `register(ctx)` hook is
-defensive about the host API: it discovers the host's tool-registration method
-(`register_tool` / `add_tool` / `register_tools` / …) and falls back to stashing
-the tool list on the context. Bumping the upper bound is a reviewed change gated
-by the conformance test (`tests/contract/test_hermes_agent_adapter.py`).
+**`>=0.4,<1`** (`SUPPORTED_HERMES_AGENT`). The `register(ctx)` hook speaks
+Hermes 0.14+'s `register_tool(name, toolset, schema, handler)` API and stays
+backward-compatible with older fakes that used `parameters=`. Conformance tests
+gate the actually-exercised host surface.
 
 ## Install
 
 ```bash
-# from a checkout
-pip install ./adapters/hermes_agent
-# or editable for development
-pip install -e ./adapters/hermes_agent
+# Install into the *hermes* Python (Hermes venvs often ship without pip).
+HERMES_PY="${HERMES_PY:-$HOME/.hermes/hermes-agent/venv/bin/python}"
+uv pip install --python "$HERMES_PY" -U -e ./adapters/hermes_agent
+
+# Prefer an isolated profile so default gateway config stays untouched:
+#   hermes profile create domainfoundry --clone
+# Then enable plugin + toolset on that profile (see below), or just run:
+#   scripts/hermes_e2e_smoke.sh
+#   HERMES_LIVE=1 scripts/hermes_e2e_smoke.sh   # optional LLM oneshot
 ```
 
-This registers the `hermes_agent.plugins` entry point `domain_foundry`, so
-hermes-agent discovers it automatically once installed in the same environment.
+This registers the `hermes_agent.plugins` entry point `domain_foundry`. On
+Hermes 0.14+, `hermes plugins enable` does **not** list pip entry-points, so
+enable by editing the profile's `config.yaml`:
+
+```yaml
+plugins:
+  enabled: [domain_foundry]
+platform_toolsets:
+  cli: [..., domain_foundry]   # required or the model never sees the tools
+```
+
+Prefer an isolated Hermes profile (`hermes profile create … --clone`) so this
+does not touch your default gateway config.
 
 ## Configure
 

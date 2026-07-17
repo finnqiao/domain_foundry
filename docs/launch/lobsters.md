@@ -5,7 +5,7 @@
 
 ## Submission
 
-- **URL:** `https://github.com/domain-foundry/domain_foundry`
+- **URL:** `https://github.com/finnqiao/domain_foundry`
 - **Title:** `Domain Foundry: a local-first, capture-first harness for structured personal data`
 - **Tags:** `ai`, `databases`, `python` (mark as **show**)
 

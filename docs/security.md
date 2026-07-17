@@ -3,7 +3,7 @@
 `domain_foundry` is local-first, has **no telemetry**, and treats your captured
 text as untrusted input to a structured interpreter — never as executable
 instructions. This page documents the posture; the disclosure process is in the
-repository [`SECURITY.md`](https://github.com/domain-foundry/domain_foundry/blob/main/SECURITY.md).
+repository [`SECURITY.md`](https://github.com/finnqiao/domain_foundry/blob/main/SECURITY.md).
 
 ## Threat model in one paragraph
 
@@ -88,5 +88,5 @@ private remotes, synthetic-only fixtures, git history starting at P0. See the
 ## Reporting a vulnerability
 
 Please report privately (do not open a public issue with exploit detail). See
-[`SECURITY.md`](https://github.com/domain-foundry/domain_foundry/blob/main/SECURITY.md)
+[`SECURITY.md`](https://github.com/finnqiao/domain_foundry/blob/main/SECURITY.md)
 for the process and response targets.

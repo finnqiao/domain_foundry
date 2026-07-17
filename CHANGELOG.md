@@ -62,5 +62,5 @@ capture natural language → structured domain data → a remixable app.
 - The public product name is not yet finalized (see ADR-005); the distribution
   is published as `domain-foundry-core` for this pre-1.0 line.
 
-[Unreleased]: https://github.com/domain-foundry/domain_foundry/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/domain-foundry/domain_foundry/releases/tag/v0.1.0
+[Unreleased]: https://github.com/finnqiao/domain_foundry/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/finnqiao/domain_foundry/releases/tag/v0.1.0

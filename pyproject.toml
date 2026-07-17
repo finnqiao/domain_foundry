@@ -48,9 +48,9 @@ docs = [
 domain-foundry = "domain_foundry_core.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/domain-foundry/domain_foundry"
-Documentation = "https://github.com/domain-foundry/domain_foundry#readme"
-Issues = "https://github.com/domain-foundry/domain_foundry/issues"
+Homepage = "https://github.com/finnqiao/domain_foundry"
+Documentation = "https://github.com/finnqiao/domain_foundry#readme"
+Issues = "https://github.com/finnqiao/domain_foundry/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["core/domain_foundry_core"]

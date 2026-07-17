@@ -22,7 +22,9 @@ from domain_foundry_hermes_agent.client import DomainExpertClient
 
 # Pinned, tested hermes-agent compatibility range. Bumping the upper bound is a
 # reviewed change gated by the conformance test in this repo.
-SUPPORTED_HERMES_AGENT = ">=0.4,<0.7"
+# Upper bound kept loose so `hermes update` does not silently break discovery;
+# conformance tests pin the actually-tested host range.
+SUPPORTED_HERMES_AGENT = ">=0.4,<1"
 
 # Capture-first behavioral guidance. Hosts should inject this into the agent's
 # system prompt / skill so the model uses the harness the way it is designed to
@@ -257,6 +259,38 @@ def _resolve_client(ctx: Any, client: DomainExpertClient | None) -> DomainExpert
     return DomainExpertClient(str(base_url), token=token)
 
 
+def _param_names(func: Callable[..., Any]) -> set[str]:
+    import inspect
+
+    try:
+        return set(inspect.signature(func).parameters)
+    except (TypeError, ValueError):
+        return set()
+
+
+def _hermes_tool_handler(tool: Tool) -> Callable[..., str]:
+    """Adapt a Tool to Hermes 0.14+ handler shape: ``(args: dict, **kwargs) -> str``."""
+    import json
+
+    def handler(args: dict | None = None, **_kwargs: Any) -> str:
+        payload = {k: v for k, v in dict(args or {}).items() if v is not None}
+        try:
+            result = tool(**payload)
+            return json.dumps(result, ensure_ascii=False, default=str)
+        except Exception as exc:  # noqa: BLE001 — never raise into the host loop
+            return json.dumps({"error": str(exc)}, ensure_ascii=False)
+
+    return handler
+
+
+def _tool_schema(tool: Tool) -> dict[str, Any]:
+    return {
+        "name": tool.name,
+        "description": tool.description,
+        "parameters": tool.parameters,
+    }
+
+
 def _register_with_host(ctx: Any, tools: list[Tool]) -> bool:
     """Try the host's registration hook; return True if one was found."""
     if ctx is None:
@@ -264,38 +298,65 @@ def _register_with_host(ctx: Any, tools: list[Tool]) -> bool:
     # Try a per-tool registration hook first.
     for method in ("register_tool", "add_tool", "tool"):
         hook = getattr(ctx, method, None)
-        if callable(hook):
+        if not callable(hook):
+            continue
+        params = _param_names(hook)
+        # Hermes 0.14+ PluginContext: name + toolset + schema + handler.
+        if "toolset" in params and "schema" in params:
             for t in tools:
-                if _accepts_kwargs(hook):
-                    hook(
-                        name=t.name,
-                        description=t.description,
-                        parameters=t.parameters,
-                        handler=t.handler,
-                    )
-                else:
-                    hook(t)
+                hook(
+                    name=t.name,
+                    toolset="domain_foundry",
+                    schema=_tool_schema(t),
+                    handler=_hermes_tool_handler(t),
+                    description=t.description,
+                )
             return True
+        # Legacy / test fakes: name + description + parameters + handler.
+        if "name" in params or "parameters" in params:
+            for t in tools:
+                hook(
+                    name=t.name,
+                    description=t.description,
+                    parameters=t.parameters,
+                    handler=t.handler,
+                )
+            return True
+        for t in tools:
+            hook(t)
+        return True
     # Try a bulk registration hook.
     for method in ("register_tools", "add_tools"):
         hook = getattr(ctx, method, None)
         if callable(hook):
             hook(tools)
             return True
-    # Try injecting behavioral guidance if the host supports it.
     return False
 
 
-def _accepts_kwargs(func: Callable[..., Any]) -> bool:
-    import inspect
+def _publish_guidance(ctx: Any) -> None:
+    """Inject capture-first guidance via whichever host API is available."""
+    if ctx is None:
+        return
+    for method in ("add_system_prompt", "register_guidance", "add_guidance"):
+        hook = getattr(ctx, method, None)
+        if callable(hook):
+            try:
+                hook(CAPTURE_FIRST_GUIDANCE)
+            except Exception:
+                pass
+            return
+    # Hermes 0.14+: no system-prompt helper; use pre_llm_call context injection.
+    register_hook = getattr(ctx, "register_hook", None)
+    if callable(register_hook):
 
-    try:
-        params = inspect.signature(func).parameters
-    except (TypeError, ValueError):
-        return False
-    return "name" in params or any(
-        p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values()
-    )
+        def _inject_guidance(**_kwargs: Any) -> dict[str, str]:
+            return {"context": CAPTURE_FIRST_GUIDANCE}
+
+        try:
+            register_hook("pre_llm_call", _inject_guidance)
+        except Exception:
+            pass
 
 
 def register(ctx: Any = None, *, client: DomainExpertClient | None = None) -> RegistrationResult:
@@ -309,16 +370,7 @@ def register(ctx: Any = None, *, client: DomainExpertClient | None = None) -> Re
     de_client = _resolve_client(ctx, client)
     tools = build_tools(de_client)
     registered = _register_with_host(ctx, tools)
-
-    # Publish the behavioral guidance to the host if it accepts one.
-    for method in ("add_system_prompt", "register_guidance", "add_guidance"):
-        hook = getattr(ctx, method, None)
-        if callable(hook):
-            try:
-                hook(CAPTURE_FIRST_GUIDANCE)
-            except Exception:
-                pass
-            break
+    _publish_guidance(ctx)
 
     # Fall back to stashing the tool list on the context for host pickup.
     if not registered and ctx is not None:

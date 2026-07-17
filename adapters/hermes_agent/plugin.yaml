@@ -8,11 +8,13 @@ kind: hermes-agent-plugin
 
 # Python entry point (group `hermes_agent.plugins`): hermes-agent imports this
 # and calls `register(ctx)`.
-entry_point: "domain_foundry_hermes_agent.plugin:register"
+# Module path (not module:register) — Hermes 0.14+ loads the module then
+# calls register(ctx).
+entry_point: "domain_foundry_hermes_agent.plugin"
 
-# Pinned, tested hermes-agent compatibility range. Bumping the upper bound is a
-# reviewed change gated by the adapter conformance test.
-supported_hermes_agent: ">=0.4,<0.7"
+# Compatibility range. Keep the upper bound loose so hermes update does not
+# block discovery; conformance tests document the actually-tested host.
+supported_hermes_agent: ">=0.4,<1"
 
 # How the plugin reaches the harness. Read from the host context first, then env.
 config:

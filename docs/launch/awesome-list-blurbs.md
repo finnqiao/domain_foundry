@@ -19,19 +19,19 @@
 **awesome-hermes-agent (plugins):**
 
 ```markdown
-- [Domain Foundry](https://github.com/domain-foundry/domain_foundry) — Local-first harness that turns agent-captured messages into structured, per-domain SQLite data via data-only "packs"; ships a `register(ctx)` plugin exposing capture/query/correct/review over HTTP.
+- [Domain Foundry](https://github.com/finnqiao/domain_foundry) — Local-first harness that turns agent-captured messages into structured, per-domain SQLite data via data-only "packs"; ships a `register(ctx)` plugin exposing capture/query/correct/review over HTTP.
 ```
 
 **awesome-local-first:**
 
 ```markdown
-- [Domain Foundry](https://github.com/domain-foundry/domain_foundry) — Capture natural language, get a local-first structured app for any domain. Append-only SQLite ledger, offline-checkable YAML packs, one-message corrections, no telemetry. (MIT, Python)
+- [Domain Foundry](https://github.com/finnqiao/domain_foundry) — Capture natural language, get a local-first structured app for any domain. Append-only SQLite ledger, offline-checkable YAML packs, one-message corrections, no telemetry. (MIT, Python)
 ```
 
 **awesome-selfhosted (if in-scope):**
 
 ```markdown
-- [domain_foundry](https://github.com/domain-foundry/domain_foundry) - Local-first personal data harness: describe a domain, capture in plain language, get structured SQLite + a small app. `MIT` `Python`
+- [Domain Foundry](https://github.com/finnqiao/domain_foundry) - Local-first personal data harness: describe a domain, capture in plain language, get structured SQLite + a small app. `MIT` `Python`
 ```
 
 ## PR description template

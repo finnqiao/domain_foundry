@@ -62,17 +62,30 @@ chain, and correct from there.
 
 ## 6. (Optional) Hook up hermes-agent
 
-Let an agent capture on your behalf with capture-first discipline.
+Let an agent capture on your behalf with capture-first discipline. Prefer an
+**isolated Hermes profile** so this never touches your default gateway:
 
 ```bash
-pip install ./adapters/hermes_agent          # publishes the hermes_agent.plugins entry point
+# 1) isolated profile (clone keys/config; sticky default stays put)
+hermes profile create domainfoundry --clone
+
+# 2) install adapter into the *hermes* Python (Hermes venvs often have no pip)
+HERMES_PY="$HOME/.hermes/hermes-agent/venv/bin/python"
+uv pip install --python "$HERMES_PY" -e ./adapters/hermes_agent
+
+# 3) enable plugin + toolset on that profile only (pip plugins are not listed
+#    by `hermes plugins enable` on Hermes 0.14 — edit config.yaml):
+#    plugins.enabled: [domain_foundry]
+#    platform_toolsets.cli: [..., domain_foundry]
+
 export DOMAIN_FOUNDRY_URL=http://127.0.0.1:8787
-# start (or keep) `domain-foundry serve` running
+domain-foundry serve   # terminal 1
+hermes -p domainfoundry -z "baked a 75% hydration country loaf" --yolo
 ```
 
-hermes-agent discovers the plugin and calls `register(ctx)`; inject
-[`adapters/hermes_agent/SKILL.md`](../adapters/hermes_agent/SKILL.md) into the
-agent's system prompt. Supported hermes-agent range: **`>=0.4,<0.7`**. See the
+Or run the automated smoke: `scripts/hermes_e2e_smoke.sh`.
+
+Supported hermes-agent range: **`>=0.4,<1`**. See the
 [adapter README](../adapters/hermes_agent/README.md) for details.
 
 ## Clean-machine gate (automated slice)

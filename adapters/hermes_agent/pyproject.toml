@@ -22,12 +22,14 @@ dev = [
 ]
 
 # Published so hermes-agent can discover the plugin without extra config.
+# Value must be a *module* path (Hermes calls ep.load() then module.register(ctx)).
+# Do not use "module:register" — that makes ep.load() return the function itself.
 [project.entry-points."hermes_agent.plugins"]
-domain_foundry = "domain_foundry_hermes_agent.plugin:register"
+domain_foundry = "domain_foundry_hermes_agent.plugin"
 
 [project.urls]
-Homepage = "https://github.com/domain-foundry/domain_foundry"
-Documentation = "https://github.com/domain-foundry/domain_foundry/tree/main/adapters/hermes_agent#readme"
+Homepage = "https://github.com/finnqiao/domain_foundry"
+Documentation = "https://github.com/finnqiao/domain_foundry/tree/main/adapters/hermes_agent#readme"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/domain_foundry_hermes_agent"]

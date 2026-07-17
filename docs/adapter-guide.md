@@ -65,10 +65,12 @@ dropping ambiguous input.
 
 ### Supported version range
 
-**`>=0.4,<0.7`** (`SUPPORTED_HERMES_AGENT`). Bumping the upper bound is a
-reviewed change gated by the conformance test
-(`tests/contract/test_hermes_agent_adapter.py`), which runs a scripted
-capture → query → correct → review session against a live in-process stack.
+**`>=0.4,<1`** (`SUPPORTED_HERMES_AGENT`). Upper bound stays loose so
+`hermes update` does not block discovery; the conformance test
+(`tests/contract/test_hermes_agent_adapter.py`) gates the actually-exercised
+host surface (capture → query → correct → review against a live in-process
+stack). Hermes 0.14+ uses `register_tool(name, toolset, schema, handler)` and
+expects the pip entry point to load a **module** (not `module:register`).
 
 ## Standalone use
 

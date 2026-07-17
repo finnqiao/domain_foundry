@@ -3,7 +3,7 @@ site_description: >-
   Local-first personal agent harness — capture natural language, get structured
   domain data and a remixable app. The structured-life data layer for agent runtimes.
 site_author: Domain Foundry contributors
-repo_url: https://github.com/domain-foundry/domain_foundry
+repo_url: https://github.com/finnqiao/domain_foundry
 repo_name: domain-foundry/domain_foundry
 copyright: MIT-licensed. No telemetry. Local-first.
 
