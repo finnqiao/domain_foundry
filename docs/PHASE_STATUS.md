@@ -13,7 +13,7 @@ Tracking implementation of `docs/OPEN_SOURCE_HARNESS_PLAN.md`.
 | P6 Domain wizard | **Done** | Wizard engine (goal→interview→generate→validate→dry-run→test-drive→hardening), resumable sessions, archetype+generic proposal generator, `new_domain`/`wizard_reply` API, CLI `new-domain` + `wizard reply`, HTTP endpoints, pack authoring style guide |
 | P7 Eval framework | **Done** | Cassette drift + `--live-llm`; frozen-clock audit (lint+test); full scoring (routing/field/disposition/calibration) + per-pack scorecards + committed baseline + regression diff; `eval backfill`/`eval export --sanitize`; PR replay gate + nightly live-LLM stub; curated contract-case set |
 | P8 Demo & reference packs + hermes-agent adapter | **Done** | `food` + `travel` packs (authored purely through the public pack format), each with ≥25 green routing fixtures incl. cross-domain dining↔trip links; hermes-agent plugin (`register(ctx)` + `plugin.yaml` + skill fragment + `hermes_agent.plugins` entry point) with a live-stack conformance test; quickstart + automated clean-machine gate; founder friction-log checklist |
-| P9 Docs & launch | Not started | |
+| P9 Docs & launch | **Done** (in-repo) | MkDocs Material site (concepts/architecture+data-flow diagram/adapter/security/gallery/remix tutorial); release-blocking leak audit + `release_audit.sh`; API bearer-token security contract test; README polish + `CHANGELOG.md`; launch artifacts (`docs/launch/*`, awesome-list blurbs, issue templates) + `LAUNCH_CHECKLIST.md`. **Human launch gates remain** (see below). |
 
 ## P3 gate evidence
 
@@ -73,6 +73,24 @@ Tracking implementation of `docs/OPEN_SOURCE_HARNESS_PLAN.md`.
 - **Founder-as-user-0**: `docs/FOUNDER_VALIDATION.md` is the private friction-log process checklist (cold-start ≥2 real domains → test-drive → correct → harden → live-in-it → file synthetic-repro issues). Personal packs/data are never committed; `leakscan.py` is the backstop. Public CI proves the mechanism on synthetic corpora; the lived validation is run privately.
 - Full suite green: **90 passed** (`python -m pytest`, +8 P8 tests). `ruff check core tests scripts adapters` clean. `python scripts/leakscan.py` OK. `python scripts/clock_audit.py` OK. New packs + adapter contain **synthetic data only** (PII/real-remote scan clean).
 
+## P9 gate evidence
+
+- **Docs site builds** (`mkdocs build` → exit 0): MkDocs Material site under `docs/` wired via root `mkdocs.yml`, with concept pages (ledger/packs/routing/corrections/replay), an architecture page carrying the §4.5 end-to-end data-flow **mermaid** diagram, an adapter guide, a security posture page, a pack gallery (food/travel/plants/sourdough/template + a community-candidate list), and a "remix in an afternoon" plant-care tutorial. Docs deps added as the `docs` optional-dependency group (`mkdocs`, `mkdocs-material`) + `docs/requirements.txt`. Build warnings are only cross-tree relative links (scripts/adapters outside `docs_dir`); the build itself succeeds.
+- **Final leak audit — release-blocking, GREEN** (`docs/LEAK_AUDIT.md`, `scripts/release_audit.sh`): `python scripts/leakscan.py` OK; `python scripts/clock_audit.py` OK; **no tracked `*.sqlite`/`*.db`/off-allowlist binaries**; **git history starts at the P0 bootstrap** (`Bootstrap domain_expert P0/P1 substrate.`, 7 commits, no pre-P0 import); manual review confirms fixtures/examples are synthetic (travel uses invented places), the only `@`/secret-shaped strings are PII-sanitizer/redactor test inputs, and the only "finn/hermes/HermesWorkspace" strings are the denylist patterns *inside the guard scripts themselves*. `scripts/release_audit.sh` aggregates all release-blocking gates (leakscan + clock + no-DBs + P0-history + ruff + pytest + `mkdocs build` + eval corpus replay) and prints **release audit OK**.
+- **Security posture** (`docs/security.md`, `SECURITY.md`): documents localhost-by-default binding, non-local-bind-refuses-without-token, bearer-gated endpoints, read-only + parameterized query paths with schema-validated identifiers, `safe_join` path safety, secret redaction, prompt-injection containment, extension trust tiers, and the private disclosure process. New **API security contract test** (`tests/security/test_api_auth.py`) closes a gap: with a token set, endpoints return 401 (missing) / 403 (wrong) / 401 (malformed scheme) and 200 (valid) for both reads and mutations; the localhost default stays open. (+2 tests)
+- **README polish + changelog** (`README.md`, `CHANGELOG.md`): pitch + 5-minute quickstart + docs index + name-status note; a **demo-GIF placeholder** (HTML comment + prose line pointing at the `LAUNCH_CHECKLIST.md` recording gate — no fabricated binary committed); Keep-a-Changelog `v0.1.0` stub summarizing P0–P9. PyPI publish steps live (unexecuted) in `LAUNCH_CHECKLIST.md`.
+- **Launch prep (prepared, not executed)**: `docs/launch/{show-hn,lobsters,nous,awesome-list-blurbs}.md` drafts; `.github/ISSUE_TEMPLATE/{bug_report,routing_miss,pack_submission,config}.{md,yml}` (bug / routing-miss-as-eval-case / pack-submission, plus a private-security contact link); `LAUNCH_CHECKLIST.md` covers name decision, pre-flight, demo GIF, PyPI publish, launch posts, and **post-launch triage** (labels + severity + synthetic-repro-into-eval-case rotation). Name decision recorded as an open ADR (`docs/adr/ADR-005-name-decision.md`); **no launch post is live and nothing was published**.
+- Full suite green: **92 passed** (`python -m pytest`, +2 P9 security tests). `ruff check core tests scripts adapters` clean. `python scripts/clock_audit.py` OK. `python scripts/leakscan.py` OK. `mkdocs build` OK. `domain-expert eval --full --min-accuracy 0.9` OK.
+
+### Human launch gates remaining (NOT done by the build)
+
+1. **Name decision** (open): pick the final public name (front-runner **Trellis**), verify PyPI/GitHub/domain/trademark availability, and run the mechanical rename (ADR-005 lists every touch point). Blocks the rest.
+2. **PyPI publish** (core + hermes-agent adapter) and the GitHub release/tag push — steps in `LAUNCH_CHECKLIST.md §3`, not executed.
+3. **Launch posts**: Show HN, lobste.rs, Nous, and awesome-list PRs — drafts prepared, posted by hand.
+4. **External security pass** on the API surface by an independent reviewer.
+5. **Founder-as-user-0** lived validation (private; `docs/FOUNDER_VALIDATION.md`).
+6. **90-second demo GIF** recording against synthetic packs (then re-audit + commit).
+
 ## Quick commands
 
 ```bash
@@ -102,4 +120,9 @@ domain-expert new-domain "I want to track my sourdough journey" \
   --reply "add a crumb_photo field" \
   --reply confirm
 domain-expert wizard reply <session_id> "fed the rye starter"
+
+# P9 — docs, audit & release
+pip install -e ".[docs]"                     # mkdocs + mkdocs-material (or: pip install -r docs/requirements.txt)
+mkdocs build                                 # build the docs site (mkdocs serve to preview)
+scripts/release_audit.sh                     # aggregate release-blocking gate (leakscan+clock+history+ruff+pytest+mkdocs+eval)
 ```

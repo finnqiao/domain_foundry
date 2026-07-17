@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability (private)
+    url: https://github.com/domain-expert/domain_expert/security/policy
+    about: Please report security issues privately per SECURITY.md — do not open a public issue with exploit detail.
+  - name: Question / discussion
+    url: https://github.com/domain-expert/domain_expert/discussions
+    about: For usage questions and open-ended ideas, start a discussion instead of an issue.

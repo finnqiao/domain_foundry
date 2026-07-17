@@ -1,0 +1,91 @@
+site_name: domain_expert
+site_description: >-
+  Local-first personal agent harness — capture natural language, get structured
+  domain data and a remixable app. The structured-life data layer for agent runtimes.
+site_author: domain_expert contributors
+repo_url: https://github.com/domain-expert/domain_expert
+repo_name: domain-expert/domain_expert
+copyright: MIT-licensed. No telemetry. Local-first.
+
+docs_dir: docs
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - content.code.annotate
+    - toc.follow
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+nav:
+  - Home: index.md
+  - Quickstart: QUICKSTART.md
+  - Concepts:
+      - Overview: concepts/index.md
+      - The ledger: concepts/ledger.md
+      - Domain packs: concepts/packs.md
+      - Hybrid routing: concepts/routing.md
+      - Corrections: concepts/corrections.md
+      - Evaluation replay: concepts/replay.md
+  - Architecture: architecture.md
+  - Authoring:
+      - Pack authoring guide: PACK_AUTHORING.md
+      - "Tutorial: remix in an afternoon": tutorial-plant-care.md
+      - Custom blocks & remix: CUSTOM_BLOCKS.md
+  - Pack gallery: gallery.md
+  - Adapter guide: adapter-guide.md
+  - Security: security.md
+  - Project:
+      - Leak audit: LEAK_AUDIT.md
+      - Phase status: PHASE_STATUS.md
+      - Founder validation: FOUNDER_VALIDATION.md
+
+not_in_nav: |
+  OPEN_SOURCE_HARNESS_PLAN.md
+  adr/*.md
+  launch/*.md
+
+validation:
+  nav:
+    omitted_files: ignore
+  links:
+    absolute_links: ignore
+    unrecognized_links: ignore

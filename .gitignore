@@ -21,6 +21,9 @@ node_modules/
 app/dist/
 *.local
 
+# MkDocs build output
+site/
+
 # Local runtime data (never commit)
 .domain_expert/
 *.sqlite
