@@ -7,22 +7,22 @@ notes, denylisted names, real places, or vault/SQLite contents. This file is the
 **process checklist** to run privately; it deliberately contains no personal
 content.
 
-> Hard rule: personal packs live outside this repo (e.g. `~/.domain_expert/packs`
+> Hard rule: personal packs live outside this repo (e.g. `~/.domain_foundry/packs`
 > on a production install, or a private repo). Nothing here should ever be
-> `git add`ed to `domain_expert`. `scripts/leakscan.py` is the backstop.
+> `git add`ed to `domain_foundry`. `scripts/leakscan.py` is the backstop.
 
 ## Setup (private machine)
 
 ```bash
-pipx install domain-expert-core
-domain-expert init
+pipx install domain-foundry-core
+domain-foundry init
 ```
 
 ## For each private domain (do ≥2)
 
 1. **Cold start.** Describe the domain in one sentence to the wizard:
    ```bash
-   domain-expert new-domain "…your real goal…"
+   domain-foundry new-domain "…your real goal…"
    ```
    Answer the interview (or `--reply skip` to accept defaults), then let it
    generate + validate + dry-run.

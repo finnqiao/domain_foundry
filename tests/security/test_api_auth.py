@@ -12,8 +12,8 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from domain_expert_core.api.app import create_app
-from domain_expert_core.api.harness import HarnessAPI
+from domain_foundry_core.api.app import create_app
+from domain_foundry_core.api.harness import HarnessAPI
 
 
 def _client(home: Path, token: str | None) -> TestClient:
@@ -22,7 +22,7 @@ def _client(home: Path, token: str | None) -> TestClient:
 
 
 def test_token_gates_endpoints(tmp_path: Path, monkeypatch):
-    monkeypatch.delenv("DOMAIN_EXPERT_API_TOKEN", raising=False)
+    monkeypatch.delenv("DOMAIN_FOUNDRY_API_TOKEN", raising=False)
     home = tmp_path / "home"
     client = _client(home, token="s3cret-synthetic")
 
@@ -53,7 +53,7 @@ def test_token_gates_endpoints(tmp_path: Path, monkeypatch):
 
 
 def test_localhost_default_is_open(tmp_path: Path, monkeypatch):
-    monkeypatch.delenv("DOMAIN_EXPERT_API_TOKEN", raising=False)
+    monkeypatch.delenv("DOMAIN_FOUNDRY_API_TOKEN", raising=False)
     home = tmp_path / "home"
     client = _client(home, token=None)
 

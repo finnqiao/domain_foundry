@@ -51,10 +51,10 @@ object.
 
 A pack is installed by any of:
 
-- a directory drop-in at `~/.domain_expert/packs/<pack>/`,
-- `domain-expert pack add <path-or-git-url>`,
-- `pip install domain-expert-pack-<name>` (entry-point group
-  `domain_expert.packs`).
+- a directory drop-in at `~/.domain_foundry/packs/<pack>/`,
+- `domain-foundry pack add <path-or-git-url>`,
+- `pip install domain-foundry-pack-<name>` (entry-point group
+  `domain_foundry.packs`).
 
 Discovery is a directory scan + entry-point scan at startup. Lifecycle commands:
 `pack list`, `pack validate`, `pack add`, `pack upgrade`.
@@ -66,7 +66,7 @@ Extensibility comes in three explicitly-labeled tiers:
 1. **Packs (data).** YAML/SQL/JSONL. Cannot execute code. The default.
 2. **Pip-installed handlers (trusted code).** A pack that outgrows declarative
    operations may ship a Python handler *only* via a separately-installed pip
-   package registered through the `domain_expert.packs` entry point — an
+   package registered through the `domain_foundry.packs` entry point — an
    explicit choice by the user to install code.
 3. **Side-loaded custom blocks (trusted code).** React components you build and
    drop in; they run in your browser session. See

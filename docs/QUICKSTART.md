@@ -8,21 +8,21 @@ in [`scripts/quickstart_gate.sh`](../scripts/quickstart_gate.sh).
 ## 1. Install the core
 
 ```bash
-pipx install domain-expert-core          # isolated CLI install
+pipx install domain-foundry-core          # isolated CLI install
 # — or, from a checkout —
 python3.11 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
-This puts a `domain-expert` command on your PATH.
+This puts a `domain-foundry` command on your PATH.
 
 ## 2. Initialize the workspace
 
 ```bash
-domain-expert init
+domain-foundry init
 ```
 
-Creates `~/.domain_expert/` with the two SQLite databases (`ledger.sqlite`,
+Creates `~/.domain_foundry/` with the two SQLite databases (`ledger.sqlite`,
 `domains.sqlite`) and applies substrate migrations.
 
 ## 3. Add a demonstration pack
@@ -30,10 +30,10 @@ Creates `~/.domain_expert/` with the two SQLite databases (`ledger.sqlite`,
 Packs are **data** — no code. Two showcase packs ship in `packs/`:
 
 ```bash
-domain-expert pack add packs/food     # cooking ideas → recipes → cooks → dining → learnings
-domain-expert pack add packs/travel   # trips → timeline items → bookings (+ dining↔trip links)
-domain-expert pack validate food
-domain-expert pack validate travel
+domain-foundry pack add packs/food     # cooking ideas → recipes → cooks → dining → learnings
+domain-foundry pack add packs/travel   # trips → timeline items → bookings (+ dining↔trip links)
+domain-foundry pack validate food
+domain-foundry pack validate travel
 ```
 
 (You can also start with `packs/plants` or `packs/sourdough`.)
@@ -41,9 +41,9 @@ domain-expert pack validate travel
 ## 4. Capture
 
 ```bash
-domain-expert capture "cooked a batch of shoyu ramen, came out great"
-domain-expert capture "dinner at River Station Grill and heading to Port City in March"
-domain-expert query --domain food
+domain-foundry capture "cooked a batch of shoyu ramen, came out great"
+domain-foundry capture "dinner at River Station Grill and heading to Port City in March"
+domain-foundry query --domain food
 ```
 
 The first routes to `food.cook`; the second fans out into a `food.dining` record
@@ -52,7 +52,7 @@ The first routes to `food.cook`; the second fans out into a `food.dining` record
 ## 5. Serve the app
 
 ```bash
-domain-expert serve
+domain-foundry serve
 # open http://127.0.0.1:8787
 ```
 
@@ -66,8 +66,8 @@ Let an agent capture on your behalf with capture-first discipline.
 
 ```bash
 pip install ./adapters/hermes_agent          # publishes the hermes_agent.plugins entry point
-export DOMAIN_EXPERT_URL=http://127.0.0.1:8787
-# start (or keep) `domain-expert serve` running
+export DOMAIN_FOUNDRY_URL=http://127.0.0.1:8787
+# start (or keep) `domain-foundry serve` running
 ```
 
 hermes-agent discovers the plugin and calls `register(ctx)`; inject

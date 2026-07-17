@@ -5,18 +5,18 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from domain_expert_core.api.harness import HarnessAPI
-from domain_expert_core.evals.baseline import (
+from domain_foundry_core.api.harness import HarnessAPI
+from domain_foundry_core.evals.baseline import (
     default_baseline_path,
     diff_baseline,
     load_baseline,
     save_baseline,
 )
-from domain_expert_core.evals.export import sanitize_text
-from domain_expert_core.evals.runner import run_eval
-from domain_expert_core.evals.scoring import score_report
-from domain_expert_core.paths import Workspace
-from domain_expert_core.security.store import connect_rw
+from domain_foundry_core.evals.export import sanitize_text
+from domain_foundry_core.evals.runner import run_eval
+from domain_foundry_core.evals.scoring import score_report
+from domain_foundry_core.paths import Workspace
+from domain_foundry_core.security.store import connect_rw
 
 CORPUS = (
     Path(__file__).resolve().parents[2] / "examples" / "synthetic" / "routing_eval.jsonl"

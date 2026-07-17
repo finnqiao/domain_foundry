@@ -10,7 +10,7 @@ The first shipped adapter is the **hermes-agent plugin**
 
 ## The contract
 
-Point your adapter at a running `domain-expert serve` (default
+Point your adapter at a running `domain-foundry serve` (default
 `http://127.0.0.1:8787`) and expose these operations as tools:
 
 | Tool | HTTP endpoint |
@@ -31,8 +31,8 @@ the CLI and app shell.
 
 | Setting | Env | Default |
 |---|---|---|
-| base URL | `DOMAIN_EXPERT_URL` | `http://127.0.0.1:8787` |
-| bearer token | `DOMAIN_EXPERT_API_TOKEN` | none (required for non-local binds) |
+| base URL | `DOMAIN_FOUNDRY_URL` | `http://127.0.0.1:8787` |
+| bearer token | `DOMAIN_FOUNDRY_API_TOKEN` | none (required for non-local binds) |
 
 When the daemon binds anywhere other than localhost it refuses to start without
 a token, and all requests must carry `Authorization: Bearer <token>`. Localhost
@@ -75,11 +75,11 @@ capture → query → correct → review session against a live in-process stack
 The client + tools are usable without hermes-agent:
 
 ```python
-from domain_expert_hermes_agent import DomainExpertClient, build_tools
+from domain_foundry_hermes_agent import DomainExpertClient, build_tools
 
 client = DomainExpertClient("http://127.0.0.1:8787")
 tools = build_tools(client)
-capture = next(t for t in tools if t.name == "domain_expert_capture")
+capture = next(t for t in tools if t.name == "domain_foundry_capture")
 print(capture(text="baked a 75% hydration country loaf, came out great"))
 ```
 

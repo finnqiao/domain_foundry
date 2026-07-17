@@ -35,9 +35,9 @@ jobs:
         # any per-pack regression (routing/field/disposition) or any increase in
         # false-completed-action cases (release-blocking at zero, plan §10.3).
         run: |
-          export DOMAIN_EXPERT_HOME="$(mktemp -d)"
-          domain-expert init
-          domain-expert eval --full --min-accuracy 0.9
+          export DOMAIN_FOUNDRY_HOME="$(mktemp -d)"
+          domain-foundry init
+          domain-foundry eval --full --min-accuracy 0.9
       - name: Leakscan
         run: python scripts/leakscan.py
 

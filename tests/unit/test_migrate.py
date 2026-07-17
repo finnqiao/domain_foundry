@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from domain_expert_core.ledger.migrate import (
+from domain_foundry_core.ledger.migrate import (
     ensure_migrated,
     init_workspace,
     migration_files,
     read_schema_version,
 )
-from domain_expert_core.paths import Workspace
-from domain_expert_core.security.store import connect_ro
+from domain_foundry_core.paths import Workspace
+from domain_foundry_core.security.store import connect_ro
 
 
 def test_migration_files_discovered():

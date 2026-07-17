@@ -1,18 +1,17 @@
-# domain_expert
+# Domain Foundry
 
 **Describe your passion. Get an app. Talk to it.**
 
-`domain_expert` is a local-first personal agent harness that turns natural-language
-captures into structured, domain-specific data and a usable application —
-remixable to any domain you care about.
+**Domain Foundry** is a local-first personal agent harness that turns
+natural-language captures into structured, domain-specific data and a usable
+application — remixable to any domain you care about.
 
 > The structured-life data layer for agent runtimes.
 
-!!! note "Name status"
-    The in-repo package name is `domain-expert-core` / CLI `domain-expert`. The
-    public product name is still an open decision (front-runner **Trellis**; see
-    [ADR-005](adr/ADR-005-name-decision.md)). Nothing in the code depends on the
-    final marketing name, so a rename is a mechanical follow-up, not a blocker.
+!!! note "Name"
+    Provisional public name: **Domain Foundry** (`domain-foundry-core` /
+    CLI `domain-foundry`). PyPI / GitHub / trademark availability before publish
+    is still a human gate — see [ADR-005](adr/ADR-005-name-decision.md).
 
 ## The six promises
 
@@ -56,8 +55,8 @@ remixable to any domain you care about.
 
 ## Architecture at a glance
 
-- **Python core** (`domain-expert-core`) — ledger, packs, routing, apply, projections.
-- **FastAPI** — the `HarnessAPI` surface + SPA static assets (`domain-expert serve`).
+- **Python core** (`domain-foundry-core`) — ledger, packs, routing, apply, projections.
+- **FastAPI** — the `HarnessAPI` surface + SPA static assets (`domain-foundry serve`).
 - **React + Vite app shell** — remixable blocks driven by pack projections.
 - **SQLite × 2** — `ledger.sqlite` (substrate) + `domains.sqlite` (pack tables).
 - **Adapters** — a hermes-agent plugin first; MCP later.

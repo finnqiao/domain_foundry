@@ -1,36 +1,44 @@
-# ADR-005: Product name (open)
+# ADR-005: Product name
 
-**Status:** Proposed / **open decision** — deferred out of the P9 in-repo scope
-**Date:** 2026-07-16
+**Status:** Accepted (provisional)
+**Date:** 2026-07-17
 
 ## Context
 
-The public product name is still undecided (plan §13.1). The in-repo working
-name is `domain_expert` (directory / repo) with the PyPI distribution
-`domain-expert-core` and CLI `domain-expert`. Requirements for the final name:
-not "Hermes" (Nous collision), pronounceable, PyPI + GitHub org + docs domain
-available, and it should evoke *structure for the things you're passionate about*.
+The public product name was undecided (plan §13.1). The previous in-repo working
+name was `domain_expert` with PyPI `domain-expert-core` and CLI `domain-expert`.
+Requirements for the final name: not "Hermes" (Nous collision), pronounceable,
+PyPI + GitHub org + docs domain available, and it should evoke *structure for
+the things you're passionate about*.
 
-Candidates carried from planning: **Trellis** (front-runner — "structure your
-passions grow on"), Loam, Almanac, Fieldbook, Waypost, Lorebook, Tally.
+Candidates carried from planning: Trellis (previous front-runner), Loam,
+Almanac, Fieldbook, Waypost, Lorebook, Tally — plus **Domain Foundry**.
 
 ## Decision
 
-**Defer.** P9 does **not** rename the package. Nothing in the code depends on the
-marketing name: the CLI entry point, the distribution name, and the two SQLite
-files are the only user-visible strings, and all are mechanical to change. A
-rename is therefore a follow-up task, not a launch blocker for the in-repo work.
+**Ship under Domain Foundry** as the provisional public product name.
 
-The final name decision, plus trademark + package-name availability checks, is a
-**human launch gate** tracked in [`LAUNCH_CHECKLIST.md`](../../LAUNCH_CHECKLIST.md).
+| Surface | Value |
+|---|---|
+| Display name | Domain Foundry |
+| Repo / directory | `domain_foundry` |
+| PyPI core | `domain-foundry-core` |
+| PyPI adapter | `domain-foundry-hermes-agent` |
+| CLI | `domain-foundry` |
+| Python packages | `domain_foundry_core`, `domain_foundry_hermes_agent` |
+| Workspace | `~/.domain_foundry/` |
+| Env prefix | `DOMAIN_FOUNDRY_*` |
+| hermes entry-point | `domain_foundry` |
+| GitHub (placeholder until org exists) | `https://github.com/domain-foundry/domain_foundry` |
+
+Availability (PyPI / GitHub org / docs domain) and trademark sanity remain a
+**human gate** before publish — see [`LAUNCH_CHECKLIST.md`](../../LAUNCH_CHECKLIST.md).
+A later rename to a shorter brand (e.g. Trellis) is still mechanical if needed.
 
 ## Consequences
 
-- Docs and code use `domain_expert` / `domain-expert` consistently today.
-- When the name is chosen, the rename touches: repo/dir name, `pyproject.toml`
-  (`name`, `[project.scripts]`, URLs), the CLI command string, the
-  `~/.domain_expert/` workspace path, environment variable prefixes
-  (`DOMAIN_EXPERT_*`), the `hermes_agent.plugins` entry-point label, and the docs
-  `site_name`/`repo_url`.
-- Because packs are data and adapters are HTTP clients, neither breaks on a
-  rename beyond the workspace-path and env-var prefix changes.
+- Docs and code use `domain_foundry` / `domain-foundry` / **Domain Foundry**
+  consistently.
+- Launch drafts and mkdocs `site_name` use Domain Foundry.
+- Because packs are data and adapters are HTTP clients, neither breaks on this
+  rename beyond workspace-path and env-var prefix changes.

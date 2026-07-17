@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from domain_expert_core.packs.loader import PackValidationError, load_pack
-from domain_expert_core.packs.schema_compiler import compile_ddl, field_contract
+from domain_foundry_core.packs.loader import PackValidationError, load_pack
+from domain_foundry_core.packs.schema_compiler import compile_ddl, field_contract
 
 REPO = Path(__file__).resolve().parents[2]
 

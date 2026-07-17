@@ -25,7 +25,7 @@ app/dist/
 site/
 
 # Local runtime data (never commit)
-.domain_expert/
+.domain_foundry/
 *.sqlite
 *.sqlite3
 *.db

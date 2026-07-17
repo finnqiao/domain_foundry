@@ -25,7 +25,7 @@ What passion does it serve, and who would use it?
 
 ## Validation evidence
 
-- [ ] `domain-expert pack validate <name>` passes.
+- [ ] `domain-foundry pack validate <name>` passes.
 - [ ] ≥8 example utterances, each routes to its intended object in dry-run.
 - [ ] ≥2 negative examples that must NOT route.
 - [ ] Numeric fields declare a `unit`; enums use `allow_other` where sensible.

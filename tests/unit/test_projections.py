@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from domain_expert_core.api.harness import HarnessAPI
-from domain_expert_core.llm.provider import HeuristicProvider
-from domain_expert_core.paths import Workspace
-from domain_expert_core.projections.blockdata import BlockDataError, BlockDataService
-from domain_expert_core.routing.router import Router
+from domain_foundry_core.api.harness import HarnessAPI
+from domain_foundry_core.llm.provider import HeuristicProvider
+from domain_foundry_core.paths import Workspace
+from domain_foundry_core.projections.blockdata import BlockDataError, BlockDataService
+from domain_foundry_core.routing.router import Router
 
 
 def _ready(workspace: Workspace) -> HarnessAPI:
@@ -76,8 +76,8 @@ def test_health_reports_projection_lag(workspace: Workspace):
 
 
 def test_mark_dirty_coalesces_pending(workspace: Workspace):
-    from domain_expert_core.projections.coordinator import ProjectionCoordinator
-    from domain_expert_core.security.store import connect_ro
+    from domain_foundry_core.projections.coordinator import ProjectionCoordinator
+    from domain_foundry_core.security.store import connect_ro
 
     api = _ready(workspace)
     coord = ProjectionCoordinator(workspace, registry=api.packs)

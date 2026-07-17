@@ -14,7 +14,7 @@ python scripts/clock_audit.py     # no wall-clock outside the injectable clock p
 scripts/release_audit.sh          # aggregate gate (leakscan + clock + history + ruff + pytest + mkdocs + eval)
 ```
 
-Set `DOMAIN_EXPERT_DENYLIST=/path/to/private/denylist.txt` to also scan every
+Set `DOMAIN_FOUNDRY_DENYLIST=/path/to/private/denylist.txt` to also scan every
 tracked text file for private names/URLs. The denylist file itself is **never**
 committed (plan §12.2).
 
@@ -25,7 +25,7 @@ committed (plan §12.2).
 | `leakscan.py` (tracked `*.sqlite`/`*.db`, binaries off-allowlist, private remotes) | **OK** |
 | `clock_audit.py` (frozen-clock discipline) | **OK** |
 | No tracked database files (`git ls-files | grep sqlite/db`) | **OK** — none |
-| Git history first commit is the P0 bootstrap (no pre-P0 import) | **OK** — `Bootstrap domain_expert P0/P1 substrate.` |
+| Git history first commit is the P0 bootstrap (no pre-P0 import) | **OK** — `Bootstrap domain_foundry P0/P1 substrate.` |
 | `ruff check core tests scripts adapters` | **OK** |
 | Full `pytest` | **OK** — 92 passed |
 | `mkdocs build` | **OK** |

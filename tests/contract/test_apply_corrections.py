@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import json
 
-from domain_expert_core.api.harness import HarnessAPI
-from domain_expert_core.llm.provider import HeuristicProvider
-from domain_expert_core.paths import Workspace
-from domain_expert_core.policy.evaluator import evaluate_policy, seed_user_override
-from domain_expert_core.routing.router import Router
-from domain_expert_core.security.store import connect_rw
+from domain_foundry_core.api.harness import HarnessAPI
+from domain_foundry_core.llm.provider import HeuristicProvider
+from domain_foundry_core.paths import Workspace
+from domain_foundry_core.policy.evaluator import evaluate_policy, seed_user_override
+from domain_foundry_core.routing.router import Router
+from domain_foundry_core.security.store import connect_rw
 
 
 def _ready(workspace: Workspace) -> HarnessAPI:
@@ -254,7 +254,7 @@ def test_merge_leaves_no_orphans(workspace: Workspace):
 
     # If heuristic routed to bake instead of starter, create starters explicitly
     if len(uids) < 2:
-        from domain_expert_core.apply.engine import ApplyEngine, OperationSpec
+        from domain_foundry_core.apply.engine import ApplyEngine, OperationSpec
 
         engine = ApplyEngine(workspace, registry=api.packs)
         a = engine.apply_spec(

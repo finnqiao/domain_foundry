@@ -13,9 +13,9 @@ cd "$REPO"
 
 HOME_DIR="$(mktemp -d)"
 trap 'rm -rf "$HOME_DIR"' EXIT
-export DOMAIN_EXPERT_HOME="$HOME_DIR"
+export DOMAIN_FOUNDRY_HOME="$HOME_DIR"
 
-de() { domain-expert "$@"; }
+de() { domain-foundry "$@"; }
 
 echo "==> init ($HOME_DIR)"
 de init

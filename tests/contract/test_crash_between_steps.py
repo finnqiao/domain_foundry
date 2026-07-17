@@ -5,12 +5,12 @@ from typing import Any
 
 import pytest
 
-from domain_expert_core.ids import new_ulid
-from domain_expert_core.ledger import capture as capture_mod
-from domain_expert_core.ledger.capture import CaptureService
-from domain_expert_core.paths import Workspace
-from domain_expert_core.security.redact import redact_secrets
-from domain_expert_core.security.store import connect_rw, integrity_check
+from domain_foundry_core.ids import new_ulid
+from domain_foundry_core.ledger import capture as capture_mod
+from domain_foundry_core.ledger.capture import CaptureService
+from domain_foundry_core.paths import Workspace
+from domain_foundry_core.security.redact import redact_secrets
+from domain_foundry_core.security.store import connect_rw, integrity_check
 
 
 class _FlakyConn:

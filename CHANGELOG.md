@@ -6,7 +6,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-- Nothing yet.
+- Renamed provisional public product to **Domain Foundry** (`domain-foundry-core`,
+  CLI `domain-foundry`, workspace `~/.domain_foundry/`, env `DOMAIN_FOUNDRY_*`).
 
 ## [0.1.0] — unreleased (first public release)
 
@@ -59,7 +60,7 @@ capture natural language → structured domain data → a remixable app.
 ### Notes
 
 - The public product name is not yet finalized (see ADR-005); the distribution
-  is published as `domain-expert-core` for this pre-1.0 line.
+  is published as `domain-foundry-core` for this pre-1.0 line.
 
-[Unreleased]: https://github.com/domain-expert/domain_expert/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/domain-expert/domain_expert/releases/tag/v0.1.0
+[Unreleased]: https://github.com/domain-foundry/domain_foundry/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/domain-foundry/domain_foundry/releases/tag/v0.1.0

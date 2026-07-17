@@ -56,7 +56,7 @@ export function App() {
         <aside className="sidebar">
           <div className="logo">
             <span className="logo-mark">◆</span>
-            <span className="logo-text">domain_expert</span>
+            <span className="logo-text">domain_foundry</span>
           </div>
           <nav className="side-nav" aria-label="Primary">
             <NavItem active={route.name === "home"} onClick={() => setRoute({ name: "home" })}>

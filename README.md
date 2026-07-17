@@ -1,10 +1,10 @@
-# domain_expert
+# Domain Foundry
 
 **Describe your passion. Get an app. Talk to it.**
 
-`domain_expert` is a local-first personal agent harness that turns natural-language
-captures into structured, domain-specific data and usable applications — remixable
-to any domain that is your passion.
+**Domain Foundry** (`domain-foundry`) is a local-first personal agent harness that
+turns natural-language captures into structured, domain-specific data and usable
+applications — remixable to any domain that is your passion.
 
 > The structured-life data layer for agent runtimes.
 
@@ -13,7 +13,7 @@ to any domain that is your passion.
   The 90-second walkthrough (capture → routing badge → app timeline → correction)
   is a human recording gate; see LAUNCH_CHECKLIST.md. When recorded, drop it at
   docs/assets/demo.gif (captured from synthetic packs only) and replace this line:
-  ![domain_expert 90-second demo](docs/assets/demo.gif)
+  ![Domain Foundry 90-second demo](docs/assets/demo.gif)
 -->
 
 _A 90-second demo GIF will live here once recorded (synthetic data only) — see [`LAUNCH_CHECKLIST.md`](LAUNCH_CHECKLIST.md)._
@@ -30,18 +30,18 @@ _A 90-second demo GIF will live here once recorded (synthetic data only) — see
 ## Quickstart (5 minutes)
 
 ```bash
-pipx install domain-expert-core   # or, from a checkout: pip install -e .
-domain-expert init
-domain-expert pack add packs/food     # or plants / sourdough / travel
-domain-expert serve
+pipx install domain-foundry-core   # or, from a checkout: pip install -e .
+domain-foundry init
+domain-foundry pack add packs/food     # or plants / sourdough / travel
+domain-foundry serve
 ```
 
 Then open <http://127.0.0.1:8787> and capture from the web box or CLI:
 
 ```bash
-domain-expert capture "cooked a batch of shoyu ramen, came out great"
-domain-expert query --domain food
-domain-expert health
+domain-foundry capture "cooked a batch of shoyu ramen, came out great"
+domain-foundry query --domain food
+domain-foundry health
 ```
 
 Full walkthrough (packs + optional hermes-agent hookup) in
@@ -64,8 +64,8 @@ locally, or `pip install -e ".[docs]" && mkdocs build`):
 
 ## Architecture (sketch)
 
-- **Python core** (`domain-expert-core`) — ledger, packs, routing, apply, projections
-- **FastAPI** — `HarnessAPI` + SPA static assets (`domain-expert serve`)
+- **Python core** (`domain-foundry-core`) — ledger, packs, routing, apply, projections
+- **FastAPI** — `HarnessAPI` + SPA static assets (`domain-foundry serve`)
 - **React + Vite app shell** — remixable blocks driven by pack projections
 - **SQLite × 2** — `ledger.sqlite` (substrate) + `domains.sqlite` (pack tables)
 - **Adapters** — hermes-agent plugin first; MCP later
@@ -79,10 +79,9 @@ the domain-creation wizard, the evaluation-replay framework, and reference packs
 See [`docs/PHASE_STATUS.md`](docs/PHASE_STATUS.md) and
 [`CHANGELOG.md`](CHANGELOG.md).
 
-> **Name:** the working name is `domain_expert` / `domain-expert`. The final
-> public product name is an open decision (front-runner **Trellis**) — see
-> [ADR-005](docs/adr/ADR-005-name-decision.md). Nothing in the code depends on
-> it, so a rename is mechanical.
+> **Name:** provisional public name is **Domain Foundry** (`domain-foundry-core` /
+> CLI `domain-foundry`). Availability + trademark checks before publish remain a
+> human gate — see [ADR-005](docs/adr/ADR-005-name-decision.md).
 
 ## Development
 

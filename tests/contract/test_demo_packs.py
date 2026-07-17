@@ -9,9 +9,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from domain_expert_core.api.harness import HarnessAPI
-from domain_expert_core.evals.runner import run_eval
-from domain_expert_core.packs.loader import bundled_packs_root
+from domain_foundry_core.api.harness import HarnessAPI
+from domain_foundry_core.evals.runner import run_eval
+from domain_foundry_core.packs.loader import bundled_packs_root
 
 REPO = Path(__file__).resolve().parents[2]
 FOOD_FIXTURES = REPO / "packs" / "food" / "evals" / "fixtures.jsonl"

@@ -24,15 +24,15 @@ What you expected instead.
 Steps or commands, with invented capture text:
 
 ```bash
-domain-expert init
-domain-expert pack add packs/plants
-domain-expert capture "watered the monstera, soil still damp"
+domain-foundry init
+domain-foundry pack add packs/plants
+domain-foundry capture "watered the monstera, soil still damp"
 # ...
 ```
 
 ## Environment
 
-- `domain_expert` version / commit:
+- `domain_foundry` version / commit:
 - Install method: `pipx` / `pip -e .` / other:
 - OS + Python version:
 - Adapter in use (if any): hermes-agent version / none
@@ -51,4 +51,4 @@ paste here
 ## Checklist
 
 - [ ] I used synthetic data only (no personal captures, secrets, or paths).
-- [ ] I can reproduce this from a fresh `domain-expert init`.
+- [ ] I can reproduce this from a fresh `domain-foundry init`.

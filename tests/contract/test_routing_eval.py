@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from domain_expert_core.api.harness import HarnessAPI
-from domain_expert_core.evals.runner import run_eval
-from domain_expert_core.llm.provider import HeuristicProvider
-from domain_expert_core.packs.registry import PackRegistry
-from domain_expert_core.paths import Workspace
-from domain_expert_core.routing.cost import CostGuard, CostGuardConfig
-from domain_expert_core.routing.router import Router
-from domain_expert_core.security.store import connect_rw
+from domain_foundry_core.api.harness import HarnessAPI
+from domain_foundry_core.evals.runner import run_eval
+from domain_foundry_core.llm.provider import HeuristicProvider
+from domain_foundry_core.packs.registry import PackRegistry
+from domain_foundry_core.paths import Workspace
+from domain_foundry_core.routing.cost import CostGuard, CostGuardConfig
+from domain_foundry_core.routing.router import Router
+from domain_foundry_core.security.store import connect_rw
 
 CASES = Path(__file__).resolve().parents[2] / "examples" / "synthetic" / "routing_eval.jsonl"
 

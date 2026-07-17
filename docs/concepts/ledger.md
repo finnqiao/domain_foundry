@@ -1,7 +1,7 @@
 # The ledger
 
 The ledger is the **append-only substrate** that makes capture-first and
-never-drop real. It lives in `ledger.sqlite` under `~/.domain_expert/`, separate
+never-drop real. It lives in `ledger.sqlite` under `~/.domain_foundry/`, separate
 from the pack-owned domain tables in `domains.sqlite` (see
 [ADR-002](../adr/ADR-002-two-database-layout.md)).
 

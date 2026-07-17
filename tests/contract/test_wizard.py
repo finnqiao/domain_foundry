@@ -12,9 +12,9 @@ import sqlite3
 
 import pytest
 
-from domain_expert_core.api.harness import HarnessAPI
-from domain_expert_core.packs.schema_compiler import table_name
-from domain_expert_core.wizard.blueprint import build_blueprint, write_pack
+from domain_foundry_core.api.harness import HarnessAPI
+from domain_foundry_core.packs.schema_compiler import table_name
+from domain_foundry_core.wizard.blueprint import build_blueprint, write_pack
 
 # ≥10 golden goal-statements (incl. "sourdough journey"): archetypes + generic.
 GOLDEN_GOALS = [
@@ -43,7 +43,7 @@ def _columns(db_path, table: str) -> set[str]:
 
 @pytest.mark.parametrize("goal", GOLDEN_GOALS)
 def test_golden_goal_generates_valid_routing_pack(workspace, monkeypatch, goal):
-    monkeypatch.setenv("DOMAIN_EXPERT_HOME", str(workspace.home))
+    monkeypatch.setenv("DOMAIN_FOUNDRY_HOME", str(workspace.home))
     api = HarnessAPI(workspace.home)
     api.init()
 
@@ -82,7 +82,7 @@ def test_blueprint_examples_are_disjoint_per_object():
 
 def test_cold_start_gate(workspace, monkeypatch):
     """goal → interview → generate → validate → dry-run → capture path works."""
-    monkeypatch.setenv("DOMAIN_EXPERT_HOME", str(workspace.home))
+    monkeypatch.setenv("DOMAIN_FOUNDRY_HOME", str(workspace.home))
     api = HarnessAPI(workspace.home)
     api.init()
 
@@ -109,7 +109,7 @@ def test_cold_start_gate(workspace, monkeypatch):
 
 
 def test_hardening_edit_round_trips_with_migration(workspace, monkeypatch):
-    monkeypatch.setenv("DOMAIN_EXPERT_HOME", str(workspace.home))
+    monkeypatch.setenv("DOMAIN_FOUNDRY_HOME", str(workspace.home))
     api = HarnessAPI(workspace.home)
     api.init()
 
@@ -149,7 +149,7 @@ def test_hardening_edit_round_trips_with_migration(workspace, monkeypatch):
 
 
 def test_hardening_rename_and_cancel(workspace, monkeypatch):
-    monkeypatch.setenv("DOMAIN_EXPERT_HOME", str(workspace.home))
+    monkeypatch.setenv("DOMAIN_FOUNDRY_HOME", str(workspace.home))
     api = HarnessAPI(workspace.home)
     api.init()
     sid = api.new_domain("log my running")["session_id"]
@@ -166,7 +166,7 @@ def test_hardening_rename_and_cancel(workspace, monkeypatch):
 
 
 def test_session_is_resumable(workspace, monkeypatch):
-    monkeypatch.setenv("DOMAIN_EXPERT_HOME", str(workspace.home))
+    monkeypatch.setenv("DOMAIN_FOUNDRY_HOME", str(workspace.home))
     api = HarnessAPI(workspace.home)
     api.init()
     sid = api.new_domain("keep a coffee brewing log")["session_id"]
@@ -179,7 +179,7 @@ def test_session_is_resumable(workspace, monkeypatch):
 
 
 def test_unique_domain_name_on_collision(workspace, monkeypatch, tmp_path):
-    monkeypatch.setenv("DOMAIN_EXPERT_HOME", str(workspace.home))
+    monkeypatch.setenv("DOMAIN_FOUNDRY_HOME", str(workspace.home))
     api = HarnessAPI(workspace.home)
     api.init()
     # Pre-install a "running" pack so the wizard must pick a new name.
@@ -195,9 +195,9 @@ def test_unique_domain_name_on_collision(workspace, monkeypatch, tmp_path):
 def test_wizard_http_endpoints(workspace, monkeypatch):
     from fastapi.testclient import TestClient
 
-    from domain_expert_core.api.app import create_app
+    from domain_foundry_core.api.app import create_app
 
-    monkeypatch.setenv("DOMAIN_EXPERT_HOME", str(workspace.home))
+    monkeypatch.setenv("DOMAIN_FOUNDRY_HOME", str(workspace.home))
     HarnessAPI(workspace.home).init()
     client = TestClient(create_app(workspace.home, enable_drain_loop=False))
 

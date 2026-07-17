@@ -5,18 +5,18 @@
 
 ## Title
 
-`Show HN: domain_expert – describe a passion, get a local-first app you talk to`
+`Show HN: Domain Foundry – describe a passion, get a local-first app you talk to`
 
 (Alt: `Show HN: A local-first harness that turns messages into structured domain data`)
 
 ## URL
 
-`https://github.com/domain-expert/domain_expert`
+`https://github.com/domain-foundry/domain_foundry`
 
 ## Text
 
 I got tired of my hobbies living as unstructured notes and half-abandoned
-spreadsheets. `domain_expert` is a local-first personal agent harness: you
+spreadsheets. Domain Foundry is a local-first personal agent harness: you
 describe a domain you care about (sourdough, houseplants, dive logs, whatever),
 you get a small "pack" that gives you a schema + a routed capture pipeline + a
 little app — and then you just talk to it in plain language.

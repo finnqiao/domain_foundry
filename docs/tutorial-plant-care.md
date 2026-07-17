@@ -6,7 +6,7 @@ domain that routes real captures, renders app views, and accepts corrections.
 Budget: an afternoon, most of it thinking about your schema.
 
 You can either **hand-author** the six YAML files (this tutorial) or let the
-**wizard** generate a first draft (`domain-expert new-domain "…"`) and edit from
+**wizard** generate a first draft (`domain-foundry new-domain "…"`) and edit from
 there. Doing it by hand once makes the wizard output obvious.
 
 ## 0. Prerequisites
@@ -14,7 +14,7 @@ there. Doing it by hand once makes the wizard output obvious.
 ```bash
 python3.11 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-domain-expert init
+domain-foundry init
 ```
 
 ## 1. Model the domain (the only hard part)
@@ -167,8 +167,8 @@ makes it available to columns, facets, and measures. See
 ## 7. Validate, dry-run, activate
 
 ```bash
-domain-expert pack validate plants     # schema + routing example/negative coverage
-domain-expert pack add packs/plants     # activate it
+domain-foundry pack validate plants     # schema + routing example/negative coverage
+domain-foundry pack add packs/plants     # activate it
 ```
 
 `pack validate` is offline and total — no LLM, no data touched. Fix anything it
@@ -177,10 +177,10 @@ flags (a misrouting example, too few negatives) before moving on.
 ## 8. Capture for real
 
 ```bash
-domain-expert capture "watered the monstera, soil still damp"
-domain-expert capture "bought a new monstera for the living room"
-domain-expert query --domain plants
-domain-expert serve   # open http://127.0.0.1:8787 and browse Care log / Plants / Find
+domain-foundry capture "watered the monstera, soil still damp"
+domain-foundry capture "bought a new monstera for the living room"
+domain-foundry query --domain plants
+domain-foundry serve   # open http://127.0.0.1:8787 and browse Care log / Plants / Find
 ```
 
 The first routes to `care_event`; the second to `plant`. Because the
@@ -191,13 +191,13 @@ vocabularies are disjoint, L1 resolves both with zero tokens.
 Fix a mistake in one message — the canonical record updates and history is kept:
 
 ```bash
-domain-expert correct "that wasn't the monstera, it was the pothos"
+domain-foundry correct "that wasn't the monstera, it was the pothos"
 ```
 
 Then grow the schema through the hardening loop instead of hand-editing SQL:
 
 ```bash
-domain-expert new-domain --harden plants   # e.g. "add a photo field"
+domain-foundry new-domain --harden plants   # e.g. "add a photo field"
 ```
 
 A plain-language edit becomes a diff preview → an `ALTER TABLE` migration → a

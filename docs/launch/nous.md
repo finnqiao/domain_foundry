@@ -6,7 +6,7 @@
 
 ## Title
 
-`domain_expert: a structured-life data layer your agent can capture into`
+`Domain Foundry: a structured-life data layer your agent can capture into`
 
 ## Body
 
@@ -15,7 +15,7 @@ probably hit the wall where the agent is great at *talking* but has nowhere good
 to *put* the structured facts a user drops in passing — "watered the monstera",
 "that bake was 80% hydration", "dinner at River Station then Port City in March".
 
-`domain_expert` is a local-first harness that solves the storage/structuring half:
+Domain Foundry is a local-first harness that solves the storage/structuring half:
 
 - Your agent calls one tool — **capture** — with the raw text. The harness stores
   it capture-first (raw + provenance before interpretation), routes it into the

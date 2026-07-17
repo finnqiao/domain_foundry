@@ -8,17 +8,17 @@ Legend: ☐ = not started · 🔒 = human/manual gate (cannot be automated in-re
 
 ---
 
-## 0. Name decision (blocks the rest) 🔒
+## 0. Name decision 🔒 (mostly done — availability still on you)
 
-- ☐ Decide the final public product name (front-runner **Trellis**; see
-  [ADR-005](docs/adr/ADR-005-name-decision.md)).
-- ☐ Verify availability: PyPI (`<name>-core`, `<name>-pack-*`), GitHub org,
-  docs domain, trademark sanity check.
-- ☐ If renaming: update repo/dir name, `pyproject.toml` (`name`,
-  `[project.scripts]`, URLs), CLI command, `~/.domain_expert/` workspace path,
-  `DOMAIN_EXPERT_*` env prefixes, `hermes_agent.plugins` entry-point label,
-  `mkdocs.yml` (`site_name`/`repo_url`), and the docs/README copy.
-- ☐ Re-run `scripts/release_audit.sh` after any rename.
+- ✅ Provisional public name: **Domain Foundry** — see
+  [ADR-005](docs/adr/ADR-005-name-decision.md). Mechanical rename applied
+  (`domain-foundry-core`, CLI `domain-foundry`, `~/.domain_foundry/`,
+  `DOMAIN_FOUNDRY_*`, hermes entry-point `domain_foundry`, docs/README/mkdocs).
+- ☐ Verify availability: PyPI (`domain-foundry-core`, `domain-foundry-hermes-agent`,
+  `domain-foundry-pack-*` if needed), GitHub org `domain-foundry`, docs domain,
+  trademark sanity check. Update placeholder GitHub URLs if the org differs.
+- ☐ Confirm `scripts/release_audit.sh` green on the rename commit (agent re-runs
+  this; you confirm before publish).
 
 ## 1. Pre-flight (in-repo — already green) ✅ prepared
 
@@ -53,7 +53,7 @@ and a PyPI API token.
 ```bash
 # 1. Bump/confirm version in pyproject.toml and CHANGELOG.md (move [0.1.0] out of "unreleased").
 # 2. Tag.
-git tag -a v0.1.0 -m "domain_expert v0.1.0"
+git tag -a v0.1.0 -m "domain_foundry v0.1.0"
 
 # 3. Build sdist + wheel.
 python -m pip install --upgrade build twine
@@ -61,7 +61,7 @@ python -m build                      # writes dist/*.tar.gz + dist/*.whl
 
 # 4. Smoke-test on TestPyPI first.
 python -m twine upload --repository testpypi dist/*
-pipx install --index-url https://test.pypi.org/simple/ domain-expert-core
+pipx install --index-url https://test.pypi.org/simple/ domain-foundry-core
 
 # 5. Publish for real.
 python -m twine upload dist/*
@@ -70,7 +70,7 @@ python -m twine upload dist/*
 ( cd adapters/hermes_agent && python -m build && python -m twine upload dist/* )
 
 # 7. Verify.
-pipx install domain-expert-core && domain-expert --help
+pipx install domain-foundry-core && domain-foundry --help
 ```
 
 - ☐ Push the tag: `git push origin v0.1.0`.
@@ -124,7 +124,7 @@ first two hours clear for replies:
 
 ## Human gates summary (nothing below is done by the build)
 
-- 🔒 Final name decision + availability/trademark checks.
+- 🔒 Name availability/trademark checks (provisional name **Domain Foundry** already applied).
 - 🔒 PyPI publish (core + adapter) and GitHub release/tag push.
 - 🔒 Show HN / lobste.rs / Nous posts + awesome-list PRs.
 - 🔒 External security pass on the API surface.

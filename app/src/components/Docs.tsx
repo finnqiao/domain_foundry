@@ -59,7 +59,7 @@ export function register(registerBlock) {
             </pre>
           </li>
           <li>
-            Drop it at <code>~/.domain_expert/blocks/index.js</code>. The server exposes it read-only at{" "}
+            Drop it at <code>~/.domain_foundry/blocks/index.js</code>. The server exposes it read-only at{" "}
             <code>/custom-blocks/index.js</code>.
           </li>
           <li>

@@ -2,7 +2,7 @@ name: food
 version: 0.1.0
 title: "Food Lab"
 description: "Cooking ideas, recipes, kitchen experiments, dining out, and what you learn — the full concept → recipe → experiment → observation lifecycle."
-author: "domain_expert"
+author: "domain_foundry"
 license: MIT
 core_compat: ">=0.1,<2"
 interpretation: structured

@@ -4,7 +4,7 @@
 Evals and contract tests must never read wall time. This enforces that no module
 under ``core/`` reads the real clock directly: the only sanctioned wall-clock
 read lives in the injectable clock provider (``clock.py``). Everything else must
-call ``domain_expert_core.clock.now()`` / ``now_iso()`` so a frozen clock can be
+call ``domain_foundry_core.clock.now()`` / ``now_iso()`` so a frozen clock can be
 injected in tests and eval replays.
 
 Bans, outside the allowlist:
@@ -22,7 +22,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CORE = ROOT / "core" / "domain_expert_core"
+CORE = ROOT / "core" / "domain_foundry_core"
 
 # Only the clock provider may read wall time.
 ALLOWLIST = {CORE / "clock.py"}
@@ -50,7 +50,7 @@ def audit() -> list[str]:
                     rel = path.relative_to(ROOT)
                     violations.append(
                         f"{rel}:{lineno}: bare wall-clock read; use "
-                        f"domain_expert_core.clock instead -> {line.strip()}"
+                        f"domain_foundry_core.clock instead -> {line.strip()}"
                     )
     return violations
 

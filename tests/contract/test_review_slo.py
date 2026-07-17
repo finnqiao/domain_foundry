@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from domain_expert_core.api.harness import HarnessAPI
-from domain_expert_core.llm.provider import HeuristicProvider
-from domain_expert_core.paths import Workspace
-from domain_expert_core.policy.evaluator import seed_user_override
-from domain_expert_core.routing.router import Router
-from domain_expert_core.security.store import connect_rw
+from domain_foundry_core.api.harness import HarnessAPI
+from domain_foundry_core.llm.provider import HeuristicProvider
+from domain_foundry_core.paths import Workspace
+from domain_foundry_core.policy.evaluator import seed_user_override
+from domain_foundry_core.routing.router import Router
+from domain_foundry_core.security.store import connect_rw
 
 
 def _ready(workspace: Workspace) -> HarnessAPI:

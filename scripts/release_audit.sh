@@ -37,7 +37,7 @@ run() { # <label> <cmd...>
   rm -f /tmp/release_audit.$$
 }
 
-echo "== domain_expert release audit =="
+echo "== domain_foundry release audit =="
 
 run "leakscan"        python scripts/leakscan.py
 run "clock audit"     python scripts/clock_audit.py
@@ -66,10 +66,10 @@ else
   skip "mkdocs build (mkdocs not installed; pip install -e '.[docs]')"
 fi
 
-if command -v domain-expert >/dev/null 2>&1; then
-  run "eval corpus replay" domain-expert eval --full --min-accuracy 0.9
+if command -v domain-foundry >/dev/null 2>&1; then
+  run "eval corpus replay" domain-foundry eval --full --min-accuracy 0.9
 else
-  skip "eval corpus replay (domain-expert CLI not on PATH)"
+  skip "eval corpus replay (domain-foundry CLI not on PATH)"
 fi
 
 echo

@@ -1,11 +1,11 @@
-# Contributing to domain_expert
+# Contributing to domain_foundry
 
 Thanks for helping build the structured-life data layer for agent runtimes.
 
 ## Development setup
 
 ```bash
-cd domain_expert
+cd domain_foundry
 python3.11 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"

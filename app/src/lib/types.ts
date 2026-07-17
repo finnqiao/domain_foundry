@@ -1,4 +1,4 @@
-// Shared API types — mirror the FastAPI shapes in core/domain_expert_core/api.
+// Shared API types — mirror the FastAPI shapes in core/domain_foundry_core/api.
 
 export type EntryStatus = "applied" | "review" | "ledger_only" | "unfiled";
 

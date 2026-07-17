@@ -1,14 +1,14 @@
 # Security posture
 
-`domain_expert` is local-first, has **no telemetry**, and treats your captured
+`domain_foundry` is local-first, has **no telemetry**, and treats your captured
 text as untrusted input to a structured interpreter — never as executable
 instructions. This page documents the posture; the disclosure process is in the
-repository [`SECURITY.md`](https://github.com/domain-expert/domain_expert/blob/main/SECURITY.md).
+repository [`SECURITY.md`](https://github.com/domain-foundry/domain_foundry/blob/main/SECURITY.md).
 
 ## Threat model in one paragraph
 
 Canonical data lives in local SQLite on your machine. The only network listener
-is the `domain-expert serve` daemon, which binds `127.0.0.1` by default. The
+is the `domain-foundry serve` daemon, which binds `127.0.0.1` by default. The
 attack surface is (a) the local HTTP API, (b) prompt-injection via captured
 text, (c) path writes into the markdown vault, and (d) third-party extensions
 (pip handlers / custom blocks) you explicitly install.
@@ -19,7 +19,7 @@ text, (c) path writes into the markdown vault, and (d) third-party extensions
   machine this needs no auth for zero friction.
 - **Non-local bind requires a token.** Binding to anything other than
   `127.0.0.1` / `localhost` / `::1` **refuses to start** without
-  `DOMAIN_EXPERT_API_TOKEN` (or `--token`).
+  `DOMAIN_FOUNDRY_API_TOKEN` (or `--token`).
 - **Bearer-gated when a token is set.** Every endpoint (including `/health`)
   requires `Authorization: Bearer <token>`; missing → `401`, wrong → `403`.
 - **CORS is pinned** to the local app origins only.
@@ -74,7 +74,7 @@ Captured text can never directly trigger tool execution. It is mitigated by:
 | Tier | What it is | Can it run code? |
 |---|---|---|
 | Domain pack | YAML/SQL/JSONL data | **No.** `pack validate` checks it offline. |
-| Pip handler | Python via `domain_expert.packs` entry point | Yes — you chose to `pip install` it. |
+| Pip handler | Python via `domain_foundry.packs` entry point | Yes — you chose to `pip install` it. |
 | Custom block | React component you drop in | Yes — runs in your browser session. |
 
 Only load pip handlers and custom blocks you wrote or audited.
@@ -88,5 +88,5 @@ private remotes, synthetic-only fixtures, git history starting at P0. See the
 ## Reporting a vulnerability
 
 Please report privately (do not open a public issue with exploit detail). See
-[`SECURITY.md`](https://github.com/domain-expert/domain_expert/blob/main/SECURITY.md)
+[`SECURITY.md`](https://github.com/domain-foundry/domain_foundry/blob/main/SECURITY.md)
 for the process and response targets.

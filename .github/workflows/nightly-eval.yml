@@ -6,14 +6,14 @@ name: nightly-eval
 # this job re-records cassettes against the live model and reports drift. It is
 # intentionally NOT a per-PR gate: model non-determinism must never block PRs.
 #
-# Pinned model: set DOMAIN_EXPERT_LLM_MODEL below and keep it pinned; bumping it
+# Pinned model: set DOMAIN_FOUNDRY_LLM_MODEL below and keep it pinned; bumping it
 # is a deliberate, reviewed change. A drift report artifact is uploaded so model
 # movement is visible without failing the build.
 #
 # Release gate (documented, enforced by the eval scorecard):
 #   - `false_completed_actions` must be 0 across the corpus (a system claiming an
 #     action applied that did not is release-blocking at zero occurrences).
-#   - Run `domain-expert eval --full` on the pinned model + `pack validate` on
+#   - Run `domain-foundry eval --full` on the pinned model + `pack validate` on
 #     bundled packs + `scripts/leakscan.py` before tagging a release.
 
 on:
@@ -31,9 +31,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       # Pinned model — bumping this is a deliberate, reviewed change.
-      DOMAIN_EXPERT_LLM_MODEL: ${{ github.event.inputs.model || 'gpt-4o-mini' }}
-      DOMAIN_EXPERT_LLM: openai_compatible
-      DOMAIN_EXPERT_LLM_API_KEY: ${{ secrets.DOMAIN_EXPERT_LLM_API_KEY }}
+      DOMAIN_FOUNDRY_LLM_MODEL: ${{ github.event.inputs.model || 'gpt-4o-mini' }}
+      DOMAIN_FOUNDRY_LLM: openai_compatible
+      DOMAIN_FOUNDRY_LLM_API_KEY: ${{ secrets.DOMAIN_FOUNDRY_LLM_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -48,9 +48,9 @@ jobs:
         # recordings. Falls back to the deterministic heuristic (no drift) when
         # no API key is configured, so the job degrades gracefully.
         run: |
-          export DOMAIN_EXPERT_HOME="$(mktemp -d)"
-          domain-expert init
-          domain-expert eval --full --live-llm --no-baseline \
+          export DOMAIN_FOUNDRY_HOME="$(mktemp -d)"
+          domain-foundry init
+          domain-foundry eval --full --live-llm --no-baseline \
             > eval-drift-report.json || echo "drift or accuracy delta recorded"
           cat eval-drift-report.json
       - name: Upload drift report

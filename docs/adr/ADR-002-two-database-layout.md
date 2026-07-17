@@ -11,7 +11,7 @@ cadence and complicates pack install/uninstall.
 
 ## Decision
 
-Use two SQLite databases under `~/.domain_expert/`:
+Use two SQLite databases under `~/.domain_foundry/`:
 
 - `ledger.sqlite` — substrate tables (capture, entry, interpretation, journal, …)
 - `domains.sqlite` — pack-owned tables named `<pack>__<object>`

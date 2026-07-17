@@ -34,8 +34,8 @@ Tracking implementation of `docs/OPEN_SOURCE_HARNESS_PLAN.md`.
 ## P5 gate evidence
 
 - **Scripted walkthrough on synthetic data** (`tests/contract/test_app_shell.py`): install two packs (`sourdough` + `plants` via `/api/packs/activate`) → capture from the web box (`POST /api/capture`, routes to `sourdough.bake`, `applied`) → see it in **timeline / search / stats / history / planner** (`/api/blocks/<view>/data`, all nine blocks exercisable against the synthetic packs) → open the **detail view** (`/api/objects/<domain>/<object_type>/<uid>`) with the full provenance chain (capture text → interpretation confidence → revisions) → **correct** from detail (amend hydration 75→80 via `/api/correct`, no privileged write) → **revision chain visible** (new `object_revision` with `hydration: 75 → 80`) → **review queue drains to zero** (`/api/review` diffs + `/api/review/bulk-resolve` + SLO counters) → **health panel green** (`/api/health`: ledger/domains integrity ok, projection lag 0, LLM spend under cap, on-demand routing score).
-- **Real-browser confirmation** (headless Chrome, live `domain-expert serve`): the same walkthrough was driven through the built SPA end-to-end — empty-state home → install domains → capture receipt with routing badges → capture feed → domain tabs (Bakes/Find/Progress/History/Plan/Starters) → detail modal with provenance → correction dialog applies hydration 75→80 and the new revision renders in the provenance panel → review queue clear with SLO counters → health cards all green (routing score 94%) → in-app custom-block docs. No visual glitches or console errors.
-- **Security posture:** API binds `127.0.0.1` by default; non-local bind refuses to start without `DOMAIN_EXPERT_API_TOKEN` (bearer-gated, `test_api.py::test_non_local_bind_requires_token`). Block data stays read-only + parameterized (unknown/unsafe fields rejected). The shell is a pure API client — every mutation goes through `capture()` / `correct()` / review endpoints.
+- **Real-browser confirmation** (headless Chrome, live `domain-foundry serve`): the same walkthrough was driven through the built SPA end-to-end — empty-state home → install domains → capture receipt with routing badges → capture feed → domain tabs (Bakes/Find/Progress/History/Plan/Starters) → detail modal with provenance → correction dialog applies hydration 75→80 and the new revision renders in the provenance panel → review queue clear with SLO counters → health cards all green (routing score 94%) → in-app custom-block docs. No visual glitches or console errors.
+- **Security posture:** API binds `127.0.0.1` by default; non-local bind refuses to start without `DOMAIN_FOUNDRY_API_TOKEN` (bearer-gated, `test_api.py::test_non_local_bind_requires_token`). Block data stays read-only + parameterized (unknown/unsafe fields rejected). The shell is a pure API client — every mutation goes through `capture()` / `correct()` / review endpoints.
 - **Lighthouse note (skipped):** a full Lighthouse perf run needs a headless-Chrome + CI budget this box does not carry, so the P5 gate is met via the API+DOM contract test (`test_app_shell.py`) plus the SPA `tsc` typecheck + `vite build`. The bundle is lean (~72 kB gzipped JS, ~4 kB gzipped CSS), responsive (single-column ≤820px), and keyboard-friendly (Esc closes modals, ⌘/Ctrl+Enter captures, tablist nav) as a lightweight stand-in.
 - Full suite green: **66 passed** (`python -m pytest`) incl. 4 new app-shell contract tests. `ruff check core tests scripts` clean. `python scripts/leakscan.py` OK. Frontend `npm run build` (tsc + vite) green.
 
@@ -44,7 +44,7 @@ Tracking implementation of `docs/OPEN_SOURCE_HARNESS_PLAN.md`.
 - **Cold start to working domain** (`tests/contract/test_wizard.py::test_cold_start_gate`): one-sentence goal → interview (≤6 targeted questions) → `skip` accepts defaults → generate → `pack validate` → dry-run routing → **activate** → a real `capture()` routes into the freshly generated `sourdough` domain, and driving a capture through `wizard_reply` returns a verbose routing explanation + instant-correct affordance.
 - **≥10 golden goal-statements** (`test_golden_goal_generates_valid_routing_pack`, incl. "sourdough journey"): 12 goals each produce a pack that passes full validation and routes its own examples **100%** in dry-run (threshold ≥95%). Archetypes (sourdough/running/reading/coffee/workouts) + generic activity-log fallback for anything else. HeuristicProvider only — no live LLM.
 - **Hardening round-trips with a migration** (`test_hardening_edit_round_trips_with_migration`): NL edit "add a crumb_photo field" → pack diff preview (nothing applied) → `confirm` → `ALTER TABLE` migration written to the pack + executed against `domains.sqlite` (column now exists), `schema_registry` refreshed, pack still validates, and a routing fixture/eval case appended. Rename + cancel path covered (`test_hardening_rename_and_cancel`).
-- **Resumable + channel-agnostic** (`test_session_is_resumable`): a fresh `HarnessAPI` (new process) resumes a persisted session by id and completes it. Same engine drives CLI (`domain-expert new-domain`), HTTP (`POST /api/wizard`, `POST /api/wizard/{id}/reply`), and any runtime adapter.
+- **Resumable + channel-agnostic** (`test_session_is_resumable`): a fresh `HarnessAPI` (new process) resumes a persisted session by id and completes it. Same engine drives CLI (`domain-foundry new-domain`), HTTP (`POST /api/wizard`, `POST /api/wizard/{id}/reply`), and any runtime adapter.
 - **Repeated-correction hook** (§8.4): `wizard_suggest(domain)` surfaces a hardening suggestion once a reason-code is corrected ≥3×.
 - Also fixed a latent P2 router crash (`new_ulid` imported conditionally inside `_persist` but used on the unfiled never-drop path) that any unroutable capture could trigger; hoisted the import. This unblocked 4 previously-red P5 app-shell tests.
 - Full suite green: **66 passed** (`python -m pytest`). `ruff check core tests scripts` clean. `python scripts/leakscan.py` OK. Wizard modules pyright-clean (remaining pyright warnings are pre-existing `int(cur.lastrowid)` casts in P2 `router.py`).
@@ -59,7 +59,7 @@ Tracking implementation of `docs/OPEN_SOURCE_HARNESS_PLAN.md`.
 - **Correction→corpus backfill** (`eval backfill`, `test_backfill_creates_eval_cases_from_pre_p3_corrections`): synthesizes `eval_case` rows from pre-P3 `correction_event` rows that lack them (expected = corrected `right_json`, input = original capture text); idempotent (re-runs create nothing new); `--dry-run` supported.
 - **Sanitized export** (`eval export --sanitize`, `test_export_sanitizes_pii`): strips secrets + PII (email/URL/phone/handle/IP/home-paths) from correction-derived cases and emits contribution-ready JSONL plus a redaction report for the human diff-review step (§10.4).
 - **Curated contract-case set** (`tests/contract/test_curated_contract.py`): the five named invariants — approval-executes-exactly-once, never-drop ladder, multi-domain fan-out, idempotent re-capture, projection convergence — collected as one self-contained gate that runs alongside the corpus replay (§10.1/§10.3).
-- **CI wiring**: `.github/workflows/ci.yml` adds a frozen-clock audit step and an **eval corpus replay regression gate** (`domain-expert eval --full --min-accuracy 0.9`, fails on any per-pack regression or false-completed-action increase vs the committed baseline). `.github/workflows/nightly-eval.yml` is the on-demand/scheduled **live-LLM** job against a **pinned model** (`gpt-4o-mini`, bumping is a reviewed change), uploads a drift-report artifact, degrades gracefully without an API key, and documents the release gate (zero false-completed-action cases + pinned-model replay + leak scan).
+- **CI wiring**: `.github/workflows/ci.yml` adds a frozen-clock audit step and an **eval corpus replay regression gate** (`domain-foundry eval --full --min-accuracy 0.9`, fails on any per-pack regression or false-completed-action increase vs the committed baseline). `.github/workflows/nightly-eval.yml` is the on-demand/scheduled **live-LLM** job against a **pinned model** (`gpt-4o-mini`, bumping is a reviewed change), uploads a drift-report artifact, degrades gracefully without an API key, and documents the release gate (zero false-completed-action cases + pinned-model replay + leak scan).
 - Full suite green: **82 passed** (`python -m pytest`, +16 P7 tests). `ruff check core tests scripts` clean. `python scripts/clock_audit.py` OK. `python scripts/leakscan.py` OK. New P7 modules (`evals/*`, cassette provider, CLI, audit script) are pyright-clean (remaining pyright errors are pre-existing `int(cur.lastrowid)` casts in P2/P3 modules).
 
 ## P8 gate evidence
@@ -67,7 +67,7 @@ Tracking implementation of `docs/OPEN_SOURCE_HARNESS_PLAN.md`.
 - **Food demonstration pack** (`packs/food/`, `tests/contract/test_demo_packs.py`): the full concept→recipe→experiment→observation lifecycle across five linked objects (`idea` → `recipe` → `cook` → `dining` → `observation`), authored entirely through the public six-file pack format (no core changes needed — dogfood gate clean). `pack validate food` OK; **32 committed routing fixtures** (`packs/food/evals/fixtures.jsonl`, ≥25) replay **100%** green (create + lifecycle-transition `update` operations + negatives) with the deterministic heuristic router.
 - **Travel reference pack** (`packs/travel/`): trips / timeline items / bookings-lite generalized from the private travel domain with **synthetic places only** ("Port City", "River Station", "Old Town" — no real names copied). Demonstrates open-context hints (the `active` trip as the default owner, via `llm_hints`), a `planner` block, and **cross-domain links (dining↔trip)** into `food.dining`. `pack validate travel` OK; **31 committed fixtures** (≥25) replay **100%** green with `food`+`travel` active, and the four cross-domain fixtures each fan out into two linked domains.
 - **Both packs are data-only** (ADR-004) and did not require any core capability to be added — validated through `pack validate` and the routing replay, same path as the wizard and the bundled `plants`/`sourdough` packs. They live outside the default corpus/`eval_baseline.json`, so the P7 PR regression gate is unaffected.
-- **hermes-agent adapter** (`adapters/hermes_agent/`): installable `domain-expert-hermes-agent` package with a `register(ctx)` entry point published on the `hermes_agent.plugins` group (`pyproject.toml`), a declarative `plugin.yaml`, and seven tools (`capture` / `query` / `correct` / `review_list` / `review_resolve` / `new_domain` / `wizard_reply`) mapped onto the `domain-expert serve` HTTP surface via a thin injectable client. Capture-first behavioral guidance shipped as a documented skill fragment (`SKILL.md`, also exported as `CAPTURE_FIRST_GUIDANCE`). Supported hermes-agent range **`>=0.4,<0.7`** pinned in the README + `SUPPORTED_HERMES_AGENT`.
+- **hermes-agent adapter** (`adapters/hermes_agent/`): installable `domain-foundry-hermes-agent` package with a `register(ctx)` entry point published on the `hermes_agent.plugins` group (`pyproject.toml`), a declarative `plugin.yaml`, and seven tools (`capture` / `query` / `correct` / `review_list` / `review_resolve` / `new_domain` / `wizard_reply`) mapped onto the `domain-foundry serve` HTTP surface via a thin injectable client. Capture-first behavioral guidance shipped as a documented skill fragment (`SKILL.md`, also exported as `CAPTURE_FIRST_GUIDANCE`). Supported hermes-agent range **`>=0.4,<0.7`** pinned in the README + `SUPPORTED_HERMES_AGENT`.
 - **Adapter conformance test** (`tests/contract/test_hermes_agent_adapter.py`): a scripted **capture → query → correct → review** session runs through the adapter's tools against a live in-process FastAPI stack (Starlette `TestClient`); the NL correction (`hydration 75 → 80`) is confirmed durable via the read surface; `register(ctx)` wires all seven tools + injects the guidance; version range asserted. (+4 tests)
 - **Quickstart + clean-machine gate**: `docs/QUICKSTART.md` covers `pipx`/editable install → `init` → `pack add` → capture → `serve` → optional hermes-agent hookup. `scripts/quickstart_gate.sh` automates the pack-install + single-domain + cross-domain capture path against a throwaway `--home` using only the public CLI (green). The manual browser/agent slice is documented for the 15-minute gate.
 - **Founder-as-user-0**: `docs/FOUNDER_VALIDATION.md` is the private friction-log process checklist (cold-start ≥2 real domains → test-drive → correct → harden → live-in-it → file synthetic-repro issues). Personal packs/data are never committed; `leakscan.py` is the backstop. Public CI proves the mechanism on synthetic corpora; the lived validation is run privately.
@@ -76,15 +76,15 @@ Tracking implementation of `docs/OPEN_SOURCE_HARNESS_PLAN.md`.
 ## P9 gate evidence
 
 - **Docs site builds** (`mkdocs build` → exit 0): MkDocs Material site under `docs/` wired via root `mkdocs.yml`, with concept pages (ledger/packs/routing/corrections/replay), an architecture page carrying the §4.5 end-to-end data-flow **mermaid** diagram, an adapter guide, a security posture page, a pack gallery (food/travel/plants/sourdough/template + a community-candidate list), and a "remix in an afternoon" plant-care tutorial. Docs deps added as the `docs` optional-dependency group (`mkdocs`, `mkdocs-material`) + `docs/requirements.txt`. Build warnings are only cross-tree relative links (scripts/adapters outside `docs_dir`); the build itself succeeds.
-- **Final leak audit — release-blocking, GREEN** (`docs/LEAK_AUDIT.md`, `scripts/release_audit.sh`): `python scripts/leakscan.py` OK; `python scripts/clock_audit.py` OK; **no tracked `*.sqlite`/`*.db`/off-allowlist binaries**; **git history starts at the P0 bootstrap** (`Bootstrap domain_expert P0/P1 substrate.`, 7 commits, no pre-P0 import); manual review confirms fixtures/examples are synthetic (travel uses invented places), the only `@`/secret-shaped strings are PII-sanitizer/redactor test inputs, and the only "finn/hermes/HermesWorkspace" strings are the denylist patterns *inside the guard scripts themselves*. `scripts/release_audit.sh` aggregates all release-blocking gates (leakscan + clock + no-DBs + P0-history + ruff + pytest + `mkdocs build` + eval corpus replay) and prints **release audit OK**.
+- **Final leak audit — release-blocking, GREEN** (`docs/LEAK_AUDIT.md`, `scripts/release_audit.sh`): `python scripts/leakscan.py` OK; `python scripts/clock_audit.py` OK; **no tracked `*.sqlite`/`*.db`/off-allowlist binaries**; **git history starts at the P0 bootstrap** (`Bootstrap domain_foundry P0/P1 substrate.`, 7 commits, no pre-P0 import); manual review confirms fixtures/examples are synthetic (travel uses invented places), the only `@`/secret-shaped strings are PII-sanitizer/redactor test inputs, and the only "finn/hermes/HermesWorkspace" strings are the denylist patterns *inside the guard scripts themselves*. `scripts/release_audit.sh` aggregates all release-blocking gates (leakscan + clock + no-DBs + P0-history + ruff + pytest + `mkdocs build` + eval corpus replay) and prints **release audit OK**.
 - **Security posture** (`docs/security.md`, `SECURITY.md`): documents localhost-by-default binding, non-local-bind-refuses-without-token, bearer-gated endpoints, read-only + parameterized query paths with schema-validated identifiers, `safe_join` path safety, secret redaction, prompt-injection containment, extension trust tiers, and the private disclosure process. New **API security contract test** (`tests/security/test_api_auth.py`) closes a gap: with a token set, endpoints return 401 (missing) / 403 (wrong) / 401 (malformed scheme) and 200 (valid) for both reads and mutations; the localhost default stays open. (+2 tests)
 - **README polish + changelog** (`README.md`, `CHANGELOG.md`): pitch + 5-minute quickstart + docs index + name-status note; a **demo-GIF placeholder** (HTML comment + prose line pointing at the `LAUNCH_CHECKLIST.md` recording gate — no fabricated binary committed); Keep-a-Changelog `v0.1.0` stub summarizing P0–P9. PyPI publish steps live (unexecuted) in `LAUNCH_CHECKLIST.md`.
 - **Launch prep (prepared, not executed)**: `docs/launch/{show-hn,lobsters,nous,awesome-list-blurbs}.md` drafts; `.github/ISSUE_TEMPLATE/{bug_report,routing_miss,pack_submission,config}.{md,yml}` (bug / routing-miss-as-eval-case / pack-submission, plus a private-security contact link); `LAUNCH_CHECKLIST.md` covers name decision, pre-flight, demo GIF, PyPI publish, launch posts, and **post-launch triage** (labels + severity + synthetic-repro-into-eval-case rotation). Name decision recorded as an open ADR (`docs/adr/ADR-005-name-decision.md`); **no launch post is live and nothing was published**.
-- Full suite green: **92 passed** (`python -m pytest`, +2 P9 security tests). `ruff check core tests scripts adapters` clean. `python scripts/clock_audit.py` OK. `python scripts/leakscan.py` OK. `mkdocs build` OK. `domain-expert eval --full --min-accuracy 0.9` OK.
+- Full suite green: **92 passed** (`python -m pytest`, +2 P9 security tests). `ruff check core tests scripts adapters` clean. `python scripts/clock_audit.py` OK. `python scripts/leakscan.py` OK. `mkdocs build` OK. `domain-foundry eval --full --min-accuracy 0.9` OK.
 
 ### Human launch gates remaining (NOT done by the build)
 
-1. **Name decision** (open): pick the final public name (front-runner **Trellis**), verify PyPI/GitHub/domain/trademark availability, and run the mechanical rename (ADR-005 lists every touch point). Blocks the rest.
+1. **Name decision** (provisional): **Domain Foundry** chosen; mechanical rename done (ADR-005). Still need PyPI/GitHub/domain/trademark availability checks before publish.
 2. **PyPI publish** (core + hermes-agent adapter) and the GitHub release/tag push — steps in `LAUNCH_CHECKLIST.md §3`, not executed.
 3. **Launch posts**: Show HN, lobste.rs, Nous, and awesome-list PRs — drafts prepared, posted by hand.
 4. **External security pass** on the API surface by an independent reviewer.
@@ -94,32 +94,32 @@ Tracking implementation of `docs/OPEN_SOURCE_HARNESS_PLAN.md`.
 ## Quick commands
 
 ```bash
-domain-expert init
-domain-expert pack add packs/plants
-domain-expert pack add packs/sourdough
-domain-expert pack add packs/food            # P8 demo pack (concept→recipe→experiment→observation)
-domain-expert pack add packs/travel          # P8 reference pack (trips/timeline/bookings + dining↔trip links)
+domain-foundry init
+domain-foundry pack add packs/plants
+domain-foundry pack add packs/sourdough
+domain-foundry pack add packs/food            # P8 demo pack (concept→recipe→experiment→observation)
+domain-foundry pack add packs/travel          # P8 reference pack (trips/timeline/bookings + dining↔trip links)
 scripts/quickstart_gate.sh                    # automated clean-machine gate (pack install + capture path)
 pip install ./adapters/hermes_agent          # P8 hermes-agent plugin (hermes_agent.plugins entry point)
-domain-expert capture "baked a 75% hydration country loaf"
-domain-expert correct "that bake was 80% hydration not 75"
-domain-expert review list
-domain-expert review stats
-domain-expert projections drain
-domain-expert eval                          # deterministic cassette replay (routing gate)
-domain-expert eval --full                   # per-pack scorecards + regression diff vs baseline
-domain-expert eval --full --update-baseline # rewrite committed baseline snapshot
-domain-expert eval --full --live-llm --no-baseline  # nightly: re-record + drift report
-domain-expert eval backfill                 # pre-P3 corrections -> eval_case rows
-domain-expert eval export --out contrib.jsonl --sanitize  # PII-stripped contribution
+domain-foundry capture "baked a 75% hydration country loaf"
+domain-foundry correct "that bake was 80% hydration not 75"
+domain-foundry review list
+domain-foundry review stats
+domain-foundry projections drain
+domain-foundry eval                          # deterministic cassette replay (routing gate)
+domain-foundry eval --full                   # per-pack scorecards + regression diff vs baseline
+domain-foundry eval --full --update-baseline # rewrite committed baseline snapshot
+domain-foundry eval --full --live-llm --no-baseline  # nightly: re-record + drift report
+domain-foundry eval backfill                 # pre-P3 corrections -> eval_case rows
+domain-foundry eval export --out contrib.jsonl --sanitize  # PII-stripped contribution
 
 # P6 — guided domain creation
-domain-expert new-domain "I want to track my sourdough journey" \
+domain-foundry new-domain "I want to track my sourdough journey" \
   --reply skip \
   --reply "baked a country loaf at 80% hydration" \
   --reply "add a crumb_photo field" \
   --reply confirm
-domain-expert wizard reply <session_id> "fed the rye starter"
+domain-foundry wizard reply <session_id> "fed the rye starter"
 
 # P9 — docs, audit & release
 pip install -e ".[docs]"                     # mkdocs + mkdocs-material (or: pip install -r docs/requirements.txt)

@@ -5,12 +5,12 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from domain_expert_core.api.app import create_app, run_server
-from domain_expert_core.api.harness import HarnessAPI
+from domain_foundry_core.api.app import create_app, run_server
+from domain_foundry_core.api.harness import HarnessAPI
 
 
 def test_fastapi_capture_query_health(workspace, monkeypatch):
-    monkeypatch.setenv("DOMAIN_EXPERT_HOME", str(workspace.home))
+    monkeypatch.setenv("DOMAIN_FOUNDRY_HOME", str(workspace.home))
     HarnessAPI(workspace.home).init()
     client = TestClient(create_app(workspace.home))
 
@@ -39,7 +39,7 @@ def test_non_local_bind_requires_token(tmp_path: Path):
 
 
 def test_p4_endpoints_and_drain_loop(workspace, monkeypatch):
-    monkeypatch.setenv("DOMAIN_EXPERT_HOME", str(workspace.home))
+    monkeypatch.setenv("DOMAIN_FOUNDRY_HOME", str(workspace.home))
     setup = HarnessAPI(workspace.home)
     setup.init()
     setup.packs.activate_bundled("sourdough")

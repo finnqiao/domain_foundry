@@ -21,7 +21,7 @@ router, so the core routing gate needs no recorded LLM at all.
 
 ## Scoring
 
-`domain-expert eval --full` produces overall and **per-pack scorecards**:
+`domain-foundry eval --full` produces overall and **per-pack scorecards**:
 
 - **routing accuracy** — did the capture hit the right object/operation?
 - **per-field precision / recall / F1** — were fields extracted correctly?

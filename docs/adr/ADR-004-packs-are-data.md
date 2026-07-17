@@ -15,7 +15,7 @@ migrations, JSONL eval fixtures. The ApplyEngine executes a closed operation
 vocabulary against compiled schemas.
 
 Python handlers are allowed only via separately-installed pip packages that
-register through the `domain_expert.packs` entry-point group — an explicit
+register through the `domain_foundry.packs` entry-point group — an explicit
 trust decision by the user.
 
 ## Consequences

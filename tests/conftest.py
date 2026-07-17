@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from domain_expert_core.clock import set_clock
-from domain_expert_core.paths import Workspace
+from domain_foundry_core.clock import set_clock
+from domain_foundry_core.paths import Workspace
 
 
 @pytest.fixture
@@ -20,7 +20,7 @@ def frozen_clock():
 @pytest.fixture
 def workspace(tmp_path: Path, frozen_clock, monkeypatch: pytest.MonkeyPatch) -> Workspace:
     home = tmp_path / "home"
-    monkeypatch.setenv("DOMAIN_EXPERT_HOME", str(home))
+    monkeypatch.setenv("DOMAIN_FOUNDRY_HOME", str(home))
     ws = Workspace(home)
     ws.ensure_layout()
     return ws

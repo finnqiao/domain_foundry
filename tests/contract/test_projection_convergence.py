@@ -6,11 +6,11 @@ watermark advances, receipt flips from pending to refreshed.
 
 from __future__ import annotations
 
-from domain_expert_core.api.harness import HarnessAPI
-from domain_expert_core.llm.provider import HeuristicProvider
-from domain_expert_core.paths import Workspace
-from domain_expert_core.routing.router import Router
-from domain_expert_core.security.store import connect_ro
+from domain_foundry_core.api.harness import HarnessAPI
+from domain_foundry_core.llm.provider import HeuristicProvider
+from domain_foundry_core.paths import Workspace
+from domain_foundry_core.routing.router import Router
+from domain_foundry_core.security.store import connect_ro
 
 
 def _ready(workspace: Workspace) -> HarnessAPI:
@@ -130,7 +130,7 @@ def test_kill_the_daemon_convergence(workspace: Workspace):
 
 def test_failed_projection_stays_pending_and_retries(workspace: Workspace):
     """A failing adapter leaves the outbox row retryable; recovery drains it."""
-    from domain_expert_core.projections.coordinator import ProjectionCoordinator
+    from domain_foundry_core.projections.coordinator import ProjectionCoordinator
 
     api = _ready(workspace)
     api.capture("baked a rye boule", channel="cli", source_ref="retry-1")

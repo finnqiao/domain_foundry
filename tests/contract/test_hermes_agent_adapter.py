@@ -8,16 +8,16 @@ wiring and the pinned hermes-agent version range.
 
 from __future__ import annotations
 
-from domain_expert_hermes_agent import DomainExpertClient, build_tools
-from domain_expert_hermes_agent.plugin import (
+from domain_foundry_hermes_agent import DomainExpertClient, build_tools
+from domain_foundry_hermes_agent.plugin import (
     CAPTURE_FIRST_GUIDANCE,
     SUPPORTED_HERMES_AGENT,
     register,
 )
 from fastapi.testclient import TestClient
 
-from domain_expert_core.api.app import create_app
-from domain_expert_core.api.harness import HarnessAPI
+from domain_foundry_core.api.app import create_app
+from domain_foundry_core.api.harness import HarnessAPI
 
 
 class _FakeCtx:
@@ -50,17 +50,17 @@ def test_scripted_capture_correct_review_session(workspace):
     with tc:
         tools = {t.name: t for t in build_tools(client)}
         assert set(tools) == {
-            "domain_expert_capture",
-            "domain_expert_query",
-            "domain_expert_correct",
-            "domain_expert_review_list",
-            "domain_expert_review_resolve",
-            "domain_expert_new_domain",
-            "domain_expert_wizard_reply",
+            "domain_foundry_capture",
+            "domain_foundry_query",
+            "domain_foundry_correct",
+            "domain_foundry_review_list",
+            "domain_foundry_review_resolve",
+            "domain_foundry_new_domain",
+            "domain_foundry_wizard_reply",
         }
 
         # 1. CAPTURE — verbatim message routed to sourdough.bake, auto-applied.
-        cap = tools["domain_expert_capture"](
+        cap = tools["domain_foundry_capture"](
             text="baked a 75% hydration country loaf, bulk 5h, came out great",
             source_ref="hermes-1",
         )
@@ -68,11 +68,11 @@ def test_scripted_capture_correct_review_session(workspace):
         assert any(r["domain"] == "sourdough" for r in cap["routed"])
 
         # 2. QUERY — read-only, the bake is visible.
-        rows = tools["domain_expert_query"](domain="sourdough")["rows"]
+        rows = tools["domain_foundry_query"](domain="sourdough")["rows"]
         assert rows, "expected the captured bake to be queryable"
 
         # 3. CORRECT — one-message NL amendment; a new revision lands.
-        corrected = tools["domain_expert_correct"](
+        corrected = tools["domain_foundry_correct"](
             text="that bake was 80% hydration not 75"
         )
         assert corrected.get("error") is None
@@ -80,7 +80,7 @@ def test_scripted_capture_correct_review_session(workspace):
         assert corrected["applied"] is True or corrected["revision"] is not None
 
         # 4. REVIEW — queue + SLO counters are reachable through the adapter.
-        review = tools["domain_expert_review_list"](include_diff=True)
+        review = tools["domain_foundry_review_list"](include_diff=True)
         assert "items" in review
         stats = client.review_stats()
         assert "pending" in stats
@@ -89,7 +89,7 @@ def test_scripted_capture_correct_review_session(workspace):
         for item in review["items"]:
             approval_id = item.get("approval_id") or item.get("id")
             if approval_id:
-                res = tools["domain_expert_review_resolve"](
+                res = tools["domain_foundry_review_resolve"](
                     approval_id=approval_id, decision="approved"
                 )
                 assert res.get("error") is None
@@ -101,11 +101,11 @@ def test_correction_reflected_in_canonical_object(workspace):
     tc, client = _live_client(workspace)
     with tc:
         tools = {t.name: t for t in build_tools(client)}
-        tools["domain_expert_capture"](
+        tools["domain_foundry_capture"](
             text="baked a 75% hydration country loaf, bulk 5h, came out great",
             source_ref="hermes-2",
         )
-        tools["domain_expert_correct"](text="that bake was 80% hydration not 75")
+        tools["domain_foundry_correct"](text="that bake was 80% hydration not 75")
 
         # Find the canonical bake uid and confirm hydration == 80 via detail API.
         r = tc.get("/api/blocks/sourdough/bakes/data")
@@ -132,7 +132,7 @@ def test_register_wires_tools_and_guidance(workspace):
         assert len(ctx.registered) == 7
         assert ctx.system_prompt == CAPTURE_FIRST_GUIDANCE
         # A registered handler actually works end-to-end.
-        capture = next(r for r in ctx.registered if r["name"] == "domain_expert_capture")
+        capture = next(r for r in ctx.registered if r["name"] == "domain_foundry_capture")
         receipt = capture["handler"](text="fed the rye starter")
         assert "entry_id" in receipt
 

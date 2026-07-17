@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from domain_expert_core.security.paths import PathSafetyError, safe_join
-from domain_expert_core.security.redact import redact_secrets
-from domain_expert_core.security.store import is_readonly_sql
+from domain_foundry_core.security.paths import PathSafetyError, safe_join
+from domain_foundry_core.security.redact import redact_secrets
+from domain_foundry_core.security.store import is_readonly_sql
 
 
 def test_safe_join_rejects_traversal(tmp_path: Path):

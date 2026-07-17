@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import sqlite3
 
-from domain_expert_core.ledger.capture import CaptureService
-from domain_expert_core.paths import Workspace
-from domain_expert_core.security.store import connect_ro
+from domain_foundry_core.ledger.capture import CaptureService
+from domain_foundry_core.paths import Workspace
+from domain_foundry_core.security.store import connect_ro
 
 
 def _counts(conn: sqlite3.Connection) -> tuple[int, int]:

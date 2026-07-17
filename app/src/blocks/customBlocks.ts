@@ -1,7 +1,7 @@
 import { registerBlock } from "./registry";
 
 // Side-loaded custom blocks (plan §9.3). At startup the shell tries to import
-// an ESM bundle the user dropped into ~/.domain_expert/blocks/, served by the
+// an ESM bundle the user dropped into ~/.domain_foundry/blocks/, served by the
 // FastAPI app at /custom-blocks/index.js. The module may either default-export
 // a register(fn) function, or export `register`. Custom blocks are TRUSTED code
 // (documented in docs/custom-blocks.md) — nothing is loaded unless the user
@@ -27,7 +27,7 @@ export async function loadCustomBlocks(): Promise<string[]> {
       return Array.isArray(ids) ? ids : [];
     }
   } catch (e) {
-    console.warn("[domain_expert] failed to load custom blocks:", e);
+    console.warn("[domain_foundry] failed to load custom blocks:", e);
   }
   return [];
 }

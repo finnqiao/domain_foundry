@@ -5,8 +5,8 @@
 
 ## Submission
 
-- **URL:** `https://github.com/domain-expert/domain_expert`
-- **Title:** `domain_expert: a local-first, capture-first harness for structured personal data`
+- **URL:** `https://github.com/domain-foundry/domain_foundry`
+- **Title:** `Domain Foundry: a local-first, capture-first harness for structured personal data`
 - **Tags:** `ai`, `databases`, `python` (mark as **show**)
 
 ## Author comment (required for "show")

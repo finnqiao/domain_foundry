@@ -1,6 +1,6 @@
 # Architecture
 
-`domain_expert` is a runtime-agnostic Python core with a stable HTTP surface. The
+`domain_foundry` is a runtime-agnostic Python core with a stable HTTP surface. The
 CLI, the React app shell, and every runtime adapter are thin clients of the same
 `HarnessAPI` ([ADR-001](adr/ADR-001-http-adapter-contract.md)).
 
@@ -11,7 +11,7 @@ flowchart TD
     subgraph ingress
         TG["hermes-agent plugin<br/>(Telegram/WhatsApp/CLI)"]
         WEB["app shell capture box"]
-        CLI["domain-expert CLI"]
+        CLI["domain-foundry CLI"]
     end
     TG --> API["HarnessAPI"]
     WEB --> API
@@ -38,7 +38,7 @@ flowchart TD
 
 ## Process model
 
-There is **one local daemon**: `domain-expert serve` runs FastAPI on
+There is **one local daemon**: `domain-foundry serve` runs FastAPI on
 `127.0.0.1:8787`, serving both the `HarnessAPI` JSON endpoints and the built SPA
 static assets. The CLI can run one-shot commands in-process or talk to a running
 daemon; adapters always talk over HTTP.

@@ -18,4 +18,4 @@ Adapters talk to core over HTTP (`http://127.0.0.1:<port>`) against the
 
 - Survives venv/runtime mismatches.
 - Every adapter is a thin HTTP client (~same tool surface).
-- Requires `domain-expert serve` as the local daemon.
+- Requires `domain-foundry serve` as the local daemon.

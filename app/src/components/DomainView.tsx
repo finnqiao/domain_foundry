@@ -85,7 +85,7 @@ export function DomainView({ pack }: { pack: PackCard }) {
         {!loading && activeView && !BlockComponent && (
           <EmptyState
             title={`No renderer for “${activeView.block}”`}
-            hint="This block isn’t built in. Side-load it from ~/.domain_expert/blocks/ (see Docs)."
+            hint="This block isn’t built in. Side-load it from ~/.domain_foundry/blocks/ (see Docs)."
           />
         )}
       </div>

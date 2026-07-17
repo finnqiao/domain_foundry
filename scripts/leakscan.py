@@ -5,7 +5,7 @@ Blocks:
   - tracked *.sqlite / *.db files
   - binary blobs outside an allowlist
   - forbidden remote URLs in .git/config (private Hermes remotes)
-  - optional private denylist file (DOMAIN_EXPERT_DENYLIST path)
+  - optional private denylist file (DOMAIN_FOUNDRY_DENYLIST path)
 
 Synthetic fixtures must live under examples/synthetic/.
 """
@@ -73,7 +73,7 @@ def scan() -> list[str]:
         if FORBIDDEN_REMOTE_RE.search(text):
             errors.append("forbidden private remote URL detected in .git/config")
 
-    denylist = os.environ.get("DOMAIN_EXPERT_DENYLIST")
+    denylist = os.environ.get("DOMAIN_FOUNDRY_DENYLIST")
     if denylist:
         deny_path = Path(denylist)
         if deny_path.exists():
@@ -95,7 +95,7 @@ def scan() -> list[str]:
                             f"denylist hit {needle!r} in {path.relative_to(ROOT)}"
                         )
         else:
-            errors.append(f"DOMAIN_EXPERT_DENYLIST set but missing: {deny_path}")
+            errors.append(f"DOMAIN_FOUNDRY_DENYLIST set but missing: {deny_path}")
 
     return errors
 

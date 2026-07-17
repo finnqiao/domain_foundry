@@ -3,13 +3,13 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "domain-expert-core"
+name = "domain-foundry-core"
 version = "0.1.0"
 description = "Local-first personal agent harness: capture → structured domain data → remixable apps"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
-authors = [{ name = "domain_expert contributors" }]
+authors = [{ name = "Domain Foundry contributors" }]
 keywords = ["agent", "capture", "local-first", "sqlite", "domain-packs"]
 classifiers = [
   "Development Status :: 3 - Alpha",
@@ -45,19 +45,19 @@ docs = [
 ]
 
 [project.scripts]
-domain-expert = "domain_expert_core.cli:app"
+domain-foundry = "domain_foundry_core.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/domain-expert/domain_expert"
-Documentation = "https://github.com/domain-expert/domain_expert#readme"
-Issues = "https://github.com/domain-expert/domain_expert/issues"
+Homepage = "https://github.com/domain-foundry/domain_foundry"
+Documentation = "https://github.com/domain-foundry/domain_foundry#readme"
+Issues = "https://github.com/domain-foundry/domain_foundry/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["core/domain_expert_core"]
+packages = ["core/domain_foundry_core"]
 
 [tool.hatch.build.targets.sdist]
 include = [
-  "core/domain_expert_core",
+  "core/domain_foundry_core",
   "packs",
   "examples",
   "LICENSE",

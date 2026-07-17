@@ -2,7 +2,7 @@
 
 Every pack below is **data only** ([ADR-004](adr/ADR-004-packs-are-data.md)),
 authored purely through the public six-file pack format, and ships with
-synthetic fixtures. Install any of them with `domain-expert pack add packs/<name>`.
+synthetic fixtures. Install any of them with `domain-foundry pack add packs/<name>`.
 
 ## Bundled reference packs
 
@@ -15,8 +15,8 @@ lifecycle-transition `update` operations. **32 committed routing fixtures**
 replay 100% green.
 
 ```bash
-domain-expert pack add packs/food
-domain-expert capture "cooked a batch of shoyu ramen, came out great"
+domain-foundry pack add packs/food
+domain-foundry capture "cooked a batch of shoyu ramen, came out great"
 ```
 
 ### :material-map-marker-path: `travel` — cross-domain links
@@ -28,8 +28,8 @@ City", "River Station", "Old Town"). Demonstrates open-context hints (the
 green; four of them fan out into two linked domains.
 
 ```bash
-domain-expert pack add packs/travel
-domain-expert capture "dinner at River Station Grill, then heading to Port City in March"
+domain-foundry pack add packs/travel
+domain-foundry capture "dinner at River Station Grill, then heading to Port City in March"
 ```
 
 ### :material-flower: `plants` — the beginner pack
@@ -40,8 +40,8 @@ faceted search, and activity stats. This is the pack the
 [remix-in-an-afternoon tutorial](tutorial-plant-care.md) builds from scratch.
 
 ```bash
-domain-expert pack add packs/plants
-domain-expert capture "watered the monstera, soil still damp"
+domain-foundry pack add packs/plants
+domain-foundry capture "watered the monstera, soil still damp"
 ```
 
 ### :material-bread-slice: `sourdough` — the wizard archetype
@@ -50,8 +50,8 @@ The canonical single-event domain (`bake`): hydration, flour mix, crumb result.
 Doubles as the wizard's "sourdough journey" golden archetype.
 
 ```bash
-domain-expert pack add packs/sourdough
-domain-expert capture "baked a 75% hydration country loaf, came out great"
+domain-foundry pack add packs/sourdough
+domain-foundry capture "baked a 75% hydration country loaf, came out great"
 ```
 
 ## Starter template
@@ -62,13 +62,13 @@ keys and nothing else. Copy it (or run the wizard) to start a new domain.
 ```bash
 cp -r packs/_template packs/mydomain
 $EDITOR packs/mydomain/schema.yaml
-domain-expert pack validate mydomain
+domain-foundry pack validate mydomain
 ```
 
 Or let the wizard generate one from a sentence:
 
 ```bash
-domain-expert new-domain "I want to track my climbing sessions"
+domain-foundry new-domain "I want to track my climbing sessions"
 ```
 
 ## Community-candidate list

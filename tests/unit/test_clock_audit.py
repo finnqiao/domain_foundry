@@ -24,7 +24,7 @@ def test_core_has_no_bare_wall_clock_reads():
 def test_audit_detects_injected_violation(tmp_path: Path):
     """Guard the guard: a bare datetime.now() outside clock.py must be caught."""
     mod = _load_clock_audit()
-    fake_core = tmp_path / "core" / "domain_expert_core"
+    fake_core = tmp_path / "core" / "domain_foundry_core"
     fake_core.mkdir(parents=True)
     (fake_core / "clock.py").write_text(
         "from datetime import datetime\n\ndef now():\n    return datetime.now()\n",

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import random
 
-from domain_expert_core.projections.markdown import (
+from domain_foundry_core.projections.markdown import (
     content_managed_section,
     merge_managed_markdown,
     parse_managed_sections,

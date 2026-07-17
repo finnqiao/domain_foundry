@@ -16,9 +16,9 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-from domain_expert_core.api.app import create_app
-from domain_expert_core.api.harness import HarnessAPI
-from domain_expert_core.security.store import connect_ro
+from domain_foundry_core.api.app import create_app
+from domain_foundry_core.api.harness import HarnessAPI
+from domain_foundry_core.security.store import connect_ro
 
 
 def _client(workspace):

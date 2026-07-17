@@ -1,6 +1,6 @@
 # Concepts
 
-`domain_expert` has a small set of ideas that compose into the whole system.
+`domain_foundry` has a small set of ideas that compose into the whole system.
 Read them in order the first time; they build on each other.
 
 | Concept | One line |

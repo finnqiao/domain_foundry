@@ -66,7 +66,7 @@ registerBlock("gauge", Gauge);
    }
    ```
 
-2. Drop the bundle at `~/.domain_expert/blocks/index.js`. `domain-expert serve`
+2. Drop the bundle at `~/.domain_foundry/blocks/index.js`. `domain-foundry serve`
    exposes the `blocks/` directory read-only at `/custom-blocks/`, and the shell
    imports `/custom-blocks/index.js` at startup (silently ignored if absent).
 
