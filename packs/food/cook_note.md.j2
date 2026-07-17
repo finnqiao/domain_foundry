@@ -1,0 +1,10 @@
+# {{ fields.name }}
+
+- **Made:** {{ fields.made_at }}
+{% if fields.servings %}- **Servings:** {{ fields.servings }}{% endif %}
+{% if fields.outcome %}- **Outcome:** {{ fields.outcome }}{% endif %}
+{% if fields.tweaks %}- **Tweaks:** {{ fields.tweaks }}{% endif %}
+{% if fields.notes %}
+
+{{ fields.notes }}
+{% endif %}

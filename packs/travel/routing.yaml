@@ -1,0 +1,68 @@
+rules:
+  # --- lifecycle transitions (updates) win via higher boost -------------------
+  - match: "(trip is (?:now )?(?:booked|active|completed|cancelled)|postpon(?:e|ed|ing) the trip|cancel(?:led|ing)? the .*trip|trip is a wrap)"
+    object: trip
+    operation: update
+    confidence_boost: 0.15
+  - match: "(booking is (?:now )?paid|paid the (?:balance|deposit)|cancel(?:led)? the .*booking|rebooked|booking (?:confirmed|fell through))"
+    object: booking
+    operation: update
+    confidence_boost: 0.15
+  - match: "(mov(?:e|ed) the .* to day|reschedul(?:e|ed) the|mark(?:ed)? .* as done|swapped .* for)"
+    object: timeline_item
+    operation: update
+    confidence_boost: 0.15
+
+  # --- trip: the long-lived container -----------------------------------------
+  - match: "(trip to|travel(?:ing|ling) to|planning a trip|vacation to|holiday to|heading to|getaway to|flying to|road trip to|weekend in)"
+    object: trip
+    operation: create
+    confidence_boost: 0.12
+
+  # --- booking: bookings-lite -------------------------------------------------
+  - match: "(\\bbooked\\b|reserved|reservation|confirmed (?:the )?booking|deposit for|tickets for|hold on the|nabbed a table)"
+    object: booking
+    operation: create
+    confidence_boost: 0.12
+
+  # --- timeline item: a dated/ordered thing on a trip -------------------------
+  - match: "(itinerary|day plan|excursion|guided tour|walking tour|boat tour|city tour|sightseeing|check[- ]?in at|transfer (?:to|from)|day \\d+:|free (?:day|morning|afternoon)|visit the)"
+    object: timeline_item
+    operation: create
+    confidence_boost: 0.1
+
+examples:
+  - text: "planning a trip to Port City in March"
+    expect: {object: trip, operation: create, fields: {status: planning}}
+  - text: "heading to River Station for a long weekend"
+    expect: {object: trip, operation: create}
+  - text: "booked the Harbor View Inn for three nights"
+    expect: {object: booking, operation: create, fields: {booking_type: lodging}}
+  - text: "tickets for the archipelago ferry on the 12th"
+    expect: {object: booking, operation: create, fields: {booking_type: ticket}}
+  - text: "day 2: guided tour of the old harbor"
+    expect: {object: timeline_item, operation: create, fields: {item_type: tour}}
+  - text: "transfer to the airport at 6am on the last day"
+    expect: {object: timeline_item, operation: create, fields: {item_type: transfer}}
+  - text: "free morning before the afternoon boat tour"
+    expect: {object: timeline_item, operation: create}
+  - text: "the Port City trip is now booked"
+    expect: {object: trip, operation: update, fields: {status: booked}}
+  - text: "the lodge booking is now paid in full"
+    expect: {object: booking, operation: update, fields: {status: paid}}
+  - text: "moved the museum visit to day 3"
+    expect: {object: timeline_item, operation: update}
+
+negative_examples:
+  - text: "the app build is toast"
+  - text: "deploy the release candidate tonight"
+  - text: "merge the feature flag behind a gate"
+
+llm_hints: >
+  Open-context hint: when a timeline item or booking does not name a trip, attach
+  it to the trip whose status is `active` (there is usually exactly one). A trip
+  is the container; a timeline item is one dated thing on it (activity, tour,
+  transfer, lodging, meal, free time); a booking is a lightweight reservation
+  record. Cross-domain: a meal eaten out is a `food.dining` record — link the
+  travel timeline item to it rather than duplicating the dining details here.
+  Use synthetic place names in examples (Port City, River Station, Old Town).

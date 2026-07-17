@@ -1,0 +1,37 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "domain-expert-hermes-agent"
+version = "0.1.0"
+description = "hermes-agent plugin: capture/query/correct/review/new_domain tools over HTTP to a local domain-expert serve"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [{ name = "domain_expert contributors" }]
+keywords = ["hermes-agent", "plugin", "agent", "capture", "domain-expert"]
+dependencies = [
+  "httpx>=0.27.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0.0",
+  "domain-expert-core",
+]
+
+# Published so hermes-agent can discover the plugin without extra config.
+[project.entry-points."hermes_agent.plugins"]
+domain_expert = "domain_expert_hermes_agent.plugin:register"
+
+[project.urls]
+Homepage = "https://github.com/domain-expert/domain_expert"
+Documentation = "https://github.com/domain-expert/domain_expert/tree/main/adapters/hermes_agent#readme"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/domain_expert_hermes_agent"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"plugin.yaml" = "domain_expert_hermes_agent/plugin.yaml"
+"SKILL.md" = "domain_expert_hermes_agent/SKILL.md"

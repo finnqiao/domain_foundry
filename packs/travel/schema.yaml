@@ -1,0 +1,51 @@
+objects:
+  # Trip — the long-lived container. Exactly one is usually `active` at a time;
+  # that active trip is the open-context default for ambiguous timeline items.
+  trip:
+    title_field: name
+    fields:
+      name: {type: text, required: true}
+      destination: {type: text}
+      start_date: {type: date}
+      end_date: {type: date}
+      status: {type: enum, values: [idea, planning, booked, active, completed], allow_other: true}
+      party_size: {type: integer}
+      notes: {type: text, long: true}
+
+  # Timeline item — a single dated/ordered thing on a trip (activity, transfer,
+  # lodging, tour, meal, free time). Time is deliberately fuzzy: an item can be
+  # all-day or approximate, mirroring how plans actually arrive.
+  timeline_item:
+    title_field: title
+    fields:
+      title: {type: text, required: true}
+      trip: {type: text}
+      item_type: {type: enum, values: [activity, lodging, transfer, tour, meal, flight, free_time], allow_other: true}
+      day: {type: date}
+      start_time: {type: text}
+      is_all_day: {type: boolean}
+      location: {type: text}
+      status: {type: enum, values: [idea, planned, booked, done], allow_other: true}
+      scheduled_at: {type: datetime, required: true, default: capture_time}
+      notes: {type: text, long: true}
+    links:
+      trip: {to: travel.trip, cardinality: many_to_one}
+      # cross-domain: a timeline meal can point at a dining record in the food pack
+      dining: {to: food.dining, cardinality: many_to_one}
+
+  # Booking — bookings-lite: who/what/status, not a full payments ledger.
+  booking:
+    title_field: label
+    fields:
+      label: {type: text, required: true}
+      trip: {type: text}
+      provider: {type: text}
+      booking_type: {type: enum, values: [lodging, transport, tour, table, ticket], allow_other: true}
+      status: {type: enum, values: [held, booked, paid, cancelled], allow_other: true}
+      confirmation: {type: text}
+      amount: {type: number, unit: currency_minor}
+      booked_at: {type: datetime, required: true, default: capture_time}
+      notes: {type: text, long: true}
+    links:
+      trip: {to: travel.trip, cardinality: many_to_one}
+      timeline_item: {to: travel.timeline_item, cardinality: many_to_one}

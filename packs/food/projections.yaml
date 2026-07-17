@@ -1,0 +1,15 @@
+app:
+  icon: "🍜"
+  views:
+    - {id: cooks, title: "Cooks", block: timeline, object: cook, config: {date_field: made_at}}
+    - {id: recipes, title: "Recipes", block: list, object: recipe, config: {group_by: status}}
+    - {id: ideas, title: "Ideas", block: list, object: idea, config: {group_by: status}}
+    - {id: dining, title: "Dining", block: timeline, object: dining, config: {date_field: dined_at}}
+    - {id: find, title: "Find", block: search, objects: [cook, dining, recipe], config: {facets: [outcome, rating, cuisine]}}
+    - {id: progress, title: "Progress", block: stats, object: cook, config: {measures: [{field: outcome, agg: distribution}]}}
+    - {id: history, title: "History", block: history, object: cook, config: {date_field: made_at, period: month}}
+    - {id: learnings, title: "Learnings", block: list, object: observation, config: {group_by: topic}}
+markdown:
+  folder: "Food"
+  note_template:
+    cook: cook_note.md.j2

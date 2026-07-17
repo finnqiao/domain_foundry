@@ -1,0 +1,5 @@
+idea: [create, update, correct, merge, delete]
+recipe: [create, update, correct, merge, delete]
+cook: [create, update, correct, delete]
+dining: [create, update, correct, delete]
+observation: [create, update, correct, delete]

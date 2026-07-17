@@ -1,0 +1,7 @@
+defaults:
+  - {operation: create, min_confidence: 0.8, action: auto_apply}
+  - {operation: update, min_confidence: 0.85, action: auto_apply}
+  - {operation: correct, action: auto_apply}
+  - {operation: delete, action: review}
+  - {operation: merge, action: review}
+fallback: unfiled_card

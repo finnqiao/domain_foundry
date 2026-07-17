@@ -1,0 +1,76 @@
+rules:
+  # --- lifecycle transitions (updates) win via higher boost -------------------
+  - match: "(dropp(?:ed|ing)? the .*idea|shelv(?:ed|ing)? the .*idea|bump(?:ed|ing)? the .*idea|idea is now (?:planned|tried|dropped))"
+    object: idea
+    operation: update
+    confidence_boost: 0.15
+  - match: "(tweaked the recipe|updated the recipe|recipe is (?:now )?a keeper|retir(?:ed|ing)? the recipe|promoted the recipe)"
+    object: recipe
+    operation: update
+    confidence_boost: 0.15
+
+  # --- concept: an idea you want to chase later -------------------------------
+  - match: "(\\bidea\\b|want to (?:try|make|cook)|someday i'?d? (?:like|love)|craving to make|bucket[- ]?list dish|would love to (?:cook|make)|inspiration to try)"
+    object: idea
+    operation: create
+    confidence_boost: 0.12
+
+  # --- recipe: a formalized method --------------------------------------------
+  - match: "(\\brecipe\\b|method for making|formula for|recipe card|wrote (?:down|up) (?:the|a) recipe)"
+    object: recipe
+    operation: create
+    confidence_boost: 0.12
+
+  # --- dining: eating out -----------------------------------------------------
+  - match: "(ate at|dined at|dinner at|lunch at|breakfast at|brunch at|takeout from|ordered (?:the|from)|meal at|\\brestaurant\\b|\\bcafe\\b|\\bbistro\\b|food truck)"
+    object: dining
+    operation: create
+    confidence_boost: 0.1
+
+  # --- observation: a learning / takeaway -------------------------------------
+  - match: "(learned that|noticed that|next time i|takeaway:|note to self|lesson learned|observation:|realized that)"
+    object: observation
+    operation: create
+    confidence_boost: 0.1
+
+  # --- experiment: cooking something (kept last so specific rules win) --------
+  - match: "(cooked|\\bmade\\b|tried (?:making|cooking)|test kitchen|experiment(?:ed)? with|batch of|whipped up|simmered|roasted|braised|pan[- ]?fried)"
+    object: cook
+    operation: create
+    confidence_boost: 0.08
+
+examples:
+  - text: "idea: a miso caramel banana bread someday"
+    expect: {object: idea, operation: create, fields: {status: someday}}
+  - text: "want to try a smoked paprika chickpea stew"
+    expect: {object: idea, operation: create}
+  - text: "wrote down the recipe for cold-brew tare ramen"
+    expect: {object: recipe, operation: create}
+  - text: "recipe card for 24-hour focaccia, serves 8"
+    expect: {object: recipe, operation: create, fields: {servings: 8}}
+  - text: "cooked a batch of shoyu ramen, came out great"
+    expect: {object: cook, operation: create, fields: {outcome: great}}
+  - text: "made kimchi fried rice, decent but too salty"
+    expect: {object: cook, operation: create, fields: {outcome: decent}}
+  - text: "dinner at River Station Grill, the duck was great"
+    expect: {object: dining, operation: create, fields: {meal_type: dinner, rating: great}}
+  - text: "ate at a tiny bistro near the market, good bowls"
+    expect: {object: dining, operation: create, fields: {rating: good}}
+  - text: "learned that resting the dough overnight fixes the crumb"
+    expect: {object: observation, operation: create}
+  - text: "tweaked the recipe: less sugar, more salt"
+    expect: {object: recipe, operation: update}
+  - text: "dropping the sous-vide egg idea, never works for me"
+    expect: {object: idea, operation: update, fields: {status: dropped}}
+
+negative_examples:
+  - text: "the app build is toast"
+  - text: "deploy the release candidate tonight"
+  - text: "merge the feature flag behind a gate"
+
+llm_hints: >
+  Distinguish the lifecycle stages: an idea is something to try later; a recipe
+  is a written method; a cook is one attempt at making something; dining is a
+  meal eaten out; an observation is a learning to remember. Prefer cook over
+  idea/recipe when the message describes actually making food. "Made" / "cooked"
+  is a cook, not a recipe. Ratings/outcomes are enums (great, good, decent).

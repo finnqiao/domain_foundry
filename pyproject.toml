@@ -62,7 +62,7 @@ include = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["core"]
+pythonpath = ["core", "adapters/hermes_agent/src"]
 addopts = "-q"
 
 [tool.ruff]

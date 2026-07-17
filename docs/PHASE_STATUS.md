@@ -12,7 +12,7 @@ Tracking implementation of `docs/OPEN_SOURCE_HARNESS_PLAN.md`.
 | P5 App shell | **Done** | Vite+React SPA served from FastAPI static mount; nine built-in blocks + registry; global surfaces (home/capture feed/review queue/health); detail provenance chain; correction dialogs (amend/move/merge/undo/mark-wrong); custom-block side-load + in-app docs; teaching empty states |
 | P6 Domain wizard | **Done** | Wizard engine (goal→interview→generate→validate→dry-run→test-drive→hardening), resumable sessions, archetype+generic proposal generator, `new_domain`/`wizard_reply` API, CLI `new-domain` + `wizard reply`, HTTP endpoints, pack authoring style guide |
 | P7 Eval framework | **Done** | Cassette drift + `--live-llm`; frozen-clock audit (lint+test); full scoring (routing/field/disposition/calibration) + per-pack scorecards + committed baseline + regression diff; `eval backfill`/`eval export --sanitize`; PR replay gate + nightly live-LLM stub; curated contract-case set |
-| P8 Packs & hermes-agent adapter | Partial | `plants` + `sourdough` synthetic packs; food/travel demo packs TBD |
+| P8 Demo & reference packs + hermes-agent adapter | **Done** | `food` + `travel` packs (authored purely through the public pack format), each with ≥25 green routing fixtures incl. cross-domain dining↔trip links; hermes-agent plugin (`register(ctx)` + `plugin.yaml` + skill fragment + `hermes_agent.plugins` entry point) with a live-stack conformance test; quickstart + automated clean-machine gate; founder friction-log checklist |
 | P9 Docs & launch | Not started | |
 
 ## P3 gate evidence
@@ -62,12 +62,27 @@ Tracking implementation of `docs/OPEN_SOURCE_HARNESS_PLAN.md`.
 - **CI wiring**: `.github/workflows/ci.yml` adds a frozen-clock audit step and an **eval corpus replay regression gate** (`domain-expert eval --full --min-accuracy 0.9`, fails on any per-pack regression or false-completed-action increase vs the committed baseline). `.github/workflows/nightly-eval.yml` is the on-demand/scheduled **live-LLM** job against a **pinned model** (`gpt-4o-mini`, bumping is a reviewed change), uploads a drift-report artifact, degrades gracefully without an API key, and documents the release gate (zero false-completed-action cases + pinned-model replay + leak scan).
 - Full suite green: **82 passed** (`python -m pytest`, +16 P7 tests). `ruff check core tests scripts` clean. `python scripts/clock_audit.py` OK. `python scripts/leakscan.py` OK. New P7 modules (`evals/*`, cassette provider, CLI, audit script) are pyright-clean (remaining pyright errors are pre-existing `int(cur.lastrowid)` casts in P2/P3 modules).
 
+## P8 gate evidence
+
+- **Food demonstration pack** (`packs/food/`, `tests/contract/test_demo_packs.py`): the full concept→recipe→experiment→observation lifecycle across five linked objects (`idea` → `recipe` → `cook` → `dining` → `observation`), authored entirely through the public six-file pack format (no core changes needed — dogfood gate clean). `pack validate food` OK; **32 committed routing fixtures** (`packs/food/evals/fixtures.jsonl`, ≥25) replay **100%** green (create + lifecycle-transition `update` operations + negatives) with the deterministic heuristic router.
+- **Travel reference pack** (`packs/travel/`): trips / timeline items / bookings-lite generalized from the private travel domain with **synthetic places only** ("Port City", "River Station", "Old Town" — no real names copied). Demonstrates open-context hints (the `active` trip as the default owner, via `llm_hints`), a `planner` block, and **cross-domain links (dining↔trip)** into `food.dining`. `pack validate travel` OK; **31 committed fixtures** (≥25) replay **100%** green with `food`+`travel` active, and the four cross-domain fixtures each fan out into two linked domains.
+- **Both packs are data-only** (ADR-004) and did not require any core capability to be added — validated through `pack validate` and the routing replay, same path as the wizard and the bundled `plants`/`sourdough` packs. They live outside the default corpus/`eval_baseline.json`, so the P7 PR regression gate is unaffected.
+- **hermes-agent adapter** (`adapters/hermes_agent/`): installable `domain-expert-hermes-agent` package with a `register(ctx)` entry point published on the `hermes_agent.plugins` group (`pyproject.toml`), a declarative `plugin.yaml`, and seven tools (`capture` / `query` / `correct` / `review_list` / `review_resolve` / `new_domain` / `wizard_reply`) mapped onto the `domain-expert serve` HTTP surface via a thin injectable client. Capture-first behavioral guidance shipped as a documented skill fragment (`SKILL.md`, also exported as `CAPTURE_FIRST_GUIDANCE`). Supported hermes-agent range **`>=0.4,<0.7`** pinned in the README + `SUPPORTED_HERMES_AGENT`.
+- **Adapter conformance test** (`tests/contract/test_hermes_agent_adapter.py`): a scripted **capture → query → correct → review** session runs through the adapter's tools against a live in-process FastAPI stack (Starlette `TestClient`); the NL correction (`hydration 75 → 80`) is confirmed durable via the read surface; `register(ctx)` wires all seven tools + injects the guidance; version range asserted. (+4 tests)
+- **Quickstart + clean-machine gate**: `docs/QUICKSTART.md` covers `pipx`/editable install → `init` → `pack add` → capture → `serve` → optional hermes-agent hookup. `scripts/quickstart_gate.sh` automates the pack-install + single-domain + cross-domain capture path against a throwaway `--home` using only the public CLI (green). The manual browser/agent slice is documented for the 15-minute gate.
+- **Founder-as-user-0**: `docs/FOUNDER_VALIDATION.md` is the private friction-log process checklist (cold-start ≥2 real domains → test-drive → correct → harden → live-in-it → file synthetic-repro issues). Personal packs/data are never committed; `leakscan.py` is the backstop. Public CI proves the mechanism on synthetic corpora; the lived validation is run privately.
+- Full suite green: **90 passed** (`python -m pytest`, +8 P8 tests). `ruff check core tests scripts adapters` clean. `python scripts/leakscan.py` OK. `python scripts/clock_audit.py` OK. New packs + adapter contain **synthetic data only** (PII/real-remote scan clean).
+
 ## Quick commands
 
 ```bash
 domain-expert init
 domain-expert pack add packs/plants
 domain-expert pack add packs/sourdough
+domain-expert pack add packs/food            # P8 demo pack (concept→recipe→experiment→observation)
+domain-expert pack add packs/travel          # P8 reference pack (trips/timeline/bookings + dining↔trip links)
+scripts/quickstart_gate.sh                    # automated clean-machine gate (pack install + capture path)
+pip install ./adapters/hermes_agent          # P8 hermes-agent plugin (hermes_agent.plugins entry point)
 domain-expert capture "baked a 75% hydration country loaf"
 domain-expert correct "that bake was 80% hydration not 75"
 domain-expert review list

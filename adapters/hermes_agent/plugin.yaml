@@ -1,0 +1,45 @@
+name: domain_expert
+version: 0.1.0
+title: "domain_expert harness"
+description: >
+  Capture-first personal-agent harness. Exposes capture / query / correct /
+  review / new_domain tools that talk to a local `domain-expert serve` over HTTP.
+kind: hermes-agent-plugin
+
+# Python entry point (group `hermes_agent.plugins`): hermes-agent imports this
+# and calls `register(ctx)`.
+entry_point: "domain_expert_hermes_agent.plugin:register"
+
+# Pinned, tested hermes-agent compatibility range. Bumping the upper bound is a
+# reviewed change gated by the adapter conformance test.
+supported_hermes_agent: ">=0.4,<0.7"
+
+# How the plugin reaches the harness. Read from the host context first, then env.
+config:
+  base_url:
+    env: DOMAIN_EXPERT_URL
+    default: "http://127.0.0.1:8787"
+    description: "Base URL of the running `domain-expert serve` instance."
+  token:
+    env: DOMAIN_EXPERT_API_TOKEN
+    default: null
+    description: "Bearer token when the harness is not bound to localhost."
+
+tools:
+  - name: domain_expert_capture
+    summary: "Capture the user's verbatim message into the harness ledger."
+  - name: domain_expert_query
+    summary: "Read-only query over captured entries."
+  - name: domain_expert_correct
+    summary: "Apply a one-message correction to an existing capture."
+  - name: domain_expert_review_list
+    summary: "List approval-queue items awaiting a decision."
+  - name: domain_expert_review_resolve
+    summary: "Resolve one approval-queue item."
+  - name: domain_expert_new_domain
+    summary: "Start the guided domain-creation wizard."
+  - name: domain_expert_wizard_reply
+    summary: "Send one reply to an active wizard session."
+
+# Behavioral guidance injected into the agent (see SKILL.md).
+guidance_file: SKILL.md

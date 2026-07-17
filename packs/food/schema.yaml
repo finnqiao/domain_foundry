@@ -1,0 +1,63 @@
+objects:
+  # Concept — a cooking idea you want to chase down later.
+  idea:
+    title_field: name
+    fields:
+      name: {type: text, required: true}
+      cuisine: {type: text}
+      inspiration: {type: text}
+      status: {type: enum, values: [someday, planned, tried, dropped], allow_other: true}
+      noted_at: {type: datetime, required: true, default: capture_time}
+      notes: {type: text, long: true}
+
+  # Recipe — a formalized method, usually grown out of an idea.
+  recipe:
+    title_field: name
+    fields:
+      name: {type: text, required: true}
+      cuisine: {type: text}
+      source: {type: text}
+      servings: {type: integer}
+      prep_minutes: {type: number, unit: minutes}
+      status: {type: enum, values: [draft, tested, keeper, retired], allow_other: true}
+      created_on: {type: datetime, required: true, default: capture_time}
+      notes: {type: text, long: true}
+    links:
+      idea: {to: food.idea, cardinality: many_to_one}
+
+  # Experiment — a single cook / attempt at a recipe.
+  cook:
+    title_field: name
+    fields:
+      name: {type: text, required: true}
+      made_at: {type: datetime, required: true, default: capture_time}
+      servings: {type: integer}
+      outcome: {type: enum, values: [flop, meh, decent, good, great], allow_other: true}
+      tweaks: {type: text, long: true}
+      notes: {type: text, long: true}
+    links:
+      recipe: {to: food.recipe, cardinality: many_to_one}
+
+  # Dining — a meal eaten out (restaurant, cafe, takeout).
+  dining:
+    title_field: place
+    fields:
+      place: {type: text, required: true}
+      dish: {type: text}
+      cuisine: {type: text}
+      meal_type: {type: enum, values: [breakfast, lunch, dinner, snack, dessert], allow_other: true}
+      rating: {type: enum, values: [bad, ok, good, great], allow_other: true}
+      dined_at: {type: datetime, required: true, default: capture_time}
+      notes: {type: text, long: true}
+
+  # Observation — a learning / takeaway you want to remember.
+  observation:
+    title_field: summary
+    fields:
+      summary: {type: text, required: true}
+      topic: {type: text}
+      observed_at: {type: datetime, required: true, default: capture_time}
+      notes: {type: text, long: true}
+    links:
+      recipe: {to: food.recipe, cardinality: many_to_one}
+      cook: {to: food.cook, cardinality: many_to_one}

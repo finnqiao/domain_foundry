@@ -22,16 +22,21 @@ to any domain that is your passion.
 ```bash
 pipx install domain-expert-core   # or: pip install -e .
 domain-expert init
+domain-expert pack add packs/food     # or plants / sourdough / travel
 domain-expert serve
 ```
 
 Then open http://127.0.0.1:8787 and capture from the web box or CLI:
 
 ```bash
-domain-expert capture "baked a 75% hydration country loaf, bulk 5h, came out great"
-domain-expert query --status ledger_only
+domain-expert capture "cooked a batch of shoyu ramen, came out great"
+domain-expert query --domain food
 domain-expert health
 ```
+
+Full walkthrough (packs + optional hermes-agent hookup) in
+[`docs/QUICKSTART.md`](docs/QUICKSTART.md); run the automated clean-machine gate
+with `scripts/quickstart_gate.sh`.
 
 ## Status
 
