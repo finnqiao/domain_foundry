@@ -99,7 +99,8 @@ class ExpertRunner:
                 self.stats.last_error = None
                 self.stats.last_outbound_id = outbound_id
             except Exception as exc:  # noqa: BLE001
-                self.inbox.fail(msg.id, str(exc))
+                # Poisoned messages land in the dead-letter queue (Phase 8).
+                self.inbox.dead_letter(msg.id, str(exc))
                 self.stats.failed += 1
                 self.stats.last_msg_id = msg.id
                 self.stats.last_error = str(exc)

@@ -212,8 +212,11 @@ def test_supervisor_status_shape(mesh_home: Workspace):
     assert "routed" in status.journal or "pending" in status.journal
     assert any(c["domain"] == "japanese" for c in status.children)
     assert isinstance(status.outbound, dict)
+    assert isinstance(status.queue_depths, dict)
+    assert "inbox_pending" in status.queue_depths
+    assert isinstance(status.dlq, dict)
     assert status.notes
-    assert any("outbound_queue" in n for n in status.notes)
+    assert any("DLQ" in n or "dlq" in n.lower() for n in status.notes)
 
 
 def test_agent_yaml_loads_for_japanese_and_food():

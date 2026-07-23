@@ -269,6 +269,107 @@ class OutboundQueue:
         finally:
             conn.close()
 
+    def list_dead(
+        self,
+        *,
+        origin_domain: str | None = None,
+        limit: int = 100,
+    ) -> list[OutboundMessage]:
+        """List dead outbound rows for the DLQ CLI/API."""
+        conn = self._connect()
+        try:
+            if origin_domain:
+                rows = conn.execute(
+                    """
+                    SELECT * FROM outbound_queue
+                    WHERE status = 'dead' AND origin_domain = ?
+                    ORDER BY COALESCE(claimed_at, created_at) DESC, id DESC
+                    LIMIT ?
+                    """,
+                    (origin_domain, int(limit)),
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    """
+                    SELECT * FROM outbound_queue
+                    WHERE status = 'dead'
+                    ORDER BY COALESCE(claimed_at, created_at) DESC, id DESC
+                    LIMIT ?
+                    """,
+                    (int(limit),),
+                ).fetchall()
+            return [self._row_to_msg(r) for r in rows]
+        finally:
+            conn.close()
+
+    def retry(self, msg_id: str) -> OutboundMessage | None:
+        """Requeue a dead outbound message as pending for another claim."""
+        ts = now_iso()
+        conn = self._connect()
+        try:
+            conn.execute("BEGIN IMMEDIATE")
+            row = conn.execute(
+                "SELECT * FROM outbound_queue WHERE id = ?", (msg_id,)
+            ).fetchone()
+            if row is None or row["status"] != "dead":
+                conn.commit()
+                return None
+            conn.execute(
+                """
+                UPDATE outbound_queue
+                SET status = 'pending',
+                    attempts = 0,
+                    next_attempt_at = ?,
+                    last_error = NULL,
+                    claimed_at = NULL,
+                    delivered_at = NULL
+                WHERE id = ? AND status = 'dead'
+                """,
+                (ts, msg_id),
+            )
+            if conn.total_changes == 0:
+                conn.commit()
+                return None
+            conn.commit()
+            refreshed = conn.execute(
+                "SELECT * FROM outbound_queue WHERE id = ?", (msg_id,)
+            ).fetchone()
+            return self._row_to_msg(refreshed) if refreshed else None
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
+
+    def has_pending_alert(self, *, alert_kind: str, domain: str | None = None) -> bool:
+        """True if a non-delivered alert of this kind is already queued."""
+        conn = self._connect()
+        try:
+            rows = conn.execute(
+                """
+                SELECT payload_json FROM outbound_queue
+                WHERE status IN ('pending', 'delivering')
+                """
+            ).fetchall()
+            for row in rows:
+                raw = row["payload_json"]
+                if not raw:
+                    continue
+                try:
+                    payload = json.loads(raw)
+                except json.JSONDecodeError:
+                    continue
+                if not isinstance(payload, dict):
+                    continue
+                if payload.get("alert_kind") != alert_kind:
+                    continue
+                if domain is not None and payload.get("alert_domain") != domain:
+                    continue
+                return True
+            return False
+        finally:
+            conn.close()
+
     def depth(self, origin_domain: str | None = None) -> dict[str, int]:
         conn = self._connect()
         try:

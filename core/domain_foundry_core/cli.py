@@ -472,6 +472,56 @@ def mesh_status_cmd(ctx: typer.Context) -> None:
     typer.echo(json.dumps(asdict(status), indent=2))
 
 
+dlq_app = typer.Typer(help="Dead-letter queue: list / retry poisoned mesh messages")
+mesh_app.add_typer(dlq_app, name="dlq")
+
+
+@dlq_app.command("list")
+def mesh_dlq_list_cmd(
+    ctx: typer.Context,
+    domain: str | None = typer.Option(None, "--domain", "-d"),
+    queue: str | None = typer.Option(
+        None, "--queue", "-q", help="inbox | outbound (default: both)"
+    ),
+    limit: int = typer.Option(100, "--limit", "-n"),
+    include_failed: bool = typer.Option(
+        True, "--include-failed/--dead-only", help="Include inbox failed rows"
+    ),
+) -> None:
+    """List dead-letter (and optionally failed) inbox/outbound messages."""
+    from domain_foundry_core.mesh.observability import DeadLetterQueue
+    from domain_foundry_core.paths import Workspace
+
+    if queue is not None and queue not in {"inbox", "outbound"}:
+        typer.echo("queue must be inbox or outbound", err=True)
+        raise typer.Exit(code=2)
+    dlq = DeadLetterQueue(Workspace(ctx.obj["home"]))
+    entries = dlq.list(
+        domain=domain,
+        queue=queue,  # type: ignore[arg-type]
+        limit=limit,
+        include_failed=include_failed,
+    )
+    typer.echo(json.dumps([e.to_dict() for e in entries], indent=2))
+
+
+@dlq_app.command("retry")
+def mesh_dlq_retry_cmd(
+    ctx: typer.Context,
+    msg_id: str = typer.Argument(..., help="Dead-letter message id"),
+) -> None:
+    """Requeue a dead/failed inbox or dead outbound message as pending."""
+    from domain_foundry_core.mesh.observability import DeadLetterQueue
+    from domain_foundry_core.paths import Workspace
+
+    dlq = DeadLetterQueue(Workspace(ctx.obj["home"]))
+    entry = dlq.retry(msg_id)
+    if entry is None:
+        typer.echo(json.dumps({"error": "not found or not retryable", "id": msg_id}))
+        raise typer.Exit(code=1)
+    typer.echo(json.dumps(entry.to_dict(), indent=2))
+
+
 @mesh_app.command("install")
 def mesh_install_cmd(
     ctx: typer.Context,

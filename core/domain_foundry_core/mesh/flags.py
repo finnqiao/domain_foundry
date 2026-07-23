@@ -1,9 +1,9 @@
-"""Concierge UX feature flags (mesh P3).
+"""Concierge UX + mesh observability feature flags (mesh P3 / P5).
 
 Each behavior is independently gated so it can ship dark until its contract
 test is green. Env vars accept 1/true/on/yes (case-insensitive) to enable and
-0/false/off/no to disable. Defaults are ON — sensible for the scripted UX
-suite and for production once green.
+0/false/off/no to disable. UX defaults are ON — sensible for the scripted UX
+suite and for production once green. Depth alerts default OFF (opt-in).
 """
 
 from __future__ import annotations
@@ -29,6 +29,16 @@ def _env_float(name: str, default: float) -> float:
         return default
 
 
+def _env_int(name: str, default: int) -> int:
+    raw = os.environ.get(name)
+    if raw is None or raw.strip() == "":
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
+
+
 # Public flag names (returned to operators / CONVERGENCE_LOG).
 FLAG_STICKINESS = "DOMAIN_FOUNDRY_MESH_STICKINESS"
 FLAG_BARGE_IN = "DOMAIN_FOUNDRY_MESH_BARGE_IN"
@@ -37,8 +47,15 @@ FLAG_SWITCH = "DOMAIN_FOUNDRY_MESH_SWITCH"
 FLAG_STICKY_TTL_S = "DOMAIN_FOUNDRY_MESH_STICKY_TTL_S"
 FLAG_BARGE_IN_MIN_CONF = "DOMAIN_FOUNDRY_MESH_BARGE_IN_MIN_CONF"
 
+# Phase 8 observability — queue-depth threshold → Concierge outbound alert.
+FLAG_DEPTH_ALERT = "DOMAIN_FOUNDRY_MESH_DEPTH_ALERT"
+FLAG_DEPTH_ALERT_THRESHOLD = "DOMAIN_FOUNDRY_MESH_DEPTH_ALERT_THRESHOLD"
+FLAG_DEPTH_ALERT_CHANNEL = "DOMAIN_FOUNDRY_MESH_DEPTH_ALERT_CHANNEL"
+FLAG_DEPTH_ALERT_DESTINATION = "DOMAIN_FOUNDRY_MESH_DEPTH_ALERT_DESTINATION"
+
 DEFAULT_STICKY_TTL_S = 900.0  # 15 minutes
 DEFAULT_BARGE_IN_MIN_CONF = 0.85
+DEFAULT_DEPTH_ALERT_THRESHOLD = 50
 
 
 @dataclass(frozen=True)
@@ -66,10 +83,40 @@ class ConciergeUXFlags:
         )
 
 
+@dataclass(frozen=True)
+class MeshObservabilityFlags:
+    """Gates for queue-depth threshold alerts (mesh P5 / Phase 8)."""
+
+    depth_alert: bool = False
+    depth_alert_threshold: int = DEFAULT_DEPTH_ALERT_THRESHOLD
+    depth_alert_channel: str = "telegram"
+    depth_alert_destination: str = "ops"
+
+    @classmethod
+    def from_env(cls) -> MeshObservabilityFlags:
+        return cls(
+            depth_alert=_env_bool(FLAG_DEPTH_ALERT, False),
+            depth_alert_threshold=max(
+                1, _env_int(FLAG_DEPTH_ALERT_THRESHOLD, DEFAULT_DEPTH_ALERT_THRESHOLD)
+            ),
+            depth_alert_channel=os.environ.get(FLAG_DEPTH_ALERT_CHANNEL, "telegram")
+            or "telegram",
+            depth_alert_destination=os.environ.get(
+                FLAG_DEPTH_ALERT_DESTINATION, "ops"
+            )
+            or "ops",
+        )
+
+
 # Alias used in docs / commit messages.
 UX_FLAG_NAMES = (
     FLAG_STICKINESS,
     FLAG_BARGE_IN,
     FLAG_NOT_MINE,
     FLAG_SWITCH,
+)
+
+OBS_FLAG_NAMES = (
+    FLAG_DEPTH_ALERT,
+    FLAG_DEPTH_ALERT_THRESHOLD,
 )

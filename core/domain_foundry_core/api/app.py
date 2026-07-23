@@ -235,6 +235,31 @@ def create_app(
             entry_id=entry_id, change_request_id=change_request_id
         )
 
+    @app.get("/api/mesh/status")
+    def mesh_status(
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Read-only mesh dashboard stub: per-domain health + queue depths + DLQ counts."""
+        _auth(authorization)
+        return api.mesh_status()
+
+    @app.get("/api/mesh/dlq")
+    def mesh_dlq(
+        domain: str | None = None,
+        queue: str | None = None,
+        limit: int = Query(default=100, ge=1, le=500),
+        include_failed: bool = True,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Read-only dead-letter listing for the future SPA mesh dashboard."""
+        _auth(authorization)
+        return api.mesh_dlq_list(
+            domain=domain,
+            queue=queue,
+            limit=limit,
+            include_failed=include_failed,
+        )
+
     @app.post("/api/review/{approval_id}/resolve")
     def review_resolve(approval_id: str) -> dict[str, Any]:
         _gone()

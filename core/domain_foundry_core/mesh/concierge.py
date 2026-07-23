@@ -13,9 +13,10 @@ from typing import Any
 from domain_foundry_core.clock import now_iso
 from domain_foundry_core.ids import new_ulid
 from domain_foundry_core.interpret.fewshot import append_eval_case
-from domain_foundry_core.mesh.flags import ConciergeUXFlags
+from domain_foundry_core.mesh.flags import ConciergeUXFlags, MeshObservabilityFlags
 from domain_foundry_core.mesh.inbox import DomainInbox, InboxMessage
 from domain_foundry_core.mesh.journal import InboxJournal, JournalRecord
+from domain_foundry_core.mesh.observability import MeshObservability
 from domain_foundry_core.mesh.outbound import OutboundMessage, OutboundQueue
 from domain_foundry_core.mesh.sessions import DomainSessionStore
 from domain_foundry_core.mesh.ux import (
@@ -74,6 +75,7 @@ class Concierge:
         outbound: OutboundQueue | None = None,
         sessions: DomainSessionStore | None = None,
         flags: ConciergeUXFlags | None = None,
+        obs_flags: MeshObservabilityFlags | None = None,
     ) -> None:
         self.ws = workspace or Workspace()
         self.journal = journal or InboxJournal(self.ws)
@@ -82,6 +84,10 @@ class Concierge:
         self.sessions = sessions or DomainSessionStore(self.ws)
         self.router = router or Router(self.ws)
         self.flags = flags if flags is not None else ConciergeUXFlags.from_env()
+        self.obs_flags = (
+            obs_flags if obs_flags is not None else MeshObservabilityFlags.from_env()
+        )
+        self.obs = MeshObservability(self.ws, flags=self.obs_flags)
 
     def enqueue_reply(
         self,
@@ -184,7 +190,23 @@ class Concierge:
         results: list[RouteEnqueueResult] = []
         for record in self.journal.list_pending(limit=limit):
             results.append(self.route_one(record))
+        # Observability side-effect: optional queue-depth threshold alert.
+        self.maybe_enqueue_depth_alert()
         return results
+
+    def maybe_enqueue_depth_alert(
+        self,
+        *,
+        channel: str | None = None,
+        destination: str | None = None,
+    ) -> list[OutboundMessage]:
+        """Enqueue Concierge outbound alerts when inbox depth exceeds threshold.
+
+        Gated by ``DOMAIN_FOUNDRY_MESH_DEPTH_ALERT`` (default off).
+        """
+        return self.obs.maybe_enqueue_depth_alert(
+            channel=channel, destination=destination
+        )
 
     def handle_not_mine(
         self,

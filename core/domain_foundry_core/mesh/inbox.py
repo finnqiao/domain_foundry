@@ -163,6 +163,188 @@ class DomainInbox:
         finally:
             conn.close()
 
+    def dead_letter(self, msg_id: str, error: str) -> InboxMessage | None:
+        """Mark a poisoned message dead (DLQ). No automatic reclaim."""
+        conn = self._connect()
+        try:
+            conn.execute(
+                """
+                UPDATE domain_inbox
+                SET status = 'dead', acked_at = ?, error = ?
+                WHERE id = ?
+                """,
+                (now_iso(), (error or "")[:1000], msg_id),
+            )
+            conn.commit()
+            row = conn.execute(
+                "SELECT * FROM domain_inbox WHERE id = ?", (msg_id,)
+            ).fetchone()
+            return self._row_to_msg(row) if row else None
+        finally:
+            conn.close()
+
+    def retry(self, msg_id: str) -> InboxMessage | None:
+        """Requeue a failed/dead message as pending for another Expert claim."""
+        conn = self._connect()
+        try:
+            conn.execute("BEGIN IMMEDIATE")
+            row = conn.execute(
+                "SELECT * FROM domain_inbox WHERE id = ?", (msg_id,)
+            ).fetchone()
+            if row is None or row["status"] not in {"failed", "dead"}:
+                conn.commit()
+                return None
+            conn.execute(
+                """
+                UPDATE domain_inbox
+                SET status = 'pending',
+                    claimed_at = NULL,
+                    acked_at = NULL,
+                    error = NULL,
+                    reply_json = NULL
+                WHERE id = ? AND status IN ('failed', 'dead')
+                """,
+                (msg_id,),
+            )
+            if conn.total_changes == 0:
+                conn.commit()
+                return None
+            conn.commit()
+            refreshed = conn.execute(
+                "SELECT * FROM domain_inbox WHERE id = ?", (msg_id,)
+            ).fetchone()
+            return self._row_to_msg(refreshed) if refreshed else None
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
+
+    def list_dead(
+        self,
+        *,
+        domain: str | None = None,
+        limit: int = 100,
+        include_failed: bool = True,
+    ) -> list[InboxMessage]:
+        """List dead (and optionally failed) inbox rows for the DLQ CLI/API."""
+        statuses = ("dead", "failed") if include_failed else ("dead",)
+        placeholders = ",".join("?" for _ in statuses)
+        conn = self._connect()
+        try:
+            if domain:
+                rows = conn.execute(
+                    f"""
+                    SELECT * FROM domain_inbox
+                    WHERE domain = ? AND status IN ({placeholders})
+                    ORDER BY COALESCE(acked_at, enqueued_at) DESC, id DESC
+                    LIMIT ?
+                    """,
+                    (domain, *statuses, int(limit)),
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    f"""
+                    SELECT * FROM domain_inbox
+                    WHERE status IN ({placeholders})
+                    ORDER BY COALESCE(acked_at, enqueued_at) DESC, id DESC
+                    LIMIT ?
+                    """,
+                    (*statuses, int(limit)),
+                ).fetchall()
+            return [self._row_to_msg(r) for r in rows]
+        finally:
+            conn.close()
+
+    def domain_health(self, domain: str | None = None) -> dict[str, dict[str, Any]]:
+        """Per-domain inbox health: depths, last processed, error rate."""
+        conn = self._connect()
+        try:
+            if domain:
+                depth_rows = conn.execute(
+                    """
+                    SELECT domain, status, COUNT(*) AS n FROM domain_inbox
+                    WHERE domain = ? GROUP BY domain, status
+                    """,
+                    (domain,),
+                ).fetchall()
+                last_rows = conn.execute(
+                    """
+                    SELECT domain, MAX(acked_at) AS last_processed_at
+                    FROM domain_inbox
+                    WHERE domain = ? AND status = 'done' AND acked_at IS NOT NULL
+                    GROUP BY domain
+                    """,
+                    (domain,),
+                ).fetchall()
+            else:
+                depth_rows = conn.execute(
+                    """
+                    SELECT domain, status, COUNT(*) AS n
+                    FROM domain_inbox GROUP BY domain, status
+                    """
+                ).fetchall()
+                last_rows = conn.execute(
+                    """
+                    SELECT domain, MAX(acked_at) AS last_processed_at
+                    FROM domain_inbox
+                    WHERE status = 'done' AND acked_at IS NOT NULL
+                    GROUP BY domain
+                    """
+                ).fetchall()
+            out: dict[str, dict[str, Any]] = {}
+            for r in depth_rows:
+                d = str(r["domain"])
+                bucket = out.setdefault(
+                    d,
+                    {
+                        "depths": {},
+                        "pending_depth": 0,
+                        "last_processed_at": None,
+                        "processed": 0,
+                        "failed": 0,
+                        "dead": 0,
+                        "error_rate": 0.0,
+                    },
+                )
+                status = str(r["status"])
+                n = int(r["n"])
+                bucket["depths"][status] = n
+                if status in {"pending", "processing"}:
+                    bucket["pending_depth"] += n
+                if status == "done":
+                    bucket["processed"] = n
+                elif status == "failed":
+                    bucket["failed"] = n
+                elif status == "dead":
+                    bucket["dead"] = n
+            for r in last_rows:
+                d = str(r["domain"])
+                bucket = out.setdefault(
+                    d,
+                    {
+                        "depths": {},
+                        "pending_depth": 0,
+                        "last_processed_at": None,
+                        "processed": 0,
+                        "failed": 0,
+                        "dead": 0,
+                        "error_rate": 0.0,
+                    },
+                )
+                bucket["last_processed_at"] = r["last_processed_at"]
+            for bucket in out.values():
+                finished = (
+                    int(bucket["processed"])
+                    + int(bucket["failed"])
+                    + int(bucket["dead"])
+                )
+                errors = int(bucket["failed"]) + int(bucket["dead"])
+                bucket["error_rate"] = (errors / finished) if finished else 0.0
+            return out
+        finally:
+            conn.close()
+
     def depth(self, domain: str | None = None) -> dict[str, int]:
         conn = self._connect()
         try:

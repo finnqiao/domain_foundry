@@ -5,7 +5,6 @@ from __future__ import annotations
 import subprocess
 import sys
 import threading
-import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -13,6 +12,7 @@ from typing import Any
 from domain_foundry_core.clock import now
 from domain_foundry_core.mesh.inbox import DomainInbox
 from domain_foundry_core.mesh.journal import InboxJournal
+from domain_foundry_core.mesh.observability import MeshObservability
 from domain_foundry_core.mesh.outbound import OutboundQueue
 from domain_foundry_core.paths import Workspace
 
@@ -34,6 +34,10 @@ class SupervisorStatus:
     journal: dict[str, int]
     inbox_by_domain: dict[str, dict[str, int]]
     outbound: dict[str, int] = field(default_factory=dict)
+    domains: dict[str, dict[str, Any]] = field(default_factory=dict)
+    queue_depths: dict[str, int] = field(default_factory=dict)
+    dlq: dict[str, int] = field(default_factory=dict)
+    alerts: dict[str, Any] = field(default_factory=dict)
     children: list[dict[str, Any]] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
 
@@ -66,14 +70,17 @@ class Supervisor:
         self.journal = InboxJournal(self.ws)
         self.inbox = DomainInbox(self.ws)
         self.outbound = OutboundQueue(self.ws)
+        self.obs = MeshObservability(self.ws)
 
     def status(self) -> SupervisorStatus:
+        health = self.obs.health()
         children = []
         for domain, state in self._children.items():
             proc = self._procs.get(domain)
             running = proc is not None and proc.poll() is None
             state.running = running
             state.pid = proc.pid if proc and running else None
+            domain_health = dict(health.domains.get(domain) or {})
             children.append(
                 {
                     "domain": domain,
@@ -83,18 +90,25 @@ class Supervisor:
                     "last_exit": state.last_exit,
                     "last_error": state.last_error,
                     "inbox": self.inbox.depth(domain),
+                    "last_processed_at": domain_health.get("last_processed_at"),
+                    "error_rate": domain_health.get("error_rate", 0.0),
+                    "pending_depth": domain_health.get("pending_depth", 0),
                 }
             )
         return SupervisorStatus(
             home=str(self.ws.home),
-            journal=self.journal.counts(),
-            inbox_by_domain=self.inbox.depths_by_domain(),
-            outbound=self.outbound.depth(),
+            journal=health.journal,
+            inbox_by_domain=health.inbox_by_domain,
+            outbound=health.outbound,
+            domains=health.domains,
+            queue_depths=health.queue_depths,
+            dlq=health.dlq,
+            alerts=health.alerts,
             children=children,
-            notes=[
+            notes=list(health.notes)
+            + [
                 "launchd install stubbed — use `domain-foundry mesh install` TODO",
                 "gateway fast path: private logbook plugin (HERMES_MESH_FAST_PATH)",
-                "outbound_queue: ledger-backed; private poller adopts DF claim/ack/fail",
             ],
         )
 

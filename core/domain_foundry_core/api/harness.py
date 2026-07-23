@@ -910,3 +910,69 @@ class HarnessAPI:
             }
             for r in results
         ]
+
+    # -------------------------------------------------------- mesh observability (P8)
+    def mesh_status(self) -> dict[str, Any]:
+        """Read-only mesh health: per-domain depths, last processed, error rate, DLQ."""
+        from dataclasses import asdict
+
+        from domain_foundry_core.mesh.supervisor import Supervisor
+
+        return asdict(Supervisor(self.workspace).status())
+
+    def mesh_dlq_list(
+        self,
+        *,
+        domain: str | None = None,
+        queue: str | None = None,
+        limit: int = 100,
+        include_failed: bool = True,
+    ) -> dict[str, Any]:
+        """Read-only dead-letter listing for the mesh dashboard stub."""
+        from domain_foundry_core.mesh.observability import DeadLetterQueue
+
+        if queue is not None and queue not in {"inbox", "outbound"}:
+            return {"error": "queue must be inbox or outbound", "entries": []}
+        entries = DeadLetterQueue(self.workspace).list(
+            domain=domain,
+            queue=queue,  # type: ignore[arg-type]
+            limit=limit,
+            include_failed=include_failed,
+        )
+        return {"entries": [e.to_dict() for e in entries]}
+
+    def mesh_dlq_retry(self, msg_id: str) -> dict[str, Any]:
+        """Requeue a DLQ row (CLI / operator path; not exposed as HTTP write)."""
+        from domain_foundry_core.mesh.observability import DeadLetterQueue
+
+        entry = DeadLetterQueue(self.workspace).retry(msg_id)
+        if entry is None:
+            return {"error": "not found or not retryable", "id": msg_id}
+        return entry.to_dict()
+
+    def mesh_check_depth_alerts(
+        self,
+        *,
+        flags: Any | None = None,
+        channel: str | None = None,
+        destination: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Evaluate queue-depth threshold and enqueue Concierge outbound alerts."""
+        from domain_foundry_core.mesh.flags import MeshObservabilityFlags
+        from domain_foundry_core.mesh.observability import MeshObservability
+
+        obs_flags = flags if flags is not None else MeshObservabilityFlags.from_env()
+        msgs = MeshObservability(self.workspace, flags=obs_flags).maybe_enqueue_depth_alert(
+            channel=channel, destination=destination
+        )
+        return [
+            {
+                "id": m.id,
+                "origin_domain": m.origin_domain,
+                "text": m.text,
+                "status": m.status,
+                "channel": m.channel,
+                "destination": m.destination,
+            }
+            for m in msgs
+        ]
