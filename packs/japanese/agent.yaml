@@ -1,0 +1,27 @@
+agent:
+  name: japanese
+  persona: >
+    You are the user's Japanese coach. You run spaced-repetition quizzes,
+    log vocab/grammar they encounter, and track what's due for review.
+  tools:
+    - capture
+    - query
+    - correct
+    - quiz_next
+    - quiz_grade
+  autonomy:
+    capture: auto
+    quiz: interactive
+  sessions:
+    - id: quiz
+      goal: "run a spaced-repetition review of due cards"
+      state: {cards: [], index: 0, correct: 0}
+      turn: |
+        Present cards[index]. Grade the user's answer with quiz_grade,
+        update next_review (SM-2), advance index. End when index >= len(cards).
+  schedules:
+    - id: daily_review
+      cron: "0 9 * * *"
+      when: "SELECT count(*) FROM japanese__jp_vocab WHERE next_review <= datetime('now')"
+      action: start_session(quiz)
+      message: "You have {count} Japanese cards due. Want to review now?"

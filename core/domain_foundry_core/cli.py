@@ -19,6 +19,8 @@ app = typer.Typer(
 )
 pack_app = typer.Typer(help="Manage Domain Packs")
 app.add_typer(pack_app, name="pack")
+mesh_app = typer.Typer(help="Domain mesh (Concierge / Experts / Supervisor)")
+app.add_typer(mesh_app, name="mesh")
 
 
 def _home(home: Path | None) -> Path:
@@ -408,6 +410,108 @@ def wizard_suggest_cmd(
     """Show a repeated-correction hardening suggestion for a domain (§8.4)."""
     api = HarnessAPI(ctx.obj["home"])
     typer.echo(json.dumps(api.wizard_suggest(domain), indent=2, ensure_ascii=False))
+
+
+@mesh_app.command("status")
+def mesh_status_cmd(ctx: typer.Context) -> None:
+    """One-glance mesh health: journal counts, inbox depths, child state."""
+    from dataclasses import asdict
+
+    from domain_foundry_core.mesh.supervisor import Supervisor
+    from domain_foundry_core.paths import Workspace
+
+    supervisor = Supervisor(Workspace(ctx.obj["home"]))
+    status = supervisor.status()
+    typer.echo(json.dumps(asdict(status), indent=2))
+
+
+@mesh_app.command("install")
+def mesh_install_cmd(
+    ctx: typer.Context,
+    dry_run: bool = typer.Option(
+        True, "--dry-run/--apply", help="Print plist stubs (default); apply is TODO"
+    ),
+) -> None:
+    """Generate launchd plists for Concierge + Supervisor (max 2).
+
+    TODO(mesh): write plists under ~/Library/LaunchAgents and launchctl load.
+    Foundation only prints stubs.
+    """
+    from domain_foundry_core.mesh.supervisor import generate_launchd_plist_stub
+    from domain_foundry_core.paths import Workspace
+
+    home = ctx.obj["home"]
+    ws = Workspace(home)
+    concierge = generate_launchd_plist_stub(
+        label="ai.domainfoundry.mesh.concierge",
+        program_args=["domain-foundry", "--home", str(ws.home), "mesh", "concierge"],
+        home=ws.home,
+    )
+    supervisor = generate_launchd_plist_stub(
+        label="ai.domainfoundry.mesh.supervisor",
+        program_args=["domain-foundry", "--home", str(ws.home), "mesh", "supervise"],
+        home=ws.home,
+    )
+    typer.echo("# TODO: mesh install — launchd write/load not implemented yet")
+    typer.echo("# --- concierge.plist ---")
+    typer.echo(concierge)
+    typer.echo("# --- supervisor.plist ---")
+    typer.echo(supervisor)
+    if not dry_run:
+        typer.echo(
+            "apply requested but install wiring is stubbed; use --dry-run",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+
+@mesh_app.command("concierge")
+def mesh_concierge_cmd(
+    ctx: typer.Context,
+    once: bool = typer.Option(False, "--once", help="Drain pending journal once and exit"),
+) -> None:
+    """Run the Concierge drain loop (foundation: one-shot or poll)."""
+    import time
+
+    from domain_foundry_core.mesh.concierge import Concierge
+    from domain_foundry_core.paths import Workspace
+
+    concierge = Concierge(Workspace(ctx.obj["home"]))
+    if once:
+        results = concierge.drain()
+        typer.echo(json.dumps([r.__dict__ for r in results], indent=2))
+        return
+    typer.echo("concierge polling (Ctrl-C to stop)")
+    try:
+        while True:
+            concierge.drain()
+            time.sleep(0.2)
+    except KeyboardInterrupt:
+        typer.echo("stopped")
+
+
+@mesh_app.command("supervise")
+def mesh_supervise_cmd(
+    ctx: typer.Context,
+    domain: list[str] = typer.Option(
+        ["japanese", "food"], "--domain", "-d", help="Expert domains to supervise"
+    ),
+) -> None:
+    """Start Supervisor monitoring Expert children (foundation skeleton)."""
+    import time
+
+    from domain_foundry_core.mesh.supervisor import Supervisor
+    from domain_foundry_core.paths import Workspace
+
+    supervisor = Supervisor(Workspace(ctx.obj["home"]), domains=list(domain))
+    supervisor.start_all()
+    typer.echo(json.dumps({"started": list(domain), "home": str(ctx.obj["home"])}))
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        supervisor.stop_all()
+        typer.echo("stopped")
 
 
 if __name__ == "__main__":

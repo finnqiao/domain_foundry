@@ -84,6 +84,16 @@ def test_food_v2_parity_and_geo_fields():
     assert "ease_factor" not in recipe  # food must not grow SRS fields
 
 
+def test_phase3_agent_yaml_surface():
+    for name in ("japanese", "food"):
+        pack = load_pack(REPO / "packs" / name, validate=True)
+        assert pack.agent is not None
+        assert pack.agent.name == name
+        assert pack.agent.tools
+        assert isinstance(pack.agent.sessions, list)
+        assert isinstance(pack.agent.schedules, list)
+
+
 def test_template_fails_until_renamed_examples_ok():
     # template is valid as-is (≥8 examples)
     pack = load_pack(REPO / "packs" / "_template", validate=True)
