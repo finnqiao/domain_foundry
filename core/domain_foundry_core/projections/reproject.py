@@ -199,34 +199,13 @@ class VaultReprojector:
         planned_writes: list[tuple[NoteDiff, str, Path]] = []
         for key in keys:
             for plan in self.adapter.plan_notes(key):
-                rel = plan["rel_path"]
-                target = safe_join(self.vault, rel)
-                existing: str | None
-                if target.is_file():
-                    existing = target.read_text(encoding="utf-8", errors="replace")
-                else:
-                    existing = None
-                preview = preview_managed_write(existing, plan["rendered"])
-                if not preview["content_changed"]:
-                    action = "noop"
-                elif not preview["unmanaged_unchanged"]:
-                    action = "blocked"
-                elif preview["would_create"]:
-                    action = "create"
-                else:
-                    action = "update"
-                diff = NoteDiff(
-                    rel_path=rel,
-                    object_uid=plan["object_uid"],
-                    entry_id=plan["entry_id"],
-                    would_create=bool(preview["would_create"]),
-                    content_changed=bool(preview["content_changed"]),
-                    unmanaged_unchanged=bool(preview["unmanaged_unchanged"]),
-                    action=action,
-                )
-                report.notes.append(diff)
-                if action in {"create", "update"}:
-                    planned_writes.append((diff, preview["merged"], target))
+                self._plan_one(report, planned_writes, plan)
+
+        # Japanese Anki dashboard: managed "Japanese — Due today" note.
+        if self.domains is None or "japanese" in self.domains:
+            dash = self.adapter.render_due_dashboard("japanese")
+            if dash is not None:
+                self._plan_one(report, planned_writes, dash)
 
         if apply:
             if not report.unmanaged_ok:
@@ -240,3 +219,38 @@ class VaultReprojector:
             report.applied = True
             report.dry_run = False
         return report
+
+    def _plan_one(
+        self,
+        report: ReprojectReport,
+        planned_writes: list[tuple[NoteDiff, str, Path]],
+        plan: dict[str, Any],
+    ) -> None:
+        rel = plan["rel_path"]
+        target = safe_join(self.vault, rel)
+        existing: str | None
+        if target.is_file():
+            existing = target.read_text(encoding="utf-8", errors="replace")
+        else:
+            existing = None
+        preview = preview_managed_write(existing, plan["rendered"])
+        if not preview["content_changed"]:
+            action = "noop"
+        elif not preview["unmanaged_unchanged"]:
+            action = "blocked"
+        elif preview["would_create"]:
+            action = "create"
+        else:
+            action = "update"
+        diff = NoteDiff(
+            rel_path=rel,
+            object_uid=plan["object_uid"],
+            entry_id=str(plan.get("entry_id") or ""),
+            would_create=bool(preview["would_create"]),
+            content_changed=bool(preview["content_changed"]),
+            unmanaged_unchanged=bool(preview["unmanaged_unchanged"]),
+            action=action,
+        )
+        report.notes.append(diff)
+        if action in {"create", "update"}:
+            planned_writes.append((diff, preview["merged"], target))

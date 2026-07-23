@@ -14,6 +14,7 @@ objects:
       interval_days: {type: number, default: 0, unit: days, min: 0}
       reps: {type: integer, default: 0, min: 0}
       lapses: {type: integer, default: 0, min: 0}
+      learning_step: {type: integer, default: 0, min: 0}
       next_review: {type: date}
       last_reviewed: {type: datetime}
       notes: {type: text, long: true}
@@ -33,6 +34,7 @@ objects:
       interval_days: {type: number, default: 0, unit: days, min: 0}
       reps: {type: integer, default: 0, min: 0}
       lapses: {type: integer, default: 0, min: 0}
+      learning_step: {type: integer, default: 0, min: 0}
       next_review: {type: date}
       last_reviewed: {type: datetime}
       notes: {type: text, long: true}

@@ -222,8 +222,9 @@ def test_again_hard_good_easy_handlers(jp_home: Workspace):
 def test_schedule_stub_enqueues_outbound_and_starts_session(jp_home: Workspace):
     _seed_vocab(jp_home, [{"word": "朝", "meaning": "morning"}])
     quiz = QuizSession(jp_home)
-    session, outbound_id = quiz.start_from_schedule("daily_review")
-    assert session.status == "active"
+    session, outbound_id, info = quiz.start_from_schedule("daily_review")
+    assert info["fired"] is True
+    assert session is not None and session.status == "active"
     assert outbound_id
     run = ScheduleRunStore(jp_home).get("japanese", "daily_review")
     assert run is not None and run.fire_count == 1
@@ -232,6 +233,14 @@ def test_schedule_stub_enqueues_outbound_and_starts_session(jp_home: Workspace):
     assert claimed[0].id == outbound_id
     assert "cards due" in claimed[0].text.lower() or "Japanese" in claimed[0].text
     assert claimed[0].prefixed_text().startswith("[japanese]")
+
+    # Idempotent: second evaluate in same 09:00 window must not re-fire.
+    session2, outbound2, info2 = quiz.start_from_schedule("daily_review")
+    assert info2["fired"] is False
+    assert info2["skipped_reason"] == "already_fired"
+    assert session2 is None and outbound2 is None
+    run2 = ScheduleRunStore(jp_home).get("japanese", "daily_review")
+    assert run2 is not None and run2.fire_count == 1
 
 
 def test_expert_quiz_grade_path(jp_home: Workspace):
@@ -289,3 +298,92 @@ def test_session_resume_after_restart(jp_home: Workspace):
     assert nxt["active"] is True
     assert nxt["prompt"] == "二"
     assert nxt["index"] == 1
+
+
+def test_new_card_introduction_rate_caps_queue(jp_home: Workspace):
+    _seed_vocab(
+        jp_home,
+        [{"word": f"n{i}", "meaning": f"m{i}"} for i in range(10)],
+    )
+    quiz = QuizSession(jp_home, new_card_limit=3)
+    queue = quiz.build_due_first_queue(include_grammar=False, new_card_limit=3)
+    assert len(queue) == 3
+    assert all(not c.due for c in queue)
+
+    api = HarnessAPI(jp_home.home)
+    started = api.quiz_start(include_grammar=False, new_card_limit=2)
+    assert started["total"] == 2
+    assert started["new_count"] == 2
+    assert started["due_count"] == 0
+    assert started["new_card_limit"] == 2
+
+
+def test_quiz_stats_aggregates_review_events(jp_home: Workspace):
+    _seed_vocab(
+        jp_home,
+        [
+            {
+                "word": "due1",
+                "meaning": "d",
+                "reps": 1,
+                "next_review": "2026-07-10",
+                "ease_factor": 2.5,
+                "interval_days": 1,
+            },
+            {"word": "new1", "meaning": "n"},
+        ],
+    )
+    api = HarnessAPI(jp_home.home)
+    started = api.quiz_start(limit=1, include_grammar=False)
+    api.quiz_grade("good", session_id=started["session_id"])
+    stats = api.quiz_stats()
+    assert stats["review_count"] == 1
+    assert stats["grade_distribution"].get("good") == 1
+    assert stats["algorithm_distribution"].get("sm2") == 1
+    assert stats["due_count"] >= 0
+    assert stats["new_count"] >= 1
+
+
+def test_vault_vocab_frontmatter_and_due_dashboard(jp_home: Workspace, tmp_path: Path):
+    from domain_foundry_core.projections.reproject import VaultReprojector
+
+    _seed_vocab(
+        jp_home,
+        [
+            {
+                "word": "食べる",
+                "meaning": "to eat",
+                "reps": 2,
+                "next_review": "2026-07-10",
+                "ease_factor": 2.5,
+                "interval_days": 6,
+            },
+            {"word": "新しい", "meaning": "new"},
+        ],
+    )
+    vault = tmp_path / "vault"
+    report = VaultReprojector(
+        jp_home,
+        vault=vault,
+        domains=["japanese"],
+        folder_map={"japanese": "06_Japanese"},
+    ).run(apply=True)
+    assert report.applied
+    assert report.unmanaged_ok
+
+    # Vocab note carries next_review + reps frontmatter inside managed body.
+    vocab_notes = [
+        n for n in report.notes if "/jp_vocab/" in n.rel_path and n.action == "create"
+    ]
+    assert vocab_notes
+    sample = vault / vocab_notes[0].rel_path
+    text = sample.read_text(encoding="utf-8")
+    assert "next_review:" in text
+    assert "reps:" in text
+
+    dash_path = vault / "06_Japanese" / "Japanese — Due today.md"
+    assert dash_path.is_file()
+    dash = dash_path.read_text(encoding="utf-8")
+    assert "Japanese — Due today" in dash
+    assert "食べる" in dash
+    assert "due_dashboard:japanese" in dash

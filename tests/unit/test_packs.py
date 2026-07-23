@@ -11,7 +11,7 @@ REPO = Path(__file__).resolve().parents[2]
 
 PHASE2_PACKS = ("japanese", "health", "dev", "food")
 GEO_FIELDS = ("lat", "lng", "place_id", "place_name")
-SM2_FIELDS = ("ease_factor", "interval_days", "reps", "lapses", "next_review")
+SM2_FIELDS = ("ease_factor", "interval_days", "reps", "lapses", "next_review", "learning_step")
 
 
 def test_load_plants_and_sourdough():
