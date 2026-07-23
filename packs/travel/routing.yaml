@@ -19,14 +19,23 @@ rules:
     operation: create
     confidence_boost: 0.12
 
-  # --- booking: bookings-lite -------------------------------------------------
+  # --- booking: bookings-lite (Hermes travel.admin flight/hotel/visa/booking) --
   - match: "(\\bbooked\\b|reserved|reservation|confirmed (?:the )?booking|deposit for|tickets for|hold on the|nabbed a table)"
     object: booking
     operation: create
     confidence_boost: 0.12
+  - match: "\\b(flight|boarding(?: pass)?|\\bhotel\\b|\\bvisa\\b|airbnb|ferry(?: tickets?)?|lodging|confirmation #)\\b"
+    object: booking
+    operation: create
+    confidence_boost: 0.11
 
   # --- timeline item: a dated/ordered thing on a trip -------------------------
   - match: "(itinerary|day plan|excursion|guided tour|walking tour|boat tour|city tour|sightseeing|check[- ]?in at|transfer (?:to|from)|day \\d+:|free (?:day|morning|afternoon)|visit the)"
+    object: timeline_item
+    operation: create
+    confidence_boost: 0.1
+  # Hermes fewshot ports: mid-trip errands / timeline cleanup language
+  - match: "(grocery run|between .+ tour and|timeline(?: item| card)?|moved the .+ into the (?:correct )?trip|day \\d+ -)"
     object: timeline_item
     operation: create
     confidence_boost: 0.1
@@ -52,11 +61,23 @@ examples:
     expect: {object: booking, operation: update, fields: {status: paid}}
   - text: "moved the museum visit to day 3"
     expect: {object: timeline_item, operation: update}
+  # Hermes fewshot ports (synthetic)
+  - text: "Hotel reservation confirmation at Meadowbrook Inn. Confirmation #51812441. Check-in Thu Jun 18."
+    expect: {object: booking, operation: create}
+  - text: "Need a grocery run between puffin tour and dinner on July 10 for tomorrow's tour supplies"
+    expect: {object: timeline_item, operation: create}
+  - text: "Day 1 - Snæfellsnes Peninsula: Ytri Tunga, Kirkjufell, Berserkjahraun"
+    expect: {object: timeline_item, operation: create}
+  - text: "Updated trip ferry Moskenes→Bodø to 10:00-13:30; flight BOO→CPH now 15:00-18:25"
+    expect: {object: booking, operation: create}
+  - text: "Jun 7-18 lodging: transit nights need no stay; Jun 9-18 staying with friend — all lodging accounted for"
+    expect: {object: booking, operation: create}
 
 negative_examples:
   - text: "the app build is toast"
   - text: "deploy the release candidate tonight"
   - text: "merge the feature flag behind a gate"
+  - text: "magnesium 400mg capsule after the evening run"
 
 llm_hints: >
   Open-context hint: when a timeline item or booking does not name a trip, attach
@@ -65,4 +86,6 @@ llm_hints: >
   transfer, lodging, meal, free time); a booking is a lightweight reservation
   record. Cross-domain: a meal eaten out is a `food.dining` record — link the
   travel timeline item to it rather than duplicating the dining details here.
-  Use synthetic place names in examples (Port City, River Station, Old Town).
+  Hotel/flight/ferry/visa/Airbnb confirmations are bookings. Mid-trip errands
+  and day-by-day itinerary language are timeline items. Use synthetic place
+  names in examples (Port City, River Station, Old Town).

@@ -9,23 +9,60 @@ rules:
     operation: update
     confidence_boost: 0.15
 
+  # --- dining: eating out (boost above drink tasting so pairings stay dining) -
+  # Ported from Hermes classify: omakase/izakaya/tasting menu + place dining.
+  - match: "(\\btasting menu\\b|\\bomakase\\b|\\bizakaya\\b|dined(?: at)?|\\brestaurant\\b|reservation at)"
+    object: dining
+    operation: create
+    confidence_boost: 0.13
+  - match: "(ate at|dinner at|lunch at|breakfast at|brunch at|takeout from|ordered (?:the|from)|meal at|\\bcafe\\b|\\bbistro\\b|food truck|(?:flat white|espresso|latte|cortado) at)"
+    object: dining
+    operation: create
+    confidence_boost: 0.12
+
   # --- concept: an idea you want to chase later -------------------------------
-  - match: "(\\bidea\\b|want to (?:try|make|cook)|someday i'?d? (?:like|love)|craving to make|bucket[- ]?list dish|would love to (?:cook|make)|inspiration to try)"
+  - match: "(\\bidea\\b|want to (?:try|make|cook)|someday i'?d? (?:like|love)|craving to make|bucket[- ]?list dish|would love to (?:cook|make)|inspiration to try|dinner idea)"
     object: idea
     operation: create
     confidence_boost: 0.12
 
   # --- recipe: a formalized method --------------------------------------------
-  - match: "(\\brecipe\\b|method for making|formula for|recipe card|wrote (?:down|up) (?:the|a) recipe)"
+  - match: "(\\brecipe\\b|method for making|formula for|recipe card|wrote (?:down|up) (?:the|a) recipe|ingredient|meal prep|leftover)"
     object: recipe
     operation: create
     confidence_boost: 0.12
 
-  # --- dining: eating out -----------------------------------------------------
-  - match: "(ate at|dined at|dinner at|lunch at|breakfast at|brunch at|takeout from|ordered (?:the|from)|meal at|\\brestaurant\\b|\\bcafe\\b|\\bbistro\\b|food truck)"
-    object: dining
+  # --- recipe attempt / cook test (Hermes recipe_attempt) ---------------------
+  - match: "\\b(test|attempt|tried|held better|revision)\\b.*\\b(tofu|dish|recipe|cook|sauce|dough|mapo|stew|curry|bread|pasta)\\b|\\b(mapo|tofu|stew|curry)\\b.*\\b(test|held|better|less|more)\\b"
+    object: cook
     operation: create
-    confidence_boost: 0.1
+    confidence_boost: 0.11
+
+  # --- technique / brew notes → observation (Hermes food_note technique) ------
+  - match: "\\b(grind|finer|coarser|technique|dial in|extraction|bloom|ratio|steep|brew|ferment|proof|knead|fold|whisk|emulsif|fat wash|milk wash)\\b"
+    object: observation
+    operation: create
+    confidence_boost: 0.11
+
+  # --- drink tasting notes (sake/cocktail/wine/coffee) → observation ----------
+  # Boost BELOW dining so restaurant tasting menus with pairings stay dining.
+  # Mapped to observation until P2 adds coffee_note/drink_note objects.
+  - match: "\\b(sake|junmai|daiginjo|ginjo|honjozo|nigori|namazake|nihonshu)\\b"
+    object: observation
+    operation: create
+    confidence_boost: 0.09
+  - match: "\\b(cocktail|martini|negroni|manhattan|margarita|spritz|highball|old fashioned|gimlet|daiquiri|\\bsour\\b)\\b"
+    object: observation
+    operation: create
+    confidence_boost: 0.09
+  - match: "\\b(wine|riesling|pinot|nebbiolo|chardonnay|cabernet|merlot|syrah|bordeaux|burgundy|vintage)\\b"
+    object: observation
+    operation: create
+    confidence_boost: 0.09
+  - match: "\\b(coffee|espresso|latte|cortado|cappuccino|flat white|pour[- ]?over|V60|aeropress|siphon|cold[- ]?brew|batch brew|single origin|sous vide coffee|roastery)\\b"
+    object: observation
+    operation: create
+    confidence_boost: 0.09
 
   # --- observation: a learning / takeaway -------------------------------------
   - match: "(learned that|noticed that|next time i|takeaway:|note to self|lesson learned|observation:|realized that)"
@@ -62,11 +99,29 @@ examples:
     expect: {object: recipe, operation: update}
   - text: "dropping the sous-vide egg idea, never works for me"
     expect: {object: idea, operation: update, fields: {status: dropped}}
+  # Hermes fewshot ports (synthetic places; object map = current pack schema)
+  - text: "Harbor Tasting Room tasting menu with junmai daiginjo pairing on course 3"
+    expect: {object: dining, operation: create}
+  - text: "cocktail menu — Love Potion with coffee liqueur and espresso; Old Fashioned specs"
+    expect: {object: observation, operation: create}
+  - text: "mapo tofu test — held better with less chili oil this revision"
+    expect: {object: cook, operation: create}
+  - text: "dialed in the V60, grind finer, 1:16 ratio, 45s bloom"
+    expect: {object: observation, operation: create}
+  - text: "Pastel de Nata recipe: dough 250g flour, custard with egg yolks, bake hot"
+    expect: {object: recipe, operation: create}
+  - text: "omakase at the corner izakaya, reservation at 7"
+    expect: {object: dining, operation: create}
+  - text: "junmai tasting notes — fragrant, dry finish, bottle from the shop"
+    expect: {object: observation, operation: create}
 
 negative_examples:
   - text: "the app build is toast"
   - text: "deploy the release candidate tonight"
   - text: "merge the feature flag behind a gate"
+  # Health/supplement must not become food (P0 fitness-rule lesson; health pack is P2)
+  - text: "magnesium 400mg capsule after the evening run"
+  - text: "took creatine and vitamin D this morning"
 
 llm_hints: >
   Distinguish the lifecycle stages: an idea is something to try later; a recipe
@@ -74,3 +129,7 @@ llm_hints: >
   meal eaten out; an observation is a learning to remember. Prefer cook over
   idea/recipe when the message describes actually making food. "Made" / "cooked"
   is a cook, not a recipe. Ratings/outcomes are enums (great, good, decent).
+  Restaurant tasting menus (and pairings that mention sake/wine/cocktail) are
+  dining, not drink tasting notes. Standalone sake/cocktail/wine/coffee tasting
+  or brew technique notes are observations until drink-specific objects land.
+  Recipe attempts ("mapo tofu test, held better…") are cooks.
