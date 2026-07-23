@@ -1,0 +1,9 @@
+name: japanese
+version: 0.1.0
+title: "Japanese Study"
+description: "Vocab and grammar cards with SM-2 spaced repetition, plus per-review event history for algorithm swaps later."
+author: "domain_foundry"
+license: MIT
+core_compat: ">=0.1,<2"
+interpretation: structured
+aliases: [jp, nihongo, anki, srs]

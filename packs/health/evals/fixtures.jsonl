@@ -1,0 +1,8 @@
+{"id": "health_001", "raw_text": "took creatine 5g this morning", "expected": {"captures": [{"domain": "health", "object_type": "supplement", "operation": "create"}], "tags": ["health", "supplement", "single"]}}
+{"id": "health_002", "raw_text": "took metformin 500mg with breakfast", "expected": {"captures": [{"domain": "health", "object_type": "medication", "operation": "create"}], "tags": ["health", "medication", "single"]}}
+{"id": "health_003", "raw_text": "workout 60 min deadlift 3x4", "expected": {"captures": [{"domain": "health", "object_type": "fitness", "operation": "create"}], "tags": ["health", "fitness", "single"]}}
+{"id": "health_004", "raw_text": "lab: LDL 98 mg/dL in range", "expected": {"captures": [{"domain": "health", "object_type": "lab", "operation": "create"}], "tags": ["health", "lab", "single"]}}
+{"id": "health_005", "raw_text": "finished a 16:8 fast, 16 hours", "expected": {"captures": [{"domain": "health", "object_type": "fasting", "operation": "create"}], "tags": ["health", "fasting", "single"]}}
+{"id": "health_006", "raw_text": "supplement: magnesium 400mg before bed", "expected": {"captures": [{"domain": "health", "object_type": "supplement", "operation": "create"}], "tags": ["health", "supplement", "single"]}}
+{"id": "health_007", "raw_text": "rx: lisinopril this morning", "expected": {"captures": [{"domain": "health", "object_type": "medication", "operation": "create"}], "tags": ["health", "medication", "single"]}}
+{"id": "health_008", "raw_text": "blood work HbA1c 5.2", "expected": {"captures": [{"domain": "health", "object_type": "lab", "operation": "create"}], "tags": ["health", "lab", "single"]}}

@@ -1,0 +1,63 @@
+objects:
+  # Canonical: health.supplement (singular). personal.sqlite health_supplement parity.
+  supplement:
+    title_field: name
+    fields:
+      name: {type: text, required: true}
+      dose_value: {type: number}
+      dose_unit: {type: enum, values: [mg, mcg, g, iu, ml, tablet, capsule, drop], allow_other: true}
+      timing: {type: enum, values: [morning, evening, night, before_bed, pre_workout, with_food, with_breakfast, with_dinner], allow_other: true}
+      brand: {type: text}
+      status: {type: enum, values: [taken, skipped, delayed, logged], default: taken, allow_other: true}
+      taken_at: {type: datetime, required: true, default: capture_time}
+      notes: {type: text, long: true}
+
+  # Canonical: health.medication. Shares intake shape with supplement; kind is prescription.
+  medication:
+    title_field: name
+    fields:
+      name: {type: text, required: true}
+      dose_value: {type: number}
+      dose_unit: {type: enum, values: [mg, mcg, g, iu, ml, tablet, capsule, drop], allow_other: true}
+      timing: {type: enum, values: [morning, evening, night, before_bed, with_food, with_breakfast, with_dinner], allow_other: true}
+      prescription: {type: boolean, default: true}
+      status: {type: enum, values: [taken, skipped, delayed, logged], default: taken, allow_other: true}
+      taken_at: {type: datetime, required: true, default: capture_time}
+      notes: {type: text, long: true}
+
+  # Canonical: health.fitness. personal.sqlite health_workout parity.
+  fitness:
+    title_field: summary
+    fields:
+      summary: {type: text, required: true}
+      session_date: {type: date}
+      muscles_primary: {type: text}
+      bodyweight_kg: {type: number, unit: kg}
+      exercises: {type: text, long: true}
+      duration_min: {type: integer, unit: minutes, min: 0}
+      noted_at: {type: datetime, required: true, default: capture_time}
+      notes: {type: text, long: true}
+
+  # Canonical: health.lab. personal.sqlite health_blood parity.
+  lab:
+    title_field: marker
+    fields:
+      marker: {type: text, required: true}
+      value: {type: number}
+      unit: {type: text}
+      reference_range: {type: text}
+      in_range: {type: boolean}
+      lab_name: {type: text}
+      test_date: {type: date}
+      noted_at: {type: datetime, required: true, default: capture_time}
+      notes: {type: text, long: true}
+
+  # Canonical: health.fasting. personal.sqlite health_fast parity.
+  fasting:
+    title_field: protocol
+    fields:
+      protocol: {type: text, required: true}
+      fast_hours: {type: number, unit: hours, min: 0}
+      break_time: {type: datetime}
+      noted_at: {type: datetime, required: true, default: capture_time}
+      notes: {type: text, long: true}

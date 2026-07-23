@@ -1,0 +1,8 @@
+{"id": "jp_001", "raw_text": "vocab: 産業 / さんぎょう / industry", "expected": {"captures": [{"domain": "japanese", "object_type": "jp_vocab", "operation": "create"}], "tags": ["japanese", "vocab", "single"]}}
+{"id": "jp_002", "raw_text": "日本語単語: 製造業 reading せいぞうぎょう meaning manufacturing", "expected": {"captures": [{"domain": "japanese", "object_type": "jp_vocab", "operation": "create"}], "tags": ["japanese", "vocab", "single"]}}
+{"id": "jp_003", "raw_text": "grammar: 〜てしまう means regrettable completion", "expected": {"captures": [{"domain": "japanese", "object_type": "jp_grammar", "operation": "create"}], "tags": ["japanese", "grammar", "single"]}}
+{"id": "jp_004", "raw_text": "文法ノート: とは / といえば topic-definition patterns", "expected": {"captures": [{"domain": "japanese", "object_type": "jp_grammar", "operation": "create"}], "tags": ["japanese", "grammar", "single"]}}
+{"id": "jp_005", "raw_text": "reviewed 産業 as good, interval 3→7 days SM-2", "expected": {"captures": [{"domain": "japanese", "object_type": "review_event", "operation": "create"}], "tags": ["japanese", "review", "single"]}}
+{"id": "jp_006", "raw_text": "anki card 医療 いりょう medical care N2", "expected": {"captures": [{"domain": "japanese", "object_type": "jp_vocab", "operation": "create"}], "tags": ["japanese", "vocab", "single"]}}
+{"id": "jp_007", "raw_text": "JLPT N3 grammar 〜ばかりだ example 勉強したばかりだ", "expected": {"captures": [{"domain": "japanese", "object_type": "jp_grammar", "operation": "create"}], "tags": ["japanese", "grammar", "single"]}}
+{"id": "jp_008", "raw_text": "quiz again on 〜てしまう, hard", "expected": {"captures": [{"domain": "japanese", "object_type": "review_event", "operation": "create"}], "tags": ["japanese", "review", "single"]}}

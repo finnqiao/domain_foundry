@@ -5,7 +5,10 @@ app:
     - {id: recipes, title: "Recipes", block: list, object: recipe, config: {group_by: status}}
     - {id: ideas, title: "Ideas", block: list, object: idea, config: {group_by: status}}
     - {id: dining, title: "Dining", block: timeline, object: dining, config: {date_field: dined_at}}
-    - {id: find, title: "Find", block: search, objects: [cook, dining, recipe], config: {facets: [outcome, rating, cuisine]}}
+    - {id: coffee, title: "Coffee", block: timeline, object: coffee_note, config: {date_field: visited_at}}
+    - {id: drinks, title: "Drinks", block: list, object: drink_note, config: {group_by: category}}
+    - {id: attempts, title: "Attempts", block: timeline, object: recipe_attempt, config: {date_field: attempted_at}}
+    - {id: find, title: "Find", block: search, objects: [cook, dining, recipe, coffee_note, drink_note, dining_note], config: {facets: [outcome, rating, cuisine, category]}}
     - {id: progress, title: "Progress", block: stats, object: cook, config: {measures: [{field: outcome, agg: distribution}]}}
     - {id: history, title: "History", block: history, object: cook, config: {date_field: made_at, period: month}}
     - {id: learnings, title: "Learnings", block: list, object: observation, config: {group_by: topic}}

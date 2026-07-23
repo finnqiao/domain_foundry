@@ -1,0 +1,11 @@
+app:
+  icon: "💊"
+  views:
+    - {id: intake, title: "Intake", block: timeline, object: supplement, config: {date_field: taken_at}}
+    - {id: meds, title: "Meds", block: timeline, object: medication, config: {date_field: taken_at}}
+    - {id: fitness, title: "Fitness", block: timeline, object: fitness, config: {date_field: noted_at}}
+    - {id: labs, title: "Labs", block: list, object: lab, config: {group_by: marker}}
+    - {id: fasting, title: "Fasting", block: timeline, object: fasting, config: {date_field: noted_at}}
+    - {id: find, title: "Find", block: search, objects: [supplement, medication, fitness, lab], config: {facets: [status, timing]}}
+markdown:
+  folder: "Health"

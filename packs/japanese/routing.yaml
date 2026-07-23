@@ -1,0 +1,58 @@
+rules:
+  # Review events win when the message is clearly a grade/quiz result
+  - match: "(reviewed|quiz(?:zed)?|\\bagain\\b|\\bhard\\b|\\bgood\\b|\\beasy\\b).{0,40}(vocab|grammar|カード|単語|文法)|SRS|SM-?2|spaced[- ]?repetition"
+    object: review_event
+    operation: create
+    confidence_boost: 0.15
+
+  # Grammar forms / patterns
+  - match: "(文法|grammar|〜|〜る|〜た|particle|助詞|活用|conjugation|jlpt\\s*n[1-5].{0,20}grammar|\\bform\\b[:：])"
+    object: jp_grammar
+    operation: create
+    confidence_boost: 0.12
+
+  # Vocab / kanji / readings — prefer correct 日本語 glyphs in captures
+  - match: "(日本語|単語|語彙|漢字|kanji|vocab(?:ulary)?|reading[:：]|意味[:：]|jlpt\\s*n[1-5]|\\banki\\b|flashcard)"
+    object: jp_vocab
+    operation: create
+    confidence_boost: 0.12
+
+  # Bare Japanese script in a short capture → vocab by default
+  - match: "[\\u3040-\\u30ff\\u4e00-\\u9faf]{2,}"
+    object: jp_vocab
+    operation: create
+    confidence_boost: 0.06
+
+examples:
+  - text: "vocab: 産業 / さんぎょう / industry"
+    expect: {object: jp_vocab, operation: create, fields: {word: 産業, reading: さんぎょう, meaning: industry}}
+  - text: "日本語単語: 製造業 reading せいぞうぎょう meaning manufacturing"
+    expect: {object: jp_vocab, operation: create, fields: {word: 製造業}}
+  - text: "anki card 医療 いりょう medical care N2"
+    expect: {object: jp_vocab, operation: create, fields: {jlpt_level: N2}}
+  - text: "grammar: 〜てしまう means regrettable completion"
+    expect: {object: jp_grammar, operation: create, fields: {form: 〜てしまう}}
+  - text: "文法ノート: とは / といえば topic-definition patterns"
+    expect: {object: jp_grammar, operation: create}
+  - text: "JLPT N3 grammar 〜ばかりだ example 勉強したばかりだ"
+    expect: {object: jp_grammar, operation: create, fields: {jlpt_level: N3}}
+  - text: "reviewed 産業 as good, interval 3→7 days SM-2"
+    expect: {object: review_event, operation: create, fields: {grade: good, algorithm: sm2}}
+  - text: "quiz again on 〜てしまう, hard"
+    expect: {object: review_event, operation: create, fields: {grade: hard}}
+  - text: "漢字: 医療 reading いりょう"
+    expect: {object: jp_vocab, operation: create, fields: {word: 医療, reading: いりょう}}
+  - text: "flashcard 意味: industry for 産業"
+    expect: {object: jp_vocab, operation: create}
+
+negative_examples:
+  - text: "Japanese restaurant in Portland was great"
+  - text: "deploy the kanji font subset tonight"
+  - text: "日语 is a malformed glyph — do not route as study"
+
+llm_hints: >
+  Japanese study captures are vocab or grammar cards, not dining or travel.
+  Prefer jp_vocab for words/kanji/readings; jp_grammar for particles, conjugations,
+  and pattern notes (〜forms). Prefer the 日本語 glyph in routing text. Review
+  grades (again/hard/good/easy) become review_event rows so SM-2 (and later
+  FSRS) can replay history.

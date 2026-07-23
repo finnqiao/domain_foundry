@@ -1,0 +1,9 @@
+name: health
+version: 0.1.0
+title: "Health"
+description: "Supplements, medications, fitness sessions, lab markers, and fasting — canonical objects per Phase 0 alias decisions."
+author: "domain_foundry"
+license: MIT
+core_compat: ">=0.1,<2"
+interpretation: structured
+aliases: [fitness, meds, labs, supplements]

@@ -1,0 +1,5 @@
+supplement: [create, update, correct, delete]
+medication: [create, update, correct, delete]
+fitness: [create, update, correct, delete]
+lab: [create, update, correct, delete]
+fasting: [create, update, correct, delete]

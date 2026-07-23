@@ -30,3 +30,8 @@
 {"id": "food_030", "raw_text": "the app build is toast", "expected": {"kind": "negative", "tags": ["negative"]}}
 {"id": "food_031", "raw_text": "deploy the release candidate tonight", "expected": {"kind": "negative", "tags": ["negative"]}}
 {"id": "food_032", "raw_text": "merge the feature flag behind a gate", "expected": {"kind": "negative", "tags": ["negative"]}}
+{"id": "food_033", "raw_text": "coffee at Heart, ethiopian pour-over, bright acidity", "expected": {"captures": [{"domain": "food", "object_type": "coffee_note", "operation": "create"}], "tags": ["food", "coffee_note", "single"]}}
+{"id": "food_034", "raw_text": "sake tasting note: Dassai 45, clean nose, dry finish", "expected": {"captures": [{"domain": "food", "object_type": "drink_note", "operation": "create"}], "tags": ["food", "drink_note", "single"]}}
+{"id": "food_035", "raw_text": "dining note: River Station Grill, revisit yes, great ambience", "expected": {"captures": [{"domain": "food", "object_type": "dining_note", "operation": "create"}], "tags": ["food", "dining_note", "single"]}}
+{"id": "food_036", "raw_text": "recipe attempt: focaccia, outcome great, less salt next time", "expected": {"captures": [{"domain": "food", "object_type": "recipe_attempt", "operation": "create"}], "tags": ["food", "recipe_attempt", "single"]}}
+{"id": "food_037", "raw_text": "food note: remember to toast the spices before blooming", "expected": {"captures": [{"domain": "food", "object_type": "food_note", "operation": "create"}], "tags": ["food", "food_note", "single"]}}

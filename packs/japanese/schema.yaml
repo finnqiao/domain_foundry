@@ -1,0 +1,53 @@
+objects:
+  # Vocab card — personal.sqlite jp_vocab parity + full SM-2 surface.
+  jp_vocab:
+    title_field: word
+    fields:
+      word: {type: text, required: true}
+      reading: {type: text}
+      meaning: {type: text}
+      jlpt_level: {type: enum, values: [N5, N4, N3, N2, N1], allow_other: true}
+      context_sentence: {type: text, long: true}
+      formality: {type: enum, values: [casual, polite, formal, humble, honorific], allow_other: true}
+      # SM-2 state (interval_days/reps/lapses are first-class so FSRS later is a swap)
+      ease_factor: {type: number, default: 2.5, min: 1.3}
+      interval_days: {type: number, default: 0, unit: days, min: 0}
+      reps: {type: integer, default: 0, min: 0}
+      lapses: {type: integer, default: 0, min: 0}
+      next_review: {type: date}
+      last_reviewed: {type: datetime}
+      notes: {type: text, long: true}
+
+  # Grammar card — personal.sqlite jp_grammar parity + full SM-2 surface.
+  jp_grammar:
+    title_field: form
+    fields:
+      form: {type: text, required: true}
+      meaning: {type: text}
+      jlpt_level: {type: enum, values: [N5, N4, N3, N2, N1], allow_other: true}
+      example_jp: {type: text, long: true}
+      example_en: {type: text, long: true}
+      source: {type: text}
+      formality: {type: enum, values: [casual, polite, formal, humble, honorific], allow_other: true}
+      ease_factor: {type: number, default: 2.5, min: 1.3}
+      interval_days: {type: number, default: 0, unit: days, min: 0}
+      reps: {type: integer, default: 0, min: 0}
+      lapses: {type: integer, default: 0, min: 0}
+      next_review: {type: date}
+      last_reviewed: {type: datetime}
+      notes: {type: text, long: true}
+
+  # One review attempt — grade + interval delta + algorithm tag (SM-2 now; FSRS later).
+  review_event:
+    title_field: grade
+    fields:
+      grade: {type: enum, values: [again, hard, good, easy], required: true}
+      reviewed_at: {type: datetime, required: true, default: capture_time}
+      prev_interval_days: {type: number, unit: days, min: 0}
+      next_interval_days: {type: number, unit: days, min: 0}
+      algorithm: {type: enum, values: [sm2, fsrs], default: sm2, allow_other: true}
+      ease_factor_after: {type: number}
+      notes: {type: text, long: true}
+    links:
+      jp_vocab: {to: japanese.jp_vocab, cardinality: many_to_one}
+      jp_grammar: {to: japanese.jp_grammar, cardinality: many_to_one}

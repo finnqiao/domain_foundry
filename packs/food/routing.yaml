@@ -33,6 +33,32 @@ rules:
     operation: create
     confidence_boost: 0.1
 
+  # --- personal.sqlite v2 note types ----------------------------------------
+  - match: "(\\bcoffee\\b|espresso|latte|cappuccino|cold[- ]?brew|\\broaster\\b|\\bcafe\\b.{0,20}(?:coffee|espresso))"
+    object: coffee_note
+    operation: create
+    confidence_boost: 0.12
+
+  - match: "(\\bwine\\b|\\bsake\\b|\\bbeer\\b|\\bcocktail\\b|tasting note|nose:|palate:|\\bvintage\\b|alcohol[- ]?pct)"
+    object: drink_note
+    operation: create
+    confidence_boost: 0.11
+
+  - match: "(dining note|restaurant note|revisit (?:yes|no)|ambience|service was)"
+    object: dining_note
+    operation: create
+    confidence_boost: 0.1
+
+  - match: "(recipe attempt|attempt(?:ed)? (?:the|this) recipe|cook(?:ed)? attempt|tried the recipe)"
+    object: recipe_attempt
+    operation: create
+    confidence_boost: 0.12
+
+  - match: "(food note:|kitchen note:|mise note:)"
+    object: food_note
+    operation: create
+    confidence_boost: 0.1
+
   # --- experiment: cooking something (kept last so specific rules win) --------
   - match: "(cooked|\\bmade\\b|tried (?:making|cooking)|test kitchen|experiment(?:ed)? with|batch of|whipped up|simmered|roasted|braised|pan[- ]?fried)"
     object: cook
@@ -62,6 +88,16 @@ examples:
     expect: {object: recipe, operation: update}
   - text: "dropping the sous-vide egg idea, never works for me"
     expect: {object: idea, operation: update, fields: {status: dropped}}
+  - text: "coffee at Heart, ethiopian pour-over, bright acidity"
+    expect: {object: coffee_note, operation: create, fields: {drink_name: ethiopian pour-over}}
+  - text: "sake tasting note: Dassai 45, clean nose, dry finish"
+    expect: {object: drink_note, operation: create, fields: {category: sake}}
+  - text: "dining note: River Station Grill, revisit yes, great ambience"
+    expect: {object: dining_note, operation: create, fields: {restaurant: River Station Grill, revisit: true}}
+  - text: "recipe attempt: focaccia, outcome great, less salt next time"
+    expect: {object: recipe_attempt, operation: create, fields: {outcome: great}}
+  - text: "food note: remember to toast the spices before blooming"
+    expect: {object: food_note, operation: create}
 
 negative_examples:
   - text: "the app build is toast"
@@ -74,3 +110,6 @@ llm_hints: >
   meal eaten out; an observation is a learning to remember. Prefer cook over
   idea/recipe when the message describes actually making food. "Made" / "cooked"
   is a cook, not a recipe. Ratings/outcomes are enums (great, good, decent).
+  Coffee/espresso/cafe drinks → coffee_note; wine/sake/cocktail tastings →
+  drink_note; structured restaurant revisit notes → dining_note; explicit
+  recipe attempts → recipe_attempt. Venue geo (lat/lng/place_*) is optional.

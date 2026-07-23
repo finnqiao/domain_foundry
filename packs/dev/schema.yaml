@@ -1,0 +1,45 @@
+objects:
+  decision:
+    title_field: title
+    fields:
+      title: {type: text, required: true}
+      decision: {type: text, long: true}
+      project: {type: text}
+      alternatives: {type: text, long: true}
+      status: {type: enum, values: [proposed, decided, superseded, reversed], default: decided, allow_other: true}
+      repo_ref: {type: text}
+      noted_at: {type: datetime, required: true, default: capture_time}
+      notes: {type: text, long: true}
+
+  gotcha:
+    title_field: title
+    fields:
+      title: {type: text, required: true}
+      context: {type: text, long: true}
+      trigger: {type: text}
+      fix: {type: text, long: true}
+      project: {type: text}
+      repo_ref: {type: text}
+      noted_at: {type: datetime, required: true, default: capture_time}
+      notes: {type: text, long: true}
+
+  session:
+    title_field: title
+    fields:
+      title: {type: text, required: true}
+      summary: {type: text, long: true}
+      project: {type: text}
+      repo_ref: {type: text}
+      noted_at: {type: datetime, required: true, default: capture_time}
+      notes: {type: text, long: true}
+
+  pattern:
+    title_field: title
+    fields:
+      title: {type: text, required: true}
+      scope: {type: text, long: true}
+      rationale: {type: text, long: true}
+      examples: {type: text, long: true}
+      project: {type: text}
+      noted_at: {type: datetime, required: true, default: capture_time}
+      notes: {type: text, long: true}

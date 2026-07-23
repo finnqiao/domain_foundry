@@ -1,7 +1,7 @@
 name: food
 version: 0.1.0
 title: "Food Lab"
-description: "Cooking ideas, recipes, kitchen experiments, dining out, and what you learn — the full concept → recipe → experiment → observation lifecycle."
+description: "Cooking ideas, recipes, kitchen experiments, dining out, coffee/drink notes, and what you learn — demo lifecycle plus personal.sqlite v2 parity objects with nullable venue geo."
 author: "domain_foundry"
 license: MIT
 core_compat: ">=0.1,<2"
