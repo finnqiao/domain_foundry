@@ -88,6 +88,16 @@ Or run the automated smoke: `scripts/hermes_e2e_smoke.sh`.
 Supported hermes-agent range: **`>=0.4,<1`**. See the
 [adapter README](../adapters/hermes_agent/README.md) for details.
 
+## 7. (Optional) Private pack overlay
+
+Personal packs do not belong in this checkout. Point Domain Foundry at a private
+catalog (see [Private overlay](PRIVATE_OVERLAY.md)):
+
+```bash
+export DOMAIN_FOUNDRY_PACKS_PATH=~/HermesWorkspace/packs
+domain-foundry pack list   # includes overlay packs; same-named overlay wins
+```
+
 ## Clean-machine gate (automated slice)
 
 ```bash

@@ -8,8 +8,10 @@ notes, denylisted names, real places, or vault/SQLite contents. This file is the
 content.
 
 > Hard rule: personal packs live outside this repo (e.g. `~/.domain_foundry/packs`
-> on a production install, or a private repo). Nothing here should ever be
-> `git add`ed to `domain_foundry`. `scripts/leakscan.py` is the backstop.
+> on a production install, or a private overlay such as `~/HermesWorkspace/packs`
+> via `DOMAIN_FOUNDRY_PACKS_PATH` — see [`PRIVATE_OVERLAY.md`](PRIVATE_OVERLAY.md)).
+> Nothing here should ever be `git add`ed to `domain_foundry`.
+> `scripts/leakscan.py` is the backstop.
 
 ## Setup (private machine)
 
@@ -58,6 +60,21 @@ one before filing). Suggested tags:
 - [ ] ≥1 hardening migration per domain.
 - [ ] Friction filed as issues (synthetic repros only).
 - [ ] Confirmed: **nothing personal committed** to this repo (`leakscan.py` green).
+
+## Measured results (stub — fill after production week)
+
+Record private numbers here after the lived week; do **not** paste personal
+content, only aggregates:
+
+| Metric | Value | Notes |
+|---|---|---|
+| Entries migrated (japanese / food / health / dev / travel) | _TBD_ | From Phase 2/7 dry-run recon |
+| Days in production on Foundry home | _TBD_ | |
+| Quiz streak (days with ≥1 grade) | _TBD_ | |
+| Routing accuracy vs P1 synthetic baseline | _TBD_ | Compare to 0.938 plants+sourdough |
+| Cost / day (routine tier) | _TBD_ | DeepSeek |
+| Cost / day (SOTA tier) | _TBD_ | Claude |
+| `needs_review` remaining | _TBD_ | Target < 20 |
 
 > Why this isn't automated here: the harness cannot fabricate the founder's real
 > domains without inventing personal data, which would violate the synthetic-only

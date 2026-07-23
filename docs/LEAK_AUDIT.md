@@ -18,6 +18,11 @@ Set `DOMAIN_FOUNDRY_DENYLIST=/path/to/private/denylist.txt` to also scan every
 tracked text file for private names/URLs. The denylist file itself is **never**
 committed (plan §12.2).
 
+Phase 9 also enables built-in personal-string heuristics (home paths, emails,
+Telegram token/id shapes, API-key shapes) — see
+[`LEAKSCAN_PHASE9.md`](LEAKSCAN_PHASE9.md) for the working-tree report (0 findings
+after path scrub; history not rewritten).
+
 ## Results — P9 (2026-07-16, HEAD `7468e31` + P9 working tree)
 
 | Check | Result |

@@ -139,7 +139,7 @@ Three private code locations feed this plan:
 | Location | Role | Disposition |
 |---|---|---|
 | `~/.hermes/hermes-agent` | Nous Research runtime (MIT, v0.14.0, Python ≥3.11): gateway, channels, agent loop, plugin/tool registry, cron | **Consume as upstream dependency** via the adapter; never fork |
-| `/Users/finn/HermesWorkspace` | ~9,300 LOC `lib/` domain logic **plus personal data git-tracked in the same repo** (SQLite DBs, 297 Obsidian notes) | **Reference for porting.** The OSS repo must be fresh — no history import (§12) |
+| `~/HermesWorkspace` (private) | ~9,300 LOC `lib/` domain logic **plus personal data git-tracked in the same repo** (SQLite DBs, 297 Obsidian notes) | **Reference for porting.** The OSS repo must be fresh — no history import (§12) |
 | `~/.hermes/plugins/logbook` | 1,899 LOC plugin: 7 tools, classifier, security-critical `store.py` (1,022 LOC), 12 plain-SQL migrations | Reference for porting |
 
 ## 3.2 The capture substrate (already domain-agnostic — port nearly as-is)
