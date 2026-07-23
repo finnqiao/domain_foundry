@@ -24,6 +24,8 @@ _MODEL_PRICING: dict[str, tuple[float, float]] = {
     # OpenAI fallbacks (legacy OpenAICompatibleProvider)
     "gpt-4o-mini": (0.15, 0.60),
     "gpt-4o": (2.50, 10.00),
+    # Z.ai GLM (routine tier via OpenRouter) — openrouter.ai pricing
+    "glm-5.2": (0.798, 2.508),
 }
 
 # Alias map: strip provider prefixes / date suffixes loosely
@@ -32,6 +34,7 @@ _ALIASES: dict[str, str] = {
     "deepseek/deepseek-v4-flash": "deepseek-v4-flash",
     "anthropic/claude-sonnet-4-6": "claude-sonnet-4-6",
     "anthropic/claude-opus-4-8": "claude-opus-4-8",
+    "z-ai/glm-5.2": "glm-5.2",
 }
 
 
@@ -87,7 +90,7 @@ def tier_for_model(model: str | None) -> str | None:
     key = normalize_model_id(model)
     if not key:
         return None
-    if key.startswith("deepseek") or key.startswith("gpt-"):
+    if key.startswith("deepseek") or key.startswith("gpt-") or key.startswith("glm"):
         return "routine"
     if key.startswith("claude"):
         return "sota"

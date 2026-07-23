@@ -9,6 +9,11 @@ Required env (any subset):
 Optional:
   DOMAIN_FOUNDRY_ROUTINE_MODEL, DOMAIN_FOUNDRY_SOTA_MODEL
   DOMAIN_FOUNDRY_ROUTINE_BASE_URL (default https://api.deepseek.com/v1)
+
+OpenRouter recipe (routine tier via any OpenAI-compatible model, e.g. GLM 5.2):
+  DOMAIN_FOUNDRY_ROUTINE_API_KEY=<openrouter key>
+  DOMAIN_FOUNDRY_ROUTINE_BASE_URL=https://openrouter.ai/api/v1
+  DOMAIN_FOUNDRY_ROUTINE_MODEL=z-ai/glm-5.2
 """
 
 from __future__ import annotations

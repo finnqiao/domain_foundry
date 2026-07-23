@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from domain_foundry_core.ledger.migrate import ensure_migrated
 from domain_foundry_core.llm.pricing import estimate_cost_usd, lookup_price, tier_for_model
 from domain_foundry_core.llm.provider import (
     CompletionResult,
@@ -17,7 +18,6 @@ from domain_foundry_core.packs.registry import PackRegistry
 from domain_foundry_core.paths import Workspace
 from domain_foundry_core.routing.cost import CostGuard, CostGuardConfig
 from domain_foundry_core.routing.router import Router
-from domain_foundry_core.ledger.migrate import ensure_migrated
 
 
 class _FakeLLM(LLMProvider):
@@ -144,6 +144,20 @@ def test_select_model_tier_sota_on_structural():
         )
         == "sota"
     )
+
+
+def test_pricing_glm_openrouter_alias():
+    glm = lookup_price("z-ai/glm-5.2")
+    assert glm is not None
+    assert glm == lookup_price("glm-5.2")
+
+    cost = estimate_cost_usd(
+        model="z-ai/glm-5.2", input_tokens=1_000_000, output_tokens=0
+    )
+    assert abs(cost - 0.798) < 1e-9
+    assert estimate_cost_usd(model="z-ai/glm-5.2", input_tokens=33, output_tokens=25) > 0
+
+    assert tier_for_model("z-ai/glm-5.2") == "routine"
 
 
 def test_pricing_deepseek_and_claude():
