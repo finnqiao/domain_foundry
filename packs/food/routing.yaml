@@ -70,6 +70,33 @@ rules:
     operation: create
     confidence_boost: 0.1
 
+  # --- personal.sqlite v2 note types ----------------------------------------
+  # Skip cocktail contexts so espresso/coffee-liqueur cocktail menus stay drink_note.
+  - match: "^(?!.*\\bcocktail\\b).*(?:\\bcoffee\\b|espresso|latte|cappuccino|cold[- ]?brew|\\broaster\\b|\\bcafe\\b.{0,20}(?:coffee|espresso))"
+    object: coffee_note
+    operation: create
+    confidence_boost: 0.12
+
+  - match: "(\\bwine\\b|\\bsake\\b|\\bbeer\\b|\\bcocktail\\b|tasting note|nose:|palate:|\\bvintage\\b|alcohol[- ]?pct)"
+    object: drink_note
+    operation: create
+    confidence_boost: 0.11
+
+  - match: "(dining note|restaurant note|revisit (?:yes|no)|ambience|service was)"
+    object: dining_note
+    operation: create
+    confidence_boost: 0.1
+
+  - match: "(recipe attempt|attempt(?:ed)? (?:the|this) recipe|cook(?:ed)? attempt|tried the recipe)"
+    object: recipe_attempt
+    operation: create
+    confidence_boost: 0.12
+
+  - match: "(food note:|kitchen note:|mise note:)"
+    object: food_note
+    operation: create
+    confidence_boost: 0.1
+
   # --- experiment: cooking something (kept last so specific rules win) --------
   - match: "(cooked|\\bmade\\b|tried (?:making|cooking)|test kitchen|experiment(?:ed)? with|batch of|whipped up|simmered|roasted|braised|pan[- ]?fried)"
     object: cook
@@ -99,11 +126,11 @@ examples:
     expect: {object: recipe, operation: update}
   - text: "dropping the sous-vide egg idea, never works for me"
     expect: {object: idea, operation: update, fields: {status: dropped}}
-  # Hermes fewshot ports (synthetic places; object map = current pack schema)
+  # Hermes fewshot ports (synthetic places; drink/coffee tasting → v2 note objects)
   - text: "Harbor Tasting Room tasting menu with junmai daiginjo pairing on course 3"
     expect: {object: dining, operation: create}
   - text: "cocktail menu — Love Potion with coffee liqueur and espresso; Old Fashioned specs"
-    expect: {object: observation, operation: create}
+    expect: {object: drink_note, operation: create}
   - text: "mapo tofu test — held better with less chili oil this revision"
     expect: {object: cook, operation: create}
   - text: "dialed in the V60, grind finer, 1:16 ratio, 45s bloom"
@@ -113,7 +140,17 @@ examples:
   - text: "omakase at the corner izakaya, reservation at 7"
     expect: {object: dining, operation: create}
   - text: "junmai tasting notes — fragrant, dry finish, bottle from the shop"
-    expect: {object: observation, operation: create}
+    expect: {object: drink_note, operation: create}
+  - text: "coffee at Heart, ethiopian pour-over, bright acidity"
+    expect: {object: coffee_note, operation: create, fields: {drink_name: ethiopian pour-over}}
+  - text: "sake tasting note: Dassai 45, clean nose, dry finish"
+    expect: {object: drink_note, operation: create, fields: {category: sake}}
+  - text: "dining note: River Station Grill, revisit yes, great ambience"
+    expect: {object: dining_note, operation: create, fields: {restaurant: River Station Grill, revisit: true}}
+  - text: "recipe attempt: focaccia, outcome great, less salt next time"
+    expect: {object: recipe_attempt, operation: create, fields: {outcome: great}}
+  - text: "food note: remember to toast the spices before blooming"
+    expect: {object: food_note, operation: create}
 
 negative_examples:
   - text: "the app build is toast"
@@ -130,6 +167,9 @@ llm_hints: >
   idea/recipe when the message describes actually making food. "Made" / "cooked"
   is a cook, not a recipe. Ratings/outcomes are enums (great, good, decent).
   Restaurant tasting menus (and pairings that mention sake/wine/cocktail) are
-  dining, not drink tasting notes. Standalone sake/cocktail/wine/coffee tasting
-  or brew technique notes are observations until drink-specific objects land.
-  Recipe attempts ("mapo tofu test, held better…") are cooks.
+  dining, not drink tasting notes. Standalone sake/cocktail/wine tasting →
+  drink_note; coffee/espresso/cafe drinks → coffee_note; brew technique notes
+  (grind/bloom/ratio without a coffee drink framing) stay observations.
+  Structured restaurant revisit notes → dining_note; explicit recipe attempts →
+  recipe_attempt; "mapo tofu test, held better…" cooks stay cook. Venue geo
+  (lat/lng/place_*) is optional.

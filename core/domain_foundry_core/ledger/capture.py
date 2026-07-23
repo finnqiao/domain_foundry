@@ -140,7 +140,7 @@ class CaptureService:
                 """,
                 (capture_id, entry_id, ts),
             )
-            # entry_fts + search_document are maintained by ledger_003 triggers.
+            # entry_fts + search_document are maintained by ledger_004 triggers.
             conn.commit()
             return CaptureReceipt(
                 entry_id=entry_id,

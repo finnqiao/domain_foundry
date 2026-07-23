@@ -1,0 +1,9 @@
+name: dev
+version: 0.1.0
+title: "Dev Notes"
+description: "Engineering decision, gotcha, session, and pattern cards — minimal pack for ledger domain-card migration."
+author: "domain_foundry"
+license: MIT
+core_compat: ">=0.1,<2"
+interpretation: simple
+aliases: [engineering, coding, notes]

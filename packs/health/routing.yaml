@@ -1,0 +1,60 @@
+rules:
+  # Medication BEFORE fitness (Phase 0: fitness must not swallow meds/supplements)
+  - match: "(\\b(?:rx|prescription|medication|meds?)\\b|took (?:my )?(?:metformin|atorvastatin|lisinopril|amoxicillin|ibuprofen|allopurinol|febuxostat)\\b)"
+    object: medication
+    operation: create
+    confidence_boost: 0.15
+
+  - match: "(\\bsupplement\\b|took (?:my )?(?:creatine|magnesium|vitamin|omega(?:-?3)?|zinc)\\b|\\bmultivitamin\\b)"
+    object: supplement
+    operation: create
+    confidence_boost: 0.14
+
+  - match: "(\\bfasting\\b|\\bomad\\b|16:8|18:6|20:4|water fast|broke (?:the )?fast|fast(?:ed)? (?:for )?\\d+\\s*(?:h|hr|hrs|hours))"
+    object: fasting
+    operation: create
+    confidence_boost: 0.14
+
+  - match: "(\\blab\\b|blood (?:test|work|panel)|\\bldl\\b|\\bhdl\\b|\\bhba1c\\b|\\bferritin\\b|\\btsh\\b|cholesterol|triglycerides|creatinine|glucose (?:was|at|is))"
+    object: lab
+    operation: create
+    confidence_boost: 0.12
+
+  # Fitness last among health rules — avoid bare run/press swallow (Phase 0)
+  - match: "(\\bworkout\\b|\\bgym\\b|deadlift|squat(?:ed)?|bench press|stairstepp|\\bhiit\\b|lift(?:ed|ing)? session|muscles?:)"
+    object: fitness
+    operation: create
+    confidence_boost: 0.1
+
+examples:
+  - text: "took creatine 5g this morning"
+    expect: {object: supplement, operation: create, fields: {name: creatine, dose_value: 5, dose_unit: g}}
+  - text: "supplement: magnesium 400mg before bed"
+    expect: {object: supplement, operation: create, fields: {name: magnesium, dose_value: 400, dose_unit: mg, timing: before_bed}}
+  - text: "took metformin 500mg with breakfast"
+    expect: {object: medication, operation: create, fields: {name: metformin, dose_value: 500, dose_unit: mg}}
+  - text: "rx: lisinopril this morning"
+    expect: {object: medication, operation: create, fields: {name: lisinopril}}
+  - text: "workout 60 min deadlift 3x4 @ 105lb per side"
+    expect: {object: fitness, operation: create, fields: {duration_min: 60}}
+  - text: "gym session: squat and bench, 45 minutes"
+    expect: {object: fitness, operation: create, fields: {duration_min: 45}}
+  - text: "lab: LDL 98 mg/dL in range"
+    expect: {object: lab, operation: create, fields: {marker: LDL, value: 98, in_range: true}}
+  - text: "blood work HbA1c 5.2"
+    expect: {object: lab, operation: create, fields: {marker: HbA1c, value: 5.2}}
+  - text: "finished a 16:8 fast, 16 hours"
+    expect: {object: fasting, operation: create, fields: {protocol: 16:8, fast_hours: 16}}
+  - text: "OMAD day, broke the fast at 7pm"
+    expect: {object: fasting, operation: create, fields: {protocol: OMAD}}
+
+negative_examples:
+  - text: "supplement the PR description before merge"
+  - text: "lab notebook for the chemistry homework"
+  - text: "fast deploy of the release candidate"
+
+llm_hints: >
+  Use singular health.supplement (never supplements). Medication rules beat
+  fitness — "took metformin" is medication, not a workout. Fitness needs an
+  explicit workout/gym/lift signal; do not match bare run/press. Lab is markers
+  and bloodwork; fasting is protocols like 16:8 / OMAD.

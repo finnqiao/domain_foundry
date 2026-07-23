@@ -1,0 +1,4 @@
+decision: [create, update, correct, merge, delete]
+gotcha: [create, update, correct, delete]
+session: [create, update, correct, delete]
+pattern: [create, update, correct, merge, delete]

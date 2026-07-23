@@ -10,7 +10,7 @@ objects:
       noted_at: {type: datetime, required: true, default: capture_time}
       notes: {type: text, long: true}
 
-  # Recipe — a formalized method, usually grown out of an idea.
+  # Recipe — formalized method (demo lifecycle) + personal.sqlite v2 lifecycle_stage.
   recipe:
     title_field: name
     fields:
@@ -20,12 +20,15 @@ objects:
       servings: {type: integer}
       prep_minutes: {type: number, unit: minutes}
       status: {type: enum, values: [draft, tested, keeper, retired], allow_other: true}
+      lifecycle_stage: {type: enum, values: [concept, cookable, archived], default: concept, allow_other: true}
+      recipe_ref: {type: text}
       created_on: {type: datetime, required: true, default: capture_time}
+      promoted_at: {type: datetime}
       notes: {type: text, long: true}
     links:
       idea: {to: food.idea, cardinality: many_to_one}
 
-  # Experiment — a single cook / attempt at a recipe.
+  # Experiment — a single cook / attempt at a recipe (demo object; keep for fixtures).
   cook:
     title_field: name
     fields:
@@ -38,7 +41,7 @@ objects:
     links:
       recipe: {to: food.recipe, cardinality: many_to_one}
 
-  # Dining — a meal eaten out (restaurant, cafe, takeout).
+  # Dining — a meal eaten out (demo object) + nullable geo for venue map.
   dining:
     title_field: place
     fields:
@@ -49,6 +52,10 @@ objects:
       rating: {type: enum, values: [bad, ok, good, great], allow_other: true}
       dined_at: {type: datetime, required: true, default: capture_time}
       notes: {type: text, long: true}
+      lat: {type: number}
+      lng: {type: number}
+      place_id: {type: text}
+      place_name: {type: text}
 
   # Observation — a learning / takeaway you want to remember.
   observation:
@@ -61,3 +68,100 @@ objects:
     links:
       recipe: {to: food.recipe, cardinality: many_to_one}
       cook: {to: food.cook, cardinality: many_to_one}
+
+  # --- personal.sqlite v2 parity objects ----------------------------------------
+
+  coffee_note:
+    title_field: drink_name
+    fields:
+      drink_name: {type: text, required: true}
+      cafe_name: {type: text}
+      city: {type: text}
+      drink_type: {type: text}
+      roaster: {type: text}
+      origin: {type: text}
+      roast_level: {type: text}
+      process_method: {type: text}
+      flavor_profile: {type: text}
+      body: {type: text}
+      acidity: {type: text}
+      finish: {type: text}
+      prep_method: {type: text}
+      milk_type: {type: text}
+      additives: {type: text}
+      garnish: {type: text}
+      price: {type: text}
+      size_oz: {type: integer}
+      rating: {type: number, min: 0, max: 5}
+      visited_at: {type: datetime, required: true, default: capture_time}
+      notes: {type: text, long: true}
+      lat: {type: number}
+      lng: {type: number}
+      place_id: {type: text}
+      place_name: {type: text}
+
+  dining_note:
+    title_field: restaurant
+    fields:
+      restaurant: {type: text, required: true}
+      city: {type: text}
+      cuisine: {type: text}
+      occasion: {type: text}
+      dishes: {type: text, long: true}
+      service_notes: {type: text, long: true}
+      ambience_notes: {type: text, long: true}
+      overall_rating: {type: number, min: 0, max: 5}
+      revisit: {type: boolean, default: false}
+      noted_at: {type: datetime, required: true, default: capture_time}
+      notes: {type: text, long: true}
+      lat: {type: number}
+      lng: {type: number}
+      place_id: {type: text}
+      place_name: {type: text}
+
+  drink_note:
+    title_field: name
+    fields:
+      category: {type: enum, values: [wine, sake, beer, cocktail, spirits, soft, other], required: true, allow_other: true}
+      name: {type: text}
+      producer: {type: text}
+      region: {type: text}
+      vintage: {type: integer}
+      alcohol_pct: {type: number, unit: percent}
+      appearance: {type: text}
+      nose: {type: text}
+      palate: {type: text}
+      finish: {type: text}
+      rating: {type: number}
+      rating_scale: {type: text, default: "100"}
+      pairings: {type: text}
+      noted_at: {type: datetime, required: true, default: capture_time}
+      notes: {type: text, long: true}
+      lat: {type: number}
+      lng: {type: number}
+      place_id: {type: text}
+      place_name: {type: text}
+
+  food_note:
+    title_field: title
+    fields:
+      note_type: {type: text, required: true}
+      title: {type: text}
+      body: {type: text, required: true, long: true}
+      tags: {type: text}
+      noted_at: {type: datetime, required: true, default: capture_time}
+    links:
+      recipe: {to: food.recipe, cardinality: many_to_one}
+      recipe_attempt: {to: food.recipe_attempt, cardinality: many_to_one}
+
+  recipe_attempt:
+    title_field: title
+    fields:
+      title: {type: text, required: true}
+      recipe_ref: {type: text}
+      outcome: {type: enum, values: [flop, meh, decent, good, great], allow_other: true}
+      modifications: {type: text, long: true}
+      attempted_at: {type: datetime, required: true, default: capture_time}
+      notes: {type: text, long: true}
+    links:
+      recipe: {to: food.recipe, cardinality: many_to_one}

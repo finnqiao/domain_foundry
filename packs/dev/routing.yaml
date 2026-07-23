@@ -1,0 +1,53 @@
+rules:
+  - match: "(\\bgotcha\\b|pitfall|trap:|watch out|surprising(?:ly)?|unexpected(?:ly)? (?:fail|error|behavior))"
+    object: gotcha
+    operation: create
+    confidence_boost: 0.14
+
+  - match: "(\\bdecision\\b|we (?:decided|chose|picked)|chose to|going with|ADR[:\\s]|architecture decision)"
+    object: decision
+    operation: create
+    confidence_boost: 0.12
+
+  - match: "(\\bpattern\\b|convention:|idiom:|prefer .+ over|house style|do this when)"
+    object: pattern
+    operation: create
+    confidence_boost: 0.12
+
+  - match: "(\\bsession\\b|devlog|worklog|today'?s work|pairing notes|shipped today|debugging session)"
+    object: session
+    operation: create
+    confidence_boost: 0.1
+
+examples:
+  - text: "gotcha: sqlite busy_timeout must be set before WAL or writers stall"
+    expect: {object: gotcha, operation: create}
+  - text: "pitfall — hatchling packages= path must point at the package dir"
+    expect: {object: gotcha, operation: create}
+  - text: "decision: use SM-2 now; FSRS later as a pure algorithm swap"
+    expect: {object: decision, operation: create, fields: {status: decided}}
+  - text: "ADR: packs are the single source of truth for domain schema"
+    expect: {object: decision, operation: create}
+  - text: "pattern: medication rules before fitness so supplements are not swallowed"
+    expect: {object: pattern, operation: create}
+  - text: "convention: prefer singular health.supplement over supplements"
+    expect: {object: pattern, operation: create}
+  - text: "session: wired japanese pack schema and routing examples"
+    expect: {object: session, operation: create}
+  - text: "devlog — fixed pack loader validation for enum values"
+    expect: {object: session, operation: create}
+  - text: "we decided to keep recipe.name and add lifecycle_stage additively"
+    expect: {object: decision, operation: create}
+  - text: "watch out: bare 'run' matched investing prose in the old classifier"
+    expect: {object: gotcha, operation: create}
+
+negative_examples:
+  - text: "decided to order ramen tonight"
+  - text: "pattern of rain over the weekend"
+  - text: "yoga session at 6pm"
+
+llm_hints: >
+  Dev cards are engineering notes: decisions, gotchas, patterns, and work
+  sessions. Prefer gotcha when the message warns about a trap; decision when
+  choosing among options; pattern for reusable conventions; session for a
+  day's work summary. Do not capture food/travel/health life events here.

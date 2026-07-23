@@ -16,11 +16,12 @@ def test_migration_files_discovered():
     assert ledger and ledger[0][0] == 1
     assert domains and domains[0][0] == 1
     assert any(version == 3 for version, _ in ledger)
+    assert any(version == 4 for version, _ in ledger)
 
 
 def test_init_workspace_applies_migrations(workspace: Workspace):
     versions = init_workspace(workspace.home)
-    assert versions["ledger"] >= 3
+    assert versions["ledger"] >= 4
     assert versions["domains"] >= 1
     assert workspace.ledger_db.exists()
     assert workspace.domains_db.exists()

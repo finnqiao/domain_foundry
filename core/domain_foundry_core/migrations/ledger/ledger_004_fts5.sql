@@ -1,4 +1,4 @@
--- ledger_003_fts5.sql
+-- ledger_004_fts5.sql
 -- Phase 2 (G8): unified FTS5 substrate over entry raw text + canonical text.
 -- Additive only. Legacy entry_fts remains; search_document/search_fts are the
 -- HarnessAPI.search() + query(q=...) source of truth, synced by triggers.

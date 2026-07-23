@@ -1,0 +1,10 @@
+app:
+  icon: "📎"
+  views:
+    - {id: decisions, title: "Decisions", block: list, object: decision, config: {group_by: status}}
+    - {id: gotchas, title: "Gotchas", block: list, object: gotcha}
+    - {id: patterns, title: "Patterns", block: list, object: pattern}
+    - {id: sessions, title: "Sessions", block: timeline, object: session, config: {date_field: noted_at}}
+    - {id: find, title: "Find", block: search, objects: [decision, gotcha, pattern, session], config: {facets: [project, status]}}
+markdown:
+  folder: "Dev"
