@@ -66,13 +66,13 @@ include = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["core", "adapters/hermes_agent/src"]
+pythonpath = ["core", "adapters/hermes_agent/src", "adapters/roamboard/src"]
 addopts = "-q"
 
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-src = ["core", "tests", "scripts"]
+src = ["core", "tests", "scripts", "adapters/roamboard/src"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]

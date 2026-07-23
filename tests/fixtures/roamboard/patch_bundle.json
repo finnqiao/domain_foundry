@@ -1,0 +1,19 @@
+{
+  "clientSessionId": "sess-fixture-1",
+  "tripSlug": "port-city-weekend",
+  "updates": [
+    {
+      "updateId": "upd-mark-booked-1",
+      "type": "mark_activity_booked",
+      "target": {"activityId": "item_10"},
+      "payload": {"sourceId": 10},
+      "reasonText": "Confirmed in Roamboard UI"
+    },
+    {
+      "updateId": "upd-add-note-1",
+      "type": "add_note",
+      "payload": {"note": "Pack rain jacket"},
+      "canonicalInstruction": "Add note: Pack rain jacket"
+    }
+  ]
+}
