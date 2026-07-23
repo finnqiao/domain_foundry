@@ -780,6 +780,7 @@ class HarnessAPI:
         limit: int | None = None,
         include_grammar: bool = True,
         filter_text: str | None = None,
+        new_card_limit: int | None = None,
     ) -> dict[str, Any]:
         from domain_foundry_core.mesh.quiz import QuizSession
 
@@ -794,6 +795,7 @@ class HarnessAPI:
             limit=limit,
             include_grammar=include_grammar,
             filter_text=filter_text,
+            new_card_limit=new_card_limit,
         )
         card = quiz.current_card(session)
         return {
@@ -804,6 +806,9 @@ class HarnessAPI:
             "prompt": card.prompt if card else None,
             "card_uid": card.object_uid if card else None,
             "object_type": card.object_type if card else None,
+            "new_card_limit": int(session.state.get("new_card_limit") or 0),
+            "due_count": int(session.state.get("due_count") or 0),
+            "new_count": int(session.state.get("new_count") or 0),
         }
 
     def quiz_grade(
@@ -858,3 +863,50 @@ class HarnessAPI:
             "card_uid": card.object_uid if card else None,
             "done": card is None,
         }
+
+    def quiz_stats(self, *, domain: str = "japanese") -> dict[str, Any]:
+        """Read-only review_event aggregates + due/new counts (SPA stats stub)."""
+        from domain_foundry_core.mesh.quiz import quiz_stats as _quiz_stats
+
+        self.packs.reload()
+        try:
+            self.packs.ensure_schemas_applied()
+        except Exception:
+            pass
+        return _quiz_stats(self.workspace, domain=domain)
+
+    def evaluate_schedules(
+        self,
+        *,
+        domain: str | None = "japanese",
+        fire: bool = True,
+        user_id: str = "default",
+        channel: str = "telegram",
+    ) -> list[dict[str, Any]]:
+        """Evaluate pack cron schedules (daily 09:00); idempotent via schedule_run."""
+        from domain_foundry_core.mesh.schedules import ScheduleEvaluator
+
+        self.packs.reload()
+        try:
+            self.packs.ensure_schemas_applied()
+        except Exception:
+            pass
+        evaluator = ScheduleEvaluator(self.workspace, registry=self.packs)
+        if domain:
+            results = evaluator.evaluate_domain(
+                domain, fire=fire, user_id=user_id, channel=channel
+            )
+        else:
+            results = evaluator.evaluate_all(fire=fire)
+        return [
+            {
+                "domain": r.domain,
+                "schedule_id": r.schedule_id,
+                "fired": r.fired,
+                "skipped_reason": r.skipped_reason,
+                "window_id": r.window_id,
+                "next_due_at": r.next_due_at,
+                "result": r.result,
+            }
+            for r in results
+        ]

@@ -28,6 +28,6 @@ agent:
   schedules:
     - id: daily_review
       cron: "0 9 * * *"
-      when: "SELECT count(*) FROM japanese__jp_vocab WHERE next_review IS NOT NULL AND next_review <= date('now')"
+      when: "SELECT count(*) FROM japanese__jp_vocab WHERE tombstoned = 0 AND ((next_review IS NOT NULL AND next_review <= date('now')) OR (reps = 0 AND (next_review IS NULL OR next_review = '') AND (last_reviewed IS NULL OR last_reviewed = '')))"
       action: start_session(quiz)
       message: "You have {count} Japanese cards due. Want to review now?"

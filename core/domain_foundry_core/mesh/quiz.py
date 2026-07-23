@@ -1,8 +1,8 @@
-"""Japanese quiz session skeleton — due-first queue + SM-2 grade handlers.
+"""Japanese quiz session — due-first queue, new-card rate, SM-2 grades.
 
-Full Anki UX (learning steps, new-card rate UI, vault dashboard) is partial;
-this pass wires durable sessions, due-first ordering, and review_event writes
-through the HarnessAPI apply path.
+Anki-parity mechanics: learning-aware SM-2 scheduler, configurable new-card
+introduction rate, daily schedule evaluator, and review_event writes through
+the HarnessAPI apply path.
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ from typing import Any
 from domain_foundry_core.apply.engine import ApplyEngine, OperationSpec
 from domain_foundry_core.clock import now, today_utc
 from domain_foundry_core.mesh.outbound import OutboundQueue
-from domain_foundry_core.mesh.schedules import ScheduleRunStore
+from domain_foundry_core.mesh.schedules import ScheduleEvaluator, ScheduleRunStore
 from domain_foundry_core.mesh.sessions import DomainSession, DomainSessionStore
 from domain_foundry_core.mesh.srs import (
     GRADES,
@@ -50,6 +50,8 @@ _QUIZ_START_RE = re.compile(
     re.IGNORECASE,
 )
 
+DEFAULT_NEW_CARD_LIMIT = 20
+
 
 @dataclass(frozen=True)
 class QuizCard:
@@ -76,6 +78,22 @@ class GradeReceipt:
     details: dict[str, Any]
 
 
+def new_card_limit_from_pack(registry: PackRegistry, domain: str = "japanese") -> int:
+    """Read ``new_card_limit`` from agent.yaml quiz session enter actions."""
+    pack = registry.get(domain)
+    if pack is None or pack.agent is None:
+        return DEFAULT_NEW_CARD_LIMIT
+    for session in pack.agent.sessions:
+        if session.id != "quiz":
+            continue
+        for step in session.enter:
+            if step.get("action") == "build_due_first_queue":
+                raw = step.get("new_card_limit")
+                if raw is not None:
+                    return max(0, int(raw))
+    return DEFAULT_NEW_CARD_LIMIT
+
+
 class QuizSession:
     """Due-first SRS quiz over japanese jp_vocab (+ optional jp_grammar)."""
 
@@ -89,7 +107,7 @@ class QuizSession:
         *,
         scheduler: Scheduler | None = None,
         registry: PackRegistry | None = None,
-        new_card_limit: int = 20,
+        new_card_limit: int | None = None,
     ) -> None:
         self.ws = workspace or Workspace()
         self.scheduler = scheduler or SM2Scheduler()
@@ -98,7 +116,11 @@ class QuizSession:
         self.sessions = DomainSessionStore(self.ws)
         self.schedules = ScheduleRunStore(self.ws)
         self.outbound = OutboundQueue(self.ws)
-        self.new_card_limit = new_card_limit
+        self.new_card_limit = (
+            DEFAULT_NEW_CARD_LIMIT if new_card_limit is None else max(0, int(new_card_limit))
+        )
+        if new_card_limit is None:
+            self.new_card_limit = new_card_limit_from_pack(self.registry, self.DOMAIN)
 
     # ------------------------------------------------------------------ start
 
@@ -109,13 +131,18 @@ class QuizSession:
         limit: int | None = None,
         include_grammar: bool = True,
         filter_text: str | None = None,
+        new_card_limit: int | None = None,
     ) -> DomainSession:
         """Open a quiz session with a due-first card queue."""
+        rate = self.new_card_limit if new_card_limit is None else max(0, int(new_card_limit))
         cards = self.build_due_first_queue(
             limit=limit,
             include_grammar=include_grammar,
             filter_text=filter_text,
+            new_card_limit=rate,
         )
+        due_n = sum(1 for c in cards if c.due)
+        new_n = len(cards) - due_n
         state = {
             "cards": [
                 {
@@ -131,6 +158,9 @@ class QuizSession:
             "correct": 0,
             "grades": [],
             "filter_text": filter_text,
+            "new_card_limit": rate,
+            "due_count": due_n,
+            "new_count": new_n,
         }
         session = self.sessions.start(
             self.DOMAIN,
@@ -146,25 +176,33 @@ class QuizSession:
         *,
         user_id: str = "default",
         channel: str = "telegram",
-    ) -> tuple[DomainSession, str | None]:
-        """Daily 09:00 stub: record schedule fire, start quiz, enqueue outbound nudge."""
-        session = self.start(user_id=user_id)
-        due_count = len(session.state.get("cards") or [])
-        body = f"You have {due_count} Japanese cards due. Want to review now?"
-        outbound = self.outbound.enqueue(
-            origin_domain=self.DOMAIN,
-            text=body,
-            channel=channel,
-            destination=user_id,
-            payload={"schedule_id": schedule_id, "session_id": session.id, "count": due_count},
-        )
-        self.schedules.record_fire(
+        at: datetime | None = None,
+    ) -> tuple[DomainSession | None, str | None, dict[str, Any]]:
+        """Evaluate daily schedule idempotently; enqueue outbound quiz prompt on fire."""
+        evaluator = ScheduleEvaluator(self.ws, registry=self.registry)
+        results = evaluator.evaluate_domain(
             self.DOMAIN,
-            schedule_id,
-            next_due_at=None,  # Expert cron evaluator fills next window later
-            result={"session_id": session.id, "outbound_id": outbound.id, "count": due_count},
+            at=at,
+            fire=True,
+            user_id=user_id,
+            channel=channel,
         )
-        return session, outbound.id
+        match = next((r for r in results if r.schedule_id == schedule_id), None)
+        if match is None:
+            return None, None, {"fired": False, "skipped_reason": "no_schedule"}
+        info = {
+            "fired": match.fired,
+            "skipped_reason": match.skipped_reason,
+            "window_id": match.window_id,
+            "next_due_at": match.next_due_at,
+            "result": match.result,
+        }
+        if not match.fired or not match.result:
+            return None, None, info
+        session_id = match.result.get("session_id")
+        outbound_id = match.result.get("outbound_id")
+        session = self.sessions.get(session_id) if session_id else None
+        return session, outbound_id, info
 
     # ------------------------------------------------------------------ queue
 
@@ -175,9 +213,11 @@ class QuizSession:
         include_grammar: bool = True,
         filter_text: str | None = None,
         as_of: str | None = None,
+        new_card_limit: int | None = None,
     ) -> list[QuizCard]:
-        """Due reviews first (oldest next_review), then new cards (capped)."""
+        """Due reviews first (oldest next_review), then new cards (rate-capped)."""
         as_of = as_of or today_utc()
+        rate = self.new_card_limit if new_card_limit is None else max(0, int(new_card_limit))
         types = self.CARD_TYPES if include_grammar else ("jp_vocab",)
         due: list[QuizCard] = []
         new: list[QuizCard] = []
@@ -196,28 +236,30 @@ class QuizSession:
                 meaning_col = "meaning"
                 rows = conn.execute(
                     f"""
-                    SELECT object_uid, {title_col} AS prompt, {meaning_col} AS answer,
-                           ease_factor, interval_days, reps, lapses,
-                           next_review, last_reviewed
+                    SELECT *
                     FROM {tname}
                     WHERE tombstoned = 0
                     ORDER BY id ASC
                     """
                 ).fetchall()
                 for row in rows:
-                    prompt = str(row["prompt"] or "")
-                    answer = row["answer"]
+                    data = dict(row)
+                    prompt = str(data.get(title_col) or "")
+                    answer = data.get(meaning_col)
                     if filter_text and filter_text.lower() not in prompt.lower() and (
                         not answer or filter_text.lower() not in str(answer).lower()
                     ):
                         continue
-                    state = card_state_from_row(dict(row))
-                    is_new = state.reps == 0 and not state.next_review
-                    is_due = bool(
-                        state.next_review and state.next_review <= as_of
+                    state = card_state_from_row(data)
+                    is_due = bool(state.next_review and state.next_review <= as_of)
+                    is_new = (
+                        state.reps == 0
+                        and not state.next_review
+                        and not state.last_reviewed
+                        and not is_due
                     )
                     card = QuizCard(
-                        object_uid=str(row["object_uid"]),
+                        object_uid=str(data["object_uid"]),
                         object_type=otype,
                         prompt=prompt,
                         answer=str(answer) if answer is not None else None,
@@ -232,7 +274,7 @@ class QuizSession:
             conn.close()
 
         due.sort(key=lambda c: (c.state.next_review or "", c.object_uid))
-        queue = due + new[: self.new_card_limit]
+        queue = due + new[:rate]
         if limit is not None:
             queue = queue[: max(0, int(limit))]
         return queue
@@ -385,6 +427,7 @@ class QuizSession:
                 "next_interval_days": result.next_interval_days,
                 "ease_factor": result.state.ease_factor,
                 "algorithm": result.algorithm,
+                "learning_step": result.state.learning_step,
             },
         )
 
@@ -416,3 +459,74 @@ def looks_like_quiz_start(text: str) -> bool:
 
 def looks_like_grade(text: str) -> bool:
     return str(text or "").strip().lower() in GRADE_ALIASES
+
+
+def quiz_stats(workspace: Workspace, *, domain: str = "japanese") -> dict[str, Any]:
+    """Read-only aggregates over review_event (+ due/new card counts)."""
+    from collections import Counter
+
+    from domain_foundry_core.clock import today_utc
+
+    ev_table = table_name(domain, "review_event")
+    vocab_table = table_name(domain, "jp_vocab")
+    as_of = today_utc()
+    out: dict[str, Any] = {
+        "domain": domain,
+        "as_of": as_of,
+        "review_count": 0,
+        "grade_distribution": {},
+        "algorithm_distribution": {},
+        "due_count": 0,
+        "new_count": 0,
+        "reviewed_today": 0,
+    }
+    if not workspace.domains_db.exists():
+        return out
+    conn = connect_ro(workspace.domains_db)
+    try:
+        if conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (ev_table,)
+        ).fetchone():
+            rows = conn.execute(
+                f"""
+                SELECT grade, algorithm, reviewed_at
+                FROM {ev_table}
+                WHERE tombstoned = 0
+                """
+            ).fetchall()
+            grades = Counter(str(r["grade"] or "") for r in rows)
+            algos = Counter(str(r["algorithm"] or "") for r in rows)
+            out["review_count"] = len(rows)
+            out["grade_distribution"] = dict(grades)
+            out["algorithm_distribution"] = dict(algos)
+            out["reviewed_today"] = sum(
+                1
+                for r in rows
+                if str(r["reviewed_at"] or "").startswith(as_of)
+            )
+        if conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (vocab_table,)
+        ).fetchone():
+            due = conn.execute(
+                f"""
+                SELECT count(*) FROM {vocab_table}
+                WHERE tombstoned = 0
+                  AND next_review IS NOT NULL
+                  AND next_review <= ?
+                """,
+                (as_of,),
+            ).fetchone()
+            new = conn.execute(
+                f"""
+                SELECT count(*) FROM {vocab_table}
+                WHERE tombstoned = 0
+                  AND reps = 0
+                  AND (next_review IS NULL OR next_review = '')
+                  AND (last_reviewed IS NULL OR last_reviewed = '')
+                """
+            ).fetchone()
+            out["due_count"] = int(due[0] or 0)
+            out["new_count"] = int(new[0] or 0)
+    finally:
+        conn.close()
+    return out

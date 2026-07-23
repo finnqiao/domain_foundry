@@ -10,8 +10,8 @@ from domain_foundry_core.mesh.outbound import (
     OutboundQueue,
     domain_prefix,
 )
-from domain_foundry_core.mesh.quiz import QuizSession
-from domain_foundry_core.mesh.schedules import ScheduleRunStore
+from domain_foundry_core.mesh.quiz import QuizSession, quiz_stats
+from domain_foundry_core.mesh.schedules import ScheduleEvaluator, ScheduleRunStore
 from domain_foundry_core.mesh.sessions import DomainSessionStore
 from domain_foundry_core.mesh.srs import SM2Scheduler, Scheduler
 from domain_foundry_core.mesh.supervisor import Supervisor, SupervisorStatus
@@ -28,9 +28,11 @@ __all__ = [
     "OutboundQueue",
     "QuizSession",
     "SM2Scheduler",
+    "ScheduleEvaluator",
     "ScheduleRunStore",
     "Scheduler",
     "Supervisor",
     "SupervisorStatus",
     "domain_prefix",
+    "quiz_stats",
 ]

@@ -316,7 +316,30 @@ class MarkdownAdapter:
             body = self._default_body(pack, object_type, row)
         body = self._append_entry_backlinks(body, row)
         body = redact_secrets(body).rstrip()
+        # Vocab/grammar: YAML frontmatter inside managed body so next_review/reps
+        # re-project without touching unmanaged free zones.
+        if object_type in {"jp_vocab", "jp_grammar"}:
+            body = self._with_srs_frontmatter(body, row)
         return content_managed_section(section, body, object_uid=object_uid)
+
+    def _with_srs_frontmatter(self, body: str, row: dict[str, Any]) -> str:
+        """Prepend YAML frontmatter with next_review + reps for vault SRS visibility."""
+        # Strip a prior managed frontmatter block if the body already has one.
+        stripped = body
+        if stripped.lstrip().startswith("---"):
+            parts = stripped.split("---", 2)
+            if len(parts) >= 3:
+                stripped = parts[2].lstrip("\n")
+        reps = row.get("reps")
+        next_review = row.get("next_review")
+        fm_lines = [
+            "---",
+            f"next_review: {next_review if next_review not in (None, '') else ''}",
+            f"reps: {0 if reps is None else int(reps)}",
+            "---",
+            "",
+        ]
+        return "\n".join(fm_lines) + stripped.lstrip("\n")
 
     def _default_body(
         self, pack: DomainPack, object_type: str, row: dict[str, Any]
@@ -334,6 +357,92 @@ class MarkdownAdapter:
         lines.append("")
         lines.append(f"_updated {row.get('updated_at') or now_iso()}_")
         return "\n".join(lines)
+
+    def render_due_dashboard(
+        self,
+        domain: str = "japanese",
+        *,
+        as_of: str | None = None,
+        title: str = "Japanese — Due today",
+    ) -> dict[str, Any] | None:
+        """Managed dashboard note listing cards due on ``as_of`` (UTC date)."""
+        from domain_foundry_core.clock import today_utc
+
+        pack = self.registry.get(domain)
+        if pack is None or "jp_vocab" not in pack.objects:
+            return None
+        day = as_of or today_utc()
+        folder = str(pack.projections.markdown.get("folder") or pack.name)
+        rel = f"{folder}/{title}.md"
+        rows = self._load_due_rows(pack, day)
+        lines = [
+            f"# {title}",
+            "",
+            f"_as of {day} — {len(rows)} due_",
+            "",
+        ]
+        if not rows:
+            lines.append("_Nothing due. Nice._")
+            lines.append("")
+        else:
+            for row in rows:
+                word = str(row.get("word") or row.get("_title") or row.get("object_uid"))
+                meaning = row.get("meaning") or ""
+                next_review = row.get("next_review") or day
+                reps = int(row.get("reps") or 0)
+                uid = str(row.get("object_uid") or "")
+                lines.append(
+                    f"- **{word}** — {meaning} _(next_review={next_review}, reps={reps})_"
+                )
+                if uid:
+                    lines.append(f"  - `%%uid:{uid}%%`")
+            lines.append("")
+        body = "\n".join(lines).rstrip()
+        section = f"due_dashboard:{domain}"
+        rendered = content_managed_section(section, body, object_uid=f"{domain}:due_today")
+        return {
+            "rel_path": rel,
+            "object_uid": f"{domain}:due_today",
+            "entry_id": "",
+            "rendered": rendered,
+            "due_count": len(rows),
+            "as_of": day,
+        }
+
+    def _load_due_rows(self, pack: DomainPack, as_of: str) -> list[dict[str, Any]]:
+        tname = table_name(pack.name, "jp_vocab")
+        if not self.ws.domains_db.exists():
+            return []
+        conn = connect_ro(self.ws.domains_db)
+        try:
+            exists = conn.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",
+                (tname,),
+            ).fetchone()
+            if not exists:
+                return []
+            rows = conn.execute(
+                f"""
+                SELECT * FROM {tname}
+                WHERE tombstoned = 0
+                  AND next_review IS NOT NULL
+                  AND next_review <= ?
+                ORDER BY next_review ASC, id ASC
+                """,
+                (as_of,),
+            ).fetchall()
+        except Exception:
+            return []
+        finally:
+            conn.close()
+        obj = pack.objects["jp_vocab"]
+        out: list[dict[str, Any]] = []
+        for r in rows:
+            d = {k: r[k] for k in r.keys()}
+            title_field = obj.title_field
+            d["_title"] = d.get(title_field) if title_field else d.get("object_uid")
+            out.append(d)
+        return out
 
     def _append_entry_backlinks(self, body: str, row: dict[str, Any]) -> str:
         """Emit [[entry:<id>]] for DF entry_id plus Hermes lb_* aliases when known."""
