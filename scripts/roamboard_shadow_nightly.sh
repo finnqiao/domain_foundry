@@ -35,7 +35,7 @@ OUT="$LOG_DIR/nightly-${DAY}.log"
 # Append a one-line streak counter (human reviews zero-diff days).
 STREAK="$LOG_DIR/ZERO_DIFF_STREAK.txt"
 SUMMARY="$(ls -1dt "$LOG_DIR"/20*Z/SUMMARY.md 2>/dev/null | head -1 || true)"
-if [[ -n "$SUMMARY" ]] && rg -q 'zero_diff[^\\n]*:\\s*\\*\\*True\\*\\*|zero_diff.: true' "$SUMMARY" 2>/dev/null; then
+if [[ -n "$SUMMARY" ]] && rg -q 'zero_diff[^\n]*:\s*\*\*True\*\*|zero_diff.: true' "$SUMMARY" 2>/dev/null; then
   echo "$DAY zero-diff" >>"$STREAK"
 else
   echo "$DAY HAS-DIFFS — reset streak review" >>"$STREAK"

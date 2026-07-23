@@ -69,8 +69,8 @@ if ! command -v uv >/dev/null 2>&1; then
   friction "uv not on PATH; Hermes venvs often lack pip — install uv or use hermes python -m ensurepip"
   exit 1
 fi
-log "uv pip install -e adapters/hermes_agent into Hermes venv"
-uv pip install --python "$HERMES_PY" -U -e "$ROOT/adapters/hermes_agent" >/dev/null
+log "uv pip install -e adapters/hermes_agent + core into Hermes venv"
+uv pip install --python "$HERMES_PY" -U -e "$ROOT/adapters/hermes_agent" -e "$ROOT" >/dev/null
 
 # Entry point must load a *module* (Hermes calls module.register)
 "$HERMES_PY" - <<'PY' || { friction "entry point does not load a module with register()"; exit 1; }
@@ -129,14 +129,15 @@ done
 curl -sf "$URL/api/health" >/dev/null || { friction "serve failed to become healthy on $URL"; exit 1; }
 log "serve healthy"
 
-# --- direct tool path (no LLM) ----------------------------------------------
-export DOMAIN_FOUNDRY_URL="$URL"
+# --- direct tool path (no LLM; in-process writes per mesh P0) ---------------
+# DOMAIN_FOUNDRY_URL is intentionally NOT exported to the tool block: that env
+# var forces the HTTP client, and HTTP writes 410 since mesh P0.
 "$HERMES_PY" - <<'PY' | tee -a "$FRICTION_LOG"
 import json, os
-from domain_foundry_hermes_agent import DomainExpertClient, build_tools
+from domain_foundry_hermes_agent import build_tools
+from domain_foundry_hermes_agent.local import LocalHarnessClient
 
-url = os.environ["DOMAIN_FOUNDRY_URL"]
-tools = {t.name: t for t in build_tools(DomainExpertClient(url))}
+tools = {t.name: t for t in build_tools(LocalHarnessClient(os.environ["DOMAIN_FOUNDRY_HOME"]))}
 c1 = tools["domain_foundry_capture"](
     text="baked a 75% hydration country loaf, bulk 5h, came out great",
     source_ref="smoke-bake",
@@ -153,6 +154,14 @@ uid = corr.get("object_uid") or ""
 if not uid.startswith("sourdough:bake:"):
     print("FRICTION: ambiguous correction hit", uid, "expected sourdough bake")
 PY
+
+# --- HTTP server stays a read-only viewer: writes must 410 -------------------
+WRITE_STATUS="$(curl -s -o /dev/null -w '%{http_code}' -X POST "$URL/api/capture" \
+  -H 'Content-Type: application/json' -d '{"text": "should be rejected"}')"
+log "HTTP_WRITE_STATUS $WRITE_STATUS"
+if [[ "$WRITE_STATUS" != "410" ]]; then
+  friction "expected 410 on HTTP write, got $WRITE_STATUS"
+fi
 
 # --- optional live LLM oneshot ----------------------------------------------
 if [[ "${HERMES_LIVE:-0}" == "1" ]]; then
