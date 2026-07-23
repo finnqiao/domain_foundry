@@ -32,6 +32,11 @@ def _minimal_pack(dest: Path, name: str) -> Path:
     text = pack_yaml.read_text(encoding="utf-8")
     text = text.replace("name: example", f"name: {name}", 1)
     pack_yaml.write_text(text, encoding="utf-8")
+    agent_yaml = dest / "agent.yaml"
+    if agent_yaml.exists():
+        agent_text = agent_yaml.read_text(encoding="utf-8")
+        agent_text = agent_text.replace("name: example", f"name: {name}", 1)
+        agent_yaml.write_text(agent_text, encoding="utf-8")
     return dest
 
 
