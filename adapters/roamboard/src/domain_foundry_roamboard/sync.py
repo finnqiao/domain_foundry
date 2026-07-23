@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict, dataclass, field
-from enum import Enum
+from datetime import UTC
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -15,17 +16,16 @@ from domain_foundry_core.migrations.importers import (
     MappingConfig,
 )
 from domain_foundry_core.paths import Workspace
-
 from domain_foundry_roamboard.mapper import (
     feed_to_records,
     mapping_config_dict,
     patch_bundle_to_records,
 )
-from domain_foundry_roamboard.shapes import load_feed, load_patch_bundle
 from domain_foundry_roamboard.shadow import ShadowReport, run_shadow
+from domain_foundry_roamboard.shapes import load_feed, load_patch_bundle
 
 
-class SyncMode(str, Enum):
+class SyncMode(StrEnum):
     DRY_RUN = "dry_run"
     APPLY = "apply"
     SHADOW = "shadow"
@@ -262,11 +262,11 @@ def export_df_feed(home: Path | str, *, limit: int = 500) -> dict[str, Any]:
     checksum = __import__("hashlib").sha256(
         json.dumps(stable, sort_keys=True, separators=(",", ":")).encode("utf-8")
     ).hexdigest()
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     return {
         "schemaVersion": 2,
-        "generatedAt": datetime.now(timezone.utc)
+        "generatedAt": datetime.now(UTC)
         .replace(microsecond=0)
         .isoformat()
         .replace("+00:00", "Z"),

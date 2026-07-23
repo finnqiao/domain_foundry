@@ -13,7 +13,6 @@ from domain_foundry_core.projections.markdown import (
     preview_managed_write,
     unmanaged_preserved,
     unmanaged_text,
-    write_managed_note,
 )
 from domain_foundry_core.projections.reproject import HERMES_FOLDER_MAP, VaultReprojector
 from domain_foundry_core.routing.router import Router

@@ -18,8 +18,8 @@ from domain_foundry_roamboard.mapper import (
     source_ref_trip,
 )
 from domain_foundry_roamboard.remote import live_creds_present
-from domain_foundry_roamboard.shapes import load_feed, load_patch_bundle
 from domain_foundry_roamboard.shadow import run_shadow
+from domain_foundry_roamboard.shapes import load_feed, load_patch_bundle
 from domain_foundry_roamboard.sync import SyncMode, sync_roamboard
 
 REPO = Path(__file__).resolve().parents[1]

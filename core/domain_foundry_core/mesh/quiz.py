@@ -21,8 +21,8 @@ from domain_foundry_core.mesh.srs import (
     GRADES,
     CardState,
     Grade,
-    SM2Scheduler,
     Scheduler,
+    SM2Scheduler,
     card_state_from_row,
 )
 from domain_foundry_core.packs.registry import PackRegistry

@@ -8,7 +8,6 @@ Two invariants:
 
 from __future__ import annotations
 
-import sqlite3
 import subprocess
 import sys
 import time

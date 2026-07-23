@@ -31,8 +31,8 @@ from domain_foundry_core.migrations.importers.config import (
 )
 from domain_foundry_core.migrations.importers.importer import GenericImporter
 from domain_foundry_core.migrations.importers.models import (
-    RecordOutcome,
     ReconciliationReport,
+    RecordOutcome,
 )
 from domain_foundry_core.migrations.importers.source import (
     DictSource,
