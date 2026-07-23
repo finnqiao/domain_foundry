@@ -63,6 +63,9 @@ class RoutingRule(BaseModel):
     object: str
     confidence_boost: float = 0.0
     operation: str = "create"
+    # Optional LLM tier override when this rule matches and L2 is invoked.
+    # "sota" for schema-affecting / architectural / ambiguous interpretations.
+    tier: str | None = None
 
 
 class RoutingExample(BaseModel):

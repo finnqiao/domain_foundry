@@ -8,7 +8,15 @@ from typing import Any
 
 from domain_foundry_core.clock import now_iso
 from domain_foundry_core.interpret.fewshot import load_fewshot_bank
-from domain_foundry_core.llm.provider import HeuristicProvider, LLMProvider, get_default_provider
+from domain_foundry_core.llm.pricing import estimate_cost_usd
+from domain_foundry_core.llm.provider import (
+    HeuristicProvider,
+    LLMProvider,
+    TokenUsage,
+    get_default_provider,
+    is_heuristic_provider,
+    select_model_tier,
+)
 from domain_foundry_core.packs.models import DomainPack
 from domain_foundry_core.packs.registry import PackRegistry
 from domain_foundry_core.paths import Workspace
@@ -66,6 +74,8 @@ class RouteResult:
     cost_usd: float = 0.0
     l1: L1Result | None = None
     clarification: str | None = None
+    model_tier: str | None = None
+    usage: TokenUsage | None = None
 
 
 class Router:
@@ -75,11 +85,13 @@ class Router:
         *,
         registry: PackRegistry | None = None,
         llm: LLMProvider | None = None,
-        cost_cap: float = 2.0,
+        cost_cap: float = 0.25,
     ) -> None:
         self.ws = workspace or Workspace()
         self.registry = registry or PackRegistry(self.ws)
-        self.cost = CostGuard(self.ws.ledger_db, CostGuardConfig(daily_usd_cap=cost_cap))
+        self.cost = CostGuard(
+            self.ws.ledger_db, CostGuardConfig.from_env(daily_usd_cap=cost_cap)
+        )
         cassette_dir = self.ws.home / "cassettes"
         self.llm = llm or get_default_provider(cassette_dir=cassette_dir)
         self.heuristic = HeuristicProvider()
@@ -88,7 +100,7 @@ class Router:
         """Route without persisting — used by eval runner."""
         packs = self.registry.list()
         l1 = L1Matcher(packs).match(text)
-        spans, interpreter, cost, clarification = self._interpret(
+        spans, interpreter, cost, clarification, model_tier, usage = self._interpret(
             text, channel=channel, l1=l1, packs=packs, entry_id=None
         )
         status, tier = self._finalize_status(spans, clarification)
@@ -101,17 +113,29 @@ class Router:
             cost_usd=cost,
             l1=l1,
             clarification=clarification,
+            model_tier=model_tier,
+            usage=usage,
         )
 
     def route_entry(self, entry_id: str, text: str, *, channel: str = "cli") -> RouteResult:
         packs = self.registry.list()
         l1 = L1Matcher(packs, demotions=self._load_demotions()).match(text)
-        spans, interpreter, cost, clarification = self._interpret(
+        spans, interpreter, cost, clarification, model_tier, usage = self._interpret(
             text, channel=channel, l1=l1, packs=packs, entry_id=entry_id
         )
         status, tier = self._finalize_status(spans, clarification)
         self._persist(entry_id, text, spans, status, tier, interpreter, clarification)
-        if cost > 0:
+        if cost > 0 and usage is not None:
+            self.cost.record(
+                provider=usage.provider or getattr(self.llm, "name", "llm"),
+                model=usage.model,
+                input_tokens=usage.input_tokens,
+                output_tokens=usage.output_tokens,
+                cost_usd=cost,
+                entry_id=entry_id,
+                tier=usage.tier or model_tier,
+            )
+        elif cost > 0:
             self.cost.record(
                 provider=getattr(self.llm, "name", "llm"),
                 model=None,
@@ -119,6 +143,7 @@ class Router:
                 output_tokens=0,
                 cost_usd=cost,
                 entry_id=entry_id,
+                tier=model_tier,
             )
         return RouteResult(
             entry_id=entry_id,
@@ -129,6 +154,8 @@ class Router:
             cost_usd=cost,
             l1=l1,
             clarification=clarification,
+            model_tier=model_tier,
+            usage=usage,
         )
 
     def _interpret(
@@ -139,9 +166,9 @@ class Router:
         l1: L1Result,
         packs: list[DomainPack],
         entry_id: str | None,
-    ) -> tuple[list[CaptureSpan], str, float, str | None]:
+    ) -> tuple[list[CaptureSpan], str, float, str | None, str | None, TokenUsage | None]:
         if not packs:
-            return [], "none", 0.0, None
+            return [], "none", 0.0, None, None, None
 
         if not l1.escalate and l1.hits:
             # Prefer highest-boost hit (e.g. plant acquisition over plant-name mention)
@@ -157,7 +184,7 @@ class Router:
                 fields=fields,
             )
             span.disposition = self._policy_action(pack, span, channel)
-            return [span], "rules", 0.0, None
+            return [span], "rules", 0.0, None, None, None
 
         # L2
         ctx = self._build_context(text, packs, l1)
@@ -168,26 +195,48 @@ class Router:
             "Fan out multi-domain messages into separate captures with links."
         )
 
-        use_llm = self.cost.allow_llm() and not isinstance(self.llm, HeuristicProvider)
+        model_tier = self._select_tier(text, l1, packs)
+        use_llm = (
+            self.cost.allow_llm(tier=model_tier) and not is_heuristic_provider(self.llm)
+        )
         # Prefer configured provider; fall back to heuristic on failure / cost guard
         interpreter = "heuristic"
         cost = 0.0
+        usage: TokenUsage | None = None
         raw: dict[str, Any]
-        if use_llm and self.cost.allow_llm():
+        if use_llm:
             try:
-                raw = self.llm.complete_json(
-                    system=system, user=user, schema=ROUTE_SCHEMA
+                result = self.llm.complete_json(
+                    system=system,
+                    user=user,
+                    schema=ROUTE_SCHEMA,
+                    tier=model_tier,
                 )
+                raw = result.data
+                usage = result.usage
+                usage.tier = usage.tier or model_tier
                 interpreter = getattr(self.llm, "name", "llm")
-                cost = 0.001  # placeholder metering until provider returns usage
+                cost = estimate_cost_usd(
+                    model=usage.model,
+                    input_tokens=usage.input_tokens,
+                    output_tokens=usage.output_tokens,
+                )
             except Exception:
-                raw = self.heuristic.complete_json(system=system, user=user)
+                raw = self.heuristic.complete_json(
+                    system=system, user=user, tier=model_tier
+                ).data
                 interpreter = "heuristic_fallback"
+                usage = None
+                cost = 0.0
         else:
             # cost guard or heuristic mode
-            if not self.cost.allow_llm() and not isinstance(self.llm, HeuristicProvider):
+            if not self.cost.allow_llm(tier=model_tier) and not is_heuristic_provider(
+                self.llm
+            ):
                 interpreter = "rules_only_cost_guard"
-            raw = self.heuristic.complete_json(system=system, user=user)
+            raw = self.heuristic.complete_json(
+                system=system, user=user, tier=model_tier
+            ).data
 
         spans: list[CaptureSpan] = []
         for c in raw.get("captures") or []:
@@ -223,7 +272,30 @@ class Router:
         if not spans:
             spans = self._never_drop(text, packs)
 
-        return spans, interpreter, cost, clarification
+        return spans, interpreter, cost, clarification, model_tier, usage
+
+    def _select_tier(self, text: str, l1: L1Result, packs: list[DomainPack]) -> str:
+        rule_tiers: list[str | None] = []
+        structural = False
+        pack_by_name = {p.name: p for p in packs}
+        for hit in l1.hits:
+            pack = pack_by_name.get(hit.pack)
+            if not pack:
+                continue
+            if hit.rule_index < len(pack.routing.rules):
+                rule = pack.routing.rules[hit.rule_index]
+                rule_tiers.append(rule.tier)
+                if rule.operation in {"update", "delete", "merge", "correct"}:
+                    structural = True
+            if hit.operation in {"update", "delete", "merge", "correct"}:
+                structural = True
+        return select_model_tier(
+            l1_confidence=l1.confidence,
+            l1_reason=l1.reason,
+            text=text,
+            rule_tiers=rule_tiers,
+            structural=structural,
+        )
 
     def _never_drop(self, text: str, packs: list[DomainPack]) -> list[CaptureSpan]:
         # 1) pack-declared fallback via unfiled if any pack has fallback unfiled_card
