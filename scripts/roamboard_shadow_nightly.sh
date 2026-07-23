@@ -4,7 +4,7 @@
 #
 # Usage:
 #   export DOMAIN_FOUNDRY_HOME=~/HermesWorkspace/foundry-dry
-#   export DOMAIN_FOUNDRY_REPO=/Users/finn/dev/domain_foundry
+#   export DOMAIN_FOUNDRY_REPO=/path/to/domain_foundry
 #   ./scripts/roamboard_shadow_nightly.sh
 #
 # Optional: ROAMBOARD_FEED=/path/to/feed.json TRAVEL_DB=~/HermesWorkspace/travel/data/travel.sqlite
