@@ -54,10 +54,15 @@ A pack is installed by any of:
 - a directory drop-in at `~/.domain_foundry/packs/<pack>/`,
 - `domain-foundry pack add <path-or-git-url>`,
 - `pip install domain-foundry-pack-<name>` (entry-point group
-  `domain_foundry.packs`).
+  `domain_foundry.packs`),
+- a **private overlay** directory listed in `DOMAIN_FOUNDRY_PACKS_PATH`
+  (personal packs can live entirely outside this repo — e.g.
+  `~/HermesWorkspace/packs/`; see [Private overlay](../PRIVATE_OVERLAY.md)).
 
-Discovery is a directory scan + entry-point scan at startup. Lifecycle commands:
-`pack list`, `pack validate`, `pack add`, `pack upgrade`.
+Discovery is a directory scan + entry-point scan at startup. Overlay paths load
+**after** workspace and entry-point packs so a same-named private pack shadows
+the public one. Lifecycle commands: `pack list`, `pack validate`, `pack add`,
+`pack upgrade`.
 
 ## Trust tiers
 

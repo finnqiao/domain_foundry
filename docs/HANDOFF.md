@@ -1,7 +1,7 @@
 # Launch handoff — what I did vs what you do
 
-Provisional name is **Domain Foundry**. Repo is now at
-`/Users/finn/dev/domain_foundry` (renamed from `domain_expert`).
+Provisional name is **Domain Foundry**. Repo is the local `domain_foundry`
+checkout (renamed from `domain_expert`).
 
 ---
 
@@ -47,7 +47,7 @@ If the org name differs, search-replace
 ### 2. Commit + push remote (when ready)
 
 ```bash
-cd /Users/finn/dev/domain_foundry
+cd /path/to/domain_foundry
 # recreate clean venv if needed (old path shebangs break after dir rename):
 #   mv .venv /tmp/df_venv_old && python3 -m venv .venv
 #   .venv/bin/python -m pip install -e ".[dev,docs]" -e ./adapters/hermes_agent
@@ -104,7 +104,7 @@ Tools: QuickTime / Kap / `ffmpeg`. Do not fabricate a binary GIF.
 Prereqs: audit green, name availability OK, `build` + `twine` installed.
 
 ```bash
-cd /Users/finn/dev/domain_foundry
+cd /path/to/domain_foundry
 # Move CHANGELOG [0.1.0] out of "unreleased" if needed
 git tag -a v0.1.0 -m "Domain Foundry v0.1.0"
 python -m build
@@ -157,7 +157,7 @@ domain-foundry serve   # terminal 1
 ## Quick verify commands
 
 ```bash
-cd /Users/finn/dev/domain_foundry
+cd /path/to/domain_foundry
 export PATH="$PWD/.venv/bin:$PATH"
 scripts/release_audit.sh
 scripts/quickstart_gate.sh

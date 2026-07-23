@@ -4,7 +4,8 @@ Everything the in-repo P9 work **prepared** but deliberately did **not execute**
 Finn runs these steps by hand. Nothing here is automated, published, or posted by
 the build — do not assume any launch post is live.
 
-Legend: ☐ = not started · 🔒 = human/manual gate (cannot be automated in-repo).
+Legend: ☐ = not started · ✅ = in-repo prepared / done · 🔒 = human/manual gate
+(cannot be automated in-repo).
 
 ---
 
@@ -19,6 +20,22 @@ Legend: ☐ = not started · 🔒 = human/manual gate (cannot be automated in-re
   trademark sanity check. Update placeholder GitHub URLs if the org differs.
 - ☐ Confirm `scripts/release_audit.sh` green on the rename commit (agent re-runs
   this; you confirm before publish).
+
+## 0b. OSS uplift (Phase 9 overlay + leakscan) ✅ in-repo
+
+- ✅ **Private overlay mechanism** — multi-dir
+  `DOMAIN_FOUNDRY_PACKS_PATH` + `domain_foundry.packs` entry points; docs in
+  [`docs/PRIVATE_OVERLAY.md`](docs/PRIVATE_OVERLAY.md). Personal packs can live
+  at e.g. `~/HermesWorkspace/packs/` with no OSS repo diff.
+- ✅ **Leakscan personal-string heuristics** —
+  `scripts/leakscan.py` (home paths, emails, Telegram token/id shapes, API-key
+  shapes); fixture test plants a fake secret; report in
+  [`docs/LEAKSCAN_PHASE9.md`](docs/LEAKSCAN_PHASE9.md). **No git-history rewrite.**
+- ☐ Move personalized packs into the private overlay location on the founder
+  machine (OSS keeps genericized demos only).
+- ☐ Founder-validation **measured results** table filled after a production week
+  — stub in [`docs/FOUNDER_VALIDATION.md`](docs/FOUNDER_VALIDATION.md).
+- ☐ One full single-stack **production week** (human gate; not claimed done).
 
 ## 1. Pre-flight (in-repo — already green) ✅ prepared
 

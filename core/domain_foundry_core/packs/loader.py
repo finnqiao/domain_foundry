@@ -202,23 +202,37 @@ def validate_pack(pack: DomainPack) -> None:
 
 
 def discover_pack_dirs(search_paths: list[Path]) -> list[Path]:
+    """Find pack roots under each search path.
+
+    A search path may be:
+    - a catalog directory whose immediate children are packs (have pack.yaml), or
+    - a single pack directory that itself contains pack.yaml.
+    """
     found: list[Path] = []
     seen: set[Path] = set()
+
+    def _add(candidate: Path) -> None:
+        resolved = candidate.resolve()
+        if resolved not in seen:
+            seen.add(resolved)
+            found.append(resolved)
+
     for base in search_paths:
         if not base.is_dir():
+            continue
+        if (base / "pack.yaml").exists():
+            _add(base)
             continue
         for child in sorted(base.iterdir()):
             if not child.is_dir() or child.name.startswith(("_", ".")):
                 continue
             if (child / "pack.yaml").exists():
-                resolved = child.resolve()
-                if resolved not in seen:
-                    seen.add(resolved)
-                    found.append(resolved)
+                _add(child)
     return found
 
 
 def discover_entry_point_packs() -> list[Path]:
+    """Packs registered via the ``domain_foundry.packs`` entry-point group."""
     paths: list[Path] = []
     try:
         eps = importlib.metadata.entry_points(group="domain_foundry.packs")

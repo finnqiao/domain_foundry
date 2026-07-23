@@ -75,6 +75,8 @@ nav:
   - Security: security.md
   - Project:
       - Leak audit: LEAK_AUDIT.md
+      - Leakscan (Phase 9): LEAKSCAN_PHASE9.md
+      - Private overlay: PRIVATE_OVERLAY.md
       - Phase status: PHASE_STATUS.md
       - Founder validation: FOUNDER_VALIDATION.md
 

@@ -14,7 +14,7 @@ from domain_foundry_core.packs.loader import (
 )
 from domain_foundry_core.packs.models import DomainPack
 from domain_foundry_core.packs.schema_compiler import apply_pack_schema, write_migration
-from domain_foundry_core.paths import Workspace
+from domain_foundry_core.paths import Workspace, overlay_pack_dirs
 
 
 class PackRegistry:
@@ -27,16 +27,28 @@ class PackRegistry:
         self.reload()
 
     def search_paths(self) -> list[Path]:
-        # Only installed/workspace packs are active. Bundled packs are a catalog
-        # (see bundled_catalog / activate_bundled) — not auto-enabled.
-        return [self.ws.packs_dir]
+        """Active pack roots: workspace install dir + private overlay dirs.
+
+        Bundled packs remain a catalog only (see bundled_catalog /
+        activate_bundled) — not auto-enabled. Overlay dirs come from
+        ``DOMAIN_FOUNDRY_PACKS_PATH`` so personal packs can live outside the
+        OSS checkout (e.g. ``~/HermesWorkspace/packs``).
+        """
+        return [self.ws.packs_dir, *overlay_pack_dirs()]
 
     def bundled_catalog(self) -> list[Path]:
         return discover_pack_dirs([bundled_packs_root()])
 
     def reload(self) -> None:
         self._packs.clear()
-        dirs = discover_pack_dirs(self.search_paths()) + discover_entry_point_packs()
+        # Order: workspace → pip entry points → DOMAIN_FOUNDRY_PACKS_PATH overlay.
+        # Later sources win on name collision so a private overlay pack can shadow
+        # a same-named install or entry-point pack.
+        dirs = (
+            discover_pack_dirs([self.ws.packs_dir])
+            + discover_entry_point_packs()
+            + discover_pack_dirs(overlay_pack_dirs())
+        )
         for d in dirs:
             try:
                 pack = load_pack(d, validate=True)
