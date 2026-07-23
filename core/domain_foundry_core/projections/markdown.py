@@ -51,6 +51,58 @@ def parse_managed_sections(text: str) -> dict[str, str]:
     }
 
 
+def unmanaged_text(text: str) -> str:
+    """Return bytes outside managed markers (free zones). Used for invariants."""
+    return MANAGED_SECTION_RE.sub("", text or "")
+
+
+def unmanaged_preserved(existing: str, merged: str) -> bool:
+    """True when free-zone bytes from ``existing`` survive in ``merged``.
+
+    Exact equality is required when managed regions already existed. When managed
+    content is appended to a free-only file, only whitespace separators may be
+    added after the original free text.
+    """
+    before = unmanaged_text(existing)
+    after = unmanaged_text(merged)
+    if before == after:
+        return True
+    if parse_managed_sections(existing):
+        return False
+    # First managed inject: original free bytes are an exact prefix; suffix is
+    # whitespace-only (blank-line separator before the new managed block).
+    if after.startswith(before):
+        return after[len(before) :].strip("\n") == ""
+    # Merge may normalize a missing trailing newline on the free zone.
+    trimmed = before.rstrip("\n")
+    if after.startswith(trimmed):
+        return after[len(trimmed) :].strip("\n") == ""
+    return False
+
+
+def preview_managed_write(existing: str | None, rendered: str) -> dict[str, Any]:
+    """Compute merge outcome without writing. Reports unmanaged-byte identity."""
+    before = existing if existing is not None else ""
+    if not before:
+        after = rendered or ""
+        if after and not after.endswith("\n"):
+            after += "\n"
+    else:
+        after = merge_managed_markdown(before, rendered)
+    u_before = unmanaged_text(before)
+    u_after = unmanaged_text(after)
+    preserved = True if existing is None else unmanaged_preserved(before, after)
+    return {
+        "existing": before,
+        "merged": after,
+        "unmanaged_before": u_before,
+        "unmanaged_after": u_after,
+        "unmanaged_unchanged": preserved,
+        "would_create": existing is None,
+        "content_changed": before != after,
+    }
+
+
 def merge_managed_markdown(existing: str, rendered: str) -> str:
     """Replace managed regions in `existing` with `rendered`, preserving free zones.
 
@@ -64,11 +116,19 @@ def merge_managed_markdown(existing: str, rendered: str) -> str:
         return existing
     if not existing_blocks:
         # No managed regions yet: keep the user's file and append managed content.
-        base = (existing or "").rstrip()
+        # Do not rstrip free-zone bytes — only add a separator if needed.
+        base = existing or ""
         rendered_only = "\n\n".join(m.group(0) for m in rendered_matches)
-        if not base:
-            return rendered_only + "\n"
-        return f"{base}\n\n{rendered_only}\n"
+        if not base.strip():
+            return rendered_only + ("\n" if not rendered_only.endswith("\n") else "")
+        if base.endswith("\n\n"):
+            sep = ""
+        elif base.endswith("\n"):
+            sep = "\n"
+        else:
+            sep = "\n\n"
+        out = base + sep + rendered_only
+        return out if out.endswith("\n") else out + "\n"
 
     rendered_blocks = {
         m.group("section").strip(): m.group(0) for m in rendered_matches
@@ -120,22 +180,38 @@ def _slug(value: str, fallback: str) -> str:
     return slug or fallback
 
 
+def _note_filename(row: dict[str, Any]) -> str:
+    """Stable unique note name: title slug + short object_uid suffix."""
+    uid = str(row.get("object_uid") or "")
+    # Prefer the trailing ULID segment when present (pack:type:ULID).
+    short = uid.rsplit(":", 1)[-1] if uid else ""
+    short = (short or "note")[-8:].lower()
+    title_slug = _slug(str(row.get("_title") or short), short)
+    return f"{title_slug}_{short}.md"
+
+
 class MarkdownAdapter:
     """Renders canonical objects into the generic vault as managed notes."""
 
     name = "markdown"
 
     def __init__(
-        self, workspace: Workspace, *, registry: PackRegistry | None = None
+        self,
+        workspace: Workspace,
+        *,
+        registry: PackRegistry | None = None,
+        vault_root: Path | None = None,
     ) -> None:
         self.ws = workspace
         self.registry = registry or PackRegistry(workspace)
+        self.vault_root = Path(vault_root) if vault_root else workspace.vault_dir
         self._env = Environment(  # noqa: S701 — output is markdown, not HTML
             autoescape=False,
             undefined=StrictUndefined,
             trim_blocks=True,
             lstrip_blocks=True,
         )
+        self._entry_aliases: dict[str, list[str]] | None = None
 
     def render(self, object_key: str, outbox_row: dict[str, Any]) -> dict[str, Any]:
         domain, _, object_type = object_key.partition(":")
@@ -152,12 +228,39 @@ class MarkdownAdapter:
         written: list[str] = []
         for row in rows:
             note = self._render_note(pack, object_type, row, template)
-            fname = f"{_slug(str(row.get('_title') or row.get('object_uid')), 'note')}.md"
+            fname = _note_filename(row)
             rel = f"{folder}/{object_type}/{fname}"
-            target = safe_join(self.ws.vault_dir, rel)
+            target = safe_join(self.vault_root, rel)
             write_managed_note(target, note)
             written.append(rel)
         return {"status": "rendered", "notes": len(written), "paths": written}
+
+    def plan_notes(
+        self, object_key: str
+    ) -> list[dict[str, Any]]:
+        """Return planned note paths + rendered bodies (no writes)."""
+        domain, _, object_type = object_key.partition(":")
+        if not domain or not object_type:
+            return []
+        pack = self.registry.get(domain)
+        if pack is None or object_type not in pack.objects:
+            return []
+        folder = str(pack.projections.markdown.get("folder") or pack.name)
+        template = self._load_template(pack, object_type)
+        planned: list[dict[str, Any]] = []
+        for row in self._load_rows(pack, object_type):
+            note = self._render_note(pack, object_type, row, template)
+            fname = _note_filename(row)
+            rel = f"{folder}/{object_type}/{fname}"
+            planned.append(
+                {
+                    "rel_path": rel,
+                    "object_uid": str(row.get("object_uid") or ""),
+                    "entry_id": str(row.get("entry_id") or ""),
+                    "rendered": note,
+                }
+            )
+        return planned
 
     def _load_rows(self, pack: DomainPack, object_type: str) -> list[dict[str, Any]]:
         tname = table_name(pack.name, object_type)
@@ -211,6 +314,7 @@ class MarkdownAdapter:
             )
         else:
             body = self._default_body(pack, object_type, row)
+        body = self._append_entry_backlinks(body, row)
         body = redact_secrets(body).rstrip()
         return content_managed_section(section, body, object_uid=object_uid)
 
@@ -230,3 +334,61 @@ class MarkdownAdapter:
         lines.append("")
         lines.append(f"_updated {row.get('updated_at') or now_iso()}_")
         return "\n".join(lines)
+
+    def _append_entry_backlinks(self, body: str, row: dict[str, Any]) -> str:
+        """Emit [[entry:<id>]] for DF entry_id plus Hermes lb_* aliases when known."""
+        entry_id = str(row.get("entry_id") or "").strip()
+        if not entry_id:
+            return body
+        ids = [entry_id]
+        for alias in self._aliases_for_entry(entry_id):
+            if alias not in ids:
+                ids.append(alias)
+        links = "\n".join(f"[[entry:{eid}]]" for eid in ids)
+        if any(f"[[entry:{eid}]]" in body for eid in ids):
+            return body
+        return f"{body.rstrip()}\n\n{links}\n"
+
+    def _aliases_for_entry(self, entry_id: str) -> list[str]:
+        table = self._ensure_entry_aliases()
+        return list(table.get(entry_id, []))
+
+    def _ensure_entry_aliases(self) -> dict[str, list[str]]:
+        if self._entry_aliases is not None:
+            return self._entry_aliases
+        aliases: dict[str, list[str]] = {}
+        if not self.ws.ledger_db.exists():
+            self._entry_aliases = aliases
+            return aliases
+        conn = connect_ro(self.ws.ledger_db)
+        try:
+            rows = conn.execute(
+                """
+                SELECT e.id AS entry_id, c.source_ref
+                FROM capture_event c
+                JOIN source_link sl
+                  ON sl.source_type = 'capture_event'
+                 AND sl.source_id = c.id
+                 AND sl.target_type = 'entry'
+                JOIN entry e ON e.id = sl.target_id
+                WHERE c.source_ref LIKE 'hermes:logbook:entry:%'
+                """
+            ).fetchall()
+            prefix = "hermes:logbook:entry:"
+            for r in rows:
+                ref = str(r["source_ref"] or "")
+                if not ref.startswith(prefix):
+                    continue
+                lb = ref[len(prefix) :].strip()
+                if not lb:
+                    continue
+                eid = str(r["entry_id"])
+                bucket = aliases.setdefault(eid, [])
+                if lb not in bucket:
+                    bucket.append(lb)
+        except Exception:
+            aliases = {}
+        finally:
+            conn.close()
+        self._entry_aliases = aliases
+        return aliases

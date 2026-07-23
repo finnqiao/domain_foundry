@@ -321,6 +321,53 @@ def projections_status_cmd(
     )
 
 
+@projections_app.command("reproject")
+def projections_reproject_cmd(
+    ctx: typer.Context,
+    vault: Path = typer.Option(
+        ...,
+        "--vault",
+        help="Target Obsidian vault root (use a snapshot/copy; never clobber live without review)",
+    ),
+    apply: bool = typer.Option(
+        False,
+        "--apply",
+        help="Write managed regions (default: dry-run diff only)",
+    ),
+    domain: list[str] | None = typer.Option(
+        None,
+        "--domain",
+        "-d",
+        help="Limit to domain(s); repeatable. Default: all installed packs.",
+    ),
+    markdown: bool = typer.Option(
+        False,
+        "--markdown",
+        help="Emit markdown summary instead of JSON",
+    ),
+) -> None:
+    """Re-project vault notes (managed regions only). Dry-run by default."""
+    api = HarnessAPI(ctx.obj["home"])
+    report = api.reproject_vault(
+        vault,
+        apply=apply,
+        domains=list(domain) if domain else None,
+    )
+    if markdown:
+        typer.echo(report.get("_markdown") or "")
+        payload = {k: v for k, v in report.items() if k != "_markdown"}
+        if not payload.get("totals", {}).get("unmanaged_ok", True):
+            raise typer.Exit(code=2)
+        if apply and not payload.get("applied"):
+            raise typer.Exit(code=2)
+        return
+    typer.echo(json.dumps({k: v for k, v in report.items() if k != "_markdown"}, indent=2))
+    if not report.get("totals", {}).get("unmanaged_ok", True):
+        raise typer.Exit(code=2)
+    if apply and not report.get("applied"):
+        raise typer.Exit(code=2)
+
+
 @pack_app.command("list")
 def pack_list_cmd(ctx: typer.Context) -> None:
     api = HarnessAPI(ctx.obj["home"])

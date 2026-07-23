@@ -8,4 +8,4 @@ app:
     - {id: find, title: "Find", block: search, objects: [timeline_item, booking], config: {facets: [item_type, status, booking_type]}}
     - {id: history, title: "History", block: history, object: timeline_item, config: {date_field: scheduled_at, period: day}}
 markdown:
-  folder: "Travel"
+  folder: "04_Travel"

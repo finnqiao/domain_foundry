@@ -8,4 +8,4 @@ app:
     - {id: find, title: "Find", block: search, objects: [jp_vocab, jp_grammar], config: {facets: [jlpt_level, formality]}}
     - {id: stats, title: "SRS", block: stats, object: review_event, config: {measures: [{field: grade, agg: distribution}]}}
 markdown:
-  folder: "Japanese"
+  folder: "06_Japanese"

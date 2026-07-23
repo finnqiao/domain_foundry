@@ -8,4 +8,4 @@ app:
     - {id: fasting, title: "Fasting", block: timeline, object: fasting, config: {date_field: noted_at}}
     - {id: find, title: "Find", block: search, objects: [supplement, medication, fitness, lab], config: {facets: [status, timing]}}
 markdown:
-  folder: "Health"
+  folder: "07_Health"
