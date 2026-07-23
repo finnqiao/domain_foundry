@@ -133,6 +133,33 @@ class HarnessAPI:
             limit=limit,
         )
 
+    def search(
+        self,
+        q: str,
+        *,
+        domain: str | None = None,
+        object_type: str | None = None,
+        kind: str | None = None,
+        limit: int = 50,
+    ) -> dict[str, Any]:
+        """Full-text search over entry raw text and canonical object text (FTS5)."""
+        from domain_foundry_core.search.fts import SearchKind, search_ledger
+
+        kind_arg: SearchKind | None = None
+        if kind is not None:
+            if kind not in {"entry", "canonical"}:
+                raise ValueError("kind must be 'entry' or 'canonical'")
+            kind_arg = kind  # type: ignore[assignment]
+        result = search_ledger(
+            self.workspace.ledger_db,
+            q,
+            domain=domain,
+            object_type=object_type,
+            kind=kind_arg,
+            limit=limit,
+        )
+        return result.model_dump()
+
     def health(self) -> HealthReport:
         return self.captures.health()
 
