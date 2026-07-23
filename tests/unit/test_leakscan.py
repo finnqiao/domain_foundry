@@ -11,7 +11,6 @@ from domain_foundry_core.packs.loader import discover_pack_dirs
 from domain_foundry_core.packs.registry import PackRegistry
 from domain_foundry_core.paths import ENV_PACKS_PATH, overlay_pack_dirs
 
-
 REPO = Path(__file__).resolve().parents[2]
 
 
