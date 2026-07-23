@@ -13,6 +13,6 @@ app:
     - {id: history, title: "History", block: history, object: cook, config: {date_field: made_at, period: month}}
     - {id: learnings, title: "Learnings", block: list, object: observation, config: {group_by: topic}}
 markdown:
-  folder: "Food"
+  folder: "05_Food_Drink"
   note_template:
     cook: cook_note.md.j2

@@ -7,4 +7,4 @@ app:
     - {id: sessions, title: "Sessions", block: timeline, object: session, config: {date_field: noted_at}}
     - {id: find, title: "Find", block: search, objects: [decision, gotcha, pattern, session], config: {facets: [project, status]}}
 markdown:
-  folder: "Dev"
+  folder: "12_Dev"

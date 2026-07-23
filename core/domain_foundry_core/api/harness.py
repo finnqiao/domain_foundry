@@ -431,6 +431,28 @@ class HarnessAPI:
         report = self.projections.drain_until_empty(limit=limit)
         return report.to_dict()
 
+    def reproject_vault(
+        self,
+        vault: Path | str,
+        *,
+        apply: bool = False,
+        domains: list[str] | None = None,
+        folder_map: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Dry-run (default) or apply managed-region vault re-projection."""
+        from domain_foundry_core.projections.reproject import VaultReprojector
+
+        report = VaultReprojector(
+            self.workspace,
+            vault=Path(vault),
+            registry=self.packs,
+            folder_map=folder_map,
+            domains=domains,
+        ).run(apply=apply)
+        out = report.to_dict()
+        out["_markdown"] = report.to_markdown()
+        return out
+
     def projection_status(
         self,
         *,
