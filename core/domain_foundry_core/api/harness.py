@@ -705,3 +705,134 @@ class HarnessAPI:
     def wizard_suggest(self, domain: str) -> dict[str, Any] | None:
         """Suggest a hardening edit when a domain has repeated corrections (§8.4)."""
         return self.wizard.suggest_hardening(domain)
+
+    # -------------------------------------------------------- quiz / SRS (mesh P2)
+    def apply_operation(
+        self,
+        *,
+        domain: str,
+        operation: str,
+        object_type: str,
+        fields: dict[str, Any] | None = None,
+        object_uid: str | None = None,
+        entry_id: str | None = None,
+        channel: str = "cli",
+        actor: str = "system",
+    ) -> dict[str, Any]:
+        """Direct apply-path write (quiz grades, programmatic updates)."""
+        from domain_foundry_core.apply.engine import OperationSpec
+
+        self.packs.reload()
+        try:
+            self.packs.ensure_schemas_applied()
+        except Exception:
+            pass
+        result = self.executor.engine.apply_spec(
+            OperationSpec(
+                domain=domain,
+                operation=operation,
+                object_type=object_type,
+                object_uid=object_uid,
+                payload=dict(fields or {}),
+                entry_id=entry_id,
+                channel=channel,
+            ),
+            actor=actor,
+            actor_channel=channel,
+        )
+        return {
+            "ok": result.ok,
+            "object_uid": result.object_uid,
+            "row_id": result.row_id,
+            "revision": result.revision,
+            "created": result.created,
+            "operation": result.operation,
+            "error": result.error,
+            "details": result.details,
+        }
+
+    def quiz_start(
+        self,
+        *,
+        user_id: str = "default",
+        limit: int | None = None,
+        include_grammar: bool = True,
+        filter_text: str | None = None,
+    ) -> dict[str, Any]:
+        from domain_foundry_core.mesh.quiz import QuizSession
+
+        self.packs.reload()
+        try:
+            self.packs.ensure_schemas_applied()
+        except Exception:
+            pass
+        quiz = QuizSession(self.workspace, registry=self.packs)
+        session = quiz.start(
+            user_id=user_id,
+            limit=limit,
+            include_grammar=include_grammar,
+            filter_text=filter_text,
+        )
+        card = quiz.current_card(session)
+        return {
+            "session_id": session.id,
+            "status": session.status,
+            "total": len(session.state.get("cards") or []),
+            "index": int(session.state.get("index") or 0),
+            "prompt": card.prompt if card else None,
+            "card_uid": card.object_uid if card else None,
+            "object_type": card.object_type if card else None,
+        }
+
+    def quiz_grade(
+        self,
+        grade: str,
+        *,
+        session_id: str | None = None,
+        user_id: str = "default",
+    ) -> dict[str, Any]:
+        from domain_foundry_core.mesh.quiz import QuizSession
+
+        self.packs.reload()
+        try:
+            self.packs.ensure_schemas_applied()
+        except Exception:
+            pass
+        quiz = QuizSession(self.workspace, registry=self.packs)
+        receipt = quiz.grade(grade, session_id=session_id, user_id=user_id)
+        card = receipt.next_card
+        return {
+            "session_id": receipt.session_id,
+            "grade": receipt.grade,
+            "review_event_uid": receipt.review_event_uid,
+            "card_uid": receipt.card_uid,
+            "card_updated": receipt.card_updated,
+            "done": receipt.done,
+            "correct": receipt.correct,
+            "index": receipt.index,
+            "total": receipt.total,
+            "prompt": card.prompt if card else None,
+            "next_card_uid": card.object_uid if card else None,
+            "details": receipt.details,
+        }
+
+    def quiz_next(self, *, user_id: str = "default") -> dict[str, Any]:
+        """Return the current card for an active quiz (resume hook)."""
+        from domain_foundry_core.mesh.quiz import QuizSession
+
+        quiz = QuizSession(self.workspace, registry=self.packs)
+        card = quiz.current_card(user_id=user_id)
+        active = quiz.sessions.get_active(
+            "japanese", user_id=user_id, session_type=QuizSession.SESSION_TYPE
+        )
+        if active is None:
+            return {"active": False, "prompt": None}
+        return {
+            "active": True,
+            "session_id": active.id,
+            "index": int(active.state.get("index") or 0),
+            "total": len(active.state.get("cards") or []),
+            "prompt": card.prompt if card else None,
+            "card_uid": card.object_uid if card else None,
+            "done": card is None,
+        }

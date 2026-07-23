@@ -94,6 +94,20 @@ def test_phase3_agent_yaml_surface():
         assert isinstance(pack.agent.schedules, list)
 
 
+def test_japanese_interactive_sessions_schedules_for_expert():
+    pack = load_pack(REPO / "packs" / "japanese", validate=True)
+    assert pack.manifest.interpretation == "interactive"
+    assert pack.agent is not None
+    quiz = next(s for s in pack.agent.sessions if s.id == "quiz")
+    assert "quiz_grade" in quiz.turn
+    assert quiz.state.get("cards") == []
+    daily = next(s for s in pack.agent.schedules if s.id == "daily_review")
+    assert daily.cron == "0 9 * * *"
+    assert "start_session(quiz)" in daily.action
+    assert "quiz_grade" in pack.agent.tools
+    assert pack.agent.autonomy.get("quiz") == "interactive"
+
+
 def test_template_fails_until_renamed_examples_ok():
     # template is valid as-is (≥8 examples)
     pack = load_pack(REPO / "packs" / "_template", validate=True)
