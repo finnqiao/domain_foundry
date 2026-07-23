@@ -7,7 +7,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-InterpretationMode = Literal["simple", "structured"]
+InterpretationMode = Literal["simple", "structured", "interactive"]
+AutonomyLevel = Literal["auto", "interactive", "review"]
 FieldType = Literal[
     "text",
     "number",
@@ -108,6 +109,38 @@ class ProjectionsSpec(BaseModel):
     markdown: dict[str, Any] = Field(default_factory=dict)
 
 
+class AgentSessionSpec(BaseModel):
+    """Multi-turn session machine (mesh P2+). Defined now; unused until P4."""
+
+    id: str
+    goal: str = ""
+    state: dict[str, Any] = Field(default_factory=dict)
+    enter: list[dict[str, Any]] = Field(default_factory=list)
+    turn: str = ""
+    exit: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class AgentScheduleSpec(BaseModel):
+    """Proactive schedule trigger (mesh P2+). Defined now; unused until P4."""
+
+    id: str
+    cron: str = ""
+    when: str = ""
+    action: str = ""
+    message: str = ""
+
+
+class AgentSpec(BaseModel):
+    """Per-pack agent manifest (`agent.yaml`) — mesh P1 surface."""
+
+    name: str
+    persona: str = ""
+    tools: list[str] = Field(default_factory=list)
+    autonomy: dict[str, AutonomyLevel | str] = Field(default_factory=dict)
+    sessions: list[AgentSessionSpec] = Field(default_factory=list)
+    schedules: list[AgentScheduleSpec] = Field(default_factory=list)
+
+
 class DomainPack(BaseModel):
     root: Path
     manifest: PackManifest
@@ -116,6 +149,7 @@ class DomainPack(BaseModel):
     operations: dict[str, list[str]]
     policy: PolicySpec
     projections: ProjectionsSpec
+    agent: AgentSpec | None = None
 
     @property
     def name(self) -> str:

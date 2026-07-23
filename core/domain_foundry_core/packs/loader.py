@@ -14,6 +14,7 @@ from packaging.version import Version
 
 from domain_foundry_core import __version__ as CORE_VERSION
 from domain_foundry_core.packs.models import (
+    AgentSpec,
     DomainPack,
     FieldSpec,
     LinkSpec,
@@ -34,7 +35,7 @@ REQUIRED_FILES = (
     "operations.yaml",
     "policy.yaml",
 )
-OPTIONAL_FILES = ("projections.yaml",)
+OPTIONAL_FILES = ("projections.yaml", "agent.yaml")
 
 _NAME_RE = re.compile(r"^[a-z][a-z0-9_]{1,62}$")
 
@@ -121,6 +122,15 @@ def load_pack(root: Path, *, validate: bool = True) -> DomainPack:
         else ProjectionsSpec()
     )
 
+    agent: AgentSpec | None = None
+    agent_path = root / "agent.yaml"
+    if agent_path.exists():
+        agent_raw = _read_yaml(agent_path)
+        # Accept either top-level `agent:` wrapper or a bare agent object.
+        if isinstance(agent_raw, dict) and "agent" in agent_raw:
+            agent_raw = agent_raw["agent"]
+        agent = AgentSpec.model_validate(agent_raw or {})
+
     pack = DomainPack(
         root=root,
         manifest=manifest,
@@ -129,6 +139,7 @@ def load_pack(root: Path, *, validate: bool = True) -> DomainPack:
         operations=operations,
         policy=policy,
         projections=projections,
+        agent=agent,
     )
     if validate:
         validate_pack(pack)
@@ -180,6 +191,11 @@ def validate_pack(pack: DomainPack) -> None:
         for fname, fspec in obj.fields.items():
             if fspec.type == "enum" and not fspec.values:
                 errors.append(f"{obj_name}.{fname}: enum requires values")
+
+    if pack.agent is not None and pack.agent.name and pack.agent.name != pack.name:
+        errors.append(
+            f"agent.name {pack.agent.name!r} must match pack name {pack.name!r}"
+        )
 
     if errors:
         raise PackValidationError(errors)
