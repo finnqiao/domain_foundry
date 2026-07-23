@@ -34,8 +34,8 @@ def mesh_home(workspace: Workspace) -> Workspace:
 
 def test_mesh_migration_creates_tables(workspace: Workspace):
     version = ensure_migrated(workspace.ledger_db, "ledger")
-    assert version >= 6
-    assert read_schema_version(workspace.ledger_db) >= 6
+    assert version >= 7
+    assert read_schema_version(workspace.ledger_db) >= 7
     conn = connect_ro(workspace.ledger_db)
     try:
         tables = {
@@ -47,6 +47,8 @@ def test_mesh_migration_creates_tables(workspace: Workspace):
         assert "inbox_journal" in tables
         assert "domain_inbox" in tables
         assert "outbound_queue" in tables
+        assert "domain_session" in tables
+        assert "routing_correction" in tables
     finally:
         conn.close()
 

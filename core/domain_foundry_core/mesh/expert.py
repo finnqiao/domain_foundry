@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import threading
-import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
 from domain_foundry_core.api.harness import HarnessAPI
+from domain_foundry_core.mesh.flags import ConciergeUXFlags
 from domain_foundry_core.mesh.inbox import DomainInbox, InboxMessage
 from domain_foundry_core.mesh.outbound import OutboundMessage, OutboundQueue
 from domain_foundry_core.paths import Workspace
@@ -25,6 +25,8 @@ class ExpertStats:
     last_msg_id: str | None = None
     last_error: str | None = None
     last_outbound_id: str | None = None
+    last_not_mine_correction_id: str | None = None
+    last_not_mine_reroute_domain: str | None = None
 
 
 @dataclass
@@ -39,6 +41,7 @@ class ExpertRunner:
     workspace: Workspace | None = None
     poll_interval_s: float = 0.05
     process_hook: ProcessHook | None = None
+    flags: ConciergeUXFlags | None = None
     _stop: threading.Event = field(default_factory=threading.Event, init=False)
     _busy: threading.Lock = field(default_factory=threading.Lock, init=False)
     stats: ExpertStats = field(init=False)
@@ -48,6 +51,9 @@ class ExpertRunner:
         self.inbox = DomainInbox(self.ws)
         self.outbound = OutboundQueue(self.ws)
         self.harness = HarnessAPI(self.ws.home)
+        self.ux_flags = (
+            self.flags if self.flags is not None else ConciergeUXFlags.from_env()
+        )
         self.stats = ExpertStats(domain=self.domain)
 
     def enqueue_reply(
@@ -77,6 +83,7 @@ class ExpertRunner:
                 reply = self._handle(msg)
                 self.inbox.ack(msg.id, reply=reply)
                 outbound_id = self._maybe_enqueue_reply(msg, reply)
+                self._maybe_reroute_not_mine(msg, reply)
                 self.stats.processed += 1
                 self.stats.last_msg_id = msg.id
                 self.stats.last_error = None
@@ -142,6 +149,15 @@ class ExpertRunner:
             if hooked is not None:
                 return hooked
 
+        # Switch / focus acks — don't capture the command text as a domain entry.
+        if msg.payload.get("route_reason") == "switch":
+            return {
+                "kind": "switch_ack",
+                "status": "ok",
+                "domain": self.domain,
+                "reply_text": f"Switched focus to {self.domain}.",
+            }
+
         text = str(msg.payload.get("text") or "")
         channel = str(msg.payload.get("channel") or "mesh")
         source_ref = msg.payload.get("source_ref")
@@ -161,3 +177,21 @@ class ExpertRunner:
             "domain": self.domain,
             "idempotent_replay": receipt.idempotent_replay,
         }
+
+    def _maybe_reroute_not_mine(
+        self, msg: InboxMessage, reply: dict[str, Any]
+    ) -> None:
+        """If Expert bounced, Concierge re-routes excluding this domain."""
+        kind = str(reply.get("kind") or reply.get("status") or "")
+        if kind != "not_mine":
+            return
+        if not self.ux_flags.not_mine:
+            return
+        # Lazy import avoids circular Concierge ↔ Expert at module load.
+        from domain_foundry_core.mesh.concierge import Concierge
+
+        result = Concierge(self.ws, flags=self.ux_flags).handle_not_mine(
+            msg, bounced_domain=self.domain
+        )
+        self.stats.last_not_mine_correction_id = result.correction_id
+        self.stats.last_not_mine_reroute_domain = result.routed_domain
