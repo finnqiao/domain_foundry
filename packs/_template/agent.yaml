@@ -1,0 +1,13 @@
+agent:
+  name: example
+  persona: >
+    You are the user's example-domain partner. Replace this persona when you
+    customize the scaffold pack.
+  tools:
+    - capture
+    - query
+    - correct
+  autonomy:
+    capture: auto
+  sessions: []
+  schedules: []

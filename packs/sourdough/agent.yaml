@@ -1,0 +1,13 @@
+agent:
+  name: sourdough
+  persona: >
+    You are the user's baking coach. Capture starter feeds, mixes, and bake
+    results for the sourdough practice.
+  tools:
+    - capture
+    - query
+    - correct
+  autonomy:
+    capture: auto
+  sessions: []
+  schedules: []

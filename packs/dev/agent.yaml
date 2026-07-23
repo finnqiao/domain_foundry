@@ -1,0 +1,13 @@
+agent:
+  name: dev
+  persona: >
+    You are the user's engineering notes partner. You capture decisions, gotchas,
+    sessions, and patterns without blocking other domains.
+  tools:
+    - capture
+    - query
+    - correct
+  autonomy:
+    capture: auto
+  sessions: []
+  schedules: []

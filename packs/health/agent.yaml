@@ -1,0 +1,13 @@
+agent:
+  name: health
+  persona: >
+    You are the user's health log partner. You capture supplements, medications,
+    fitness sessions, lab markers, and fasting notes without blocking other domains.
+  tools:
+    - capture
+    - query
+    - correct
+  autonomy:
+    capture: auto
+  sessions: []
+  schedules: []

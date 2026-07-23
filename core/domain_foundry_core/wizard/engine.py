@@ -48,6 +48,11 @@ class WizardEngine:
         session = self.store.new(goal_text, test_drive=test_drive)
         blueprint = bp.build_blueprint(goal_text)
         blueprint["domain"] = self._unique_domain(blueprint["domain"])
+        agent = blueprint.get("agent")
+        if isinstance(agent, dict):
+            agent["name"] = blueprint["domain"]
+        else:
+            blueprint["agent"] = bp.build_agent_spec(blueprint)
         session.blueprint = blueprint
         session.domain = blueprint["domain"]
         session.questions = blueprint.get("questions", [])
@@ -155,8 +160,15 @@ class WizardEngine:
         session.pack_path = str(installed.root)
         session.activated = True
         session.state = "test_drive"
+        # Hot-register Expert child config with Supervisor (launchd stubbed).
+        expert = self.harness.register_expert(installed.name)
         self.store.save(session)
-        return self._activated_turn(session)
+        turn = self._activated_turn(session)
+        turn["expert"] = expert
+        turn["agent"] = (
+            installed.agent.model_dump() if installed.agent is not None else None
+        )
+        return turn
 
     def _dry_run(self, draft_dir: Path) -> dict[str, Any]:
         pack = load_pack(draft_dir, validate=True)

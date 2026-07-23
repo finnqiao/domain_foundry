@@ -191,7 +191,17 @@ class HarnessAPI:
 
     def pack_add(self, src: Path, *, force: bool = False) -> dict[str, Any]:
         pack = self.packs.add(Path(src), force=force)
-        return {"name": pack.name, "version": pack.version, "path": str(pack.root)}
+        expert = self.register_expert(pack.name) if pack.agent is not None else None
+        out: dict[str, Any] = {
+            "name": pack.name,
+            "version": pack.version,
+            "path": str(pack.root),
+        }
+        if pack.agent is not None:
+            out["agent"] = pack.agent.model_dump()
+        if expert is not None:
+            out["expert"] = expert
+        return out
 
     def pack_new(self, name: str) -> dict[str, Any]:
         """Scaffold a new pack from _template into the workspace packs dir."""
@@ -210,6 +220,11 @@ class HarnessAPI:
         text = text.replace("name: example", f"name: {name}", 1)
         text = text.replace('title: "Example Domain"', f'title: "{name}"', 1)
         pack_yaml.write_text(text, encoding="utf-8")
+        agent_yaml = dest / "agent.yaml"
+        if agent_yaml.exists():
+            agent_text = agent_yaml.read_text(encoding="utf-8")
+            agent_text = agent_text.replace("name: example", f"name: {name}", 1)
+            agent_yaml.write_text(agent_text, encoding="utf-8")
         return {
             "name": name,
             "path": str(dest),
@@ -559,7 +574,36 @@ class HarnessAPI:
 
     def activate_pack(self, name: str) -> dict[str, Any]:
         pack = self.packs.activate_bundled(name)
-        return {"name": pack.name, "version": pack.version, "title": pack.manifest.title}
+        out: dict[str, Any] = {
+            "name": pack.name,
+            "version": pack.version,
+            "title": pack.manifest.title,
+        }
+        if pack.agent is not None:
+            out["agent"] = pack.agent.model_dump()
+            out["expert"] = self.register_expert(pack.name)
+        return out
+
+    def register_expert(self, domain: str, *, spawn: bool = False) -> dict[str, Any]:
+        """Hot-register a domain Expert with the Supervisor (launchd stubbed)."""
+        from domain_foundry_core.mesh.supervisor import Supervisor
+
+        pack = self.packs.get(domain)
+        if pack is None:
+            return {
+                "domain": domain,
+                "registered": False,
+                "error": f"pack not installed: {domain}",
+                "launchd": "stubbed",
+            }
+        if pack.agent is None:
+            return {
+                "domain": domain,
+                "registered": False,
+                "error": f"no agent.yaml for {domain}",
+                "launchd": "stubbed",
+            }
+        return Supervisor(self.workspace).register(domain, spawn=spawn)
 
     def _object_counts_by_domain(self) -> dict[tuple[str, str], int]:
         counts: dict[tuple[str, str], int] = {}

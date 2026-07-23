@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 import threading
@@ -15,6 +16,8 @@ from domain_foundry_core.mesh.journal import InboxJournal
 from domain_foundry_core.mesh.observability import MeshObservability
 from domain_foundry_core.mesh.outbound import OutboundQueue
 from domain_foundry_core.paths import Workspace
+
+DEFAULT_EXPERT_DOMAINS = ("japanese", "food")
 
 
 @dataclass
@@ -40,6 +43,7 @@ class SupervisorStatus:
     alerts: dict[str, Any] = field(default_factory=dict)
     children: list[dict[str, Any]] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
+    registered: list[str] = field(default_factory=list)
 
 
 class Supervisor:
@@ -47,6 +51,9 @@ class Supervisor:
 
     Foundation skeleton: spawns `python -m domain_foundry_core.mesh.expert_main`
     per domain. launchd install is stubbed (see mesh install CLI).
+
+    ``register(domain)`` hot-adds Expert child config (persisted under
+    ``<home>/mesh/registered_experts.json``) without requiring launchd apply.
     """
 
     def __init__(
@@ -58,7 +65,14 @@ class Supervisor:
         max_backoff_s: float = 30.0,
     ) -> None:
         self.ws = workspace or Workspace()
-        self.domains = list(domains or ["japanese", "food"])
+        self.ws.ensure_layout()
+        (self.ws.home / "mesh").mkdir(parents=True, exist_ok=True)
+        persisted = self.list_registered()
+        if domains is None:
+            merged = list(dict.fromkeys([*DEFAULT_EXPERT_DOMAINS, *persisted]))
+        else:
+            merged = list(dict.fromkeys([*domains, *persisted]))
+        self.domains = merged
         self.min_backoff_s = min_backoff_s
         self.max_backoff_s = max_backoff_s
         self._children: dict[str, ChildState] = {
@@ -71,6 +85,77 @@ class Supervisor:
         self.inbox = DomainInbox(self.ws)
         self.outbound = OutboundQueue(self.ws)
         self.obs = MeshObservability(self.ws)
+
+    def _registry_path(self) -> Path:
+        return self.ws.home / "mesh" / "registered_experts.json"
+
+    def list_registered(self) -> list[str]:
+        path = self._registry_path()
+        if not path.exists():
+            return []
+        try:
+            raw = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return []
+        if isinstance(raw, dict):
+            domains = raw.get("domains") or []
+        elif isinstance(raw, list):
+            domains = raw
+        else:
+            return []
+        return [str(d) for d in domains if str(d).strip()]
+
+    def _save_registered(self, domains: list[str]) -> None:
+        path = self._registry_path()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps({"domains": list(domains)}, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+
+    def register(self, domain: str, *, spawn: bool = False) -> dict[str, Any]:
+        """Hot-register an Expert child config for ``domain``.
+
+        Persists the domain so subsequent Supervisor instances include it.
+        Does **not** apply launchd (stub). Optionally spawns the Expert process
+        when the supervise loop is already running.
+        """
+        domain = str(domain).strip()
+        if not domain:
+            return {
+                "domain": domain,
+                "registered": False,
+                "error": "empty domain",
+                "launchd": "stubbed",
+            }
+        registered = self.list_registered()
+        if domain not in registered:
+            registered.append(domain)
+            self._save_registered(registered)
+        if domain not in self.domains:
+            self.domains.append(domain)
+        if domain not in self._children:
+            self._children[domain] = ChildState(domain=domain)
+
+        running = False
+        if spawn:
+            monitor_alive = (
+                self._monitor_thread is not None and self._monitor_thread.is_alive()
+            )
+            proc = self._procs.get(domain)
+            if monitor_alive and (proc is None or proc.poll() is not None):
+                self._spawn(domain)
+            proc = self._procs.get(domain)
+            running = proc is not None and proc.poll() is None
+            self._children[domain].running = running
+
+        return {
+            "domain": domain,
+            "registered": True,
+            "running": running,
+            "launchd": "stubbed",
+            "note": "Expert child config registered; launchd install stubbed",
+        }
 
     def status(self) -> SupervisorStatus:
         health = self.obs.health()
@@ -105,6 +190,7 @@ class Supervisor:
             dlq=health.dlq,
             alerts=health.alerts,
             children=children,
+            registered=self.list_registered(),
             notes=list(health.notes)
             + [
                 "launchd install stubbed — use `domain-foundry mesh install` TODO",

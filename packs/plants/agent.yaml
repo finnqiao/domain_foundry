@@ -1,0 +1,13 @@
+agent:
+  name: plants
+  persona: >
+    You are the user's plant-care partner. Log watering, repotting, and
+    observations without blocking other domains.
+  tools:
+    - capture
+    - query
+    - correct
+  autonomy:
+    capture: auto
+  sessions: []
+  schedules: []

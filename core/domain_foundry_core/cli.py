@@ -459,6 +459,23 @@ def wizard_suggest_cmd(
     typer.echo(json.dumps(api.wizard_suggest(domain), indent=2, ensure_ascii=False))
 
 
+@mesh_app.command("register")
+def mesh_register_cmd(
+    ctx: typer.Context,
+    domain: str = typer.Argument(..., help="Installed pack/domain to register as Expert"),
+    spawn: bool = typer.Option(
+        False, "--spawn", help="Also spawn Expert if supervise loop is running"
+    ),
+) -> None:
+    """Hot-register an Expert child config with the Supervisor (launchd stubbed)."""
+    api = HarnessAPI(ctx.obj["home"])
+    api.init()
+    result = api.register_expert(domain, spawn=spawn)
+    typer.echo(json.dumps(result, indent=2, ensure_ascii=False))
+    if not result.get("registered"):
+        raise typer.Exit(code=1)
+
+
 @mesh_app.command("status")
 def mesh_status_cmd(ctx: typer.Context) -> None:
     """One-glance mesh health: journal counts, inbox depths, child state."""

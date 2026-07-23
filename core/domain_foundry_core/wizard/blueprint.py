@@ -429,11 +429,34 @@ def _default_views(spec: dict[str, Any]) -> list[dict[str, Any]]:
     return views
 
 
+def build_agent_spec(blueprint: dict[str, Any]) -> dict[str, Any]:
+    """Build an ``AgentSpec``-compatible dict for a pack blueprint.
+
+    Emits persona/tools/autonomy plus empty sessions/schedules stubs so every
+    wizard-created domain is mesh-ready (mesh P4).
+    """
+    domain = str(blueprint["domain"])
+    title = str(blueprint.get("title") or domain)
+    description = str(blueprint.get("description") or "").strip()
+    persona = (
+        f"You are the user's {title} partner. {description} "
+        f"You capture and query {domain} data without blocking other domains."
+    ).strip()
+    return {
+        "name": domain,
+        "persona": persona,
+        "tools": ["capture", "query", "correct"],
+        "autonomy": {"capture": "auto"},
+        "sessions": [],
+        "schedules": [],
+    }
+
+
 def _blueprint_from(spec: dict[str, Any], goal: str) -> dict[str, Any]:
     examples = [
         {"text": t, "object": o, "operation": "create"} for (t, o) in spec["examples"]
     ]
-    return {
+    blueprint = {
         "archetype": spec.get("domain") if spec.get("keys") else "generic",
         "goal": goal,
         "domain": spec["domain"],
@@ -465,6 +488,8 @@ def _blueprint_from(spec: dict[str, Any], goal: str) -> dict[str, Any]:
             "fallback": "unfiled_card",
         },
     }
+    blueprint["agent"] = build_agent_spec(blueprint)
+    return blueprint
 
 
 def build_blueprint(goal: str) -> dict[str, Any]:
@@ -533,7 +558,7 @@ _CORE_COMPAT = ">=0.1,<2"
 
 
 def render_files(blueprint: dict[str, Any], *, version: str = "0.1.0") -> dict[str, Any]:
-    """Return the six pack files as YAML-ready dicts."""
+    """Return pack YAML files (incl. ``agent.yaml``) as YAML-ready dicts."""
     objects = blueprint["objects"]
     pack_yaml = {
         "name": blueprint["domain"],
@@ -579,6 +604,9 @@ def render_files(blueprint: dict[str, Any], *, version: str = "0.1.0") -> dict[s
         "app": {"icon": blueprint["icon"], "views": blueprint["views"]},
         "markdown": {"folder": blueprint["markdown_folder"], "note_template": None},
     }
+    agent = blueprint.get("agent") or build_agent_spec(blueprint)
+    # Keep name aligned if the wizard renamed the domain for uniqueness.
+    agent = {**agent, "name": blueprint["domain"]}
     return {
         "pack.yaml": pack_yaml,
         "schema.yaml": schema_yaml,
@@ -586,6 +614,7 @@ def render_files(blueprint: dict[str, Any], *, version: str = "0.1.0") -> dict[s
         "operations.yaml": operations_yaml,
         "policy.yaml": policy_yaml,
         "projections.yaml": projections_yaml,
+        "agent.yaml": {"agent": agent},
     }
 
 
