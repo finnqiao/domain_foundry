@@ -20,11 +20,12 @@ def test_migration_files_discovered():
     assert any(version == 5 for version, _ in ledger)
     assert any(version == 6 for version, _ in ledger)
     assert any(version == 7 for version, _ in ledger)
+    assert any(version == 8 for version, _ in ledger)
 
 
 def test_init_workspace_applies_migrations(workspace: Workspace):
     versions = init_workspace(workspace.home)
-    assert versions["ledger"] >= 7
+    assert versions["ledger"] >= 8
     assert versions["domains"] >= 1
     assert workspace.ledger_db.exists()
     assert workspace.domains_db.exists()
@@ -73,5 +74,6 @@ def test_substrate_tables_exist(workspace: Workspace):
         "outbound_queue",
         "domain_session",
         "schedule_run",
+        "routing_correction",
     }
     assert required.issubset(names)
