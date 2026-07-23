@@ -21,9 +21,9 @@ from domain_foundry_core.security.store import connect_ro, connect_rw
 if TYPE_CHECKING:
     import sqlite3
 
-# Adapters that a canonical commit fans out to. Direct-query block data + the
-# managed markdown vault are the two v1 projections.
-DEFAULT_ADAPTERS: tuple[str, ...] = ("app_feed", "markdown")
+# Adapters that a canonical commit fans out to. Direct-query block data, the
+# managed markdown vault, and the food venues GeoJSON artifact.
+DEFAULT_ADAPTERS: tuple[str, ...] = ("app_feed", "markdown", "geojson")
 
 _TERMINAL_STATUS = frozenset({"done"})
 _RETRYABLE_STATUS = frozenset({"pending", "failed", "draining"})
@@ -79,11 +79,13 @@ class ProjectionCoordinator:
     def _default_adapters(self) -> dict[str, ProjectionAdapter]:
         # Imported lazily to avoid a circular import at module load.
         from domain_foundry_core.projections.blockdata import BlockDataAdapter
+        from domain_foundry_core.projections.geojson import GeoJsonAdapter
         from domain_foundry_core.projections.markdown import MarkdownAdapter
 
         return {
             "app_feed": BlockDataAdapter(self.ws, registry=self.registry),
             "markdown": MarkdownAdapter(self.ws, registry=self.registry),
+            "geojson": GeoJsonAdapter(self.ws, registry=self.registry),
         }
 
     def register(self, adapter: ProjectionAdapter) -> None:

@@ -12,6 +12,7 @@ app:
     - {id: progress, title: "Progress", block: stats, object: cook, config: {measures: [{field: outcome, agg: distribution}]}}
     - {id: history, title: "History", block: history, object: cook, config: {date_field: made_at, period: month}}
     - {id: learnings, title: "Learnings", block: list, object: observation, config: {group_by: topic}}
+    - {id: map, title: "Been-to", block: map, objects: [dining, coffee_note, dining_note, drink_note], config: {}}
 markdown:
   folder: "05_Food_Drink"
   note_template:

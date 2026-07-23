@@ -1159,3 +1159,71 @@ code {
     gap: 0.25rem;
   }
 }
+
+/* Phase 6 — been-to map block */
+.map-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.map-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+.map-skipped {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-left: 0.25rem;
+}
+.map-canvas {
+  width: 100%;
+  min-height: 320px;
+  height: 52vh;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.map-canvas-ready {
+  background: transparent;
+}
+.map-fallback {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.map-pin-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.map-pin-row {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 0.65rem 0.8rem;
+  cursor: pointer;
+  color: inherit;
+}
+.map-pin-row:disabled {
+  cursor: default;
+  opacity: 0.85;
+}
+.map-pin-title {
+  display: block;
+  font-weight: 600;
+}
+.map-pin-meta {
+  display: block;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-family: var(--mono);
+  margin-top: 0.15rem;
+}

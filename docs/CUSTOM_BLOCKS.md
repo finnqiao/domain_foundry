@@ -33,6 +33,7 @@ app:
 | `history` | per-domain view | `object`, `period` (day/week/month) |
 | `planner` | per-domain view | `object`, `date_field` |
 | `review_queue` | global surface | approvals |
+| `map` | per-domain view | `objects` with `lat`/`lng` (null geo omitted) |
 
 ## 2. Custom block (React devs)
 
