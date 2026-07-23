@@ -192,22 +192,23 @@ def test_unique_domain_name_on_collision(workspace, monkeypatch, tmp_path):
     assert turn["proposal"]["domain"].startswith("running")
 
 
-def test_wizard_http_endpoints(workspace, monkeypatch):
+def test_wizard_http_endpoints_are_gone(workspace, monkeypatch):
+    """Mesh P0: wizard writes moved in-process; HTTP surface returns 410."""
     from fastapi.testclient import TestClient
 
     from domain_foundry_core.api.app import create_app
 
     monkeypatch.setenv("DOMAIN_FOUNDRY_HOME", str(workspace.home))
-    HarnessAPI(workspace.home).init()
+    api = HarnessAPI(workspace.home)
+    api.init()
     client = TestClient(create_app(workspace.home, enable_drain_loop=False))
 
-    r = client.post("/api/wizard", json={"goal_text": "log my running"})
-    assert r.status_code == 200
-    body = r.json()
-    assert body["state"] == "interview"
-    sid = body["session_id"]
+    assert client.post("/api/wizard", json={"goal_text": "log my running"}).status_code == 410
+    assert client.post("/api/wizard/sess/reply", json={"text": "skip"}).status_code == 410
 
-    r = client.post(f"/api/wizard/{sid}/reply", json={"text": "skip"})
-    assert r.status_code == 200
-    assert r.json()["state"] == "test_drive"
-    assert r.json()["pack"]["name"] == "running"
+    # The same flow works through the embedded harness.
+    body = api.new_domain("log my running")
+    assert body["state"] == "interview"
+    done = api.wizard_reply(body["session_id"], "skip")
+    assert done["state"] == "test_drive"
+    assert done["pack"]["name"] == "running"

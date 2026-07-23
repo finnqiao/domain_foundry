@@ -79,8 +79,12 @@ def _string(desc: str) -> dict[str, Any]:
     return {"type": "string", "description": desc}
 
 
-def build_tools(client: DomainExpertClient) -> list[Tool]:
-    """Construct the harness tool set bound to a client."""
+def build_tools(client: Any) -> list[Tool]:
+    """Construct the harness tool set bound to a client.
+
+    ``client`` is duck-typed: LocalHarnessClient (in-process, default) and
+    DomainExpertClient (HTTP, opt-in) expose the same nine methods.
+    """
 
     return [
         Tool(
@@ -247,16 +251,31 @@ def _ctx_get(ctx: Any, key: str) -> Any:
     return None
 
 
-def _resolve_client(ctx: Any, client: DomainExpertClient | None) -> DomainExpertClient:
+def _resolve_client(ctx: Any, client: Any | None) -> Any:
+    """Pick the harness client. In-process is the default (mesh P0).
+
+    Priority:
+      1. An explicitly injected ``client``.
+      2. HTTP, when the host explicitly configured a URL (ctx ``base_url`` or
+         ``DOMAIN_FOUNDRY_URL``) — the opt-in remote mode.
+      3. In-process :class:`LocalHarnessClient` when ``domain-foundry-core`` is
+         importable — writes go straight to SQLite; no server on the write path.
+      4. HTTP to the default local port, as the last-resort fallback.
+    """
     if client is not None:
         return client
-    base_url = (
-        _ctx_get(ctx, "base_url")
-        or os.environ.get("DOMAIN_FOUNDRY_URL")
-        or "http://127.0.0.1:8787"
-    )
+    base_url = _ctx_get(ctx, "base_url") or os.environ.get("DOMAIN_FOUNDRY_URL")
     token = _ctx_get(ctx, "token") or os.environ.get("DOMAIN_FOUNDRY_API_TOKEN")
-    return DomainExpertClient(str(base_url), token=token)
+    if base_url:
+        return DomainExpertClient(str(base_url), token=token)
+    try:
+        from domain_foundry_hermes_agent.local import LocalHarnessClient
+
+        return LocalHarnessClient(
+            _ctx_get(ctx, "home") or os.environ.get("DOMAIN_FOUNDRY_HOME")
+        )
+    except ImportError:
+        return DomainExpertClient("http://127.0.0.1:8787", token=token)
 
 
 def _param_names(func: Callable[..., Any]) -> set[str]:

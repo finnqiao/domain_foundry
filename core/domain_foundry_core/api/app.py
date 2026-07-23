@@ -1,4 +1,8 @@
-"""FastAPI application: capture/query/health (+ static SPA mount later)."""
+"""FastAPI application: read-only SPA surface (query/health/blocks).
+
+Mesh P0: mutating routes return 410 Gone. Writes go in-process via the CLI
+or the hermes-agent ``LocalHarnessClient`` (embedded ``HarnessAPI``).
+"""
 
 from __future__ import annotations
 
@@ -12,7 +16,6 @@ from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
 
 from domain_foundry_core.api.harness import HarnessAPI
 from domain_foundry_core.paths import Workspace
@@ -22,49 +25,16 @@ from domain_foundry_core.projections.coordinator import ProjectionDrainLoop
 _REPO_APP_DIST = Path(__file__).resolve().parents[3] / "app" / "dist"
 
 
-class CaptureBody(BaseModel):
-    text: str
-    channel: str = "web"
-    source_ref: str | None = None
-    actor: str | None = None
-    attachments: list[dict[str, Any]] | None = None
-
-
-class NewDomainBody(BaseModel):
-    goal_text: str
-    test_drive: int = 5
-
-
-class WizardReplyBody(BaseModel):
-    text: str
-
-
-class ActivatePackBody(BaseModel):
-    name: str
-
-
-class CorrectBody(BaseModel):
-    text: str | None = None
-    entry_id: str | None = None
-    object_uid: str | None = None
-    action: str | None = None
-    fields: dict[str, Any] | None = None
-    merge_into_uid: str | None = None
-    target_domain: str | None = None
-    channel: str = "web"
-
-
-class BulkResolveBody(BaseModel):
-    approval_ids: list[str]
-    decision: str
-    note: str | None = None
-    resolver: str = "user"
-
-
-class ResolveBody(BaseModel):
-    decision: str
-    note: str | None = None
-    resolver: str = "user"
+# Mesh P0: the HTTP surface is READ-ONLY. Every mutating endpoint returns
+# 410 Gone — writes go in-process through the CLI or the hermes-agent
+# adapter's LocalHarnessClient (embedded HarnessAPI). A dead server can no
+# longer block capture. The background projection drain loop stays until
+# Domain Experts own draining (mesh P1/P2).
+_WRITE_PATH_GONE = (
+    "write endpoints were removed (mesh P0): the HTTP server is a read-only "
+    "viewer. Use the domain-foundry CLI or the hermes-agent adapter, which "
+    "embed the harness in-process."
+)
 
 
 def create_app(
@@ -117,20 +87,13 @@ def create_app(
         _auth(authorization)
         return api.health_panel()
 
+    def _gone() -> None:
+        raise HTTPException(status_code=410, detail=_WRITE_PATH_GONE)
+
     @app.post("/api/capture")
-    def capture(
-        body: CaptureBody,
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        _auth(authorization)
-        receipt = api.capture(
-            body.text,
-            channel=body.channel,
-            source_ref=body.source_ref,
-            attachments=body.attachments,
-            actor=body.actor,
-        )
-        return receipt.model_dump()
+    def capture() -> dict[str, Any]:
+        _gone()
+        return {}
 
     @app.get("/api/query")
     def query(
@@ -152,21 +115,9 @@ def create_app(
         return {"rows": [r.model_dump() for r in rows]}
 
     @app.post("/api/correct")
-    def correct(
-        body: CorrectBody,
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        _auth(authorization)
-        return api.correct(
-            text=body.text,
-            entry_id=body.entry_id,
-            object_uid=body.object_uid,
-            action=body.action,
-            fields=body.fields,
-            merge_into_uid=body.merge_into_uid,
-            target_domain=body.target_domain,
-            channel=body.channel,
-        )
+    def correct() -> dict[str, Any]:
+        _gone()
+        return {}
 
     @app.get("/api/review")
     def review_list(
@@ -207,17 +158,9 @@ def create_app(
         return api.review_diff(approval_id)
 
     @app.post("/api/review/bulk-resolve")
-    def review_bulk_resolve(
-        body: BulkResolveBody,
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        _auth(authorization)
-        return api.review_resolve_bulk(
-            body.approval_ids,
-            decision=body.decision,
-            note=body.note,
-            resolver=body.resolver,
-        )
+    def review_bulk_resolve() -> dict[str, Any]:
+        _gone()
+        return {}
 
     @app.get("/api/packs")
     def packs_list(
@@ -234,15 +177,9 @@ def create_app(
         return {"catalog": api.pack_catalog()}
 
     @app.post("/api/packs/activate")
-    def packs_activate(
-        body: ActivatePackBody,
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        _auth(authorization)
-        try:
-            return api.activate_pack(body.name)
-        except FileNotFoundError as exc:
-            raise HTTPException(status_code=404, detail=str(exc)) from exc
+    def packs_activate() -> dict[str, Any]:
+        _gone()
+        return {}
 
     @app.get("/api/objects/{domain}/{object_type}/{object_uid}")
     def object_detail(
@@ -283,11 +220,9 @@ def create_app(
         return api.block_view_data(domain, view_id, limit=limit)
 
     @app.post("/api/projections/drain")
-    def projections_drain(
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        _auth(authorization)
-        return api.drain_projections()
+    def projections_drain() -> dict[str, Any]:
+        _gone()
+        return {}
 
     @app.get("/api/projections/status")
     def projections_status(
@@ -301,18 +236,9 @@ def create_app(
         )
 
     @app.post("/api/review/{approval_id}/resolve")
-    def review_resolve(
-        approval_id: str,
-        body: ResolveBody,
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        _auth(authorization)
-        return api.review_resolve(
-            approval_id,
-            decision=body.decision,
-            note=body.note,
-            resolver=body.resolver,
-        )
+    def review_resolve(approval_id: str) -> dict[str, Any]:
+        _gone()
+        return {}
 
     # Side-loaded custom blocks (dev path, plan §9.3): built ESM dropped into
     # ~/.domain_foundry/blocks/ is served read-only; the SPA imports its index at
@@ -326,21 +252,14 @@ def create_app(
         )
 
     @app.post("/api/wizard")
-    def wizard_new_domain(
-        body: NewDomainBody,
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        _auth(authorization)
-        return api.new_domain(body.goal_text, test_drive=body.test_drive)
+    def wizard_new_domain() -> dict[str, Any]:
+        _gone()
+        return {}
 
     @app.post("/api/wizard/{session_id}/reply")
-    def wizard_reply(
-        session_id: str,
-        body: WizardReplyBody,
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        _auth(authorization)
-        return api.wizard_reply(session_id, body.text)
+    def wizard_reply(session_id: str) -> dict[str, Any]:
+        _gone()
+        return {}
 
     @app.get("/api/wizard/{domain}/suggest")
     def wizard_suggest(
@@ -367,7 +286,7 @@ def create_app(
                 "version": "0.1.0",
                 "home": str(ws.home),
                 "docs": "/docs",
-                "hint": "Build the SPA with `cd app && npm run build`, or use /api/capture.",
+                "hint": "Build the SPA with `cd app && npm run build`. Writes go in-process (CLI / hermes-agent); this HTTP surface is read-only.",
             }
 
     app.state.harness = api  # type: ignore[attr-defined]

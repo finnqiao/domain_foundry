@@ -42,14 +42,16 @@ def test_token_gates_endpoints(tmp_path: Path, monkeypatch):
     assert ok.status_code == 200
     assert ok.json()["ok"] is True
 
+    # Write endpoints are gone entirely (mesh P0) — 410 with or without a
+    # credential; nothing to gate because nothing is accepted.
     denied = client.post("/api/capture", json={"text": "synthetic", "channel": "web"})
-    assert denied.status_code == 401
-    allowed = client.post(
+    assert denied.status_code == 410
+    with_token = client.post(
         "/api/capture",
         json={"text": "synthetic", "channel": "web"},
         headers={"Authorization": "Bearer s3cret-synthetic"},
     )
-    assert allowed.status_code == 200
+    assert with_token.status_code == 410
 
 
 def test_localhost_default_is_open(tmp_path: Path, monkeypatch):
