@@ -89,7 +89,7 @@ class Supervisor:
             children=children,
             notes=[
                 "launchd install stubbed — use `domain-foundry mesh install` TODO",
-                "gateway fast path / outbound multiplex deferred",
+                "gateway fast path: private logbook plugin (HERMES_MESH_FAST_PATH); outbound_queue TODO Phase 4",
             ],
         )
 
