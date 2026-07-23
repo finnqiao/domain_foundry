@@ -1,0 +1,3 @@
+{"id": 100, "trip_id": 1, "timeline_item_id": null, "event_type": "create_trip", "event_json": "{\"client_id\": \"trip:port-city\"}", "created_by": "hermes", "created_at": "2026-01-05T10:00:01+00:00"}
+{"id": 101, "trip_id": 1, "timeline_item_id": 10, "event_type": "create_timeline_item", "event_json": "{\"title\": \"Harbor walking tour\"}", "created_by": "hermes", "created_at": "2026-01-06T11:00:01+00:00"}
+{"id": 102, "trip_id": 2, "timeline_item_id": null, "event_type": "upsert_trip_day", "event_json": "{\"day\": \"2025-08-01\"}", "created_by": "roamboard", "created_at": "2025-06-03T09:00:00+00:00"}

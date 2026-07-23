@@ -84,8 +84,33 @@ def test_food_v2_parity_and_geo_fields():
     assert "ease_factor" not in recipe  # food must not grow SRS fields
 
 
+def test_travel_pack_parity_lat_lng_and_event_log():
+    pack = load_pack(REPO / "packs" / "travel", validate=True)
+    assert set(pack.objects) >= {"trip", "timeline_item", "booking", "event_log"}
+    trip = pack.objects["trip"].fields
+    assert "slug" in trip
+    assert "primary_destination" in trip
+    assert "placeholder" in (trip["status"].values or [])
+    item = pack.objects["timeline_item"].fields
+    for fname in ("lat", "lng", "location_name", "trip_id", "item_type_canonical"):
+        assert fname in item, f"timeline_item missing {fname}"
+        assert item[fname].required is False
+    assert item["lat"].type == "number"
+    assert item["lng"].type == "number"
+    event = pack.objects["event_log"].fields
+    for fname in ("event_type", "event_json", "trip_id", "timeline_item_id", "noted_at", "created_by"):
+        assert fname in event, f"event_log missing {fname}"
+    assert "created_at" not in event  # substrate owns created_at/updated_at
+    assert pack.agent is not None
+    assert pack.agent.name == "travel"
+    assert "capture" in pack.agent.tools
+    ddl = compile_ddl(pack)
+    assert "travel__event_log" in ddl
+    assert "lat" in ddl and "lng" in ddl
+
+
 def test_phase3_agent_yaml_surface():
-    for name in ("japanese", "food"):
+    for name in ("japanese", "food", "travel"):
         pack = load_pack(REPO / "packs" / name, validate=True)
         assert pack.agent is not None
         assert pack.agent.name == name

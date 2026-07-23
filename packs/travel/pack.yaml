@@ -1,7 +1,7 @@
 name: travel
-version: 0.1.0
+version: 0.2.0
 title: "Travel Planner"
-description: "Trips, day-by-day timeline items, and lightweight bookings — with open-context hints (the active trip) and cross-domain links to dining out."
+description: "Trips, geo-aware timeline items, bookings-lite, and event_log parity with travel.sqlite — open-context active trip + cross-domain dining links."
 author: "domain_foundry"
 license: MIT
 core_compat: ">=0.1,<2"
