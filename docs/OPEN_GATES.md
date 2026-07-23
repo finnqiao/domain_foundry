@@ -11,7 +11,7 @@ calendar time or live Telegram.
 | 3 | Geocode proposal → `--apply` | **Done (partial)** | 14/40 venues confirmed+applied into `foundry-dry`; 26 left (no OSM hit / bad OCR query) |
 | 4 | Enable mesh flags + Telegram QA | **Open** | `HERMES_MESH_FAST_PATH` / `HERMES_MESH_OUTBOUND` still default OFF — needs live channel QA |
 | 5 | Japanese + food cutover | **Open** | Freeze → delta → flip classify — human cutover window |
-| 6 | ≥7-day Roamboard shadow → launchd flip | **Day 1 started** | `scripts/roamboard_shadow_nightly.sh` wrote streak log; travel still empty in foundry-dry → expect diffs until travel import; **do not flip launchd** |
+| 6 | ≥7-day Roamboard shadow → launchd flip | **Day 1 zero-diff (2026-07-23)** | Travel imported into foundry-dry via `roamboard sync --apply` (222/222: 28 trips / 166 items / 28 events; idempotent rerun = 0 new). Shadow `zero_diff (trips+items+slugs): True`; event_log 815-vs-28 remains a soft diff by design. Streak-regex bug in `roamboard_shadow_nightly.sh` fixed (could never record zero-diff); streak log now shows `2026-07-23 zero-diff`. Run nightly with `ROAMBOARD_FEED=~/HermesWorkspace/travel/exports/json/roamboard-feed.json`. **Do not flip launchd until ≥7 consecutive zero-diff days.** |
 | 7 | Production week + overlay move + release | **Open** | Lived week; no tag/push without ask |
 
 ## Ran locally (no production flip)
