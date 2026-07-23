@@ -1,0 +1,35 @@
+rules:
+  - match: "(\\bx\\b|twitter|tweet|thread|watchlist|radar)"
+    object: signal
+    operation: create
+    confidence_boost: 0.12
+  - match: "(@[A-Za-z0-9_]{2,}|follow\\b|mute\\b)"
+    object: person
+    operation: create
+    confidence_boost: 0.1
+
+examples:
+  - text: "x radar: interesting thread on SQLite WAL"
+    expect: {object: signal, operation: create}
+  - text: "tweet about FSRS scheduling — save to watchlist"
+    expect: {object: signal, operation: create}
+  - text: "radar: new paper on retrieval-augmented memory"
+    expect: {object: signal, operation: create}
+  - text: "watchlist this twitter thread on mesh agents"
+    expect: {object: signal, operation: create}
+  - text: "signal: account posted a useful dive-log tip"
+    expect: {object: signal, operation: create}
+  - text: "follow @example_user for systems threads"
+    expect: {object: person, operation: create, fields: {handle: "@example_user"}}
+  - text: "mute @noisy_bot on x"
+    expect: {object: person, operation: create}
+  - text: "add @researcher to the radar people list"
+    expect: {object: person, operation: create}
+
+negative_examples:
+  - text: "deploy the release candidate tonight"
+  - text: "cooked mapo tofu for dinner"
+
+llm_hints: >
+  X Radar captures interesting posts/threads as signals and people as person
+  cards. Prefer signal for content; person when the focus is an account handle.

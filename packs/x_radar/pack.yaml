@@ -1,0 +1,9 @@
+name: x_radar
+version: 0.1.0
+title: "X Radar"
+description: "Lightweight signal / watchlist cards for interesting posts, people, and threads."
+author: "domain_foundry"
+license: MIT
+core_compat: ">=0.1,<2"
+interpretation: simple
+aliases: [twitter, x, radar, watchlist]

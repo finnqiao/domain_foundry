@@ -75,6 +75,17 @@ def test_home_starts_empty_then_lists_installed_domains(workspace):
     assert {"timeline", "search", "stats", "history", "planner", "list"} <= blocks
 
 
+def test_quiz_stats_http_endpoint(workspace):
+    api, client = _client(workspace)
+    api.activate_pack("japanese")
+    r = client.get("/api/quiz/stats", params={"domain": "japanese"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["domain"] == "japanese"
+    assert "review_count" in body
+    assert "grade_distribution" in body
+
+
 def test_full_walkthrough(workspace):
     api, client = _client(workspace)
     api.activate_pack("sourdough")

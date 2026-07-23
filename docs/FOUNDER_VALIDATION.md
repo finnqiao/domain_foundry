@@ -61,23 +61,29 @@ one before filing). Suggested tags:
 - [ ] Friction filed as issues (synthetic repros only).
 - [ ] Confirmed: **nothing personal committed** to this repo (`leakscan.py` green).
 
-## Measured results (stub — fill after production week)
+## Measured results (prove-out mirror — counts only)
 
-Record private numbers here after the lived week; do **not** paste personal
-content, only aggregates:
+From `scripts/founder_metrics.py` against `~/HermesWorkspace/foundry-dry`
+(2026-07-23). No personal text — aggregates only. Travel not yet applied into
+this home (Roamboard shadow still open).
 
 | Metric | Value | Notes |
 |---|---|---|
-| Entries migrated (japanese / food / health / dev / travel) | _TBD_ | From Phase 2/7 dry-run recon |
-| Days in production on Foundry home | _TBD_ | |
-| Quiz streak (days with ≥1 grade) | _TBD_ | |
+| Entries migrated | **1118** | `entry` / `capture_event` / `canonical_object` |
+| japanese vocab / grammar | **418 / 258** | personal.sqlite import + extras |
+| food objects | **88** | coffee/dining/drink/food notes + recipes |
+| health objects | **248** | fitness/lab/supplement/medication/fasting |
+| dev objects | **106** | decision/gotcha/session/pattern |
+| travel objects | **0** in foundry-dry | dry-run 28/166/815 accounted; apply deferred |
+| Days in production on Foundry home | _TBD_ | Human production week |
+| Quiz streak (days with ≥1 grade) | _TBD_ | After mesh quiz live |
 | Routing accuracy vs P1 synthetic baseline | _TBD_ | Compare to 0.938 plants+sourdough |
 | Cost / day (routine tier) | _TBD_ | DeepSeek |
 | Cost / day (SOTA tier) | _TBD_ | Claude |
-| `needs_review` remaining | _TBD_ | Target < 20 |
+| `needs_review` remaining | _TBD_ | Target < 20; blocked on Anthropic triage |
 
-> Why this isn't automated here: the harness cannot fabricate the founder's real
-> domains without inventing personal data, which would violate the synthetic-only
-> constraint. The public CI proves the *mechanism* (packs, routing, corrections,
-> wizard, adapter) on synthetic corpora; this checklist proves the *lived*
-> experience privately.
+> Why the lived-week rows stay TBD: the harness cannot invent the founder's real
+> production week without personal content. Fill those after the cutover week.
+> The public CI proves the *mechanism* (packs, routing, corrections, wizard,
+> adapter) on synthetic corpora; this checklist proves the *lived* experience
+> privately.

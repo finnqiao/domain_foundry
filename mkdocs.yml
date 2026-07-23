@@ -77,6 +77,9 @@ nav:
       - Leak audit: LEAK_AUDIT.md
       - Leakscan (Phase 9): LEAKSCAN_PHASE9.md
       - Private overlay: PRIVATE_OVERLAY.md
+      - Mesh as-built: MESH_AS_BUILT.md
+      - Open gates: OPEN_GATES.md
+      - Retirement runbook: RETIREMENT_RUNBOOK.md
       - Phase status: PHASE_STATUS.md
       - Founder validation: FOUNDER_VALIDATION.md
 

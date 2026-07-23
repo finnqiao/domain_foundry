@@ -172,4 +172,7 @@ llm_hints: >
   (grind/bloom/ratio without a coffee drink framing) stay observations.
   Structured restaurant revisit notes → dining_note; explicit recipe attempts →
   recipe_attempt; "mapo tofu test, held better…" cooks stay cook. Venue geo
-  (lat/lng/place_*) is optional.
+  (lat/lng/place_*) is optional. For dining / coffee_note / dining_note /
+  drink_note, always extract place_name when the text names a cafe, restaurant,
+  or bar (e.g. "flat white at Onibus Nakameguro" → place_name=Onibus Nakameguro).
+  Do not invent lat/lng; leave null when unknown (lazy geocode / backfill later).

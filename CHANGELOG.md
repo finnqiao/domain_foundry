@@ -6,8 +6,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-- Renamed provisional public product to **Domain Foundry** (`domain-foundry-core`,
-  CLI `domain-foundry`, workspace `~/.domain_foundry/`, env `DOMAIN_FOUNDRY_*`).
+### Added (convergence finish)
+
+- `packs/x_radar/` — signal/person pack + agent.yaml.
+- SPA `quiz_stats` block + `GET /api/quiz/stats` (SRS aggregates).
+- Food Inspiration timeline (`idea` / `noted_at`); capture-time place_name hints
+  (`geo/capture_hints.py`, optional live geocode via env).
+- Weekly Concierge triage nudge (`mesh weekly-triage`).
+- Roamboard nightly shadow harness (`scripts/roamboard_shadow_nightly.sh`).
+- Leakscan `--history` (advisory; no rewrite).
+- Founder metrics script + mesh as-built / retirement / open-gates docs.
 
 ## [0.1.0] — unreleased (first public release)
 

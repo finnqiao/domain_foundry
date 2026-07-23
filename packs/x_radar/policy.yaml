@@ -1,0 +1,3 @@
+defaults:
+  - {action: auto_apply}
+fallback: unfiled_card

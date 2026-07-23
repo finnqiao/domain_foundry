@@ -7,6 +7,7 @@ import { Stats } from "./Stats";
 import { History } from "./History";
 import { Planner } from "./Planner";
 import { MapBlock } from "./Map";
+import { QuizStats } from "./QuizStats";
 
 export type BlockId =
   | "capture_feed"
@@ -18,7 +19,8 @@ export type BlockId =
   | "history"
   | "planner"
   | "review_queue"
-  | "map";
+  | "map"
+  | "quiz_stats";
 
 export type BlockMeta = {
   id: BlockId;
@@ -28,8 +30,7 @@ export type BlockMeta = {
   global?: boolean;
 };
 
-// Ten built-in blocks (plan §9.1 + Phase 6 map). Data blocks render inside a
-// domain view; global blocks (capture_feed, detail, review_queue) are shell surfaces.
+// Built-in blocks (plan §9.1 + Phase 6 map + Phase 4 quiz_stats).
 export const BUILTIN_BLOCKS: BlockMeta[] = [
   { id: "capture_feed", title: "Capture feed", dataContract: ["entries"], global: true },
   { id: "list", title: "List", dataContract: ["object", "columns?", "group_by?"] },
@@ -41,6 +42,7 @@ export const BUILTIN_BLOCKS: BlockMeta[] = [
   { id: "planner", title: "Planner", dataContract: ["object", "date_field"] },
   { id: "review_queue", title: "Review queue", dataContract: ["approvals"], global: true },
   { id: "map", title: "Map", dataContract: ["objects", "lat", "lng"] },
+  { id: "quiz_stats", title: "Quiz stats", dataContract: ["domain?"] },
 ];
 
 // Per-domain data blocks: keyed by the `block` field the API returns.
@@ -52,6 +54,7 @@ const DATA_BLOCKS: Record<string, ComponentType<BlockProps>> = {
   history: History,
   planner: Planner,
   map: MapBlock,
+  quiz_stats: QuizStats,
 };
 
 // Runtime-registered custom blocks (side-loaded, plan §9.3).

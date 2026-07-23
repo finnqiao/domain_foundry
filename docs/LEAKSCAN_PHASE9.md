@@ -56,10 +56,16 @@ under allowlisted test/docs paths that exercise redaction.
 
 ## History note
 
-Full-history string sweep is **out of scope for automated rewrite**. The public
-repo already starts at the P0 bootstrap (see [`LEAK_AUDIT.md`](LEAK_AUDIT.md)).
-If a future audit needs history grep, report path+pattern per commit and fix
-forward — do not rewrite.
+```bash
+python scripts/leakscan.py --history
+```
+
+Full-history string sweep is **advisory by default** (exit 0 when the working
+tree is clean). Set `DOMAIN_FOUNDRY_LEAKSCAN_HISTORY_STRICT=1` to fail on
+historical hits. The public repo already starts at the P0 bootstrap (see
+[`LEAK_AUDIT.md`](LEAK_AUDIT.md)). Historical path hits (old HANDOFF absolute
+paths; `sk-` shapes in redactor fixtures / CSS) are fixed **forward** in the
+working tree — do **not** rewrite history.
 
 ## Overlay coupling
 

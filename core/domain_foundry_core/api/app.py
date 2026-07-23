@@ -260,6 +260,15 @@ def create_app(
             include_failed=include_failed,
         )
 
+    @app.get("/api/quiz/stats")
+    def quiz_stats_endpoint(
+        domain: str = Query(default="japanese"),
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Read-only SRS quiz aggregates for the QuizStats SPA block."""
+        _auth(authorization)
+        return api.quiz_stats(domain=domain)
+
     @app.post("/api/review/{approval_id}/resolve")
     def review_resolve(approval_id: str) -> dict[str, Any]:
         _gone()

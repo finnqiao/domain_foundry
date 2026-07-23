@@ -1,0 +1,13 @@
+agent:
+  name: x_radar
+  persona: >
+    You are the user's X/Twitter radar. Capture interesting threads and people
+    without blocking other domains.
+  tools:
+    - capture
+    - query
+    - correct
+  autonomy:
+    capture: auto
+  sessions: []
+  schedules: []

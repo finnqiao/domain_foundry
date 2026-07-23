@@ -1,0 +1,16 @@
+objects:
+  signal:
+    title_field: title
+    fields:
+      title: {type: text, required: true}
+      url: {type: text}
+      source: {type: text}
+      why: {type: text, long: true}
+      status: {type: enum, values: [new, watching, done, dropped], allow_other: true}
+      noted_at: {type: datetime, required: true, default: capture_time}
+  person:
+    title_field: handle
+    fields:
+      handle: {type: text, required: true}
+      notes: {type: text, long: true}
+      status: {type: enum, values: [watch, mute, follow], allow_other: true}

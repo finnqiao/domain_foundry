@@ -178,7 +178,69 @@ def scan_personal_content(files: list[Path], *, root: Path | None = None) -> lis
     return errors
 
 
-def scan() -> list[str]:
+def scan_history(*, max_commits_per_pattern: int = 50) -> list[str]:
+    """Scan git history for personal-string patterns (report-only; no rewrite).
+
+    Uses ``git log -G`` to find candidate commits, then ``git grep`` at that
+    revision and keeps only hits outside CONTENT_ALLOWLIST_PREFIXES.
+    Findings are ``commit=<sha> pattern=<id> path=<rel>`` — never echo secrets.
+    """
+    patterns: list[tuple[str, str]] = [
+        ("personal_home_path", r"/Users/finn"),
+        ("telegram_bot_token", r"\d{8,12}:[A-Za-z0-9_\-]{30,}"),
+        ("api_key_shape", r"(sk-|sk-proj-|rk-|gh[pousr]_|AKIA|xox[baprs]-)"),
+    ]
+    errors: list[str] = []
+    for pattern_id, regex in patterns:
+        try:
+            out = subprocess.check_output(
+                [
+                    "git",
+                    "log",
+                    "--all",
+                    "-G",
+                    regex,
+                    "--pretty=format:%H",
+                    f"-n{max_commits_per_pattern}",
+                ],
+                cwd=ROOT,
+                stderr=subprocess.DEVNULL,
+            )
+        except subprocess.CalledProcessError:
+            continue
+        shas = [line.strip() for line in out.decode().splitlines() if line.strip()]
+        for sha in shas:
+            for rel in _commit_disallowed_paths(sha, regex):
+                errors.append(f"commit={sha[:12]} pattern={pattern_id} path={rel}")
+    return errors
+
+
+def _commit_disallowed_paths(sha: str, regex: str) -> list[str]:
+    """Paths at ``sha`` matching ``regex`` that are not content-allowlisted."""
+    try:
+        out = subprocess.check_output(
+            ["git", "grep", "-I", "-E", "-l", regex, sha],
+            cwd=ROOT,
+            stderr=subprocess.DEVNULL,
+        )
+    except subprocess.CalledProcessError as exc:
+        # git grep exits 1 when no matches.
+        if exc.returncode in {1, 2}:
+            return []
+        return []
+    bad: list[str] = []
+    for line in out.decode(errors="replace").splitlines():
+        raw = line.strip()
+        if not raw:
+            continue
+        # `git grep -l PATTERN SHA` → "SHA:path" or just "path" depending on git.
+        path = raw.split(":", 1)[-1] if raw.startswith(sha) else raw
+        path = path.lstrip("./")
+        if path and not _content_allowlisted(Path(path)):
+            bad.append(path)
+    return bad
+
+def scan(*, history: bool = False) -> list[str]:
     errors: list[str] = []
     files = _git_ls_files()
 
@@ -225,18 +287,56 @@ def scan() -> list[str]:
     if os.environ.get("DOMAIN_FOUNDRY_LEAKSCAN_CONTENT", "1") not in {"0", "false", "no"}:
         errors.extend(scan_personal_content(files, root=ROOT))
 
+    if history:
+        errors.extend(scan_history())
+
     return errors
 
 
-def main() -> int:
-    errors = scan()
-    if errors:
-        print("leakscan FAILED:")
-        for e in errors:
+def main(argv: list[str] | None = None) -> int:
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Domain Foundry leakscan")
+    parser.add_argument(
+        "--history",
+        action="store_true",
+        help=(
+            "Also scan git history via git log -G / git grep (no rewrite). "
+            "History hits are reported; they fail the process only when "
+            "DOMAIN_FOUNDRY_LEAKSCAN_HISTORY_STRICT=1 (plan forbids rewrite)."
+        ),
+    )
+    args = parser.parse_args(argv)
+    tree_errors = scan(history=False)
+    history_errors: list[str] = []
+    if args.history:
+        history_errors = scan_history()
+
+    if tree_errors:
+        print("leakscan FAILED (working tree):")
+        for e in tree_errors:
             print(f"  - {e}")
-        print(f"leakscan findings: {len(errors)}")
+        print(f"leakscan findings: {len(tree_errors)}")
         return 1
-    print("leakscan OK")
+
+    if history_errors:
+        strict = os.environ.get("DOMAIN_FOUNDRY_LEAKSCAN_HISTORY_STRICT", "0").lower() in {
+            "1",
+            "true",
+            "on",
+            "yes",
+        }
+        label = "FAILED" if strict else "WARN (history; no rewrite)"
+        print(f"leakscan {label}:")
+        for e in history_errors:
+            print(f"  - {e}")
+        print(f"leakscan history findings: {len(history_errors)}")
+        if strict:
+            return 1
+        print("leakscan OK (working tree); history findings documented — do not rewrite")
+        return 0
+
+    print("leakscan OK" + (" (working tree + history)" if args.history else ""))
     print("leakscan findings: 0")
     return 0
 

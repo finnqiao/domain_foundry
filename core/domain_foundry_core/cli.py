@@ -489,6 +489,21 @@ def mesh_status_cmd(ctx: typer.Context) -> None:
     typer.echo(json.dumps(asdict(status), indent=2))
 
 
+@mesh_app.command("weekly-triage")
+def mesh_weekly_triage_cmd(
+    ctx: typer.Context,
+    force: bool = typer.Option(
+        False, "--force", help="Enqueue even if already fired this ISO week"
+    ),
+) -> None:
+    """Enqueue the Concierge weekly triage nudge (idempotent per UTC week)."""
+    from domain_foundry_core.mesh.triage_nudge import maybe_fire_weekly_triage
+    from domain_foundry_core.paths import Workspace
+
+    result = maybe_fire_weekly_triage(Workspace(ctx.obj["home"]), force=force)
+    typer.echo(json.dumps(result, indent=2))
+
+
 dlq_app = typer.Typer(help="Dead-letter queue: list / retry poisoned mesh messages")
 mesh_app.add_typer(dlq_app, name="dlq")
 

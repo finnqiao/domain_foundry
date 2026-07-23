@@ -175,6 +175,12 @@ class Router:
             hit = max(l1.hits, key=lambda h: (h.boost, h.rule_index))
             pack = next(p for p in packs if p.name == hit.pack)
             fields = self._l1_fields(text, pack, hit.object_type)
+            if pack.name == "food":
+                from domain_foundry_core.geo.capture_hints import enrich_venue_fields
+
+                fields = enrich_venue_fields(
+                    object_type=hit.object_type, fields=fields, raw_text=text
+                )
             span = CaptureSpan(
                 domain=hit.pack,
                 object_type=hit.object_type,
@@ -247,13 +253,21 @@ class Router:
                 pack = self.registry.get_by_alias(str(domain or ""))
             if not pack:
                 continue
+            object_type = str(c.get("object_type") or next(iter(pack.objects), "note"))
+            fields = dict(c.get("fields") or {})
+            if pack.name == "food":
+                from domain_foundry_core.geo.capture_hints import enrich_venue_fields
+
+                fields = enrich_venue_fields(
+                    object_type=object_type, fields=fields, raw_text=text
+                )
             span = CaptureSpan(
                 domain=pack.name,
-                object_type=str(c.get("object_type") or next(iter(pack.objects), "note")),
+                object_type=object_type,
                 operation=str(c.get("operation") or "create"),
                 span=str(c.get("span") or text),
                 confidence=float(c.get("confidence") or 0.7),
-                fields=dict(c.get("fields") or {}),
+                fields=fields,
                 links=list(c.get("links") or []),
             )
             span.disposition = self._policy_action(pack, span, channel)

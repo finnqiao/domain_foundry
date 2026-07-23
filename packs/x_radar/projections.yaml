@@ -1,0 +1,9 @@
+app:
+  icon: "📡"
+  views:
+    - {id: signals, title: "Signals", block: list, object: signal, config: {group_by: status}}
+    - {id: people, title: "People", block: list, object: person, config: {group_by: status}}
+    - {id: recent, title: "Recent", block: timeline, object: signal, config: {date_field: noted_at}}
+    - {id: find, title: "Find", block: search, objects: [signal, person], config: {facets: [status, source]}}
+markdown:
+  folder: "14_X_Radar"
