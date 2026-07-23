@@ -7,6 +7,7 @@ from typing import Any
 
 from domain_foundry_core.mesh.inbox import DomainInbox
 from domain_foundry_core.mesh.journal import InboxJournal, JournalRecord
+from domain_foundry_core.mesh.outbound import OutboundMessage, OutboundQueue
 from domain_foundry_core.paths import Workspace
 from domain_foundry_core.routing.router import Router
 
@@ -25,6 +26,7 @@ class Concierge:
 
     Bounded work only: classify via the two-tier router, enqueue onto a
     domain inbox, mark the journal row routed. Never awaits Expert processing.
+    Outbound replies are enqueued for the gateway; delivery is not awaited.
     """
 
     FALLBACK_DOMAIN = "general"
@@ -36,11 +38,31 @@ class Concierge:
         router: Router | None = None,
         journal: InboxJournal | None = None,
         inbox: DomainInbox | None = None,
+        outbound: OutboundQueue | None = None,
     ) -> None:
         self.ws = workspace or Workspace()
         self.journal = journal or InboxJournal(self.ws)
         self.inbox = inbox or DomainInbox(self.ws)
+        self.outbound = outbound or OutboundQueue(self.ws)
         self.router = router or Router(self.ws)
+
+    def enqueue_reply(
+        self,
+        *,
+        origin_domain: str,
+        text: str,
+        channel: str,
+        destination: str,
+        payload: dict[str, Any] | None = None,
+    ) -> OutboundMessage:
+        """Enqueue an origin-tagged outbound reply (gateway delivers later)."""
+        return self.outbound.enqueue(
+            origin_domain=origin_domain,
+            text=text,
+            channel=channel,
+            destination=destination,
+            payload=payload,
+        )
 
     def ingest(
         self,

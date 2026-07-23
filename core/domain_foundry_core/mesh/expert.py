@@ -10,6 +10,7 @@ from typing import Any
 
 from domain_foundry_core.api.harness import HarnessAPI
 from domain_foundry_core.mesh.inbox import DomainInbox, InboxMessage
+from domain_foundry_core.mesh.outbound import OutboundMessage, OutboundQueue
 from domain_foundry_core.paths import Workspace
 
 # Optional hook for tests / busy simulation: (domain, msg) -> None
@@ -23,6 +24,7 @@ class ExpertStats:
     failed: int = 0
     last_msg_id: str | None = None
     last_error: str | None = None
+    last_outbound_id: str | None = None
 
 
 @dataclass
@@ -44,8 +46,26 @@ class ExpertRunner:
     def __post_init__(self) -> None:
         self.ws = self.workspace or Workspace()
         self.inbox = DomainInbox(self.ws)
+        self.outbound = OutboundQueue(self.ws)
         self.harness = HarnessAPI(self.ws.home)
         self.stats = ExpertStats(domain=self.domain)
+
+    def enqueue_reply(
+        self,
+        *,
+        text: str,
+        channel: str,
+        destination: str,
+        payload: dict[str, Any] | None = None,
+    ) -> OutboundMessage:
+        """Enqueue an origin-tagged reply for gateway delivery."""
+        return self.outbound.enqueue(
+            origin_domain=self.domain,
+            text=text,
+            channel=channel,
+            destination=destination,
+            payload=payload,
+        )
 
     def process_one(self) -> InboxMessage | None:
         """Claim and process at most one message. Serial via `_busy` lock."""
@@ -56,9 +76,11 @@ class ExpertRunner:
             try:
                 reply = self._handle(msg)
                 self.inbox.ack(msg.id, reply=reply)
+                outbound_id = self._maybe_enqueue_reply(msg, reply)
                 self.stats.processed += 1
                 self.stats.last_msg_id = msg.id
                 self.stats.last_error = None
+                self.stats.last_outbound_id = outbound_id
             except Exception as exc:  # noqa: BLE001
                 self.inbox.fail(msg.id, str(exc))
                 self.stats.failed += 1
@@ -66,6 +88,33 @@ class ExpertRunner:
                 self.stats.last_error = str(exc)
                 raise
             return msg
+
+    def _maybe_enqueue_reply(
+        self, msg: InboxMessage, reply: dict[str, Any]
+    ) -> str | None:
+        """If the handler returned outbound_text/reply_text, enqueue it."""
+        text = reply.get("outbound_text") or reply.get("reply_text")
+        if not text:
+            return None
+        channel = str(
+            reply.get("channel")
+            or msg.payload.get("channel")
+            or "cli"
+        )
+        destination = str(
+            reply.get("destination")
+            or msg.payload.get("destination")
+            or msg.payload.get("actor")
+            or msg.payload.get("source_ref")
+            or "unknown"
+        )
+        out = self.enqueue_reply(
+            text=str(text),
+            channel=channel,
+            destination=destination,
+            payload={"inbox_id": msg.id, "journal_id": msg.journal_id},
+        )
+        return out.id
 
     def drain(self, *, max_n: int = 100) -> int:
         """Process up to max_n pending messages serially."""

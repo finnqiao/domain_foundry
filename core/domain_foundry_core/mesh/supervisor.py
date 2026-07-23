@@ -13,6 +13,7 @@ from typing import Any
 from domain_foundry_core.clock import now
 from domain_foundry_core.mesh.inbox import DomainInbox
 from domain_foundry_core.mesh.journal import InboxJournal
+from domain_foundry_core.mesh.outbound import OutboundQueue
 from domain_foundry_core.paths import Workspace
 
 
@@ -32,7 +33,8 @@ class SupervisorStatus:
     home: str
     journal: dict[str, int]
     inbox_by_domain: dict[str, dict[str, int]]
-    children: list[dict[str, Any]]
+    outbound: dict[str, int] = field(default_factory=dict)
+    children: list[dict[str, Any]] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
 
 
@@ -63,6 +65,7 @@ class Supervisor:
         self._monitor_thread: threading.Thread | None = None
         self.journal = InboxJournal(self.ws)
         self.inbox = DomainInbox(self.ws)
+        self.outbound = OutboundQueue(self.ws)
 
     def status(self) -> SupervisorStatus:
         children = []
@@ -86,10 +89,12 @@ class Supervisor:
             home=str(self.ws.home),
             journal=self.journal.counts(),
             inbox_by_domain=self.inbox.depths_by_domain(),
+            outbound=self.outbound.depth(),
             children=children,
             notes=[
                 "launchd install stubbed — use `domain-foundry mesh install` TODO",
-                "gateway fast path: private logbook plugin (HERMES_MESH_FAST_PATH); outbound_queue TODO Phase 4",
+                "gateway fast path: private logbook plugin (HERMES_MESH_FAST_PATH)",
+                "outbound_queue: ledger-backed; private poller adopts DF claim/ack/fail",
             ],
         )
 

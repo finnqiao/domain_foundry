@@ -34,8 +34,8 @@ def mesh_home(workspace: Workspace) -> Workspace:
 
 def test_mesh_migration_creates_tables(workspace: Workspace):
     version = ensure_migrated(workspace.ledger_db, "ledger")
-    assert version >= 5
-    assert read_schema_version(workspace.ledger_db) >= 5
+    assert version >= 6
+    assert read_schema_version(workspace.ledger_db) >= 6
     conn = connect_ro(workspace.ledger_db)
     try:
         tables = {
@@ -46,6 +46,7 @@ def test_mesh_migration_creates_tables(workspace: Workspace):
         }
         assert "inbox_journal" in tables
         assert "domain_inbox" in tables
+        assert "outbound_queue" in tables
     finally:
         conn.close()
 
@@ -207,7 +208,9 @@ def test_supervisor_status_shape(mesh_home: Workspace):
     assert status.home == str(mesh_home.home)
     assert "routed" in status.journal or "pending" in status.journal
     assert any(c["domain"] == "japanese" for c in status.children)
+    assert isinstance(status.outbound, dict)
     assert status.notes
+    assert any("outbound_queue" in n for n in status.notes)
 
 
 def test_agent_yaml_loads_for_japanese_and_food():
