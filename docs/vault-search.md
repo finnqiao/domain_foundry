@@ -25,4 +25,6 @@ Vault notes are projections, not the source of truth.
 - Search the vault for human browsing; trust ledger FTS for agents and CLI.
 - Managed regions (`%%managed:start … %%`) are rewritten on re-project — put free-text notes *outside* them.
 - Backlinks: `[[entry:<entry_id>]]` and `%%uid:<object_uid>%%` resolve across notes after migration; prefer those ids over fragile note titles.
+- Hermes logbook imports also emit `[[entry:lb_…]]` aliases so pre-migration vault backlinks keep resolving.
+- Pack markdown folders use the Hermes numbered layout (`06_Japanese`, `05_Food_Drink`, `07_Health`, `12_Dev`, `04_Travel`). Bulk re-projection: `domain-foundry projections reproject --vault <path>` (dry-run default; `--apply` only after unmanaged_ok).
 - Do not hand-edit managed body text expecting it to survive a drain — correct via `domain-foundry` / HarnessAPI so provenance stays intact.
