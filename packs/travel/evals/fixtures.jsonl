@@ -29,3 +29,9 @@
 {"id": "travel_029", "raw_text": "the app build is toast", "expected": {"kind": "negative", "tags": ["negative"]}}
 {"id": "travel_030", "raw_text": "deploy the release candidate tonight", "expected": {"kind": "negative", "tags": ["negative"]}}
 {"id": "travel_031", "raw_text": "merge the feature flag behind a gate", "expected": {"kind": "negative", "tags": ["negative"]}}
+{"id": "travel_032", "raw_text": "Hotel reservation confirmation at Meadowbrook Inn. Confirmation #51812441. Check-in Thu Jun 18.", "expected": {"captures": [{"domain": "travel", "object_type": "booking", "operation": "create"}], "tags": ["travel", "booking", "hermes_port"]}}
+{"id": "travel_033", "raw_text": "Need a grocery run between puffin tour and dinner on July 10 for tomorrow's tour supplies", "expected": {"captures": [{"domain": "travel", "object_type": "timeline_item", "operation": "create"}], "tags": ["travel", "timeline_item", "hermes_port"]}}
+{"id": "travel_034", "raw_text": "Day 1 - Snæfellsnes Peninsula: Ytri Tunga, Kirkjufell, Berserkjahraun", "expected": {"captures": [{"domain": "travel", "object_type": "timeline_item", "operation": "create"}], "tags": ["travel", "timeline_item", "hermes_port", "itinerary"]}}
+{"id": "travel_035", "raw_text": "Updated trip ferry Moskenes to Bodo schedule 10:00-13:30; flight BOO to CPH now 15:00-18:25", "expected": {"captures": [{"domain": "travel", "object_type": "booking", "operation": "create"}], "tags": ["travel", "booking", "hermes_port"]}}
+{"id": "travel_036", "raw_text": "Jun 7-18 lodging: transit nights need no stay; Jun 9-18 staying with friend — all lodging accounted for", "expected": {"captures": [{"domain": "travel", "object_type": "booking", "operation": "create"}], "tags": ["travel", "booking", "hermes_port"]}}
+{"id": "travel_037", "raw_text": "magnesium 400mg capsule after the evening run", "expected": {"kind": "negative", "tags": ["negative", "hermes_port", "not_travel"]}}
