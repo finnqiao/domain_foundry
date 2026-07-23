@@ -1,0 +1,44 @@
+name: hermes-japanese-vocab-fixture
+channel: hermes-import
+notes: Fixture mapping for jp_vocab / jp_grammar provenance-preserving import.
+entities:
+  - name: jp_vocab
+    domain: japanese
+    object_type: jp_vocab
+    source_ref_template: "hermes:personal:jp_vocab:{id}"
+    id_field: id
+    timestamp_field: created_at
+    updated_at_field: updated_at
+    raw_text_template: "{word} ({reading}) — {meaning}"
+    required_source_fields: [word]
+    field_map:
+      word: word
+      reading: reading
+      meaning: meaning
+      jlpt_level: jlpt_level
+      ease_factor: ease_factor
+      interval_days: interval_days
+      reps: reps
+      lapses: lapses
+      next_review: next_review
+      notes: notes
+  - name: jp_grammar
+    domain: japanese
+    object_type: jp_grammar
+    source_ref_template: "hermes:personal:jp_grammar:{id}"
+    id_field: id
+    timestamp_field: created_at
+    updated_at_field: updated_at
+    raw_text_template: "{form} — {meaning}"
+    required_source_fields: [form]
+    field_map:
+      form: form
+      meaning: meaning
+      jlpt_level: jlpt_level
+      example_jp: example_jp
+      example_en: example_en
+      ease_factor: ease_factor
+      interval_days: interval_days
+      reps: reps
+      lapses: lapses
+      next_review: next_review

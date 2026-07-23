@@ -1,0 +1,32 @@
+[
+  {
+    "id": 10,
+    "form": "〜てしまう",
+    "meaning": "end up doing / regretfully do",
+    "jlpt_level": "N4",
+    "example_jp": "忘れてしまった",
+    "example_en": "I ended up forgetting",
+    "ease_factor": 2.5,
+    "interval_days": 0,
+    "reps": 0,
+    "lapses": 0,
+    "next_review": "2026-07-22",
+    "created_at": "2025-10-15T14:30:00+00:00",
+    "updated_at": "2025-10-15T14:30:00+00:00"
+  },
+  {
+    "id": 11,
+    "form": "〜ばかり",
+    "meaning": "just did / nothing but",
+    "jlpt_level": "N3",
+    "example_jp": "食べたばかりです",
+    "example_en": "I just ate",
+    "ease_factor": 2.6,
+    "interval_days": 3,
+    "reps": 2,
+    "lapses": 0,
+    "next_review": "2026-07-24",
+    "created_at": "2025-11-20T10:00:00+00:00",
+    "updated_at": "2026-02-01T10:00:00+00:00"
+  }
+]

@@ -1,0 +1,18 @@
+name: hermes-logbook-entry-fixture
+channel: hermes-import
+notes: Example entry-shaped mapping (plants care_event) mirroring hermes:logbook:entry:N refs.
+entities:
+  - name: entries
+    domain: plants
+    object_type: care_event
+    source_ref_template: "hermes:logbook:entry:{id}"
+    id_field: id
+    timestamp_field: created_at
+    updated_at_field: null
+    raw_text_field: text
+    required_source_fields: [text]
+    field_map:
+      plant_name: plant_name
+      action: action
+      noted_at: created_at
+      notes: text
