@@ -1,31 +1,56 @@
 objects:
-  # Trip — the long-lived container. Exactly one is usually `active` at a time;
-  # that active trip is the open-context default for ambiguous timeline items.
+  # Trip — long-lived container (travel.sqlite `trips` parity).
+  # Exactly one is usually `active`; that trip is the open-context default.
   trip:
     title_field: name
     fields:
       name: {type: text, required: true}
+      slug: {type: text}
       destination: {type: text}
+      primary_destination: {type: text}
       start_date: {type: date}
       end_date: {type: date}
-      status: {type: enum, values: [idea, planning, booked, active, completed], allow_other: true}
+      status: {type: enum, values: [idea, planning, booked, active, completed, placeholder], allow_other: true}
+      readiness_score: {type: integer}
+      cover_image_path: {type: text}
+      notes_path: {type: text}
       party_size: {type: integer}
       notes: {type: text, long: true}
 
-  # Timeline item — a single dated/ordered thing on a trip (activity, transfer,
-  # lodging, tour, meal, free time). Time is deliberately fuzzy: an item can be
-  # all-day or approximate, mirroring how plans actually arrive.
+  # Timeline item — dated/ordered thing on a trip (travel.sqlite `timeline_items`).
+  # Geo is nullable; lat/lng mirror food venue fields for a future map projection.
   timeline_item:
     title_field: title
     fields:
       title: {type: text, required: true}
       trip: {type: text}
-      item_type: {type: enum, values: [activity, lodging, transfer, tour, meal, flight, free_time], allow_other: true}
+      trip_id: {type: integer}
+      day_id: {type: integer}
+      item_type: {type: enum, values: [activity, lodging, stay, transfer, tour, meal, dining, flight, free_time, train, ferry, car, cruise, day_trip, reservation, task_block, note, buffer], allow_other: true}
+      item_type_canonical: {type: text}
+      item_subtype: {type: text}
       day: {type: date}
       start_time: {type: text}
+      start_time_text: {type: text}
+      end_time_text: {type: text}
+      start_datetime: {type: datetime}
+      end_datetime: {type: datetime}
+      timezone: {type: text}
       is_all_day: {type: boolean}
+      is_overnight: {type: boolean}
+      is_flexible: {type: boolean}
       location: {type: text}
+      location_name: {type: text}
+      lat: {type: number}
+      lng: {type: number}
       status: {type: enum, values: [idea, planned, booked, done], allow_other: true}
+      confidence: {type: text}
+      source: {type: text}
+      sort_order: {type: integer}
+      duration_minutes: {type: integer}
+      guest_count: {type: integer}
+      reservation_channel: {type: text}
+      package_label: {type: text}
       scheduled_at: {type: datetime, required: true, default: capture_time}
       notes: {type: text, long: true}
     links:
@@ -46,6 +71,23 @@ objects:
       amount: {type: number, unit: currency_minor}
       booked_at: {type: datetime, required: true, default: capture_time}
       notes: {type: text, long: true}
+    links:
+      trip: {to: travel.trip, cardinality: many_to_one}
+      timeline_item: {to: travel.timeline_item, cardinality: many_to_one}
+
+  # Event log — append-only travel.sqlite `event_log` parity (audit / Roamboard sync).
+  # Note: source `created_at` stamps the substrate row via importer timestamp_field
+  # (system created_at/updated_at columns) — do not redeclare created_at here.
+  event_log:
+    title_field: event_type
+    fields:
+      event_type: {type: text, required: true}
+      trip_id: {type: integer}
+      timeline_item_id: {type: integer}
+      change_request_id: {type: integer}
+      event_json: {type: text, long: true}
+      created_by: {type: text}
+      noted_at: {type: datetime, required: true, default: capture_time}
     links:
       trip: {to: travel.trip, cardinality: many_to_one}
       timeline_item: {to: travel.timeline_item, cardinality: many_to_one}

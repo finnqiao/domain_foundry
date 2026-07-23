@@ -1,0 +1,64 @@
+name: hermes-travel-fixture
+channel: hermes-import
+notes: Synthetic travel fixture for provenance-preserving import (no real places).
+entities:
+  - name: trip
+    domain: travel
+    object_type: trip
+    source_ref_template: "hermes:travel:trip:{id}"
+    id_field: id
+    timestamp_field: created_at
+    updated_at_field: updated_at
+    raw_text_template: "{name} ({destination}) — {status}"
+    required_source_fields: [name]
+    field_map:
+      name: name
+      slug: slug
+      destination: destination
+      primary_destination: primary_destination
+      start_date: start_date
+      end_date: end_date
+      status: status
+      readiness_score: readiness_score
+      notes: notes
+  - name: timeline_item
+    domain: travel
+    object_type: timeline_item
+    source_ref_template: "hermes:travel:timeline_item:{id}"
+    id_field: id
+    timestamp_field: created_at
+    updated_at_field: updated_at
+    raw_text_template: "{title} ({item_type}) — {location}"
+    required_source_fields: [title]
+    field_map:
+      title: title
+      trip: trip
+      trip_id: trip_id
+      item_type: item_type
+      item_type_canonical: item_type_canonical
+      location: location
+      location_name: location_name
+      lat: lat
+      lng: lng
+      status: status
+      is_all_day: is_all_day
+      scheduled_at: scheduled_at
+      notes: notes
+  - name: event_log
+    domain: travel
+    object_type: event_log
+    source_ref_template: "hermes:travel:event_log:{id}"
+    id_field: id
+    timestamp_field: created_at
+    updated_at_field: null
+    raw_text_template: "{event_type} trip={trip_id}"
+    required_source_fields: [event_type]
+    actor_field: created_by
+    default_actor: hermes
+    field_map:
+      event_type: event_type
+      trip_id: trip_id
+      timeline_item_id: timeline_item_id
+      event_json: event_json
+      created_by: created_by
+      noted_at: created_at

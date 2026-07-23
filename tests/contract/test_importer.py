@@ -250,3 +250,80 @@ def test_dict_source_unit_path(workspace: Workspace):
         assert row["captured_at"] == "2023-05-05T12:00:00+00:00"
     finally:
         conn.close()
+
+
+def _ready_travel(workspace: Workspace) -> HarnessAPI:
+    api = HarnessAPI(workspace.home)
+    api.init()
+    api.packs.activate_bundled("travel")
+    return api
+
+
+def test_load_mapping_travel_example():
+    mapping = load_mapping(EXAMPLES / "travel.yaml")
+    assert mapping.name == "hermes-travel-fixture"
+    assert mapping.channel == "hermes-import"
+    assert {e.name for e in mapping.entities} == {"trip", "timeline_item", "event_log"}
+    assert mapping.entities[0].source_ref_template == "hermes:travel:trip:{id}"
+
+
+def test_travel_dry_run_accounts_for_fixture_rows(workspace: Workspace):
+    _ready_travel(workspace)
+    mapping = load_mapping(EXAMPLES / "travel.yaml")
+    source = FixtureSource(FIXTURES / "travel")
+    report = GenericImporter(workspace, mapping, dry_run=True).run(source)
+
+    # 3 trips (1 invalid) + 3 timeline_items + 3 event_log
+    assert report.source_total == 9
+    assert report.would_import == 8
+    assert report.skipped_invalid == 1
+    assert report.imported == 0
+    assert report.complete
+    assert report.by_entity["trip"]["would_import"] == 2
+    assert report.by_entity["trip"]["skipped_invalid"] == 1
+    assert report.by_entity["timeline_item"]["would_import"] == 3
+    assert report.by_entity["event_log"]["would_import"] == 3
+
+
+def test_travel_apply_preserves_geo_and_source_ref(workspace: Workspace):
+    _ready_travel(workspace)
+    mapping = load_mapping(EXAMPLES / "travel.yaml")
+    source = FixtureSource(FIXTURES / "travel")
+    report = GenericImporter(workspace, mapping, dry_run=False).run(source)
+
+    assert report.imported == 8
+    assert report.skipped_invalid == 1
+    assert report.complete
+
+    conn = connect_ro(workspace.ledger_db)
+    try:
+        canon = conn.execute(
+            """
+            SELECT co.uid
+            FROM canonical_object co
+            JOIN source_link sl
+              ON sl.target_type = 'canonical_object' AND sl.target_id = co.uid
+            WHERE sl.source_type = 'import'
+              AND sl.source_id = ?
+            """,
+            ("hermes:travel:timeline_item:10",),
+        ).fetchone()
+        assert canon is not None
+        object_uid = canon["uid"]
+    finally:
+        conn.close()
+
+    dconn = connect_ro(workspace.domains_db)
+    try:
+        drow = dconn.execute(
+            "SELECT * FROM travel__timeline_item WHERE object_uid = ?",
+            (object_uid,),
+        ).fetchone()
+        assert drow is not None
+        assert drow["title"] == "Harbor walking tour"
+        assert float(drow["lat"]) == 41.88
+        assert float(drow["lng"]) == -87.63
+        assert drow["location"] == "Old Harbor"
+        assert drow["created_at"] == "2026-01-06T11:00:00+00:00"
+    finally:
+        dconn.close()
