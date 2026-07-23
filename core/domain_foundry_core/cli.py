@@ -628,5 +628,105 @@ def mesh_supervise_cmd(
         typer.echo("stopped")
 
 
+# ---------------------------------------------------------------------------
+# Roamboard sync (Phase 7 — shadow-ready; no production cutover)
+# ---------------------------------------------------------------------------
+roamboard_app = typer.Typer(
+    help="Roamboard sync adapter (import feed/patches; shadow vs travel.sqlite RO)",
+)
+app.add_typer(roamboard_app, name="roamboard")
+
+
+@roamboard_app.command("sync")
+def roamboard_sync_cmd(
+    ctx: typer.Context,
+    dry_run: bool = typer.Option(
+        True,
+        "--dry-run/--no-dry-run",
+        help="Reconcile without writing (default). Superseded by --apply / --shadow.",
+    ),
+    apply: bool = typer.Option(
+        False,
+        "--apply",
+        help="Write Roamboard-shaped records into DF travel (idempotent source_ref).",
+    ),
+    shadow: bool = typer.Option(
+        False,
+        "--shadow",
+        help="Dry-run import accounting + write shadow/roamboard/ diff vs travel.sqlite RO.",
+    ),
+    feed: Path | None = typer.Option(
+        None, "--feed", help="Roamboard feed JSON (schemaVersion 2)"
+    ),
+    patch_bundle: Path | None = typer.Option(
+        None, "--patch-bundle", help="Pending-patch bundle JSON (drain shape)"
+    ),
+    travel_db: Path | None = typer.Option(
+        None,
+        "--travel-db",
+        help="Private travel.sqlite for shadow (opened RO; default HermesWorkspace path)",
+    ),
+) -> None:
+    """Import Roamboard shapes into DomainFoundry travel (shadow-ready).
+
+    Default is --dry-run. --apply writes. --shadow writes a report under
+    ``{DF_HOME}/shadow/roamboard/`` comparing private travel.sqlite (RO) to DF.
+    Does not mutate travel.sqlite or flip launchd sync jobs.
+    """
+    from domain_foundry_roamboard.sync import SyncMode, sync_roamboard
+
+    if apply and shadow:
+        typer.echo("use either --apply or --shadow (not both)", err=True)
+        raise typer.Exit(code=2)
+    if apply:
+        mode = SyncMode.APPLY
+    elif shadow:
+        mode = SyncMode.SHADOW
+    else:
+        mode = SyncMode.DRY_RUN
+        if not dry_run:
+            # --no-dry-run without --apply is ambiguous; require --apply.
+            typer.echo("pass --apply to write (dry-run is the default)", err=True)
+            raise typer.Exit(code=2)
+
+    if feed is None and patch_bundle is None:
+        typer.echo("provide --feed and/or --patch-bundle", err=True)
+        raise typer.Exit(code=2)
+
+    # Prefer feed when both given (patch can be run as a second invocation).
+    report = sync_roamboard(
+        ctx.obj["home"],
+        mode=mode,
+        feed=feed,
+        patch_bundle=None if feed is not None else patch_bundle,
+        travel_db=travel_db,
+    )
+    typer.echo(json.dumps(report.to_dict(), indent=2, default=str))
+    import_report = report.import_report or {}
+    if not import_report.get("complete", True):
+        raise typer.Exit(code=1)
+
+
+@roamboard_app.command("export-feed")
+def roamboard_export_feed_cmd(
+    ctx: typer.Context,
+    out: Path | None = typer.Option(
+        None, "--out", "-o", help="Write JSON feed preview (default: stdout)"
+    ),
+) -> None:
+    """Build a Roamboard-shaped feed from DF travel (push preview; does not POST)."""
+    from domain_foundry_roamboard.sync import export_df_feed
+
+    feed_payload = export_df_feed(ctx.obj["home"])
+    text = json.dumps(feed_payload, indent=2) + "\n"
+    if out is not None:
+        out = out.expanduser()
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(text, encoding="utf-8")
+        typer.echo(json.dumps({"wrote": str(out), "trips": len(feed_payload.get("trips") or [])}))
+    else:
+        typer.echo(text)
+
+
 if __name__ == "__main__":
     app()

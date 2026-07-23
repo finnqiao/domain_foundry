@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "domain-foundry-roamboard"
+version = "0.1.0"
+description = "Roamboard sync adapter: import feed/patches into DomainFoundry travel via in-process HarnessAPI (shadow-ready, no cutover)"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [{ name = "Domain Foundry contributors" }]
+keywords = ["roamboard", "travel", "sync", "domain-foundry"]
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0.0",
+  "domain-foundry-core",
+]
+
+[project.urls]
+Homepage = "https://github.com/finnqiao/domain_foundry"
+Documentation = "https://github.com/finnqiao/domain_foundry/tree/main/adapters/roamboard#readme"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/domain_foundry_roamboard"]

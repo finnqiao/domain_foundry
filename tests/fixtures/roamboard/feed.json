@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-23T12:00:00Z",
+  "checksum": "fixture",
+  "trips": [
+    {
+      "id": "trip_1",
+      "sourceId": 1,
+      "slug": "port-city-weekend",
+      "name": "Port City weekend",
+      "startDate": "2026-03-10",
+      "endDate": "2026-03-12",
+      "primaryDestination": "Port City",
+      "status": "planning",
+      "updatedAt": "2026-02-01T12:00:00Z",
+      "days": [
+        {
+          "id": "day_10",
+          "sourceId": 10,
+          "localDate": "2026-03-11",
+          "city": "Port City",
+          "timelineItems": [
+            {
+              "id": "item_10",
+              "sourceId": 10,
+              "tripSlug": "port-city-weekend",
+              "itemType": "activity",
+              "category": "activity",
+              "title": "Harbor walking tour",
+              "startDateTime": "2026-03-11T10:00:00",
+              "locationName": "Old Harbor",
+              "lat": 41.88,
+              "lng": -87.63,
+              "status": "planned",
+              "source": "roamboard",
+              "notes": "bring layers"
+            }
+          ]
+        }
+      ],
+      "backlogItems": [
+        {
+          "id": "item_11",
+          "sourceId": 11,
+          "tripSlug": "port-city-weekend",
+          "itemType": "flight",
+          "category": "flight",
+          "title": "Home → Port City",
+          "startDateTime": "2026-03-10T08:00:00",
+          "status": "booked",
+          "source": "roamboard"
+        }
+      ],
+      "tasks": [],
+      "openQuestions": [],
+      "readiness": {"score": 40, "criticalGaps": [], "warnings": []}
+    },
+    {
+      "id": "trip_2",
+      "sourceId": 2,
+      "slug": "river-station",
+      "name": "River Station getaway",
+      "startDate": "2025-08-01",
+      "endDate": "2025-08-08",
+      "primaryDestination": "River Station",
+      "status": "completed",
+      "updatedAt": "2025-08-09T18:00:00Z",
+      "days": [
+        {
+          "id": "day_20",
+          "sourceId": 20,
+          "localDate": "2025-08-01",
+          "city": "River Station",
+          "timelineItems": [
+            {
+              "id": "item_12",
+              "sourceId": 12,
+              "tripSlug": "river-station",
+              "itemType": "stay",
+              "category": "lodging",
+              "title": "River Inn",
+              "startDateTime": "2025-08-01T15:00:00",
+              "endDateTime": "2025-08-08T11:00:00",
+              "locationName": "River Station",
+              "lat": 45.5,
+              "lng": -122.6,
+              "status": "done",
+              "isAllDay": true,
+              "source": "roamboard"
+            }
+          ]
+        }
+      ],
+      "backlogItems": [],
+      "tasks": [],
+      "openQuestions": [],
+      "readiness": {"score": 100, "criticalGaps": [], "warnings": []}
+    }
+  ]
+}
