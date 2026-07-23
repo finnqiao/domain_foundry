@@ -95,3 +95,19 @@ print(capture(text="baked a 75% hydration country loaf, came out great"))
    local stack, and pin the host version range.
 
 MCP is the planned second adapter and follows the same HTTP contract.
+
+## Roamboard sync adapter (Phase 7)
+
+`adapters/roamboard/` imports Roamboard feed / patch shapes into the **travel**
+pack via in-process `HarnessAPI` (no HTTP hop). CLI:
+
+```bash
+domain-foundry roamboard sync --dry-run --feed path/to/feed.json   # default
+domain-foundry roamboard sync --apply --feed path/to/feed.json
+domain-foundry roamboard sync --shadow --feed path/to/feed.json \
+  --travel-db ~/HermesWorkspace/travel/data/travel.sqlite
+```
+
+Shadow reports land under `{DF_HOME}/shadow/roamboard/`. Private
+`travel.sqlite` is read-only; launchd cutover remains manual. See
+[`adapters/roamboard/README.md`](../adapters/roamboard/README.md).
