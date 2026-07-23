@@ -95,6 +95,8 @@ class BlockDataService:
             result = self._history(tname, obj_fields, config, limit)
         elif block == "planner":
             result = self._planner(tname, obj_fields, config, limit)
+        elif block == "map":
+            result = self._map(pack, view, config, limit)
         else:  # list / search / unknown → plain listing
             result = self._list(tname, obj_fields, config, limit)
         # Every view carries its object type so the app can open the detail
@@ -237,6 +239,94 @@ class BlockDataService:
             "past": past,
             "statuses": list(config.get("statuses") or []),
             "count": len(rows),
+        }
+
+    def _map(
+        self,
+        pack: DomainPack,
+        view: dict[str, Any],
+        config: dict,
+        limit: int,
+    ) -> dict[str, Any]:
+        """Been-to map: rows with lat/lng across one or more venue object types.
+
+        Null geo degrades cleanly — ungeocoded venues are counted but omitted
+        from ``rows`` / ``features`` so the SPA can still render.
+        """
+        object_types = list(view.get("objects") or [])
+        single = view.get("object")
+        if single and single not in object_types:
+            object_types.insert(0, str(single))
+        object_types = [ot for ot in object_types if ot in pack.objects]
+        if not object_types:
+            raise BlockDataError(f"view {view.get('id')!r} has no valid object")
+
+        type_filter = config.get("types") or config.get("filter_types")
+        if type_filter:
+            wanted = {str(t) for t in type_filter}
+            object_types = [ot for ot in object_types if ot in wanted]
+
+        per_type = max(1, int(limit))
+        rows: list[dict[str, Any]] = []
+        skipped_null_geo = 0
+        scanned = 0
+        for object_type in object_types:
+            obj = pack.objects[object_type]
+            obj_fields = {k: v for k, v in obj.fields.items()}
+            if "lat" not in obj_fields or "lng" not in obj_fields:
+                continue
+            tname = table_name(pack.name, object_type)
+            title_field = obj.title_field
+            sql = (
+                f"SELECT * FROM {tname} WHERE tombstoned = 0 "
+                f"ORDER BY created_at DESC LIMIT ?"
+            )
+            for row in self._rows(sql, [per_type]):
+                scanned += 1
+                row = dict(row)
+                row["object_type"] = object_type
+                if title_field and row.get(title_field) is not None:
+                    row["_title"] = row.get(title_field)
+                lat, lng = row.get("lat"), row.get("lng")
+                if lat is None or lng is None:
+                    skipped_null_geo += 1
+                    continue
+                try:
+                    lat_f = float(lat)
+                    lng_f = float(lng)
+                except (TypeError, ValueError):
+                    skipped_null_geo += 1
+                    continue
+                row["lat"] = lat_f
+                row["lng"] = lng_f
+                rows.append(row)
+
+        features = [
+            {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [float(r["lng"]), float(r["lat"])],
+                },
+                "properties": {
+                    "object_uid": r.get("object_uid"),
+                    "object_type": r.get("object_type"),
+                    "entry_id": r.get("entry_id"),
+                    "title": r.get("_title") or r.get("place_name") or r.get("object_uid"),
+                    "place_name": r.get("place_name"),
+                },
+            }
+            for r in rows
+        ]
+        return {
+            "block": "map",
+            "rows": rows,
+            "features": features,
+            "count": len(rows),
+            "scanned": scanned,
+            "skipped_null_geo": skipped_null_geo,
+            "object_types": object_types,
+            "geojson": {"type": "FeatureCollection", "features": features},
         }
 
 

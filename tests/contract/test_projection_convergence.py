@@ -57,7 +57,7 @@ def test_kill_the_daemon_convergence(workspace: Workspace):
             "SELECT adapter, status FROM projection_outbox WHERE change_request_id = ?",
             (cr_ids[0],),
         ).fetchall()
-        assert {r["adapter"] for r in pending} == {"app_feed", "markdown"}
+        assert {r["adapter"] for r in pending} == {"app_feed", "markdown", "geojson"}
         assert all(r["status"] == "pending" for r in pending)
         wm = conn.execute("SELECT COUNT(*) AS n FROM projection_watermark").fetchone()
         assert wm["n"] == 0
@@ -71,7 +71,7 @@ def test_kill_the_daemon_convergence(workspace: Workspace):
     restarted = HarnessAPI(workspace.home)
     report = restarted.drain_projections()
     assert report["failed_count"] == 0
-    assert report["drained_count"] >= 2
+    assert report["drained_count"] >= 3
 
     conn = connect_ro(workspace.ledger_db)
     try:
@@ -85,7 +85,7 @@ def test_kill_the_daemon_convergence(workspace: Workspace):
         wms = conn.execute(
             "SELECT adapter, watermark FROM projection_watermark"
         ).fetchall()
-        assert {r["adapter"] for r in wms} == {"app_feed", "markdown"}
+        assert {r["adapter"] for r in wms} == {"app_feed", "markdown", "geojson"}
         first_watermarks = {r["adapter"]: int(r["watermark"]) for r in wms}
     finally:
         conn.close()

@@ -263,7 +263,7 @@ def schedule_projection_stub(
     """Fan a canonical commit out to every projection adapter (invariant 11).
 
     The `adapter` argument is retained for call-site compatibility but ignored:
-    the ProjectionCoordinator owns the adapter set (app_feed + markdown).
+    the ProjectionCoordinator owns the adapter set (app_feed + markdown + geojson).
     """
     from domain_foundry_core.projections.coordinator import schedule_projections
 
