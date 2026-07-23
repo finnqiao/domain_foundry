@@ -1,4 +1,4 @@
-"""domain-foundry CLI: init, capture, query, health, serve, pack, eval."""
+"""domain-foundry CLI: init, capture, query, search, health, serve, pack, eval."""
 
 from __future__ import annotations
 
@@ -84,6 +84,25 @@ def query_cmd(
         domain=domain, object_type=object_type, status=status, q=q, limit=limit
     )
     typer.echo(json.dumps([r.model_dump() for r in rows], indent=2))
+
+
+@app.command("search")
+def search_cmd(
+    ctx: typer.Context,
+    q: str = typer.Argument(..., help="FTS5 search query"),
+    domain: str | None = typer.Option(None, "--domain", "-d"),
+    object_type: str | None = typer.Option(None, "--object-type", "-t"),
+    kind: str | None = typer.Option(
+        None, "--kind", "-k", help="entry | canonical (default: both)"
+    ),
+    limit: int = typer.Option(50, "--limit", "-n"),
+) -> None:
+    """Full-text search over entry raw text and canonical object text."""
+    api = HarnessAPI(ctx.obj["home"])
+    result = api.search(
+        q, domain=domain, object_type=object_type, kind=kind, limit=limit
+    )
+    typer.echo(json.dumps(result, indent=2))
 
 
 @app.command("health")

@@ -55,7 +55,7 @@ class CaptureService:
           1. validate + redact
           2. INSERT capture_event
           3. INSERT entry (status=ledger_only until routing/apply)
-          4. INSERT source_link + FTS
+          4. INSERT source_link (FTS synced by ledger triggers)
           5. return receipt
 
         Idempotency: (channel, source_ref) unique → replay returns original receipt.
@@ -140,10 +140,7 @@ class CaptureService:
                 """,
                 (capture_id, entry_id, ts),
             )
-            conn.execute(
-                "INSERT INTO entry_fts (entry_id, raw_text, summary, domain) VALUES (?, ?, ?, ?)",
-                (entry_id, safe_text, summary, None),
-            )
+            # entry_fts + search_document are maintained by ledger_003 triggers.
             conn.commit()
             return CaptureReceipt(
                 entry_id=entry_id,
@@ -217,10 +214,11 @@ class CaptureService:
                 SELECT e.id, e.capture_event_id, e.status, e.domain, e.object_type,
                        e.operation, e.routing_confidence, e.fallback_tier, e.summary,
                        e.created_at, e.updated_at, c.raw_text, c.channel
-                FROM entry_fts
-                JOIN entry e ON e.id = entry_fts.entry_id
+                FROM search_fts
+                JOIN search_document sd ON sd.id = search_fts.rowid
+                JOIN entry e ON e.id = sd.ref_id AND sd.kind = 'entry'
                 JOIN capture_event c ON c.id = e.capture_event_id
-                WHERE entry_fts MATCH ?
+                WHERE search_fts MATCH ?
             """
             params.append(q)
             if domain:

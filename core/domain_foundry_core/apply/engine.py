@@ -22,6 +22,7 @@ from domain_foundry_core.packs.models import DomainPack, FieldSpec, ObjectSpec
 from domain_foundry_core.packs.registry import PackRegistry
 from domain_foundry_core.packs.schema_compiler import table_name
 from domain_foundry_core.paths import Workspace
+from domain_foundry_core.search.fts import set_canonical_searchable_text
 from domain_foundry_core.security.store import connect_rw
 
 _IDENT_RE = re.compile(r"^[a-z][a-z0-9_]{0,62}$")
@@ -250,6 +251,7 @@ class ApplyEngine:
                 relationship="created_from",
                 now=now,
             )
+        set_canonical_searchable_text(ledger, canonical.uid, fields, now=now)
         schedule_projection_stub(
             ledger,
             adapter="app_feed",
@@ -332,6 +334,8 @@ class ApplyEngine:
             actor_channel=actor_channel,
             now=now,
         )
+        after_fields = row_to_dict(after) or {}
+        set_canonical_searchable_text(ledger, spec.object_uid, after_fields, now=now)
         schedule_projection_stub(
             ledger,
             adapter="app_feed",
