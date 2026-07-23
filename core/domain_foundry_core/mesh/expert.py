@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import threading
 import time
 from collections.abc import Callable
@@ -11,10 +12,18 @@ from typing import Any
 from domain_foundry_core.api.harness import HarnessAPI
 from domain_foundry_core.mesh.inbox import DomainInbox, InboxMessage
 from domain_foundry_core.mesh.outbound import OutboundMessage, OutboundQueue
+from domain_foundry_core.mesh.quiz import (
+    QuizSession,
+    looks_like_grade,
+    looks_like_quiz_start,
+    parse_grade,
+)
 from domain_foundry_core.paths import Workspace
 
 # Optional hook for tests / busy simulation: (domain, msg) -> None
 ProcessHook = Callable[[str, InboxMessage], dict[str, Any] | None]
+
+_QUIZ_N_RE = re.compile(r"quiz(?:\s+me)?(?:\s+on)?\s+(\d+)", re.IGNORECASE)
 
 
 @dataclass
@@ -48,6 +57,7 @@ class ExpertRunner:
         self.inbox = DomainInbox(self.ws)
         self.outbound = OutboundQueue(self.ws)
         self.harness = HarnessAPI(self.ws.home)
+        self.quiz = QuizSession(self.ws) if self.domain == "japanese" else None
         self.stats = ExpertStats(domain=self.domain)
 
     def enqueue_reply(
@@ -143,6 +153,14 @@ class ExpertRunner:
                 return hooked
 
         text = str(msg.payload.get("text") or "")
+        actor = str(msg.payload.get("actor") or "default")
+
+        # Interactive quiz turns (japanese only) — not a capture.
+        if self.quiz is not None:
+            interactive = self._maybe_quiz_turn(text, user_id=actor)
+            if interactive is not None:
+                return interactive
+
         channel = str(msg.payload.get("channel") or "mesh")
         source_ref = msg.payload.get("source_ref")
         # Prefer mesh-scoped idempotency so channel redelivery + journal
@@ -161,3 +179,39 @@ class ExpertRunner:
             "domain": self.domain,
             "idempotent_replay": receipt.idempotent_replay,
         }
+
+    def _maybe_quiz_turn(self, text: str, *, user_id: str) -> dict[str, Any] | None:
+        assert self.quiz is not None
+        active = self.quiz.sessions.get_active(
+            "japanese", user_id=user_id, session_type=QuizSession.SESSION_TYPE
+        )
+        if active is not None and looks_like_grade(text):
+            receipt = self.quiz.grade(parse_grade(text), session_id=active.id, user_id=user_id)
+            card = receipt.next_card
+            return {
+                "kind": "quiz_grade",
+                "session_id": receipt.session_id,
+                "grade": receipt.grade,
+                "review_event_uid": receipt.review_event_uid,
+                "done": receipt.done,
+                "index": receipt.index,
+                "total": receipt.total,
+                "correct": receipt.correct,
+                "prompt": card.prompt if card else None,
+                "domain": self.domain,
+            }
+        if looks_like_quiz_start(text):
+            limit = None
+            m = _QUIZ_N_RE.search(text)
+            if m:
+                limit = int(m.group(1))
+            session = self.quiz.start(user_id=user_id, limit=limit)
+            card = self.quiz.current_card(session)
+            return {
+                "kind": "quiz_start",
+                "session_id": session.id,
+                "total": len(session.state.get("cards") or []),
+                "prompt": card.prompt if card else None,
+                "domain": self.domain,
+            }
+        return None

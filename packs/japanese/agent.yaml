@@ -16,12 +16,18 @@ agent:
     - id: quiz
       goal: "run a spaced-repetition review of due cards"
       state: {cards: [], index: 0, correct: 0}
+      enter:
+        - action: build_due_first_queue
+          new_card_limit: 20
       turn: |
-        Present cards[index]. Grade the user's answer with quiz_grade,
+        Present cards[index]. Grade the user's answer with quiz_grade
+        (again/hard/good/easy), append review_event (algorithm=sm2),
         update next_review (SM-2), advance index. End when index >= len(cards).
+      exit:
+        - action: summarize_grades
   schedules:
     - id: daily_review
       cron: "0 9 * * *"
-      when: "SELECT count(*) FROM japanese__jp_vocab WHERE next_review <= datetime('now')"
+      when: "SELECT count(*) FROM japanese__jp_vocab WHERE next_review IS NOT NULL AND next_review <= date('now')"
       action: start_session(quiz)
       message: "You have {count} Japanese cards due. Want to review now?"

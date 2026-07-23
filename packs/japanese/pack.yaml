@@ -5,5 +5,5 @@ description: "Vocab and grammar cards with SM-2 spaced repetition, plus per-revi
 author: "domain_foundry"
 license: MIT
 core_compat: ">=0.1,<2"
-interpretation: structured
+interpretation: interactive
 aliases: [jp, nihongo, anki, srs]
