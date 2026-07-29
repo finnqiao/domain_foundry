@@ -20,8 +20,15 @@ import sys
 import tempfile
 from typing import Any
 
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
+import pytest
+
+# The MCP SDK is this adapter's own dependency, not a core one. Skip rather than
+# error at collection so `pytest` on a plain checkout still works; CI installs it
+# so the proof genuinely runs there (see .github/workflows/ci.yml).
+pytest.importorskip("mcp", reason="pip install 'mcp>=1.2.0' to run the MCP proof")
+
+from mcp import ClientSession, StdioServerParameters  # noqa: E402
+from mcp.client.stdio import stdio_client  # noqa: E402
 
 
 def _unwrap(result: Any) -> Any:
