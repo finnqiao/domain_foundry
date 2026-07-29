@@ -39,7 +39,7 @@ from domain_foundry_core.packs.schema_compiler import table_name
 from domain_foundry_core.paths import Workspace
 from domain_foundry_core.search.fts import set_canonical_searchable_text
 from domain_foundry_core.security.redact import redact_secrets
-from domain_foundry_core.security.store import connect_rw
+from domain_foundry_core.security.store import connect_rw, last_row_id
 
 _IDENT_RE = re.compile(r"^[a-z][a-z0-9_]{0,62}$")
 
@@ -329,7 +329,7 @@ class GenericImporter:
                 f"INSERT INTO {tname} ({col_sql}) VALUES ({placeholders})",
                 vals,
             )
-            row_id = int(cur.lastrowid)
+            row_id = last_row_id(cur)
 
             canonical = ensure_canonical_object(
                 ledger,

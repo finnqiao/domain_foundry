@@ -32,8 +32,9 @@ def _client(workspace) -> tuple[HarnessAPI, TestClient]:
     over one home would leave the HTTP registry stale after activate).
     """
     HarnessAPI(workspace.home).init()
-    client = TestClient(create_app(workspace.home, enable_drain_loop=False))
-    return client.app.state.harness, client
+    app = create_app(workspace.home, enable_drain_loop=False)
+    client = TestClient(app)
+    return app.state.harness, client
 
 
 def _first_uid(workspace, domain: str) -> tuple[str, str]:

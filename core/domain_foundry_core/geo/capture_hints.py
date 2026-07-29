@@ -12,9 +12,15 @@ from __future__ import annotations
 
 import os
 import re
+from pathlib import Path
 from typing import Any
 
-from domain_foundry_core.geo.nominatim import NominatimClient, venue_query
+from domain_foundry_core.geo.nominatim import (
+    GeocodeCache,
+    NominatimClient,
+    venue_query,
+)
+from domain_foundry_core.paths import default_home
 
 # "flat white at Onibus Nakameguro" / "dinner at River Station Grill"
 _AT_PLACE_RE = re.compile(
@@ -46,10 +52,14 @@ def enrich_venue_fields(
     fields: dict[str, Any],
     raw_text: str,
     geocode: bool | None = None,
+    cache_dir: Path | None = None,
 ) -> dict[str, Any]:
     """Return a shallow-copied fields dict with place_name / optional lat/lng.
 
     Does nothing for non-venue object types. Never overwrites existing geo.
+    ``cache_dir`` overrides where geocode responses are cached (defaults to
+    ``{workspace}/cache/geocode``); one file per query hash, so repeat lookups
+    of the same venue cost nothing.
     """
     if object_type not in _VENUE_TYPES:
         return fields
@@ -78,7 +88,13 @@ def enrich_venue_fields(
     if not query:
         return out
     try:
-        result = NominatimClient().geocode(str(query))
+        # NominatimClient requires a cache. This used to be `NominatimClient()`,
+        # which raised TypeError on every call — and because the whole block is
+        # guarded by `except Exception: return out`, enabling
+        # DOMAIN_FOUNDRY_GEOCODE_ON_CAPTURE simply never geocoded anything and
+        # never said so. Type-checking the call site is what surfaced it.
+        root = cache_dir or (default_home() / "cache" / "geocode")
+        result = NominatimClient(GeocodeCache(root)).geocode(str(query))
     except Exception:
         return out
     if result.lat is None or result.lng is None:

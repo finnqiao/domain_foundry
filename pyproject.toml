@@ -54,8 +54,8 @@ Issues = "https://github.com/finnqiao/domain_foundry/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["core/domain_foundry_core"]
-# The built SPA is gitignored, so hatchling would exclude it from the wheel.
-# scripts/stage_webapp.sh copies app/dist here before the release build.
+# The built SPA is gitignored, so hatchling would exclude it. `artifacts` brings
+# it back into a *wheel* build.
 artifacts = ["core/domain_foundry_core/_webapp/**"]
 
 # Reference packs live outside the package dir, so a wheel shipped without this
@@ -72,10 +72,29 @@ include = [
   "LICENSE",
   "README.md",
 ]
+# `python -m build` builds the wheel *from the sdist*, so anything missing here
+# is missing from the wheel no matter what the wheel target declares. The staged
+# SPA is gitignored, so without this the documented release command produced a
+# wheel with no web app — `serve` would return JSON telling the user to `cd app`,
+# in a directory a pipx install does not have. Asserted end-to-end by
+# tests/unit/test_spa_packaging.py.
+artifacts = ["core/domain_foundry_core/_webapp/**"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
-pythonpath = ["core", "adapters/hermes_agent/src", "adapters/roamboard/src"]
+# The adapter E2E tests are the only proof the MCP / Telegram / hermes-agent
+# harnesses actually work. They lived outside `testpaths`, so a bare `pytest`
+# (and therefore CI) never collected them — three of them had previously been
+# green on a no-op. Collect them.
+testpaths = ["tests", "adapters/hermes_agent/tests", "adapters/mcp/tests", "adapters/telegram/tests"]
+# pythonpath makes these importable without pip-installing each adapter, which
+# is what CI does (`pip install -e ".[dev]"` covers the root package only).
+pythonpath = [
+  "core",
+  "adapters/hermes_agent/src",
+  "adapters/roamboard/src",
+  "adapters/mcp/src",
+  "adapters/telegram/src",
+]
 addopts = "-q"
 
 [tool.ruff]
@@ -92,6 +111,16 @@ ignore = [
 
 [tool.pyright]
 include = ["core", "tests"]
+# Pyright does not read pytest's pythonpath. Locally the adapters happen to be
+# editable-installed so imports resolved; in CI they are not, which produced 11
+# phantom "could not be resolved" errors for domain_foundry_roamboard alone.
+extraPaths = [
+  "core",
+  "adapters/hermes_agent/src",
+  "adapters/roamboard/src",
+  "adapters/mcp/src",
+  "adapters/telegram/src",
+]
 pythonVersion = "3.11"
 typeCheckingMode = "basic"
 venvPath = "."

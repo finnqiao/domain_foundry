@@ -136,6 +136,7 @@ def test_hardening_edit_round_trips_with_migration(workspace, monkeypatch):
     # Column now exists (migration ran) and the pack still validates & routes.
     assert "crumb_photo" in _columns(workspace.domains_db, tname)
     pack = api.packs.get("sourdough")
+    assert pack is not None
     assert "crumb_photo" in pack.objects["bake"].fields
     assert api.pack_validate("sourdough") == []
 
@@ -162,6 +163,7 @@ def test_hardening_rename_and_cancel(workspace, monkeypatch):
     cancelled = api.wizard_reply(sid, "cancel")
     assert cancelled["state"] == "test_drive"
     pack = api.packs.get("running")
+    assert pack is not None
     assert "effort" in pack.objects["run"].fields  # rename was not applied
 
 

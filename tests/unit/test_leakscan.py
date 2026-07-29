@@ -4,6 +4,7 @@ import importlib.util
 import shutil
 import subprocess
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -14,7 +15,10 @@ from domain_foundry_core.paths import ENV_PACKS_PATH, overlay_pack_dirs
 REPO = Path(__file__).resolve().parents[2]
 
 
-def _load_leakscan():
+def _load_leakscan() -> Any:
+    """Load the script as a module. Untyped by nature — it is exec'd
+    from a path, so its constants (ROOT/CORE/ALLOWLIST) are not visible
+    to a type checker. Returning Any documents that rather than hiding it."""
     script = REPO / "scripts" / "leakscan.py"
     spec = importlib.util.spec_from_file_location("leakscan", script)
     assert spec and spec.loader
@@ -63,8 +67,9 @@ def test_registry_loads_overlay_packs(
     _minimal_pack(catalog / "overlay_only", "overlay_only")
     monkeypatch.setenv(ENV_PACKS_PATH, str(catalog))
     reg = PackRegistry(workspace)
-    assert reg.get("overlay_only") is not None
-    assert reg.get("overlay_only").root.parent == catalog.resolve()
+    pack = reg.get("overlay_only")
+    assert pack is not None
+    assert pack.root.parent == catalog.resolve()
 
 
 def test_overlay_shadows_workspace_pack(

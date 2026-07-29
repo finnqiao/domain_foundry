@@ -91,7 +91,9 @@ def load_pack(root: Path, *, validate: bool = True) -> DomainPack:
         RoutingExample.model_validate(e) if isinstance(e, dict) else RoutingExample(text=str(e))
         for e in (routing_raw.get("examples") or [])
     ]
-    negatives: list[RoutingExample] = []
+    # Field type is list[RoutingExample | dict[str, Any]]; declare the union so
+    # the list is not invariantly narrower than the parameter it feeds.
+    negatives: list[RoutingExample | dict[str, Any]] = []
     for n in routing_raw.get("negative_examples") or []:
         if isinstance(n, dict):
             negatives.append(
@@ -241,7 +243,9 @@ def discover_entry_point_packs() -> list[Path]:
     for ep in eps:
         try:
             target = ep.load()
-            path = Path(target) if not callable(target) else Path(target())
+            # ep.load() is typed `object`: an entry point may resolve to a path
+            # string or to a callable returning one. Stringify either way.
+            path = Path(str(target() if callable(target) else target))
             if path.is_dir() and (path / "pack.yaml").exists():
                 paths.append(path.resolve())
         except Exception:

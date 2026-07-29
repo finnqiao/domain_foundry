@@ -17,6 +17,23 @@ _FORBIDDEN_RE = re.compile(
 )
 
 
+def last_row_id(cur: sqlite3.Cursor) -> int:
+    """The rowid an INSERT just produced.
+
+    ``sqlite3.Cursor.lastrowid`` is typed ``int | None`` because it is None when
+    the last statement was not an INSERT. Call sites here always follow an
+    INSERT, so the None branch is unreachable — but it was being handled three
+    different ways across the codebase (``int(x)``, ``int(x or 0)``, and
+    ``int(x) if x else None``), which means one of them silently substituted 0
+    for a missing rowid. Raise instead: a missing rowid after an INSERT is a
+    broken invariant, not a zero.
+    """
+    rowid = cur.lastrowid
+    if rowid is None:
+        raise RuntimeError("INSERT produced no rowid")
+    return rowid
+
+
 def connect_rw(path: Path) -> sqlite3.Connection:
     path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(path))

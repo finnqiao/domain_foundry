@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
-from typing import Literal, Protocol
+from typing import Any, Literal, Protocol
 
 Grade = Literal["again", "hard", "good", "easy"]
 GRADES: tuple[Grade, ...] = ("again", "hard", "good", "easy")
@@ -374,10 +374,13 @@ class SM2Scheduler:
         )
 
 
-def card_state_from_row(row: dict) -> CardState:
+def card_state_from_row(row: dict[str, Any]) -> CardState:
     """Build :class:`CardState` from a domains row / dict."""
+    # Read once and branch explicitly: `or DEFAULT_EASE` would silently rewrite a
+    # legitimately-stored 0.0 ease factor, and the inline conditional read it twice.
+    ease = row.get("ease_factor")
     return CardState(
-        ease_factor=float(row.get("ease_factor") if row.get("ease_factor") is not None else DEFAULT_EASE),
+        ease_factor=float(ease) if ease is not None else float(DEFAULT_EASE),
         interval_days=float(row.get("interval_days") or 0.0),
         reps=int(row.get("reps") or 0),
         lapses=int(row.get("lapses") or 0),

@@ -24,7 +24,7 @@ from domain_foundry_core.paths import Workspace
 from domain_foundry_core.policy.evaluator import evaluate_policy
 from domain_foundry_core.routing.cost import CostGuard, CostGuardConfig
 from domain_foundry_core.routing.l1 import L1Matcher, L1Result
-from domain_foundry_core.security.store import connect_rw
+from domain_foundry_core.security.store import connect_rw, last_row_id
 
 logger = logging.getLogger(__name__)
 
@@ -176,7 +176,15 @@ class Router:
         l1: L1Result,
         packs: list[DomainPack],
         entry_id: str | None,
-    ) -> tuple[list[CaptureSpan], str, float, str | None, str | None, TokenUsage | None]:
+    ) -> tuple[
+        list[CaptureSpan],  # spans
+        str,  # interpreter
+        float,  # cost_usd
+        str | None,  # clarification
+        str | None,  # model_tier
+        TokenUsage | None,  # usage
+        str | None,  # llm_error
+    ]:
         if not packs:
             return [], "none", 0.0, None, None, None, None
 
@@ -525,7 +533,7 @@ class Router:
                     ts,
                 ),
             )
-            interp_id = int(cur.lastrowid)
+            interp_id = last_row_id(cur)
 
             span_cr: list[tuple[CaptureSpan, int]] = []
             for s in spans:
@@ -558,7 +566,7 @@ class Router:
                         ts,
                     ),
                 )
-                cr_id = int(cur.lastrowid)
+                cr_id = last_row_id(cur)
                 span_cr.append((s, cr_id))
                 # auto_apply is executed by ApplyPipeline; only review/confirm enqueue
                 if s.disposition in {"review", "confirm"}:

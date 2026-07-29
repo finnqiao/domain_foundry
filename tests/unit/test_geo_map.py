@@ -250,3 +250,66 @@ def test_venue_query_builders():
         )
         == "Oriole Chicago, Chicago"
     )
+
+
+def test_capture_time_geocode_actually_runs(tmp_path, monkeypatch):
+    """Regression: capture-time geocoding could never work.
+
+    ``enrich_venue_fields`` called ``NominatimClient()`` with no cache, which
+    raises TypeError — and the call sits inside ``except Exception: return out``.
+    So enabling DOMAIN_FOUNDRY_GEOCODE_ON_CAPTURE silently returned un-geocoded
+    fields forever. Assert lat/lng actually land, not just that nothing raised.
+    """
+    from domain_foundry_core.geo import capture_hints
+
+    calls: list[str] = []
+
+    class _StubResult:
+        lat, lng = 35.6412, 139.6982
+        place_name = "Onibus Coffee Nakameguro"
+        place_id = "42"
+
+    class _StubClient:
+        def __init__(self, cache, **kw):
+            # The bug was that this constructor was never reached with a cache.
+            assert cache is not None, "client must be built with a GeocodeCache"
+            self.cache = cache
+
+        def geocode(self, query: str, **kw):
+            calls.append(query)
+            return _StubResult()
+
+    monkeypatch.setattr(capture_hints, "NominatimClient", _StubClient)
+
+    out = capture_hints.enrich_venue_fields(
+        object_type="dining",
+        fields={"place_name": "Onibus Nakameguro"},
+        raw_text="flat white at Onibus Nakameguro",
+        geocode=True,
+        cache_dir=tmp_path / "geocache",
+    )
+
+    assert calls, "geocode was never called — the enrich path bailed silently"
+    assert out["lat"] == 35.6412
+    assert out["lng"] == 139.6982
+    assert out["place_id"] == "42"
+
+
+def test_capture_time_geocode_is_opt_in(tmp_path, monkeypatch):
+    """Default off: no network client is constructed at all."""
+    from domain_foundry_core.geo import capture_hints
+
+    def _boom(*a, **k):  # pragma: no cover - must not be reached
+        raise AssertionError("geocoding must not run unless opted in")
+
+    monkeypatch.setattr(capture_hints, "NominatimClient", _boom)
+    monkeypatch.delenv("DOMAIN_FOUNDRY_GEOCODE_ON_CAPTURE", raising=False)
+
+    out = capture_hints.enrich_venue_fields(
+        object_type="dining",
+        fields={},
+        raw_text="dinner at River Station Grill",
+        cache_dir=tmp_path / "geocache",
+    )
+    assert out["place_name"] == "River Station Grill"
+    assert out.get("lat") is None

@@ -4,9 +4,13 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
+from typing import Any
 
 
-def _load_clock_audit():
+def _load_clock_audit() -> Any:
+    """Load the script as a module. Untyped by nature — it is exec'd
+    from a path, so its constants (ROOT/CORE/ALLOWLIST) are not visible
+    to a type checker. Returning Any documents that rather than hiding it."""
     script = Path(__file__).resolve().parents[2] / "scripts" / "clock_audit.py"
     spec = importlib.util.spec_from_file_location("clock_audit", script)
     assert spec and spec.loader

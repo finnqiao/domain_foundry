@@ -44,7 +44,9 @@ def test_ledger_anchor_survives_partial_failure(workspace: Workspace, monkeypatc
     """
     svc = CaptureService(workspace)
     state = {"entry_inserts": 0}
-    real_connect = capture_mod.connect_rw
+    # Same function object capture_mod calls; imported from its canonical
+    # module rather than through capture_mod's private re-export.
+    real_connect = connect_rw
 
     def flaky_connect(path):  # type: ignore[no-untyped-def]
         return _FlakyConn(real_connect(path), state)

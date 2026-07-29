@@ -7,7 +7,12 @@ JSON blob telling the user to `cd app`, in a directory they do not have.
 
 from __future__ import annotations
 
+import subprocess
+import sys
+import zipfile
 from pathlib import Path
+
+import pytest
 
 from domain_foundry_core.api import app as app_mod
 
@@ -37,9 +42,57 @@ def test_app_dist_falls_back_to_the_packaged_copy(tmp_path, monkeypatch):
 
 
 def test_wheel_config_ships_the_staged_webapp():
-    """hatchling excludes gitignored paths unless they are declared artifacts."""
-    pyproject = Path(__file__).resolve().parents[2] / "pyproject.toml"
-    assert "core/domain_foundry_core/_webapp/**" in pyproject.read_text(encoding="utf-8")
+    """Both build targets must declare the staged SPA as an artifact.
+
+    This asserts the *config*, which is cheap enough to run every time. It is not
+    sufficient on its own: the wheel target declared the artifact and the wheel
+    still shipped without a SPA, because ``python -m build`` builds the wheel
+    from the **sdist** and the sdist target did not declare it. The real proof is
+    ``test_built_wheel_actually_contains_the_spa`` below.
+    """
+    pyproject = (Path(__file__).resolve().parents[2] / "pyproject.toml").read_text(
+        encoding="utf-8"
+    )
+    wheel_cfg = pyproject.split("[tool.hatch.build.targets.wheel]", 1)[1].split(
+        "[tool.hatch.build.targets.sdist]", 1
+    )
+    assert "core/domain_foundry_core/_webapp/**" in wheel_cfg[0], "wheel target"
+    assert "core/domain_foundry_core/_webapp/**" in wheel_cfg[1], "sdist target"
+
+
+def test_built_wheel_actually_contains_the_spa(tmp_path):
+    """Build the real distributions and look inside them.
+
+    Regression for a wheel that shipped with no web app despite a staged SPA and
+    a declared artifact: ``python -m build`` builds the wheel from the sdist, so
+    an sdist omission silently emptied the wheel. A config-string assertion could
+    not catch that — only opening the archive can.
+
+    Skipped unless the SPA has been staged (``scripts/stage_webapp.sh``), since a
+    plain dev checkout legitimately has no built app.
+    """
+    repo = Path(__file__).resolve().parents[2]
+    staged = repo / "core" / "domain_foundry_core" / "_webapp" / "index.html"
+    if not staged.is_file():
+        pytest.skip("SPA not staged; run scripts/stage_webapp.sh (release-only step)")
+
+    proc = subprocess.run(
+        [sys.executable, "-m", "build", "--outdir", str(tmp_path)],
+        cwd=repo,
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        pytest.skip(f"build backend unavailable: {proc.stderr.strip()[-200:]}")
+
+    wheels = sorted(tmp_path.glob("*.whl"))
+    assert wheels, "no wheel produced"
+    names = zipfile.ZipFile(wheels[-1]).namelist()
+    assert any("_webapp/index.html" in n for n in names), (
+        "wheel has no SPA — `domain-foundry serve` would return JSON telling the "
+        "user to `cd app`, in a directory a pipx install does not have"
+    )
+    assert any("_bundled/food/pack.yaml" in n for n in names), "wheel has no packs"
 
 
 def test_pack_add_resolves_a_bundled_name(tmp_path):

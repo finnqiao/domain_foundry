@@ -55,6 +55,8 @@ class _FakeLLM(LLMProvider):
         )
         self.raise_exc = raise_exc
         self.calls: list[dict[str, Any]] = []
+        # Tests set this to make the fake look "live" to _is_live().
+        self.api_key: str | None = None
 
     def complete_json(
         self,
@@ -324,7 +326,8 @@ def test_openai_compat_honours_env_model(monkeypatch):
     monkeypatch.setenv("DOMAIN_FOUNDRY_LLM_MODEL", "deepseek-chat")
     provider = get_default_provider(cassette_dir=Path("/tmp/_df_test_cass"))
     inner = getattr(provider, "inner", provider)
-    assert inner.default_model == "deepseek-chat"
+    # default_model is on the concrete client, not the LLMProvider ABC.
+    assert getattr(inner, "default_model", None) == "deepseek-chat"
 
 
 def test_router_accepts_pack_object_key_synonyms(workspace: Workspace):

@@ -229,46 +229,41 @@ warning: model routing failed (…) — captured with keyword rules only.
 
 | Gate | Result |
 |---|---|
-| `pytest` | **281 passed / 2 skipped** (2 skips are opt-in live-LLM smokes) |
+| `pytest` | **287 passed / 2 skipped** (2 skips are opt-in live-LLM smokes) |
 | `ruff check core tests scripts adapters` | clean |
-| `scripts/release_audit.sh` | **8/8 PASS** — leakscan · clock audit · no tracked DBs · history starts at P0 · ruff · pytest · mkdocs build · eval corpus replay |
+| `pyright` | **0 errors** |
+| `scripts/release_audit.sh` | **9/9 PASS** — leakscan · clock audit · no tracked DBs · history starts at P0 · ruff · pyright · pytest · mkdocs build · eval corpus replay |
 | `scripts/quickstart_gate.sh` | PASS — onboarding write, env override, single- and cross-domain capture, import lifecycle |
-| GitHub Actions `ci` → **Pyright** | ❌ **red, and has been since 2026-07-17** — see below |
+| GitHub Actions `ci` + `leakscan` | green |
 
-### The one gate that is red, and why it isn't in the table above
+### What clearing the last red gate turned up
 
-`scripts/release_audit.sh` runs ruff and pytest but **not** Pyright. GitHub
-Actions `ci` does. So the local aggregate gate has been reporting 8/8 while CI
-was failing — a real blind spot, and the reason to state it here rather than
-quietly present the green half.
+`ci` had been red since 2026-07-17 on 45 Pyright errors, and
+`release_audit.sh` ran ruff and pytest but **not** Pyright — so the local gate
+reported 8/8 over a failing CI for twelve days. Two consequences were worse than
+the type errors themselves:
 
-Pyright reports **45 errors locally / 56 in CI** (the extra 11 are phantom import
-errors for `domain_foundry_roamboard`, a private-overlay adapter CI does not
-install). Every one predates this work; distribution:
+- **Pyright runs before pytest in the workflow**, so the test suite had not
+  actually run in CI for those twelve days either.
+- **The adapter E2E tests gated nothing.** `testpaths` was `["tests"]`, so the
+  MCP / Telegram / hermes-agent proofs under `adapters/*/tests/` were never
+  collected by a bare `pytest` or by CI — the same three proofs that had once
+  been green on a no-op. They are in `testpaths` now, which is where the jump
+  from 281 to 287 tests comes from.
 
-```
-  9  routing/router.py           (tuple return-type mismatches, lines 111–315)
-  6  corrections/service.py      (int | None → ConvertibleToInt, lines 902–977)
-  6  tests/unit/test_clock_audit.py
-  5  tests/unit/test_leakscan.py
-  5  tests/unit/test_llm_tiering.py
-  … 9 more files with 1–3 each
-```
+Pyright also caught one **real latent bug**: `capture_hints.py` called
+`NominatimClient()` with no argument, but the constructor requires a cache — so
+it raised `TypeError` on every call, inside `except Exception: return out`.
+Setting `DOMAIN_FOUNDRY_GEOCODE_ON_CAPTURE=1` therefore never geocoded anything
+and never said so. Fixed, with two regression tests that assert coordinates
+actually land rather than merely that nothing raised.
 
-**Zero are attributable to the bring-your-own-key work.** `config.py`,
-`onboarding.py`, `llm/providers.py`, `llm/provider.py`, `llm/pricing.py`,
-`cli.py` and `test_byo_setup.py` are clean; the `router.py` and
-`service.py` errors sit at lines untouched by the two-line `home=` threading
-added there. Verify:
+Structural fixes so this cannot go quiet again: `pyright` is now a blocking step
+in `release_audit.sh` (the local gate can no longer be weaker than the one that
+blocks a merge), `pyright.extraPaths` and `pytest.pythonpath` both resolve the
+in-repo adapters the way CI needs, and CI's `ruff` invocation now covers
+`adapters` like the audit script does.
 
-```bash
-pyright --outputjson | python -c "…group errors by file…"   # 0 in the files above
-```
-
-Clearing this debt is a focused follow-up, not a launch blocker for the stories
-above — but the `ci` badge stays red until it is done, and that should not be
-presented as anything else.
-
-Still human gates, unchanged: PyPI name availability, the 90-second demo GIF, an
-external security pass, a lived production week, and one live `setup --probe` per
-documented provider.
+Still human gates, unchanged: the 90-second demo GIF, an external security pass,
+a lived production week, and one live `setup --probe` per documented provider.
+PyPI names are confirmed available (see below) but not yet claimed.

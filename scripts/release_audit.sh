@@ -12,9 +12,10 @@
 #   3. no tracked databases — belt-and-suspenders over leakscan
 #   4. git history origin  — first commit is the P0 bootstrap (no pre-P0 import)
 #   5. ruff                — lint clean
-#   6. pytest              — full suite green
-#   7. mkdocs build        — docs site builds (skipped if mkdocs absent)
-#   8. eval corpus replay  — routing gate vs committed baseline (skipped if CLI absent)
+#   6. pyright             — type-check clean (the same step CI runs)
+#   7. pytest              — full suite green
+#   8. mkdocs build        — docs site builds (skipped if mkdocs absent)
+#   9. eval corpus replay  — routing gate vs committed baseline (skipped if CLI absent)
 
 set -uo pipefail
 
@@ -66,6 +67,11 @@ else
 fi
 
 run "ruff"            ruff check core tests scripts adapters
+# Pyright was absent here while GitHub Actions `ci` ran it, so this script
+# reported 8/8 for twelve days over a red CI — and because Pyright runs before
+# pytest in the workflow, the test suite never ran there either. The local
+# aggregate gate must never be weaker than the one that blocks a merge.
+run "pyright"         pyright
 run "pytest"          python -m pytest -q
 
 if command -v mkdocs >/dev/null 2>&1; then

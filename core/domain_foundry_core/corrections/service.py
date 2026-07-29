@@ -18,7 +18,7 @@ from domain_foundry_core.interpret.fewshot import append_eval_case, rebuild_fews
 from domain_foundry_core.packs.registry import PackRegistry
 from domain_foundry_core.paths import Workspace
 from domain_foundry_core.routing.l1 import L1Matcher
-from domain_foundry_core.security.store import connect_rw
+from domain_foundry_core.security.store import connect_rw, last_row_id
 
 _AMEND_SCHEMA: dict[str, Any] = {
     "type": "object",
@@ -899,7 +899,7 @@ class CorrectionService:
                 ),
             )
             conn.commit()
-            return int(cur.lastrowid)
+            return last_row_id(cur)
         finally:
             conn.close()
 
@@ -936,7 +936,7 @@ class CorrectionService:
                 ),
             )
             conn.commit()
-            return int(cur.lastrowid)
+            return last_row_id(cur)
         finally:
             conn.close()
 
@@ -974,7 +974,7 @@ class CorrectionService:
                     now,
                 ),
             )
-            new_id = int(cur.lastrowid)
+            new_id = last_row_id(cur)
             if prev:
                 conn.execute(
                     """

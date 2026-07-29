@@ -24,7 +24,7 @@ from domain_foundry_core.packs.registry import PackRegistry
 from domain_foundry_core.packs.schema_compiler import table_name
 from domain_foundry_core.paths import Workspace
 from domain_foundry_core.search.fts import set_canonical_searchable_text
-from domain_foundry_core.security.store import connect_rw
+from domain_foundry_core.security.store import connect_rw, last_row_id
 
 logger = logging.getLogger(__name__)
 
@@ -217,7 +217,7 @@ class ApplyEngine:
             f"INSERT INTO {tname} ({col_sql}) VALUES ({placeholders})",
             vals,
         )
-        row_id = int(cur.lastrowid)
+        row_id = last_row_id(cur)
         title_field = obj.title_field
         natural_key = None
         if title_field and title_field in fields and fields[title_field]:
