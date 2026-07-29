@@ -233,6 +233,41 @@ warning: model routing failed (…) — captured with keyword rules only.
 | `ruff check core tests scripts adapters` | clean |
 | `scripts/release_audit.sh` | **8/8 PASS** — leakscan · clock audit · no tracked DBs · history starts at P0 · ruff · pytest · mkdocs build · eval corpus replay |
 | `scripts/quickstart_gate.sh` | PASS — onboarding write, env override, single- and cross-domain capture, import lifecycle |
+| GitHub Actions `ci` → **Pyright** | ❌ **red, and has been since 2026-07-17** — see below |
+
+### The one gate that is red, and why it isn't in the table above
+
+`scripts/release_audit.sh` runs ruff and pytest but **not** Pyright. GitHub
+Actions `ci` does. So the local aggregate gate has been reporting 8/8 while CI
+was failing — a real blind spot, and the reason to state it here rather than
+quietly present the green half.
+
+Pyright reports **45 errors locally / 56 in CI** (the extra 11 are phantom import
+errors for `domain_foundry_roamboard`, a private-overlay adapter CI does not
+install). Every one predates this work; distribution:
+
+```
+  9  routing/router.py           (tuple return-type mismatches, lines 111–315)
+  6  corrections/service.py      (int | None → ConvertibleToInt, lines 902–977)
+  6  tests/unit/test_clock_audit.py
+  5  tests/unit/test_leakscan.py
+  5  tests/unit/test_llm_tiering.py
+  … 9 more files with 1–3 each
+```
+
+**Zero are attributable to the bring-your-own-key work.** `config.py`,
+`onboarding.py`, `llm/providers.py`, `llm/provider.py`, `llm/pricing.py`,
+`cli.py` and `test_byo_setup.py` are clean; the `router.py` and
+`service.py` errors sit at lines untouched by the two-line `home=` threading
+added there. Verify:
+
+```bash
+pyright --outputjson | python -c "…group errors by file…"   # 0 in the files above
+```
+
+Clearing this debt is a focused follow-up, not a launch blocker for the stories
+above — but the `ci` badge stays red until it is done, and that should not be
+presented as anything else.
 
 Still human gates, unchanged: PyPI name availability, the 90-second demo GIF, an
 external security pass, a lived production week, and one live `setup --probe` per

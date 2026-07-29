@@ -50,6 +50,15 @@ P0 · ruff · full pytest · `mkdocs build` · eval corpus replay vs baseline. A
 green as of this commit (see [`docs/LEAK_AUDIT.md`](docs/LEAK_AUDIT.md)).
 
 - ☐ `scripts/release_audit.sh` green on the release commit.
+- ☐ **Clear the Pyright debt — the `ci` badge is red and has been since
+  2026-07-17.** `release_audit.sh` runs ruff + pytest but **not** Pyright, while
+  GitHub Actions `ci` does, so the local aggregate gate reports 8/8 over a red
+  CI. 45 errors locally / 56 in CI (the extra 11 are phantom
+  `domain_foundry_roamboard` imports CI does not install). Concentrated in
+  `routing/router.py` (9, tuple return types) and `corrections/service.py`
+  (6, `int | None`), rest 1–6 per file across tests. **None** come from the
+  bring-your-own-key work. Two things to decide: fix the errors, and either add
+  `pyright` to `release_audit.sh` or accept that local and CI disagree by design.
 - 🔒 External security pass on the API surface (independent reviewer) — see
   [`docs/security.md`](docs/security.md).
 - 🔒 Founder-as-user-0 validation completed privately — see

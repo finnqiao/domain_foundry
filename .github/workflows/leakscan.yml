@@ -9,6 +9,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # gitleaks scans a commit *range*, which needs the range's parent to
+          # exist locally. The default shallow clone cannot resolve it, so the
+          # action errored out having scanned ~0 bytes and still reported "no
+          # leaks found in partial scan" — a secret-scanning gate that silently
+          # scans nothing is worse than one that fires wrongly.
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
