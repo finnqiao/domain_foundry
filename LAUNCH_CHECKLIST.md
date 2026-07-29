@@ -15,9 +15,24 @@ Legend: ☐ = not started · ✅ = in-repo prepared / done · 🔒 = human/manua
   [ADR-005](docs/adr/ADR-005-name-decision.md). Mechanical rename applied
   (`domain-foundry-core`, CLI `domain-foundry`, `~/.domain_foundry/`,
   `DOMAIN_FOUNDRY_*`, hermes entry-point `domain_foundry`, docs/README/mkdocs).
-- ☐ Verify availability: PyPI (`domain-foundry-core`, `domain-foundry-hermes-agent`,
-  `domain-foundry-pack-*` if needed), GitHub org `domain-foundry`, docs domain,
-  trademark sanity check. Update placeholder GitHub URLs if the org differs.
+- ✅ **PyPI availability checked 2026-07-29 — all five names free and unclaimed:**
+  `domain-foundry`, `domain-foundry-core`, `domain-foundry-mcp`,
+  `domain-foundry-telegram`, `domain-foundry-hermes-agent` (each returns 404 on
+  `pypi.org/pypi/<name>/json`). Availability is not a reservation — first upload
+  wins, so this can go stale.
+- ☐ **Claim them.** Distributions are built and verified (`dist/`, `twine check`
+  PASSED, wheel contains the SPA + all nine reference packs). Needs a PyPI API
+  token, which was not present in the build environment:
+  ```bash
+  # already done: npm run build && scripts/stage_webapp.sh && python -m build
+  python -m twine upload --repository testpypi dist/*   # smoke-test first
+  python -m twine upload dist/*                          # then for real
+  ```
+  Uploading a version is **irreversible** — PyPI will not let you re-use
+  `0.1.0`. Confirm the name is the one you want (ADR-005 still calls it
+  provisional) before the second command.
+- ☐ GitHub org `domain-foundry`, docs domain, trademark sanity check. Update
+  placeholder GitHub URLs if the org differs from `finnqiao`.
 - ☐ Confirm `scripts/release_audit.sh` green on the rename commit (agent re-runs
   this; you confirm before publish).
 

@@ -229,7 +229,7 @@ warning: model routing failed (…) — captured with keyword rules only.
 
 | Gate | Result |
 |---|---|
-| `pytest` | **287 passed / 2 skipped** (2 skips are opt-in live-LLM smokes) |
+| `pytest` | **288 passed / 2 skipped** (2 skips are opt-in live-LLM smokes) |
 | `ruff check core tests scripts adapters` | clean |
 | `pyright` | **0 errors** |
 | `scripts/release_audit.sh` | **9/9 PASS** — leakscan · clock audit · no tracked DBs · history starts at P0 · ruff · pyright · pytest · mkdocs build · eval corpus replay |
@@ -251,19 +251,34 @@ the type errors themselves:
   been green on a no-op. They are in `testpaths` now, which is where the jump
   from 281 to 287 tests comes from.
 
-Pyright also caught one **real latent bug**: `capture_hints.py` called
-`NominatimClient()` with no argument, but the constructor requires a cache — so
-it raised `TypeError` on every call, inside `except Exception: return out`.
-Setting `DOMAIN_FOUNDRY_GEOCODE_ON_CAPTURE=1` therefore never geocoded anything
-and never said so. Fixed, with two regression tests that assert coordinates
-actually land rather than merely that nothing raised.
+Turning the gates green surfaced **three real bugs that no green local run could
+have shown**, each in a different blind spot:
 
-Structural fixes so this cannot go quiet again: `pyright` is now a blocking step
-in `release_audit.sh` (the local gate can no longer be weaker than the one that
-blocks a merge), `pyright.extraPaths` and `pytest.pythonpath` both resolve the
-in-repo adapters the way CI needs, and CI's `ruff` invocation now covers
-`adapters` like the audit script does.
+| Bug | Why it was invisible |
+|---|---|
+| `capture_hints.py` called `NominatimClient()` with no argument, but the constructor requires a cache — `TypeError` on every call, inside `except Exception: return out`. Setting `DOMAIN_FOUNDRY_GEOCODE_ON_CAPTURE=1` never geocoded anything and never said so. | Nothing exercised the opt-in path. Caught by the type checker; now has two regression tests that assert coordinates actually land, not merely that nothing raised. |
+| The **wheel shipped with no web app** despite `stage_webapp.sh` staging it and the wheel target declaring the artifact. `python -m build` builds the wheel *from the sdist*, and the sdist target did not declare it. | The existing test asserted only that a string appeared in `pyproject.toml` — config text, not outcome. Replaced with a test that builds the real distributions and opens the archive; confirmed it fails when the sdist artifact is removed. |
+| `adapters/mcp` declared an unbounded `mcp>=1.2.0`, but `server.py` imports `mcp.server.fastmcp.FastMCP`, which the 2.x line moved. A fresh resolve takes 2.0.0 and the server won't start — so **`pipx install domain-foundry-mcp` was broken for anyone installing today**. | The local venv held 1.28.1, so every local run passed. Only a clean-resolve environment can see version skew between a developer's venv and a new user's install. Capped at `<2`. |
 
-Still human gates, unchanged: the 90-second demo GIF, an external security pass,
-a lived production week, and one live `setup --probe` per documented provider.
-PyPI names are confirmed available (see below) but not yet claimed.
+The failure mode they share is the one this project keeps rediscovering: the thing
+that hides a bug is usually a broad `except`, a test that asserts configuration
+instead of outcome, or an environment that differs from a new user's.
+
+Structural fixes so these cannot go quiet again: `pyright` is a blocking step in
+`release_audit.sh` (the local gate can no longer be weaker than the merge gate);
+the adapter E2E proofs are in `testpaths` and CI editable-installs the adapters so
+the MCP proof's **subprocess** resolves (`pythonpath` alone cannot reach a child
+process); `pyright.extraPaths` matches `pytest.pythonpath`; and CI's `ruff` now
+covers `adapters` like the audit script does.
+
+Still human gates: the 90-second demo GIF, an external security pass, a lived
+production week, and one live `setup --probe` per documented provider.
+
+### PyPI
+
+All five names are **available and unclaimed** as of 2026-07-29:
+`domain-foundry`, `domain-foundry-core`, `domain-foundry-mcp`,
+`domain-foundry-telegram`, `domain-foundry-hermes-agent`. Distributions build
+clean and `twine check` passes on both; the wheel is verified to contain the SPA
+and all nine reference packs. Publishing needs a PyPI token, which is a human
+step.
