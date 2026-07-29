@@ -14,13 +14,20 @@ _MODEL_PRICING: dict[str, tuple[float, float]] = {
     "deepseek-reasoner": (0.14, 0.28),
     "deepseek-v4-flash": (0.14, 0.28),
     "deepseek-v4-pro": (0.435, 0.87),
-    # Anthropic Claude (sota tier) — platform.claude.com pricing
+    # Anthropic Claude — platform.claude.com pricing.
+    # Haiku is the suggested *routine* model, the rest are sota candidates.
+    "claude-haiku-4-5": (1.00, 5.00),
+    "claude-sonnet-5": (3.00, 15.00),
     "claude-sonnet-4-6": (3.00, 15.00),
     "claude-sonnet-4-6-20250414": (3.00, 15.00),
     "claude-sonnet-4-5": (3.00, 15.00),
+    "claude-opus-5": (5.00, 25.00),
     "claude-opus-4-8": (5.00, 25.00),
     "claude-opus-4-7": (5.00, 25.00),
     "claude-opus-4-6": (5.00, 25.00),
+    "claude-opus-4-5": (5.00, 25.00),
+    "claude-fable-5": (10.00, 50.00),
+    "claude-mythos-5": (10.00, 50.00),
     # OpenAI fallbacks (legacy OpenAICompatibleProvider)
     "gpt-4o-mini": (0.15, 0.60),
     "gpt-4o": (2.50, 10.00),
@@ -34,8 +41,17 @@ _ALIASES: dict[str, str] = {
     "deepseek/deepseek-v4-flash": "deepseek-v4-flash",
     "anthropic/claude-sonnet-4-6": "claude-sonnet-4-6",
     "anthropic/claude-opus-4-8": "claude-opus-4-8",
+    "anthropic/claude-opus-5": "claude-opus-5",
+    "anthropic/claude-sonnet-5": "claude-sonnet-5",
+    "anthropic/claude-haiku-4-5": "claude-haiku-4-5",
     "z-ai/glm-5.2": "glm-5.2",
 }
+
+# Claude families that sit on the routine side when chosen for it. Everything
+# else Claude-shaped is treated as sota. Only used to attribute *legacy*
+# cost_ledger rows written before the tier column existed — current writes
+# record the tier explicitly, so this never overrides a real answer.
+_ROUTINE_CLAUDE_PREFIXES = ("claude-haiku",)
 
 
 @dataclass(frozen=True)
@@ -86,10 +102,18 @@ def estimate_cost_usd(
 
 
 def tier_for_model(model: str | None) -> str | None:
-    """Map a model id to routine/sota when recognizable."""
+    """Best-effort tier for a model id, for legacy rows with no tier recorded.
+
+    Under bring-your-own-key a model's tier is a *user choice*, not a property
+    of its name — Haiku is the suggested routine model while Opus is sota, and a
+    user is free to invert that. Current writes record the tier explicitly; this
+    only guesses for pre-tier-column ledger rows.
+    """
     key = normalize_model_id(model)
     if not key:
         return None
+    if key.startswith(_ROUTINE_CLAUDE_PREFIXES):
+        return "routine"
     if key.startswith("deepseek") or key.startswith("gpt-") or key.startswith("glm"):
         return "routine"
     if key.startswith("claude"):

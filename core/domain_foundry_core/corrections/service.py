@@ -20,6 +20,17 @@ from domain_foundry_core.paths import Workspace
 from domain_foundry_core.routing.l1 import L1Matcher
 from domain_foundry_core.security.store import connect_rw
 
+_AMEND_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {"fields": {"type": "object"}},
+    "required": ["fields"],
+}
+
+
+def _explicit_fields(fields: dict[str, Any] | None) -> dict[str, Any]:
+    """Fields the caller/regex parser actually resolved (``_`` keys are hints)."""
+    return {k: v for k, v in (fields or {}).items() if not k.startswith("_")}
+
 
 @dataclass
 class CorrectionReceipt:
@@ -102,6 +113,12 @@ class CorrectionService:
             )
 
         if action == "amend":
+            # The regex parser only knows the vocabulary of the bundled packs
+            # (hydration, bulk hours, …). On a generated domain it returns
+            # nothing, so ask the model which field the user meant — otherwise a
+            # correction on your own domain silently amends nothing.
+            if not _explicit_fields(fields) and text:
+                fields = {**fields, **self._llm_amend_fields(target, text)}
             return self._amend(
                 target=target,  # type: ignore[arg-type]
                 fields=fields,
@@ -266,6 +283,22 @@ class CorrectionService:
                 correction_event_id=None,
                 change_request_id=None,
                 error="amend requires an applied object_uid",
+            )
+
+        if not clean:
+            # An empty amend used to report applied=true and append an eval case
+            # asserting the *unchanged* values were correct — poisoning the very
+            # corpus that is supposed to prove the system improves.
+            return CorrectionReceipt(
+                action="amend",
+                entry_id=target.get("entry_id"),
+                object_uid=str(target["object_uid"]),
+                correction_event_id=None,
+                change_request_id=None,
+                error=(
+                    "could not tell which field to change — say it explicitly, "
+                    "e.g. \"rating = medium\""
+                ),
             )
 
         wrong = self._current_fields(target)
@@ -717,6 +750,70 @@ class CorrectionService:
             eval_case_id=eval_id,
             applied=True,
         )
+
+    def _llm_amend_fields(
+        self, target: dict[str, Any] | None, text: str
+    ) -> dict[str, Any]:
+        """Ask the configured model which field(s) the correction refers to.
+
+        Returns ``{}`` when there is no live model or the answer is unusable —
+        the caller then reports "could not tell which field" rather than
+        pretending to have corrected something.
+        """
+        if not target or not target.get("object_uid"):
+            return {}
+        pack = self.registry.get(str(target["domain"]))
+        obj = pack.objects.get(str(target["object_type"])) if pack else None
+        if obj is None:
+            return {}
+
+        from domain_foundry_core.llm.provider import (
+            get_default_provider,
+            is_heuristic_provider,
+        )
+
+        llm = get_default_provider(
+            cassette_dir=self.ws.home / "cassettes", home=self.ws.home
+        )
+        if is_heuristic_provider(llm):
+            return {}
+
+        current = self._current_fields(target)
+        schema = {
+            name: {"type": spec.type, "values": list(spec.values or [])}
+            for name, spec in obj.fields.items()
+        }
+        try:
+            result = llm.complete_json(
+                system=(
+                    "You apply a user's one-message correction to a stored record. "
+                    "Return JSON {\"fields\": {...}} containing ONLY the fields that "
+                    "must change, using the record's own field names and types. "
+                    "Return an empty object if the correction is not about a field value."
+                ),
+                user=json.dumps(
+                    {
+                        "correction": text,
+                        "record": current,
+                        "schema": schema,
+                    },
+                    ensure_ascii=False,
+                ),
+                schema=_AMEND_SCHEMA,
+                tier="sota",
+            )
+        except Exception:
+            return {}
+
+        proposed = result.data.get("fields")
+        if not isinstance(proposed, dict):
+            return {}
+        # Only accept real fields whose value actually differs.
+        return {
+            k: v
+            for k, v in proposed.items()
+            if k in obj.fields and v is not None and current.get(k) != v
+        }
 
     def _current_fields(self, target: dict[str, Any] | None) -> dict[str, Any]:
         if not target or not target.get("object_uid"):

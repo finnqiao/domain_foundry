@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -24,6 +25,8 @@ from domain_foundry_core.policy.evaluator import evaluate_policy
 from domain_foundry_core.routing.cost import CostGuard, CostGuardConfig
 from domain_foundry_core.routing.l1 import L1Matcher, L1Result
 from domain_foundry_core.security.store import connect_rw
+
+logger = logging.getLogger(__name__)
 
 ROUTE_SCHEMA: dict[str, Any] = {
     "type": "object",
@@ -76,6 +79,7 @@ class RouteResult:
     clarification: str | None = None
     model_tier: str | None = None
     usage: TokenUsage | None = None
+    llm_error: str | None = None
 
 
 class Router:
@@ -93,14 +97,18 @@ class Router:
             self.ws.ledger_db, CostGuardConfig.from_env(daily_usd_cap=cost_cap)
         )
         cassette_dir = self.ws.home / "cassettes"
-        self.llm = llm or get_default_provider(cassette_dir=cassette_dir)
+        # Pass the workspace home so `--home /elsewhere` reads that workspace's
+        # config.toml, not the default one.
+        self.llm = llm or get_default_provider(
+            cassette_dir=cassette_dir, home=self.ws.home
+        )
         self.heuristic = HeuristicProvider()
 
     def route_text(self, text: str, *, channel: str = "cli") -> RouteResult:
         """Route without persisting — used by eval runner."""
         packs = self.registry.list()
         l1 = L1Matcher(packs).match(text)
-        spans, interpreter, cost, clarification, model_tier, usage = self._interpret(
+        spans, interpreter, cost, clarification, model_tier, usage, llm_error = self._interpret(
             text, channel=channel, l1=l1, packs=packs, entry_id=None
         )
         status, tier = self._finalize_status(spans, clarification)
@@ -115,12 +123,13 @@ class Router:
             clarification=clarification,
             model_tier=model_tier,
             usage=usage,
+            llm_error=llm_error,
         )
 
     def route_entry(self, entry_id: str, text: str, *, channel: str = "cli") -> RouteResult:
         packs = self.registry.list()
         l1 = L1Matcher(packs, demotions=self._load_demotions()).match(text)
-        spans, interpreter, cost, clarification, model_tier, usage = self._interpret(
+        spans, interpreter, cost, clarification, model_tier, usage, llm_error = self._interpret(
             text, channel=channel, l1=l1, packs=packs, entry_id=entry_id
         )
         status, tier = self._finalize_status(spans, clarification)
@@ -156,6 +165,7 @@ class Router:
             clarification=clarification,
             model_tier=model_tier,
             usage=usage,
+            llm_error=llm_error,
         )
 
     def _interpret(
@@ -168,7 +178,7 @@ class Router:
         entry_id: str | None,
     ) -> tuple[list[CaptureSpan], str, float, str | None, str | None, TokenUsage | None]:
         if not packs:
-            return [], "none", 0.0, None, None, None
+            return [], "none", 0.0, None, None, None, None
 
         if not l1.escalate and l1.hits:
             # Prefer highest-boost hit (e.g. plant acquisition over plant-name mention)
@@ -190,7 +200,7 @@ class Router:
                 fields=fields,
             )
             span.disposition = self._policy_action(pack, span, channel)
-            return [span], "rules", 0.0, None, None, None
+            return [span], "rules", 0.0, None, None, None, None
 
         # L2
         ctx = self._build_context(text, packs, l1)
@@ -209,6 +219,7 @@ class Router:
         interpreter = "heuristic"
         cost = 0.0
         usage: TokenUsage | None = None
+        llm_error: str | None = None
         raw: dict[str, Any]
         if use_llm:
             try:
@@ -227,7 +238,16 @@ class Router:
                     input_tokens=usage.input_tokens,
                     output_tokens=usage.output_tokens,
                 )
-            except Exception:
+            except Exception as exc:
+                # Never fail a capture on a model problem — but never hide it
+                # either: a silent fallback looks identical to "no key set",
+                # which is how a misconfigured endpoint stays invisible.
+                llm_error = f"{type(exc).__name__}: {exc}"
+                logger.warning(
+                    "L2 routing failed (tier=%s), falling back to heuristic: %s",
+                    model_tier,
+                    llm_error,
+                )
                 raw = self.heuristic.complete_json(
                     system=system, user=user, tier=model_tier
                 ).data
@@ -246,14 +266,20 @@ class Router:
 
         spans: list[CaptureSpan] = []
         for c in raw.get("captures") or []:
-            domain = c.get("domain")
+            # Accept common key synonyms: models that can't honour json_schema
+            # (e.g. DeepSeek) often echo the context vocabulary and emit
+            # ``pack``/``object`` instead of ``domain``/``object_type``. Treat
+            # them as aliases rather than silently dropping a correct capture.
+            domain = c.get("domain") or c.get("pack")
             pack = next((p for p in packs if p.name == domain), None)
             if not pack:
                 # try alias
                 pack = self.registry.get_by_alias(str(domain or ""))
             if not pack:
                 continue
-            object_type = str(c.get("object_type") or next(iter(pack.objects), "note"))
+            object_type = str(
+                c.get("object_type") or c.get("object") or next(iter(pack.objects), "note")
+            )
             fields = dict(c.get("fields") or {})
             if pack.name == "food":
                 from domain_foundry_core.geo.capture_hints import enrich_venue_fields
@@ -286,7 +312,7 @@ class Router:
         if not spans:
             spans = self._never_drop(text, packs)
 
-        return spans, interpreter, cost, clarification, model_tier, usage
+        return spans, interpreter, cost, clarification, model_tier, usage, llm_error
 
     def _select_tier(self, text: str, l1: L1Result, packs: list[DomainPack]) -> str:
         rule_tiers: list[str | None] = []

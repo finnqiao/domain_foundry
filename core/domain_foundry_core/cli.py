@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import typer
@@ -10,6 +11,7 @@ import typer
 from domain_foundry_core import __version__
 from domain_foundry_core.api.app import run_server
 from domain_foundry_core.api.harness import HarnessAPI
+from domain_foundry_core.ingest import ingest as ingest_source
 from domain_foundry_core.paths import ENV_HOME, default_home
 
 app = typer.Typer(
@@ -58,6 +60,258 @@ def init_cmd(ctx: typer.Context) -> None:
     typer.echo(f"  domains.sqlite schema_version={versions['domains']}")
 
 
+@app.command("setup")
+def setup_cmd(
+    ctx: typer.Context,
+    provider: str | None = typer.Option(
+        None, "--provider", help="Provider id (anthropic, openai, deepseek, openrouter, local, none)"
+    ),
+    routine: str | None = typer.Option(
+        None, "--routine", help="Model for the high-volume routing/extraction tier"
+    ),
+    sota: str | None = typer.Option(
+        None, "--sota", help="Model for corrections / schema-affecting calls"
+    ),
+    api_key_env: str | None = typer.Option(
+        None, "--api-key-env", help="Env var that holds your key (not the key itself)"
+    ),
+    store_key: bool = typer.Option(
+        False,
+        "--store-key",
+        help="Write the key into config.toml (chmod 0600). Default: reference the env var only.",
+    ),
+    non_interactive: bool = typer.Option(
+        False, "--non-interactive", "-y", help="Ask nothing; take flags and env as given"
+    ),
+    probe: bool = typer.Option(
+        True, "--probe/--no-probe", help="Make one cheap live call per tier to verify"
+    ),
+    show: bool = typer.Option(
+        False, "--show", help="Print the resolved config (keys redacted) and exit"
+    ),
+) -> None:
+    """Bring your own key: pick a provider and models, then pick where to start.
+
+    Run it bare for the guided path. Pass flags (or `--show`) if you already
+    know what you want — environment variables keep overriding everything, so an
+    expert setup that lives in a dotfile needs no config file at all.
+    """
+    from domain_foundry_core.config import save_llm_config
+    from domain_foundry_core.llm.providers import all_providers, get_provider
+    from domain_foundry_core.onboarding import (
+        NEXT_STEPS,
+        build_config,
+        detect_env_keys,
+        is_already_configured,
+        probe_tier,
+        resolved_status,
+        suggest_provider,
+    )
+
+    home: Path = ctx.obj["home"]
+
+    if show:
+        typer.echo(json.dumps(resolved_status(home), indent=2))
+        return
+
+    interactive = not non_interactive
+    detected = detect_env_keys()
+
+    # ---- provider -------------------------------------------------------
+    spec = get_provider(provider)
+    if spec is None and provider:
+        typer.secho(
+            f"unknown provider {provider!r}; expected one of "
+            f"{', '.join(p.id for p in all_providers())}",
+            err=True,
+            fg=typer.colors.RED,
+        )
+        raise typer.Exit(code=2)
+
+    if spec is None and not interactive:
+        spec = suggest_provider()
+        if spec is None:
+            typer.secho(
+                "no provider given and no known API key in the environment. "
+                "Pass --provider, or run `domain-foundry setup` interactively.",
+                err=True,
+                fg=typer.colors.RED,
+            )
+            raise typer.Exit(code=2)
+
+    if spec is None:
+        typer.echo("Domain Foundry needs a model to route captures. You bring the key.\n")
+        if detected:
+            for d in detected:
+                typer.echo(f"  found {d.env_name} in your environment ({d.label})")
+            typer.echo("")
+        options = list(all_providers())
+        for i, opt in enumerate(options, start=1):
+            marker = "*" if any(d.provider_id == opt.id for d in detected) else " "
+            typer.echo(f" {marker}{i}. {opt.label}")
+            if opt.notes:
+                typer.echo(f"      {opt.notes}")
+        suggested = suggest_provider()
+        default_idx = (
+            next((i for i, o in enumerate(options, 1) if o.id == suggested.id), 1)
+            if suggested
+            else 1
+        )
+        choice = typer.prompt("\nWhich provider?", default=str(default_idx))
+        picked = get_provider(choice)
+        if picked is None:
+            try:
+                picked = options[int(choice) - 1]
+            except (ValueError, IndexError):
+                typer.secho(f"not a valid choice: {choice!r}", err=True, fg=typer.colors.RED)
+                raise typer.Exit(code=2) from None
+        spec = picked
+
+    # ---- key ------------------------------------------------------------
+    api_key: str | None = None
+    if spec.needs_key:
+        env_hit = next((d for d in detected if d.provider_id == spec.id), None)
+        if api_key_env is None and env_hit is not None:
+            api_key_env = env_hit.env_name
+            if interactive:
+                typer.echo(f"\nUsing the key in ${api_key_env}.")
+        elif api_key_env is None and interactive:
+            typer.echo(f"\nNo key found for {spec.label}.")
+            if spec.signup_url:
+                typer.echo(f"Get one at {spec.signup_url}")
+            entered = typer.prompt(
+                "Paste your key (or press enter to name an env var instead)",
+                default="",
+                hide_input=True,
+                show_default=False,
+            ).strip()
+            if entered:
+                api_key = entered
+                api_key_env = spec.canonical_key_env or (
+                    spec.api_key_envs[0] if spec.api_key_envs else None
+                )
+                if not store_key:
+                    store_key = typer.confirm(
+                        f"Store the key in {home / 'config.toml'} (chmod 0600)? "
+                        "Otherwise export it yourself before capturing",
+                        default=False,
+                    )
+            else:
+                api_key_env = typer.prompt(
+                    "Which env var holds it?",
+                    default=spec.canonical_key_env
+                    or (spec.api_key_envs[0] if spec.api_key_envs else ""),
+                ).strip() or None
+
+    # ---- models ---------------------------------------------------------
+    if interactive and spec.id != "none":
+        typer.echo("")
+        typer.echo("Two tiers. Routine handles every capture; sota handles the calls")
+        typer.echo("that rewrite a record or change a schema.")
+        routine = routine or (
+            typer.prompt("  routine model", default=spec.routine_model or "").strip()
+            or None
+        )
+        sota = sota or (
+            typer.prompt("  sota model", default=spec.sota_model or "").strip() or None
+        )
+
+    cfg = build_config(
+        provider_id=spec.id,
+        routine_model=routine,
+        sota_model=sota,
+        api_key_env=api_key_env,
+        api_key=api_key,
+    )
+    path = save_llm_config(cfg, home, store_keys=store_key and bool(api_key))
+    typer.echo(f"\nWrote {path}")
+    if api_key and not store_key:
+        env_hint = api_key_env or "DOMAIN_FOUNDRY_SOTA_API_KEY"
+        typer.secho(
+            f"  key not stored — export {env_hint} before capturing",
+            fg=typer.colors.YELLOW,
+        )
+
+    # ---- probe ----------------------------------------------------------
+    if probe and spec.id != "none":
+        # Put the key on the environment for this process so the probe sees it
+        # even when the user chose not to persist it.
+        if api_key and api_key_env:
+            os.environ.setdefault(api_key_env, api_key)
+        typer.echo("\nChecking each tier can reach its model:")
+        failed = False
+        for tier in ("routine", "sota"):
+            result = probe_tier(tier, home=home, config=cfg)
+            colour = typer.colors.GREEN if result.ok else typer.colors.RED
+            typer.secho(
+                f"  {tier:<8} {result.model or '(none)':<28} {result.symbol} — {result.detail}",
+                fg=colour,
+            )
+            failed = failed or not result.ok
+        if failed:
+            typer.secho(
+                "\nAt least one tier is not reachable. Captures will still be kept, but "
+                "routing falls back to keyword rules until this is fixed.",
+                fg=typer.colors.YELLOW,
+            )
+
+    # ---- workspace + what next -----------------------------------------
+    api = HarnessAPI(home)
+    api.init()
+    typer.echo(f"\nWorkspace ready at {home}")
+
+    if not interactive:
+        if not is_already_configured(home):
+            typer.secho(
+                "note: no key resolved for at least one tier", err=True, fg=typer.colors.YELLOW
+            )
+        return
+
+    typer.echo("\nWhere do you want to start?\n")
+    for i, (_key, label, _cmd) in enumerate(NEXT_STEPS, start=1):
+        typer.echo(f"  {i}. {label}")
+    typer.echo(f"  {len(NEXT_STEPS) + 1}. Nothing — I'll take it from here")
+    pick = typer.prompt("\nChoice", default="1").strip()
+    try:
+        index = int(pick) - 1
+    except ValueError:
+        index = len(NEXT_STEPS)
+    if not 0 <= index < len(NEXT_STEPS):
+        typer.echo("\nAll set.")
+        return
+
+    key, _label, command = NEXT_STEPS[index]
+    if key == "pack":
+        from domain_foundry_core.packs.loader import bundled_packs_root
+
+        # Skip scaffolding like `_template` — it is for pack *authors*, and
+        # offering it as a starting point to someone who just picked a provider
+        # is a dead end.
+        available = sorted(
+            p.name
+            for p in bundled_packs_root().glob("*")
+            if (p / "pack.yaml").is_file() and not p.name.startswith("_")
+        )
+        typer.echo(f"\nBundled packs: {', '.join(available) or '(none)'}")
+        name = typer.prompt("Which one?", default="food" if "food" in available else "")
+        name = name.strip()
+        if name:
+            info = api.pack_add(_resolve_pack_source(name))
+            typer.echo(json.dumps(info, indent=2))
+            typer.echo(
+                f'\nNow try:  domain-foundry capture "…"   '
+                f"then  domain-foundry query --domain {name}"
+            )
+        return
+
+    typer.echo(f"\nRun:\n  {command}")
+    if key == "import":
+        typer.echo(
+            "\nMapping examples live in examples/importers/. "
+            "`domain-foundry import --help` explains each field."
+        )
+
+
 @app.command("capture")
 def capture_cmd(
     ctx: typer.Context,
@@ -68,7 +322,195 @@ def capture_cmd(
     """Capture text into the ledger (capture-first, then route)."""
     api = HarnessAPI(ctx.obj["home"])
     receipt = api.capture(text, channel=channel, source_ref=source_ref)
-    typer.echo(json.dumps(receipt.model_dump(), indent=2))
+    payload = receipt.model_dump()
+    if payload.get("llm_error") is None:
+        payload.pop("llm_error", None)
+    typer.echo(json.dumps(payload, indent=2))
+    if receipt.llm_error:
+        typer.secho(
+            f"warning: model routing failed ({receipt.llm_error}) — captured with "
+            "keyword rules only. Check DOMAIN_FOUNDRY_ROUTINE_/SOTA_ settings.",
+            err=True,
+            fg=typer.colors.YELLOW,
+        )
+
+
+@app.command("ingest")
+def ingest_cmd(
+    ctx: typer.Context,
+    path: Path = typer.Argument(..., help="Existing file or folder of notes/logs to pull in"),
+    channel: str = typer.Option("folder-import", "--channel", "-c"),
+    glob: str | None = typer.Option(None, "--glob", help="Filter files, e.g. '*.md'"),
+    split: str = typer.Option("file", "--split", help="file (one capture per file) | lines (append-only logs)"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Preview routing without writing anything"),
+    only: str | None = typer.Option(None, "--only", help="Pull ONLY notes that route to this foundry; leave the rest untouched"),
+    limit: int | None = typer.Option(None, "--limit", "-n", help="Cap number of records"),
+    watch: bool = typer.Option(False, "--watch", help="Keep watching the folder and pull in new notes on an interval"),
+    interval: float = typer.Option(30.0, "--interval", help="Seconds between --watch scans"),
+) -> None:
+    """Bolt existing notes/logs onto your foundries — read-only, idempotent.
+
+    Reads files you already have and runs each through capture → route. Nothing at
+    the source is moved or modified; re-runs skip already-imported entries. Use
+    --dry-run first to see where notes would land, --only <foundry> to pull a mixed
+    folder into a single domain context, and --watch to keep pulling in new notes.
+    """
+    api = HarnessAPI(ctx.obj["home"])
+    if watch:
+        from domain_foundry_core.ingest import watch as watch_source
+
+        typer.echo(f"Watching {path} every {interval:g}s — Ctrl-C to stop.")
+        try:
+            for report in watch_source(
+                api, path, interval=interval, channel=channel, glob=glob, split=split, only=only
+            ):
+                d = report.as_dict()
+                typer.echo(f"scan: +{d['captured']} new, {d['skipped_existing']} unchanged, by_domain={d['by_domain']}")
+        except KeyboardInterrupt:
+            typer.echo("stopped.")
+        return
+    report = ingest_source(
+        api, path, channel=channel, glob=glob, split=split,
+        dry_run=dry_run, only=only, limit=limit,
+    )
+    typer.echo(json.dumps(report.as_dict(), indent=2))
+
+
+def _parse_kv_options(values: list[str] | None, *, flag: str) -> dict[str, str]:
+    """Parse repeatable ``entity=value`` options into a dict."""
+    out: dict[str, str] = {}
+    for raw in values or []:
+        if "=" not in raw:
+            typer.secho(
+                f"{flag} expects entity=value, got {raw!r}", err=True, fg=typer.colors.RED
+            )
+            raise typer.Exit(code=2)
+        entity, _, value = raw.partition("=")
+        entity, value = entity.strip(), value.strip()
+        if not entity or not value:
+            typer.secho(
+                f"{flag} expects entity=value, got {raw!r}", err=True, fg=typer.colors.RED
+            )
+            raise typer.Exit(code=2)
+        out[entity] = value
+    return out
+
+
+@app.command("import")
+def import_cmd(
+    ctx: typer.Context,
+    mapping: Path = typer.Option(
+        ..., "--mapping", "-m", help="Mapping YAML/JSON: source rows → domain objects"
+    ),
+    sqlite: Path | None = typer.Option(
+        None, "--sqlite", help="SQLite database to read (always opened read-only)"
+    ),
+    source_json: Path | None = typer.Option(
+        None, "--json", help="JSON/JSONL file, or a directory of {entity}.jsonl files"
+    ),
+    table: list[str] | None = typer.Option(
+        None, "--table", help="Map an entity to a table name: entity=table (repeatable)"
+    ),
+    where: list[str] | None = typer.Option(
+        None, "--where", help="SQL filter per entity: entity=clause (repeatable)"
+    ),
+    order_by: list[str] | None = typer.Option(
+        None, "--order-by", help="Ordering per entity: entity=expr (repeatable)"
+    ),
+    apply: bool = typer.Option(
+        False, "--apply", help="Write records (default: dry-run reconciliation only)"
+    ),
+    markdown: bool = typer.Option(
+        False, "--markdown", help="Emit the reconciliation as markdown instead of JSON"
+    ),
+    detail: bool = typer.Option(
+        False, "--detail", help="Include per-record outcomes in JSON output"
+    ),
+) -> None:
+    """Import a structured source (SQLite table, JSON/JSONL export) by mapping.
+
+    For data that already has a schema. Free-text notes and vaults go through
+    `domain-foundry ingest` instead; this is the mapping-driven path, with the
+    same guarantees: **sources are opened read-only and never mutated**, re-runs
+    are idempotent on `source_ref`, and every source row is accounted for as
+    imported / skipped / failed so a partial import cannot pass silently.
+
+    Dry-run is the default — it reports where every row would land and writes
+    nothing. Add `--apply` once the reconciliation looks right.
+
+    \b
+    Example (SQLite, two entities in one database):
+      domain-foundry import -m my_mapping.yaml --sqlite ~/old-app.sqlite \\
+          --table entries=journal_entries --where entries="deleted_at IS NULL"
+
+    \b
+    Example (a JSONL export):
+      domain-foundry import -m my_mapping.yaml --json ~/export/
+
+    Mapping examples: `examples/importers/*.yaml`.
+    """
+    from domain_foundry_core.migrations.importers import (
+        FixtureSource,
+        GenericImporter,
+        SqliteTableSource,
+        load_mapping,
+    )
+    from domain_foundry_core.paths import Workspace
+
+    if (sqlite is None) == (source_json is None):
+        typer.secho(
+            "provide exactly one source: --sqlite or --json", err=True, fg=typer.colors.RED
+        )
+        raise typer.Exit(code=2)
+
+    mapping_path = mapping.expanduser()
+    if not mapping_path.is_file():
+        typer.secho(f"no mapping file at {mapping_path}", err=True, fg=typer.colors.RED)
+        raise typer.Exit(code=2)
+    try:
+        mapping_config = load_mapping(mapping_path)
+    except Exception as exc:
+        typer.secho(f"invalid mapping: {exc}", err=True, fg=typer.colors.RED)
+        raise typer.Exit(code=2) from exc
+
+    try:
+        if sqlite is not None:
+            source = SqliteTableSource(
+                sqlite.expanduser(),
+                tables=_parse_kv_options(table, flag="--table"),
+                where=_parse_kv_options(where, flag="--where"),
+                order_by=_parse_kv_options(order_by, flag="--order-by"),
+            )
+        else:
+            assert source_json is not None
+            source = FixtureSource(source_json.expanduser())
+    except FileNotFoundError as exc:
+        typer.secho(str(exc), err=True, fg=typer.colors.RED)
+        raise typer.Exit(code=2) from exc
+
+    importer = GenericImporter(
+        Workspace(ctx.obj["home"]), mapping_config, dry_run=not apply
+    )
+    report = importer.run(source)
+
+    if markdown:
+        typer.echo(report.to_markdown())
+    else:
+        payload = report.to_dict()
+        if not detail:
+            payload.pop("outcomes", None)
+        typer.echo(json.dumps(payload, indent=2, default=str))
+
+    if not report.complete:
+        typer.secho(
+            f"reconciliation incomplete: {report.accounted_for}/{report.source_total} "
+            f"rows accounted for, {report.failed} failed",
+            err=True,
+            fg=typer.colors.RED,
+        )
+        raise typer.Exit(code=1)
+    if not apply:
+        typer.echo("\n(dry run — nothing written. Re-run with --apply to import.)")
 
 
 @app.command("query")
@@ -275,6 +717,18 @@ def review_resolve_cmd(
     decision: str = typer.Option(..., "--decision", "-d", help="approved|denied|expired"),
     note: str | None = typer.Option(None, "--note"),
 ) -> None:
+    # Accept the natural verb forms people actually type; reject the rest with a
+    # message rather than a traceback.
+    decision = {"approve": "approved", "deny": "denied", "expire": "expired"}.get(
+        decision.strip().lower(), decision.strip().lower()
+    )
+    if decision not in {"approved", "denied", "expired"}:
+        typer.secho(
+            f"invalid --decision {decision!r}; expected approved|denied|expired",
+            err=True,
+            fg=typer.colors.RED,
+        )
+        raise typer.Exit(code=2)
     api = HarnessAPI(ctx.obj["home"])
     receipt = api.review_resolve(approval_id, decision=decision, note=note)
     typer.echo(json.dumps(receipt, indent=2))
@@ -391,12 +845,39 @@ def pack_validate_cmd(
 @pack_app.command("add")
 def pack_add_cmd(
     ctx: typer.Context,
-    src: Path = typer.Argument(..., exists=True, file_okay=False),
+    src: str = typer.Argument(..., help="Pack directory, or a bundled pack name (e.g. food)"),
     force: bool = typer.Option(False, "--force"),
 ) -> None:
     api = HarnessAPI(ctx.obj["home"])
-    info = api.pack_add(src, force=force)
+    info = api.pack_add(_resolve_pack_source(src), force=force)
     typer.echo(json.dumps(info, indent=2))
+
+
+def _resolve_pack_source(src: str) -> Path:
+    """Accept a path *or* a bundled pack name.
+
+    Installed from a wheel there is no `packs/` directory to point at, so the
+    documented `pack add packs/food` can only work as a name lookup.
+    """
+    from domain_foundry_core.packs.loader import bundled_packs_root
+
+    candidate = Path(src)
+    if candidate.is_dir():
+        return candidate
+
+    root = bundled_packs_root()
+    # Tolerate "packs/food" as well as "food".
+    named = root / candidate.name
+    if named.is_dir():
+        return named
+
+    available = sorted(p.name for p in root.glob("*") if (p / "pack.yaml").is_file())
+    typer.secho(
+        f"no pack at {src!r}. Bundled packs: {', '.join(available) or '(none)'}",
+        err=True,
+        fg=typer.colors.RED,
+    )
+    raise typer.Exit(code=2)
 
 
 @pack_app.command("new")

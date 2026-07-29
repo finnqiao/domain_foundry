@@ -26,6 +26,8 @@ site/
 
 # Local runtime data (never commit)
 .domain_foundry/
+# Workspace config can hold an API key when `setup --store-key` is used.
+config.toml
 *.sqlite
 *.sqlite3
 *.db
@@ -49,3 +51,8 @@ packs/**/evals/corrections.jsonl
 # Test / tool artifacts
 .hypothesis/
 *.log
+
+.gstack/
+
+# Staged SPA for wheel builds (see scripts/stage_webapp.sh)
+core/domain_foundry_core/_webapp/

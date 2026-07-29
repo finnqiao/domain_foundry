@@ -308,3 +308,128 @@ def test_heuristic_still_default_offline(workspace: Workspace):
     assert result.spans
     assert result.interpreter in {"heuristic", "rules"}
     assert result.cost_usd == 0.0
+
+
+def test_openai_compat_honours_env_model(monkeypatch):
+    """Regression: get_default_provider() must not shadow DOMAIN_FOUNDRY_LLM_MODEL
+    with the constructor's default. Legacy compat path previously always sent
+    'gpt-4o-mini' regardless of config."""
+    from pathlib import Path
+
+    from domain_foundry_core.llm.provider import get_default_provider
+
+    monkeypatch.setenv("DOMAIN_FOUNDRY_LLM", "compat")
+    monkeypatch.setenv("DOMAIN_FOUNDRY_LLM_BASE_URL", "https://api.deepseek.com/v1")
+    monkeypatch.setenv("DOMAIN_FOUNDRY_LLM_API_KEY", "sk-test")
+    monkeypatch.setenv("DOMAIN_FOUNDRY_LLM_MODEL", "deepseek-chat")
+    provider = get_default_provider(cassette_dir=Path("/tmp/_df_test_cass"))
+    inner = getattr(provider, "inner", provider)
+    assert inner.default_model == "deepseek-chat"
+
+
+def test_router_accepts_pack_object_key_synonyms(workspace: Workspace):
+    """Regression: models that can't honour json_schema (e.g. DeepSeek, the
+    default routine backend) emit 'pack'/'object' instead of 'domain'/
+    'object_type'. The router must treat them as aliases, not silently drop the
+    capture to _unfiled."""
+    ensure_migrated(workspace.ledger_db, "ledger")
+    registry = PackRegistry(workspace)
+    registry.activate_bundled("plants")
+    fake = _FakeLLM(
+        data={
+            "captures": [
+                {
+                    "pack": "plants",  # synonym for "domain"
+                    "object": "care_event",  # synonym for "object_type"
+                    "operation": "create",
+                    "fields": {"plant_name": "monstera", "action": "water"},
+                    "confidence": 0.9,
+                }
+            ],
+            "unmatched_text": None,
+            "needs_clarification": False,
+            "clarifying_question": None,
+        }
+    )
+    router = Router(workspace, registry=registry, llm=fake, cost_cap=1.0)
+    result = router.route_text(
+        "please interpret this unstructured plant note that is definitely long "
+        "enough to force the L2 path rather than a simple L1-only care event"
+    )
+    domains = {s.domain for s in result.spans}
+    assert "plants" in domains, f"expected plants, got {domains}"
+    assert "_unfiled" not in domains
+
+
+def test_sota_base_url_uses_openai_compatible_client(monkeypatch):
+    """Regression: pointing the sota tier at an OpenAI-compatible gateway must
+    not build an Anthropic client. It used to POST {base}/v1/messages, so the
+    documented OpenRouter recipe produced .../api/v1/v1/messages → 404, and the
+    router silently fell back to heuristic on every no-match capture."""
+    from domain_foundry_core.llm.provider import (
+        AnthropicProvider,
+        OpenAICompatibleProvider,
+        _build_sota_provider,
+    )
+
+    monkeypatch.setenv("DOMAIN_FOUNDRY_SOTA_API_KEY", "sk-test")
+    monkeypatch.setenv("DOMAIN_FOUNDRY_SOTA_BASE_URL", "https://openrouter.ai/api/v1")
+    provider = _build_sota_provider("z-ai/glm-5.2")
+    assert isinstance(provider, OpenAICompatibleProvider)
+    assert provider.base_url == "https://openrouter.ai/api/v1"
+
+    # A real Anthropic endpoint still gets the Messages-API client.
+    monkeypatch.setenv("DOMAIN_FOUNDRY_SOTA_BASE_URL", "https://api.anthropic.com")
+    assert isinstance(_build_sota_provider("claude-sonnet-4-6"), AnthropicProvider)
+    # …and so does the unset default.
+    monkeypatch.delenv("DOMAIN_FOUNDRY_SOTA_BASE_URL")
+    assert isinstance(_build_sota_provider("claude-sonnet-4-6"), AnthropicProvider)
+
+
+def test_sota_tier_falls_back_to_configured_routine_tier():
+    """Regression: _select_tier sends every no_match capture to 'sota'. With only
+    the routine tier configured (the documented single-key recipe), the sota
+    branch resolved to HeuristicProvider — so a fully-configured user got
+    keyword-only routing on exactly the captures that need a model."""
+    routine = _FakeLLM()
+    routine.api_key = "sk-test"  # looks live
+    tiered = TieredLLMProvider(routine=routine, sota=HeuristicProvider())
+
+    result = tiered.complete_json(system="s", user="u", tier="sota")
+
+    assert routine.calls, "sota call should degrade to the live routine backend"
+    assert result.data["captures"][0]["domain"] == "plants"
+    # The routine tier's model is used — not the sota default, which the
+    # routine endpoint would reject.
+    assert routine.calls[0]["model"] == tiered.routine_model
+
+
+def test_tier_fallback_prefers_requested_tier_when_both_live():
+    routine = _FakeLLM()
+    routine.api_key = "sk-test"
+    sota = _FakeLLM()
+    sota.api_key = "sk-test"
+    tiered = TieredLLMProvider(routine=routine, sota=sota)
+
+    tiered.complete_json(system="s", user="u", tier="sota")
+    assert sota.calls and not routine.calls
+
+
+def test_l2_failure_is_surfaced_not_swallowed(workspace: Workspace):
+    """A model failure must never fail the capture (never-drop) but must be
+    visible: silent heuristic fallback is indistinguishable from 'no key set'."""
+    ensure_migrated(workspace.ledger_db, "ledger")
+    registry = PackRegistry(workspace)
+    registry.activate_bundled("plants")
+    boom = _FakeLLM(raise_exc=True)
+    boom.api_key = "sk-test"
+    router = Router(workspace, registry=registry, llm=boom, cost_cap=1.0)
+
+    result = router.route_text(
+        "please interpret this unstructured note that is definitely long enough "
+        "to force the L2 path rather than a simple L1-only care event"
+    )
+
+    assert result.spans, "capture must still land"
+    assert result.interpreter == "heuristic_fallback"
+    assert result.llm_error == "RuntimeError: boom"
