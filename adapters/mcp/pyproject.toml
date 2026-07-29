@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "domain-foundry-mcp"
+version = "0.1.0"
+description = "Model Context Protocol server for Domain Foundry: capture/query/correct/review/new_domain tools for any MCP client (Claude Desktop, Cursor, ...)"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [{ name = "Domain Foundry contributors" }]
+keywords = ["mcp", "model-context-protocol", "claude", "agent", "capture", "domain-foundry"]
+dependencies = [
+  "mcp>=1.2.0",
+  "domain-foundry-core",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0.0",
+]
+
+# `domain-foundry-mcp` runs the stdio server — the command MCP clients launch.
+[project.scripts]
+domain-foundry-mcp = "domain_foundry_mcp.server:main"
+
+[project.urls]
+Homepage = "https://github.com/finnqiao/domain_foundry"
+Documentation = "https://github.com/finnqiao/domain_foundry/tree/main/adapters/mcp#readme"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/domain_foundry_mcp"]

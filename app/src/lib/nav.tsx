@@ -6,6 +6,7 @@ export type Route =
   | { name: "review" }
   | { name: "health" }
   | { name: "docs" }
+  | { name: "sources" }
   | { name: "domain"; domain: string; viewId?: string };
 
 export type DetailTarget = { domain: string; objectType: string; uid: string };

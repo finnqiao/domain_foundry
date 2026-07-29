@@ -1227,3 +1227,34 @@ code {
   font-family: var(--mono);
   margin-top: 0.15rem;
 }
+
+/* Add a source (ingest) */
+.sources-form { margin-top: 18px; max-width: 620px; }
+.sources-label { display: block; font-size: 13px; font-weight: 600; margin: 14px 0 6px; }
+.sources-input {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius);
+  font-family: var(--mono); font-size: 14px; background: var(--bg); color: var(--ink);
+}
+.sources-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.sources-actions { display: flex; gap: 10px; margin-top: 18px; }
+.sources-hint { font-size: 12px; margin-top: 8px; }
+.sources-error { color: var(--danger); font-size: 13px; margin-top: 14px; }
+.sources-result {
+  margin-top: 22px; padding: 18px; border: 1px solid var(--border);
+  border-radius: var(--radius); background: var(--surface);
+}
+.badge-preview, .badge-ok { background: var(--accent-weak); color: var(--accent); }
+.sources-stats { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0; }
+.sources-stat { border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 14px; }
+.sources-stat-n { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.sources-stat-l {
+  font-family: var(--mono); font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--muted);
+}
+.sources-bars { display: flex; flex-direction: column; gap: 8px; }
+.sources-bar { display: grid; grid-template-columns: 110px 1fr 40px; align-items: center; gap: 10px; font-size: 13px; }
+.sources-bar-name { font-weight: 600; }
+.sources-bar-track { height: 12px; background: var(--bg); border-radius: 999px; overflow: hidden; }
+.sources-bar-fill { height: 100%; background: var(--accent); }
+.sources-bar-unfiled { background: var(--danger); }
+.sources-bar-cnt { font-family: var(--mono); text-align: right; color: var(--muted); }

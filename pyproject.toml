@@ -54,6 +54,15 @@ Issues = "https://github.com/finnqiao/domain_foundry/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["core/domain_foundry_core"]
+# The built SPA is gitignored, so hatchling would exclude it from the wheel.
+# scripts/stage_webapp.sh copies app/dist here before the release build.
+artifacts = ["core/domain_foundry_core/_webapp/**"]
+
+# Reference packs live outside the package dir, so a wheel shipped without this
+# has no packs at all — `domain-foundry pack add food` after `pipx install`
+# would have nothing to add. Mirrors loader.bundled_packs_root()'s fallback.
+[tool.hatch.build.targets.wheel.force-include]
+"packs" = "domain_foundry_core/packs/_bundled"
 
 [tool.hatch.build.targets.sdist]
 include = [

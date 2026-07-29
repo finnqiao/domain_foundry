@@ -21,6 +21,14 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+# Use the repo venv when it exists, so the audit gives the same answer whether or
+# not you remembered to activate it. Without this, `python`/`domain-foundry` are
+# missing (3 checks FAIL, 2 SKIP) and `ruff` resolves to whatever version happens
+# to be on PATH — which reports rules the pinned version doesn't have.
+if [[ -x "$ROOT/.venv/bin/python" ]]; then
+  export PATH="$ROOT/.venv/bin:$PATH"
+fi
+
 fail=0
 pass() { printf '  \033[32mPASS\033[0m  %s\n' "$1"; }
 bad()  { printf '  \033[31mFAIL\033[0m  %s\n' "$1"; fail=1; }

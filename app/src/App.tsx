@@ -7,6 +7,7 @@ import { CaptureBox } from "./components/CaptureBox";
 import { Home } from "./components/Home";
 import { DomainView } from "./components/DomainView";
 import { HealthPanel } from "./components/HealthPanel";
+import { Sources } from "./components/Sources";
 import { Docs } from "./components/Docs";
 import { CaptureFeed } from "./blocks/CaptureFeed";
 import { ReviewQueue } from "./blocks/ReviewQueue";
@@ -69,6 +70,9 @@ export function App() {
               Review
               {reviewPending > 0 && <span className="nav-count">{reviewPending}</span>}
             </NavItem>
+            <NavItem active={route.name === "sources"} onClick={() => setRoute({ name: "sources" })}>
+              Add a source
+            </NavItem>
             <NavItem active={route.name === "health"} onClick={() => setRoute({ name: "health" })}>
               Health
             </NavItem>
@@ -122,6 +126,7 @@ export function App() {
               <HealthPanel refreshKey={refreshKey} />
             </section>
           )}
+          {route.name === "sources" && <Sources />}
           {route.name === "docs" && (
             <section className="panel">
               <Docs />

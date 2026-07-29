@@ -286,6 +286,7 @@ class CaptureService:
 
         counts: dict[str, int] = {}
         last_capture: str | None = None
+        failed_crs = 0
         if self.ws.ledger_db.exists():
             conn = connect_ro(self.ws.ledger_db)
             try:
@@ -297,6 +298,10 @@ class CaptureService:
                     "SELECT MAX(captured_at) AS t FROM capture_event"
                 ).fetchone()
                 last_capture = row["t"] if row else None
+                row = conn.execute(
+                    "SELECT COUNT(*) AS n FROM change_request WHERE status = 'failed'"
+                ).fetchone()
+                failed_crs = int(row["n"]) if row else 0
             finally:
                 conn.close()
 
@@ -319,6 +324,14 @@ class CaptureService:
         from domain_foundry_core.projections.coordinator import projection_lag
 
         lag = projection_lag(self.ws.ledger_db)
+        warnings: list[str] = []
+        if failed_crs:
+            warnings.append(
+                f"{failed_crs} change request(s) failed to apply — the captures are "
+                "safe in the ledger but have no canonical row and no approval to "
+                "resolve. Inspect: SELECT id, entry_id, error FROM change_request "
+                "WHERE status = 'failed'"
+            )
         return HealthReport(
             ok=ledger_h.ok and domains_h.ok,
             ledger=ledger_h,
@@ -326,6 +339,8 @@ class CaptureService:
             entry_counts=counts,
             last_capture_at=last_capture,
             projection_lag=ProjectionLagReport(**lag),
+            failed_change_requests=failed_crs,
+            warnings=warnings,
         )
 
 

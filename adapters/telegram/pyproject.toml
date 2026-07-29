@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "domain-foundry-telegram"
+version = "0.1.0"
+description = "Telegram bridge for Domain Foundry: text a bot, get captured-first structured personal data with one-message corrections"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [{ name = "Domain Foundry contributors" }]
+keywords = ["telegram", "bot", "capture", "agent", "domain-foundry", "messaging"]
+dependencies = [
+  "httpx>=0.27.0",
+  "domain-foundry-core",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0.0",
+]
+
+[project.scripts]
+domain-foundry-telegram = "domain_foundry_telegram.poller:main"
+
+[project.urls]
+Homepage = "https://github.com/finnqiao/domain_foundry"
+Documentation = "https://github.com/finnqiao/domain_foundry/tree/main/adapters/telegram#readme"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/domain_foundry_telegram"]

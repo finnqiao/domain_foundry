@@ -89,7 +89,7 @@ export function MapBlock({ data, onOpenDetail }: BlockProps) {
           if (!bounds.isEmpty()) {
             map.fitBounds(bounds, { padding: 48, maxZoom: 13 });
           }
-          map.on("click", "venues-circle", (e) => {
+          map.on("click", "venues-circle", (e: { features?: Array<{ properties?: Record<string, unknown> }> }) => {
             const props = e.features?.[0]?.properties;
             if (!props || !onOpenDetail) return;
             const ot = String(props["object_type"] || "");

@@ -12,17 +12,29 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, Header, HTTPException, Query
+from fastapi import Body, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from domain_foundry_core.api.harness import HarnessAPI
 from domain_foundry_core.paths import Workspace
 from domain_foundry_core.projections.coordinator import ProjectionDrainLoop
 
-# core/domain_foundry_core/api/app.py → repo root is parents[3]
+# Where the built SPA lives. From a checkout it is app/dist (repo root is
+# parents[3]); from an installed wheel there is no repo, so the release build
+# stages the same files inside the package as _webapp/ — otherwise `pipx install
+# domain-foundry-core && domain-foundry serve` serves JSON instead of the app the
+# quickstart promises. See scripts/stage_webapp.sh.
+_PACKAGED_APP_DIST = Path(__file__).resolve().parent.parent / "_webapp"
 _REPO_APP_DIST = Path(__file__).resolve().parents[3] / "app" / "dist"
+
+
+def _app_dist() -> Path:
+    """The SPA build to serve — checkout first, then the packaged copy."""
+    if (_REPO_APP_DIST / "index.html").is_file():
+        return _REPO_APP_DIST
+    return _PACKAGED_APP_DIST
 
 
 # Mesh P0: the HTTP surface is READ-ONLY. Every mutating endpoint returns
@@ -94,6 +106,56 @@ def create_app(
     def capture() -> dict[str, Any]:
         _gone()
         return {}
+
+    # Ingest is a *local, server-side* operation: this process reads local files
+    # and drives its own in-process HarnessAPI. That is different from the remote
+    # write path above (410), which forces clients to the in-process harness.
+    @app.post("/api/ingest/preview")
+    def ingest_preview(
+        body: dict[str, Any] = Body(...),
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(authorization)
+        from domain_foundry_core.ingest import ingest as _ingest
+
+        report = _ingest(
+            api,
+            body["path"],
+            channel=str(body.get("channel") or "folder-import"),
+            glob=body.get("glob"),
+            split=str(body.get("split") or "file"),
+            only=body.get("only"),
+            limit=body.get("limit"),
+            dry_run=True,
+        )
+        return report.as_dict()
+
+    @app.post("/api/ingest")
+    def ingest_commit(
+        body: dict[str, Any] = Body(...),
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(authorization)
+        from domain_foundry_core.ingest import ingest as _ingest
+
+        report = _ingest(
+            api,
+            body["path"],
+            channel=str(body.get("channel") or "folder-import"),
+            glob=body.get("glob"),
+            split=str(body.get("split") or "file"),
+            only=body.get("only"),
+            limit=body.get("limit"),
+            dry_run=False,
+        )
+        return report.as_dict()
+
+    @app.get("/sources", response_class=HTMLResponse)
+    def sources_page() -> HTMLResponse:
+        """No-terminal 'Add a source' page (bolt existing notes onto foundries)."""
+        from domain_foundry_core.api.sources_page import SOURCES_HTML
+
+        return HTMLResponse(SOURCES_HTML)
 
     @app.get("/api/query")
     def query(
@@ -303,9 +365,10 @@ def create_app(
         _auth(authorization)
         return {"suggestion": api.wizard_suggest(domain)}
 
-    spa_index = _REPO_APP_DIST / "index.html"
+    dist = _app_dist()
+    spa_index = dist / "index.html"
     if spa_index.is_file():
-        app.mount("/assets", StaticFiles(directory=_REPO_APP_DIST / "assets"), name="assets")
+        app.mount("/assets", StaticFiles(directory=dist / "assets"), name="assets")
 
         @app.get("/")
         def spa_root() -> FileResponse:
@@ -320,7 +383,12 @@ def create_app(
                 "version": "0.1.0",
                 "home": str(ws.home),
                 "docs": "/docs",
-                "hint": "Build the SPA with `cd app && npm run build`. Writes go in-process (CLI / hermes-agent); this HTTP surface is read-only.",
+                "hint": (
+                    "No web app bundled with this install. Use the API and CLI, or "
+                    "run from a checkout: `cd app && npm install && npm run build`. "
+                    "Writes go in-process (CLI / hermes-agent); this HTTP surface "
+                    "is read-only."
+                ),
             }
 
     app.state.harness = api  # type: ignore[attr-defined]

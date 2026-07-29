@@ -57,7 +57,14 @@ markdown_extensions:
 
 nav:
   - Home: index.md
-  - Quickstart: QUICKSTART.md
+  - Get started:
+      - Getting started: tutorial/getting-started.md
+      - Connect your agent: tutorial/connect-your-agent.md
+      - Bolt onto your setup: tutorial/adopt-in-place.md
+      - "How-to: no terminal": tutorial/howto-non-technical.md
+      - "How-to: developers": tutorial/howto-technical.md
+      - Testing runbook: tutorial/testing-runbook.md
+  - Quickstart (CLI): QUICKSTART.md
   - Concepts:
       - Overview: concepts/index.md
       - The ledger: concepts/ledger.md

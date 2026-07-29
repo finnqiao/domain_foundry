@@ -26,6 +26,9 @@ class CaptureReceipt(BaseModel):
     projection_status: ProjectionStatus = "n/a"
     idempotent_replay: bool = False
     summary: str | None = None
+    # Set when L2 was attempted and the model call failed; the capture still
+    # lands (never-drop), but the user needs to know routing was degraded.
+    llm_error: str | None = None
 
 
 class EntryRow(BaseModel):
@@ -68,3 +71,9 @@ class HealthReport(BaseModel):
     entry_counts: dict[str, int] = Field(default_factory=dict)
     last_capture_at: str | None = None
     projection_lag: ProjectionLagReport = Field(default_factory=ProjectionLagReport)
+    # Change requests that failed to apply. Nothing is lost (the raw entry and
+    # the error are both in the ledger), but they have no approval row, so they
+    # never show up in `review list` — health is the only place a user can see
+    # that a capture is stuck.
+    failed_change_requests: int = 0
+    warnings: list[str] = Field(default_factory=list)

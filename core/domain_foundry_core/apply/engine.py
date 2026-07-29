@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 import sqlite3
 from dataclasses import dataclass, field
@@ -25,8 +26,13 @@ from domain_foundry_core.paths import Workspace
 from domain_foundry_core.search.fts import set_canonical_searchable_text
 from domain_foundry_core.security.store import connect_rw
 
+logger = logging.getLogger(__name__)
+
 _IDENT_RE = re.compile(r"^[a-z][a-z0-9_]{0,62}$")
 ALLOWED_OPS = frozenset({"create", "update", "correct", "merge", "delete"})
+# Schema `default:` tokens the engine resolves itself — a model that echoes one
+# back as a field value must not have it stored verbatim.
+_DEFAULT_TOKENS = frozenset({"capture_time", "now"})
 
 
 @dataclass
@@ -555,7 +561,11 @@ class ApplyEngine:
         out: dict[str, Any] = {}
         for fname, fspec in obj.fields.items():
             if fname in raw and raw[fname] is not None:
-                out[fname] = _coerce(fspec, raw[fname])
+                coerced = _coerce(fspec, raw[fname])
+                if isinstance(coerced, _Uncoercible):
+                    logger.warning("dropping field %s: %s", fname, coerced.reason)
+                    continue
+                out[fname] = coerced
             elif fspec.default == "capture_time":
                 out[fname] = now_iso()
             elif fspec.default is not None:
@@ -569,19 +579,39 @@ class ApplyEngine:
         # Include optional provided fields even if not in loop... already covered
         for fname, value in raw.items():
             if fname in obj.fields and fname not in out and value is not None:
-                out[fname] = _coerce(obj.fields[fname], value)
+                coerced = _coerce(obj.fields[fname], value)
+                if not isinstance(coerced, _Uncoercible):
+                    out[fname] = coerced
         return out
 
 
+class _Uncoercible:
+    """Sentinel: the model gave a value this field's type cannot hold."""
+
+    __slots__ = ("reason",)
+
+    def __init__(self, reason: str) -> None:
+        self.reason = reason
+
+
 def _coerce(fspec: FieldSpec, value: Any) -> Any:
-    if fspec.type == "number":
-        return float(value)
-    if fspec.type == "integer":
-        return int(value)
+    if fspec.type in {"number", "integer"}:
+        try:
+            return float(value) if fspec.type == "number" else int(value)
+        except (TypeError, ValueError):
+            # Free text routinely carries things like "2:1:1" or "a dozen" into
+            # a numeric field. Dropping one field beats failing the whole
+            # change request and stranding the note (product promise 2).
+            return _Uncoercible(f"{value!r} is not a {fspec.type}")
     if fspec.type == "boolean":
         if isinstance(value, bool):
             return int(value)
         return int(bool(value))
+    if fspec.type == "datetime" and isinstance(value, str):
+        # Models echo the schema's own default token back as a literal; it must
+        # never land in a datetime column.
+        if value.strip() in _DEFAULT_TOKENS:
+            return now_iso()
     if fspec.type == "attachment" and fspec.many and not isinstance(value, str):
         return json.dumps(value)
     return value

@@ -115,6 +115,7 @@ class HarnessAPI:
             projection_status=projection,  # type: ignore[arg-type]
             idempotent_replay=False,
             summary=receipt.summary,
+            llm_error=routed.llm_error,
         )
 
     def query(

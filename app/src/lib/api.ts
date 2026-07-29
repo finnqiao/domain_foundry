@@ -48,6 +48,28 @@ export class ApiError extends Error {
   }
 }
 
+export interface IngestBody {
+  path: string;
+  only?: string | null;
+  split?: string;
+  glob?: string;
+  limit?: number;
+}
+
+export interface IngestReport {
+  path: string;
+  channel: string;
+  split: string;
+  dry_run: boolean;
+  scanned: number;
+  captured: number;
+  skipped_existing: number;
+  review: number;
+  unfiled: number;
+  filtered_out: number;
+  by_domain: Record<string, number>;
+}
+
 export const api = {
   capture: (text: string, channel = "web") =>
     req<CaptureReceipt>("/api/capture", {
@@ -115,4 +137,12 @@ export const api = {
 
   health: () => req<HealthReport>("/api/health"),
   evalRouting: () => req<EvalReport>("/api/eval"),
+
+  // Bolt existing notes/logs onto foundries. Preview is read-only; commit pulls
+  // in. Both are local, server-side operations (distinct from the sealed write
+  // path) — see docs/tutorial/adopt-in-place.md.
+  ingestPreview: (body: IngestBody) =>
+    req<IngestReport>("/api/ingest/preview", { method: "POST", body: JSON.stringify(body) }),
+  ingestCommit: (body: IngestBody) =>
+    req<IngestReport>("/api/ingest", { method: "POST", body: JSON.stringify(body) }),
 };
