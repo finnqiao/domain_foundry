@@ -20,10 +20,19 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
-          # The MCP adapter's E2E proof needs the MCP SDK — its own dependency,
-          # not a core one. pytest.pythonpath already puts the adapter sources on
-          # the path, so this is the only extra install needed for the three
-          # adapter proofs to actually run here rather than skip.
+          # Install the in-repo adapters so their E2E proofs actually run.
+          # pytest.pythonpath is not enough for the MCP one: it launches
+          # `python -m domain_foundry_mcp.server` as a subprocess (exactly as
+          # Claude Desktop does), and a subprocess does not inherit pytest's
+          # sys.path — the server died with ModuleNotFoundError and the client
+          # reported only "Connection closed". Editable installs make the module
+          # importable to the child too.
+          #
+          # --no-deps on purpose: these adapters declare `domain-foundry-core`,
+          # which is not on PyPI yet. It is already present from the editable
+          # root install, so skip the resolver entirely and add the one genuine
+          # third-party dependency (the MCP SDK) explicitly.
+          pip install --no-deps -e ./adapters/mcp -e ./adapters/telegram -e ./adapters/hermes_agent
           pip install "mcp>=1.2.0"
       - name: Ruff
         run: ruff check core tests scripts adapters
