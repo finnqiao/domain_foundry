@@ -26,14 +26,12 @@ jobs:
           # Claude Desktop does), and a subprocess does not inherit pytest's
           # sys.path — the server died with ModuleNotFoundError and the client
           # reported only "Connection closed". Editable installs make the module
-          # importable to the child too.
-          #
-          # --no-deps on purpose: these adapters declare `domain-foundry-core`,
-          # which is not on PyPI yet. It is already present from the editable
-          # root install, so skip the resolver entirely and add the one genuine
-          # third-party dependency (the MCP SDK) explicitly.
-          pip install --no-deps -e ./adapters/mcp -e ./adapters/telegram -e ./adapters/hermes_agent
-          pip install "mcp>=1.2.0"
+          # importable to the child too. Installed *with* dependencies so each
+          # adapter's own pyproject stays the single source of truth for its
+          # version constraints — notably the MCP SDK's `<2` cap. Their shared
+          # `domain-foundry-core` requirement resolves to the editable root
+          # install above without touching PyPI (where it is not published yet).
+          pip install -e ./adapters/mcp -e ./adapters/telegram -e ./adapters/hermes_agent
       - name: Ruff
         run: ruff check core tests scripts adapters
       - name: Pyright

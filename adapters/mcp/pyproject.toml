@@ -12,7 +12,12 @@ requires-python = ">=3.11"
 authors = [{ name = "Domain Foundry contributors" }]
 keywords = ["mcp", "model-context-protocol", "claude", "agent", "capture", "domain-foundry"]
 dependencies = [
-  "mcp>=1.2.0",
+  # Capped at <2 deliberately. server.py imports `mcp.server.fastmcp.FastMCP`,
+  # which the 2.x line moved — an unbounded `mcp>=1.2.0` meant a fresh
+  # `pipx install domain-foundry-mcp` resolved to 2.0.0 and the server failed to
+  # start with ModuleNotFoundError, surfacing to the client as the singularly
+  # unhelpful "Connection closed". Porting to the 2.x API is a separate change.
+  "mcp>=1.2.0,<2",
   "domain-foundry-core",
 ]
 
