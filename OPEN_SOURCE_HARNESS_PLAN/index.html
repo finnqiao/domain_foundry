@@ -1,0 +1,2659 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Local-first personal agent harness — capture natural language, get structured domain data and a remixable app. The structured-life data layer for agent runtimes.">
+      
+      
+        <meta name="author" content="Domain Foundry contributors">
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title><NAME> — Open-Source Lifestyle Agent Harness - Domain Foundry</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#name-open-source-lifestyle-agent-harness" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Domain Foundry" class="md-header__button md-logo" aria-label="Domain Foundry" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Domain Foundry
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              &lt;NAME&gt; — Open-Source Lifestyle Agent Harness
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/finnqiao/domain_foundry" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    domain-foundry/domain_foundry
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Domain Foundry" class="md-nav__button md-logo" aria-label="Domain Foundry" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Domain Foundry
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/finnqiao/domain_foundry" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    domain-foundry/domain_foundry
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Get started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/connect-your-agent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Connect your agent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/adopt-in-place/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt onto your setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/howto-non-technical/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to: no terminal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/howto-technical/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to: developers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/testing-runbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../QUICKSTART/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart (CLI)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../USER_STORIES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User stories & evidence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/ledger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The ledger
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/packs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Domain packs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/routing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hybrid routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/corrections/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Corrections
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/replay/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation replay
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Authoring
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PACK_AUTHORING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pack authoring guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial-plant-care/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial: remix in an afternoon
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CUSTOM_BLOCKS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom blocks & remix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gallery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pack gallery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adapter-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapter guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../LEAK_AUDIT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Leak audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../LEAKSCAN_PHASE9/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Leakscan (Phase 9)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PRIVATE_OVERLAY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Private overlay
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MESH_AS_BUILT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mesh as-built
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../OPEN_GATES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Open gates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../RETIREMENT_RUNBOOK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Retirement runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PHASE_STATUS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../FOUNDER_VALIDATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Founder validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#end-to-end-product-architecture-implementation-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        End-to-End Product, Architecture &amp; Implementation Plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="name-open-source-lifestyle-agent-harness"><code>&lt;NAME&gt;</code> — Open-Source Lifestyle Agent Harness<a class="headerlink" href="#name-open-source-lifestyle-agent-harness" title="Permanent link">&para;</a></h1>
+<h2 id="end-to-end-product-architecture-implementation-plan">End-to-End Product, Architecture &amp; Implementation Plan<a class="headerlink" href="#end-to-end-product-architecture-implementation-plan" title="Permanent link">&para;</a></h2>
+<p><strong>Status:</strong> Approved plan, ready for engineering takeover
+<strong>Date:</strong> 2026-07-16
+<strong>Source system:</strong> Finn's private Hermes deployment (as-is spec: <code>HermesWorkspace/docs/HERMES_AS_IS_E2E_SPEC_2026-07-16.md</code>), waves 0–5 of its remediation plan assumed complete
+<strong>License target:</strong> MIT · <strong>Name:</strong> <code>&lt;NAME&gt;</code> placeholder throughout (candidates in §13.1)
+<strong>Audience:</strong> an engineering team that has <em>not</em> seen the private codebase and must ship the public v1 end-to-end</p>
+<hr />
+<h2 id="table-of-contents">Table of contents<a class="headerlink" href="#table-of-contents" title="Permanent link">&para;</a></h2>
+<ol>
+<li><a href="#1-executive-summary--product-definition">Executive summary &amp; product definition</a></li>
+<li><a href="#2-market-assessment">Market assessment</a></li>
+<li><a href="#3-what-we-have-today-the-private-system">What we have today (the private system)</a></li>
+<li><a href="#4-target-architecture">Target architecture</a></li>
+<li><a href="#5-domain-pack-specification">Domain Pack specification</a></li>
+<li><a href="#6-guided-domain-creation">Guided domain creation</a></li>
+<li><a href="#7-multi-domain-routing-design">Multi-domain routing design</a></li>
+<li><a href="#8-correction--supersession-workflow">Correction &amp; supersession workflow</a></li>
+<li><a href="#9-universal-app-shell--block-system">Universal app shell &amp; block system</a></li>
+<li><a href="#10-evaluation-replay-framework">Evaluation replay framework</a></li>
+<li><a href="#11-phased-implementation-plan-p0p9">Phased implementation plan (P0–P9)</a></li>
+<li><a href="#12-security-privacy--extraction-protocol">Security, privacy &amp; extraction protocol</a></li>
+<li><a href="#13-risks--open-decisions">Risks &amp; open decisions</a></li>
+<li><a href="#14-handover-appendix">Handover appendix</a></li>
+</ol>
+<hr />
+<h1 id="1-executive-summary-product-definition">1. Executive summary &amp; product definition<a class="headerlink" href="#1-executive-summary-product-definition" title="Permanent link">&para;</a></h1>
+<h2 id="11-what-this-is">1.1 What this is<a class="headerlink" href="#11-what-this-is" title="Permanent link">&para;</a></h2>
+<p><code>&lt;NAME&gt;</code> is a <strong>local-first personal agent harness that turns natural-language captures into structured, domain-specific data and usable applications</strong> — and that you can <em>remix</em> to any domain that is your passion.</p>
+<p>A user:</p>
+<ol>
+<li>Describes what they want to manage in ordinary language ("I want to track my sourdough journey").</li>
+<li>Receives a working personalized domain — a schema, routing rules, policies, and an app view — hardened through a short conversational interview.</li>
+<li>Captures information conversationally from the channels they already use (Telegram, WhatsApp, CLI, web).</li>
+<li>Corrects mistakes in one message, with full provenance preserved.</li>
+<li>Watches the system get measurably better, because <strong>every correction becomes a replayable test case</strong>.</li>
+</ol>
+<p>The long-term direction is a stackable system of linked domain applications — travel, health, food, finance, and any user-defined area — where a single capture can touch several domains without merging them into one universal schema.</p>
+<h2 id="12-why-it-can-win">1.2 Why it can win<a class="headerlink" href="#12-why-it-can-win" title="Permanent link">&para;</a></h2>
+<p>The core engine already exists and is battle-tested in daily private use: a capture-first durable ledger, a hybrid zero-token/LLM router, a policy-gated apply engine with exactly-once approval execution, a durable projection coordinator, and a correction/few-shot feedback loop. This plan extracts that engine into a clean MIT-licensed core, replaces every hardcoded personal domain with a <strong>Domain Pack</strong> format anyone can author or generate, and ships a schema-driven universal app whose views are composed from <strong>remixable blocks</strong>.</p>
+<p>Nothing in the open-source landscape combines these properties (§2). Agent runtimes store memory as markdown or vectors. Memory layers store personalization facts. Life-loggers have no schemas or corrections. Text-to-SQL tools have no capture loop. PKM tools have no agent.</p>
+<p><strong>Positioning: the structured-life data layer for agent runtimes.</strong></p>
+<h2 id="13-target-user">1.3 Target user<a class="headerlink" href="#13-target-user" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Primary:</strong> technical power users who want a reliable personal data system without manually configuring databases, schemas, background workers, or application infrastructure.</li>
+<li><strong>Secondary (must not be excluded):</strong> non-technical users, for whom setup is one command and the daily workflow is entirely conversational. Channels are optional: the CLI + local web app work with zero channel configuration.</li>
+</ul>
+<h2 id="14-product-promise-contract-with-the-user">1.4 Product promise (contract with the user)<a class="headerlink" href="#14-product-promise-contract-with-the-user" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Capture first.</strong> The raw message and its provenance are durably stored before any lossy interpretation.</li>
+<li><strong>Never drop.</strong> Failed or ambiguous interpretation degrades to review, an unfiled card, or ledger-only capture — never silence.</li>
+<li><strong>One-message corrections.</strong> "no, that run was 8k not 5k" fixes the canonical record, preserves history, and teaches the router.</li>
+<li><strong>Your app, your schema.</strong> Describe a domain; get a working schema and app view; harden both in plain language.</li>
+<li><strong>Local first.</strong> All canonical data lives on the user's machine in SQLite. Hosted/multiplayer is an export path, not a requirement.</li>
+<li><strong>Provably improving.</strong> Corrections auto-generate eval cases; CI replays them; regressions block release.</li>
+</ol>
+<h2 id="15-v1-public-release-scope-from-the-prd-all-mapped-to-phases-in-1111">1.5 v1 public release scope (from the PRD, all mapped to phases in §11.11)<a class="headerlink" href="#15-v1-public-release-scope-from-the-prd-all-mapped-to-phases-in-1111" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>PRD item</th>
+<th>Phase</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Guided domain creation</td>
+<td>P6</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Provisional schema generation</td>
+<td>P6</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Plain-language schema hardening</td>
+<td>P6</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Multi-domain routing (incl. multi-context messages)</td>
+<td>P2</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Correction and supersession workflow</td>
+<td>P3</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Local raw capture archive</td>
+<td>P1</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Review queue</td>
+<td>P4 (API) + P5 (UI)</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Generated application shell</td>
+<td>P5</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Food demonstration pack</td>
+<td>P8</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Travel reference pack</td>
+<td>P8</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Evaluation replay framework</td>
+<td>P7</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Idempotent apply &amp; projections, execution receipts, stable global IDs</td>
+<td>P1/P3/P4</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Optional Obsidian and channel adapters; Postgres export path</td>
+<td>P4/P8; §13.4</td>
+</tr>
+</tbody>
+</table>
+<p>Health and finance packs may ship as experimental packs after the routing and correction guarantees are stable, exactly as the PRD allows.</p>
+<hr />
+<h1 id="2-market-assessment">2. Market assessment<a class="headerlink" href="#2-market-assessment" title="Permanent link">&para;</a></h1>
+<p>Research performed 2026-07-16 across five adjacent categories. Conclusion first: <strong>the intersection this product occupies is empty.</strong> Every neighbor solves one or two of the five pillars (capture-first ledger · plain-language domain creation · hybrid routing · correction→eval loop · schema-driven apps); none combines them.</p>
+<h2 id="21-category-map">2.1 Category map<a class="headerlink" href="#21-category-map" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Representative projects</th>
+<th>What they do well</th>
+<th>What they lack (vs <code>&lt;NAME&gt;</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Agent runtimes / channel assistants</td>
+<td><a href="https://github.com/nousresearch/hermes-agent">Nous hermes-agent</a> (MIT, Python, 30k+ stars since Feb 2026), <a href="https://github.com/openclaw/openclaw">OpenClaw</a> (MIT, Node, 20+ channels), <a href="https://github.com/khoj-ai/khoj">Khoj</a> (AGPL, YC-backed second brain), QwenPaw, OpenHuman</td>
+<td>Channels, agent loop, plugins/skills, persona, scheduling</td>
+<td>Memory is markdown files or vectors. No typed canonical stores, no provenance ledger, no policy-gated apply, no corrections-as-data, no domain apps</td>
+</tr>
+<tr>
+<td>Agent memory layers</td>
+<td><a href="https://mem0.ai">Mem0</a>, <a href="https://www.getzep.com">Zep</a> (temporal KG), <a href="https://www.letta.com">Letta/MemGPT</a>, honcho, hindsight</td>
+<td>Personalization facts, recall benchmarks, temporal queries</td>
+<td>Facts ≠ canonical domain records. No user-visible schema, no review queue, no supersession semantics, no apps, no eval-from-correction loop</td>
+</tr>
+<tr>
+<td>Life loggers / capture bots</td>
+<td><a href="https://github.com/naborajs/LIFE-LOGGER">LIFE-LOGGER</a> (Telegram→GitHub markdown), assorted telegram-llm-bots</td>
+<td>Low-friction capture</td>
+<td>No schema, no routing quality story, no corrections, no structured queries, no apps</td>
+</tr>
+<tr>
+<td>Text-to-SQL / schema generators</td>
+<td>WrenAI, DB-GPT, JSON-schema builders</td>
+<td>NL→schema/SQL competence</td>
+<td>Developer tools. No capture loop, no provenance, no lifestyle product surface</td>
+</tr>
+<tr>
+<td>Local-first structured PKM</td>
+<td>Obsidian, Anytype, AppFlowy, Tana (closed)</td>
+<td>Typed structure, local-first values, plugin culture</td>
+<td>The human does all data entry. No conversational capture, no router, no automatic structuring</td>
+</tr>
+</tbody>
+</table>
+<p>Sources: <a href="https://github.com/nousresearch/hermes-agent">hermes-agent repo</a> · <a href="https://hermes-agent.nousresearch.com/docs/user-guide/features/plugins">hermes-agent plugin docs</a> · awesome-hermes-agent lists (<a href="https://github.com/0xNyk/awesome-hermes-agent">0xNyk</a>, <a href="https://github.com/SamurAIGPT/awesome-hermes-agent">SamurAIGPT</a>) · <a href="https://github.com/openclaw/openclaw">OpenClaw</a> + <a href="https://en.wikipedia.org/wiki/OpenClaw">Wikipedia</a> · <a href="https://github.com/khoj-ai/khoj">Khoj</a> · memory-layer comparisons (<a href="https://apiscout.dev/guides/zep-vs-mem0-vs-letta-agent-memory-api-2026">apiscout.dev</a>, <a href="https://particula.tech/blog/agent-memory-frameworks-tested-mem0-zep-letta-cognee-2026">particula.tech</a>, <a href="https://atlan.com/know/best-ai-agent-memory-frameworks-2026/">atlan.com</a>, <a href="https://mcp.directory/blog/mem0-vs-letta-vs-zep-vs-cognee-2026">mcp.directory</a>) · <a href="https://github.com/naborajs/LIFE-LOGGER">LIFE-LOGGER</a> · <a href="https://medevel.com/llm-powered-text-to-sql-1300/">text-to-SQL roundup</a> · assistant roundups (<a href="https://www.vellum.ai/blog/best-open-source-personal-ai-assistants">vellum.ai</a>, <a href="https://tosea.ai/blog/openhuman-personal-ai-agent-guide-2026">tosea.ai</a>).</p>
+<h2 id="22-where-our-uniqueness-lies">2.2 Where our uniqueness lies<a class="headerlink" href="#22-where-our-uniqueness-lies" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Provenance-first canonical data.</strong> Every structured row traces to a raw capture event; corrections append revisions; approval decision state and application state are independently queryable. No neighbor has this discipline — it is the difference between "a bot wrote something in a file" and "a system you can trust with your life data."</li>
+<li><strong>The remix surface is a spec, not a fork.</strong> Domain Packs (§5) make "build your own domain app" a YAML-authoring (or fully conversational) exercise. Passion-domain communities (bakers, divers, climbers, whisky nerds, language learners) can share packs the way Obsidian users share plugins.</li>
+<li><strong>Routing that earns trust.</strong> Zero-token rules for the hot path, LLM only on ambiguity, confidence-gated policies, cost guard, and multi-domain span fan-out. Competitors either burn tokens on everything or file everything in one bucket.</li>
+<li><strong>Corrections are the product.</strong> The correction→few-shot→eval-corpus loop turns every user complaint into (a) an immediate fix, (b) a prompt improvement, and (c) a permanent regression test. This is the "improves through use" promise made real, and it's the hardest pillar for competitors to retrofit.</li>
+<li><strong>Distribution tailwind.</strong> The first adapter targets hermes-agent's fast-growing MIT ecosystem (plugin registry + awesome lists), while the runtime-agnostic core keeps us portable to OpenClaw/MCP. We are complementary to runtimes, not competing with them — every runtime user is a potential <code>&lt;NAME&gt;</code> user.</li>
+</ol>
+<h2 id="23-positioning-statement-taglines">2.3 Positioning statement &amp; taglines<a class="headerlink" href="#23-positioning-statement-taglines" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>For people with passions they actually want to track, <code>&lt;NAME&gt;</code> is the open-source data layer that turns chat messages into a structured personal database and a working app — unlike assistants that remember things as prose, it gives you canonical, correctable, queryable domain data you own.</p>
+</blockquote>
+<p>Tagline candidates: <em>"Describe your passion. Get an app. Talk to it."</em> · <em>"The structured-life data layer for agent runtimes."</em> · <em>"Your life, as data you can trust."</em></p>
+<h2 id="24-distribution-strategy">2.4 Distribution strategy<a class="headerlink" href="#24-distribution-strategy" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>hermes-agent ecosystem first:</strong> publish the adapter to the pip entry-point group <code>hermes_agent.plugins</code>, PR both awesome-hermes-agent lists, post in Nous community channels.</li>
+<li><strong>Show HN / lobste.rs launch</strong> with a 90-second demo GIF: sourdough domain created from one sentence → capture → correction → app view updates.</li>
+<li><strong>Docs site with a pack gallery</strong> — the remix community is the long-term moat; seed it with food (demo), travel (reference), and 2–3 community-candidate packs (workouts, reading log, plant care).</li>
+<li><strong>"Remix in an afternoon" tutorial</strong> as the canonical onboarding artifact (§11 P9).</li>
+</ol>
+<hr />
+<h1 id="3-what-we-have-today-the-private-system">3. What we have today (the private system)<a class="headerlink" href="#3-what-we-have-today-the-private-system" title="Permanent link">&para;</a></h1>
+<p>This section is the porting team's mental model of the source system. Everything here is verified against the running system as of 2026-07-16.</p>
+<h2 id="31-topology">3.1 Topology<a class="headerlink" href="#31-topology" title="Permanent link">&para;</a></h2>
+<p>Three private code locations feed this plan:</p>
+<table>
+<thead>
+<tr>
+<th>Location</th>
+<th>Role</th>
+<th>Disposition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>~/.hermes/hermes-agent</code></td>
+<td>Nous Research runtime (MIT, v0.14.0, Python ≥3.11): gateway, channels, agent loop, plugin/tool registry, cron</td>
+<td><strong>Consume as upstream dependency</strong> via the adapter; never fork</td>
+</tr>
+<tr>
+<td><code>~/HermesWorkspace</code> (private)</td>
+<td>~9,300 LOC <code>lib/</code> domain logic <strong>plus personal data git-tracked in the same repo</strong> (SQLite DBs, 297 Obsidian notes)</td>
+<td><strong>Reference for porting.</strong> The OSS repo must be fresh — no history import (§12)</td>
+</tr>
+<tr>
+<td><code>~/.hermes/plugins/logbook</code></td>
+<td>1,899 LOC plugin: 7 tools, classifier, security-critical <code>store.py</code> (1,022 LOC), 12 plain-SQL migrations</td>
+<td>Reference for porting</td>
+</tr>
+</tbody>
+</table>
+<h2 id="32-the-capture-substrate-already-domain-agnostic-port-nearly-as-is">3.2 The capture substrate (already domain-agnostic — port nearly as-is)<a class="headerlink" href="#32-the-capture-substrate-already-domain-agnostic-port-nearly-as-is" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>flowchart LR
+    RAW["raw message + channel identity"] --&gt; CE["capture_event"]
+    CE --&gt; E["entry"]
+    CE --&gt; I["interpretation (versioned)"]
+    I --&gt; CR["change_request"]
+    CR --&gt; AQ["approval_queue"]
+    AQ --&gt; CCE["CanonicalChangeExecutor&lt;br/&gt;(approve → apply exactly once)"]
+    CR --&gt; AE["ApplyEngine + DomainRegistry"]
+    CCE --&gt; AE
+    AE --&gt; CO["canonical_object (stable UID)"]
+    AE --&gt; OR["object_revision"]
+    CORR["correction_event&lt;br/&gt;(wrong_json / right_json / reason)"] --&gt; I
+    AE --&gt; PO["projection_outbox"]
+    PO --&gt; PC["ProjectionCoordinator&lt;br/&gt;mark_dirty / drain / watermarks"]
+    PC --&gt; PROJ["projections: markdown vault, app feeds"]</code></pre>
+<p>Key private modules and their fates:</p>
+<table>
+<thead>
+<tr>
+<th>Private module (LOC)</th>
+<th>What it does</th>
+<th>OSS fate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>plugins/logbook/store.py</code> (1,022)</td>
+<td>RO/RW connection discipline, parameterized writes, <code>safe_join</code> path safety, <code>redact_secrets</code>, migration runner, capture/correction/approval primitives</td>
+<td><strong>Port</strong> → split into <code>core/ledger/</code> + <code>core/security/</code></td>
+</tr>
+<tr>
+<td><code>plugins/logbook/classify.py</code> (298)</td>
+<td>Ordered-regex L1 classifier, confidence 0.85/0.5/0.3, rule-demotion from corrections, domain→folder map</td>
+<td><strong>Rewrite</strong> → registry-driven, rules come from packs (§7)</td>
+</tr>
+<tr>
+<td><code>lib/interpret/router.py</code> (741)</td>
+<td>L2 escalation: structured-domain prefixes force LLM, skip-LLM heuristics, daily cost guard, few-shot injection, schema-field context, payload validation</td>
+<td><strong>Port mechanics, rewrite domain wiring</strong> → <code>core/routing/</code></td>
+</tr>
+<tr>
+<td><code>lib/interpret/stage.py</code> (899)</td>
+<td>Apply-policy evaluation, never-drop fallback builders, versioned interpretation insert</td>
+<td><strong>Port</strong> → <code>core/policy/</code> + <code>core/routing/fallback.py</code></td>
+</tr>
+<tr>
+<td><code>lib/apply/engine.py</code> (480)</td>
+<td>ApplyEngine, DomainRegistry, DomainHandler, OperationSpec; journals every op</td>
+<td><strong>Port</strong> → <code>core/apply/engine.py</code></td>
+</tr>
+<tr>
+<td><code>lib/apply/canonical_executor.py</code> (356)</td>
+<td>Approve → apply exactly once; result receipts; schedules projections</td>
+<td><strong>Port</strong> → <code>core/apply/executor.py</code></td>
+</tr>
+<tr>
+<td><code>lib/apply/object_journal.py</code> (298)</td>
+<td>Canonical UIDs, <code>ensure_canonical_object</code>, <code>write_object_revision</code>, changed-field diffs</td>
+<td><strong>Port</strong> → <code>core/apply/journal.py</code></td>
+</tr>
+<tr>
+<td><code>lib/feed/projection_coordinator.py</code> (376)</td>
+<td>Durable dirty-queue: <code>mark_dirty</code>/<code>drain</code>/watermarks, adapter registry</td>
+<td><strong>Port</strong> → <code>core/projections/coordinator.py</code></td>
+</tr>
+<tr>
+<td><code>lib/feed/managed_notes.py</code> (257)</td>
+<td>Managed-region markdown writer (free zones preserved)</td>
+<td><strong>Port</strong> → <code>core/projections/markdown.py</code></td>
+</tr>
+<tr>
+<td>12 plain-SQL migrations (~878 LOC) + stdlib runner</td>
+<td><code>schema_version</code> table, lazy <code>ensure_migrated</code>, additive-only convention</td>
+<td><strong>Port</strong> runner + rewrite substrate DDL cleanly</td>
+</tr>
+<tr>
+<td><code>scripts/build_fewshot_bank.py</code>, <code>scripts/reinterpret_history.py</code></td>
+<td>correction_event → fewshot.json; idempotent history replay</td>
+<td><strong>Port + extend</strong> into <code>core/evals/</code> (§10)</td>
+</tr>
+<tr>
+<td><code>lib/travel/</code> (1,718), Roamboard/MiseKit adapters, Obsidian folder taxonomy, <code>_RULES</code>, projects registry, persona docs</td>
+<td>Finn's life</td>
+<td><strong>Do not port.</strong> Travel is <em>re-expressed</em> as a reference pack (P8); Roamboard/MiseKit stay private showcases</td>
+</tr>
+</tbody>
+</table>
+<h2 id="33-the-twelve-invariants-carried-over-verbatim-the-architecture-must-preserve-all-of-them">3.3 The twelve invariants (carried over verbatim; the architecture must preserve all of them)<a class="headerlink" href="#33-the-twelve-invariants-carried-over-verbatim-the-architecture-must-preserve-all-of-them" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Capture first:</strong> raw source and provenance reach the ledger before lossy interpretation.</li>
+<li><strong>Never drop:</strong> failed/ambiguous interpretation becomes review, an unfiled card, or ledger-only state.</li>
+<li><strong>Canonical structured stores own domain truth;</strong> markdown and app feeds are projections.</li>
+<li><strong>Projection failure is recoverable:</strong> rendering/network failure never rolls back canonical capture.</li>
+<li><strong>Stable identity:</strong> every replayable source and applied object has an idempotency reference or canonical UID.</li>
+<li><strong>Corrections preserve history:</strong> versions/events append; provenance is never silently rewritten.</li>
+<li><strong>Approval is observable:</strong> decision state and application state are independently queryable.</li>
+<li><strong>Markdown reverse sync is scoped:</strong> only managed regions may propose canonical changes (v1 ships forward-only projection; reverse sync is post-v1, but the managed-region format ships from day one).</li>
+<li><strong>External app writes are owner-scoped and acknowledged:</strong> hosted state is never canonical until the local engine applies it (relevant to the future multiplayer path, §13.4).</li>
+<li><strong>One shared apply path</strong> for every ingress (chat, CLI, web, imports, future adapters).</li>
+<li><strong>One shared projection path:</strong> every canonical commit enqueues the same idempotent projection refresh.</li>
+<li><strong>No secret projection:</strong> credentials and channel identifiers never enter notes, feeds, receipts, or health output.</li>
+</ol>
+<h2 id="34-operational-lessons-the-oss-design-bakes-in-from-the-as-is-specs-warn-findings">3.4 Operational lessons the OSS design bakes in (from the as-is spec's WARN findings)<a class="headerlink" href="#34-operational-lessons-the-oss-design-bakes-in-from-the-as-is-specs-warn-findings" title="Permanent link">&para;</a></h2>
+<p>These are scars, not theory. Each one shaped a design decision below:</p>
+<table>
+<thead>
+<tr>
+<th>Private-system finding</th>
+<th>OSS design consequence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Approval resolution didn't execute the change (fixed in Wave 1 by CanonicalChangeExecutor)</td>
+<td>Executor is <strong>core</strong>, not optional; "approved" without "applied" is a bug class with a dedicated eval gate (P3)</td>
+</tr>
+<tr>
+<td>Direct captures could leave app projections stale (fixed by ProjectionCoordinator)</td>
+<td>All projections flow through the outbox/watermark coordinator from day one; projection lag is a first-class health metric (P4)</td>
+</tr>
+<tr>
+<td>267-item review backlog made the queue meaningless</td>
+<td>Review queue ships with SLO counters + bulk triage UX in v1 (P5); policy defaults tuned so review is the exception</td>
+</tr>
+<tr>
+<td>48 FK violations accumulated silently in a domain store</td>
+<td><code>integrity_check</code> + FK check on every store is a release-blocking CI gate and a runtime health check (P1)</td>
+</tr>
+<tr>
+<td>Live-count test assertions and wall-clock fixtures made gates flaky</td>
+<td>Frozen clock + invariant-based assertions are mandatory test conventions (P7)</td>
+</tr>
+<tr>
+<td>Domain vocabulary drift (<code>health.supplement</code> vs <code>health.supplements</code>)</td>
+<td>Pack schema owns the vocabulary; aliases are declared data, not scattered strings (§5)</td>
+</tr>
+<tr>
+<td>Whole-file note writes clobbered user free-text</td>
+<td>The managed-region markdown writer is the <em>only</em> markdown write path in core (P4)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="4-target-architecture">4. Target architecture<a class="headerlink" href="#4-target-architecture" title="Permanent link">&para;</a></h1>
+<h2 id="41-monorepo-layout">4.1 Monorepo layout<a class="headerlink" href="#41-monorepo-layout" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>&lt;name&gt;/
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>├── LICENSE                      # MIT
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>├── README.md                    # the pitch + 5-minute quickstart
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>├── core/                        # pip package: &lt;name&gt;-core
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│   └── &lt;name&gt;_core/
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│       ├── ledger/              # capture substrate: events, entries, idempotency, migrations runner
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│       ├── security/            # RO/RW discipline, safe_join, redact_secrets (port of store.py discipline)
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│       ├── packs/               # pack loader, validator, schema compiler, pack migrations, registry
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│       ├── routing/             # L1 rules engine + L2 LLM router + span fan-out + cost guard
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│       ├── interpret/           # LLM interpreter, few-shot bank, payload validation, never-drop fallbacks
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│       ├── policy/              # apply_policy evaluation (op × object × channel × confidence)
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│       ├── apply/               # ApplyEngine, DomainRegistry, CanonicalChangeExecutor, object journal
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│       ├── projections/         # ProjectionCoordinator, markdown adapter, app-feed adapter
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│       ├── wizard/              # guided domain creation + hardening loop (§6)
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│       ├── evals/               # correction→corpus, replay runner, LLM cassettes, scoring (§10)
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>│       ├── llm/                 # provider abstraction (OpenAI-compatible + Anthropic)
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│       ├── api/                 # FastAPI app: capture/query/review/correct/packs/blocks endpoints
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│       └── cli.py               # `&lt;name&gt;` CLI: init, capture, new-domain, review, eval, serve, pack
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>├── app/                         # universal app shell (Vite + React SPA, built assets served by core/api)
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>│   └── src/blocks/              # block registry + built-in blocks (§9)
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>├── adapters/
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>│   ├── hermes_agent/            # plugin.yaml + register(ctx) → thin wrappers over core API (P8)
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>│   └── mcp/                     # MCP server exposing the same tool surface (post-v1)
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>├── packs/
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>│   ├── food/                    # demonstration pack (P8)
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>│   ├── travel/                  # reference pack (P8)
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>│   └── _template/               # `pack new` scaffold
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>├── docs/                        # docs site (MkDocs Material) + pack gallery
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>├── examples/                    # example transcripts, demo scripts, seed data (synthetic only)
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>└── .github/workflows/           # ci.yml (lint+test), evals.yml (replay gate), packcheck.yml, leakscan.yml
+</code></pre></div>
+<p>Rationale for the pieces an eng team might second-guess:</p>
+<ul>
+<li><strong>Python core, FastAPI API, React SPA.</strong> Python because the source system and the primary runtime ecosystem (hermes-agent plugins) are Python. FastAPI because the API server must also be importable as a library (adapters call core functions in-process; the SPA calls HTTP). React+Vite because the block system needs a real component model for remixers — HTMX would make "write a custom block" a core-team-only activity. The SPA builds to static assets served by the FastAPI app: <strong>one process, <code>&lt;name&gt; serve</code>, zero Node at runtime.</strong></li>
+<li><strong>SQLite, two databases.</strong> <code>ledger.sqlite</code> (substrate tables, §4.3) and <code>domains.sqlite</code> (pack-owned tables, named <code>&lt;pack&gt;__&lt;object&gt;</code>, e.g. <code>food__recipe</code>). Same lazy plain-SQL migration runner as the private system (no Alembic — a deliberate simplicity choice that has already survived 12 migrations in production). Cross-DB references are soft (by <code>entry_id</code>/<code>object_uid</code>), matching the proven private pattern. All UIDs are ULIDs and all timestamps UTC ISO-8601, which keeps the Postgres export path (§13.4) a schema translation rather than a redesign.</li>
+<li><strong>Runtime adapters are dumb.</strong> All intelligence lives in core. The hermes-agent adapter is a <code>plugin.yaml</code> + <code>register(ctx)</code> that maps ~7 tools onto <code>HarnessAPI</code> calls (§4.4). Porting to OpenClaw/MCP later means re-mapping the same 7 calls.</li>
+</ul>
+<h2 id="42-process-model">4.2 Process model<a class="headerlink" href="#42-process-model" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>&lt;name&gt; serve</code> — long-running local process: FastAPI (API + SPA) + background workers (projection drain loop, scheduled jobs). This is the only daemon.</li>
+<li>Agent-runtime ingress (hermes-agent gateway etc.) runs as its own process (owned by that runtime); the adapter talks to core either in-process (same venv) or via <code>http://127.0.0.1:&lt;port&gt;</code> — <strong>decision locked: HTTP</strong>, because it survives venv/runtime mismatches and makes every adapter identical.</li>
+<li><code>&lt;name&gt;</code> CLI — one-shot commands (capture, review, eval, pack, new-domain) that call the same API.</li>
+</ul>
+<h2 id="43-substrate-schema-ledgersqlite-final-table-list">4.3 Substrate schema (ledger.sqlite; final table list)<a class="headerlink" href="#43-substrate-schema-ledgersqlite-final-table-list" title="Permanent link">&para;</a></h2>
+<p>Port of the proven private schema, cleaned:</p>
+<table>
+<thead>
+<tr>
+<th>Table</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>capture_event</code></td>
+<td>Raw payload, channel, source ref (idempotency), timestamps, actor</td>
+</tr>
+<tr>
+<td><code>entry</code></td>
+<td>The user-facing capture unit; routing result, domain, status (<code>applied/review/ledger_only/unfiled</code>)</td>
+</tr>
+<tr>
+<td><code>source_link</code></td>
+<td>entry ↔ external identity links (message IDs, import refs)</td>
+</tr>
+<tr>
+<td><code>interpretation</code></td>
+<td>Versioned structured interpretation per entry (<code>{entry_id, version, payload_json, interpreter, confidence}</code>)</td>
+</tr>
+<tr>
+<td><code>change_request</code></td>
+<td>Proposed domain operations (one per routed span), status independent of approval</td>
+</tr>
+<tr>
+<td><code>approval_queue</code></td>
+<td>Review items: decision state (<code>pending/approved/denied/expired</code>) + resolver metadata</td>
+</tr>
+<tr>
+<td><code>canonical_object</code></td>
+<td>Stable ULID per domain object (<code>&lt;pack&gt;:&lt;object_type&gt;:&lt;ulid&gt;</code>)</td>
+</tr>
+<tr>
+<td><code>object_revision</code></td>
+<td>Append-only revision journal with changed-field diffs and provenance</td>
+</tr>
+<tr>
+<td><code>correction_event</code></td>
+<td><code>{target_kind, target_id, reason_code, wrong_json, right_json, applied_change_request_id}</code></td>
+</tr>
+<tr>
+<td><code>projection_outbox</code> + <code>projection_watermark</code></td>
+<td>Durable dirty-queue and per-adapter convergence watermarks</td>
+</tr>
+<tr>
+<td><code>apply_policy</code></td>
+<td>Policy rows seeded from packs, user-overridable (§5.5)</td>
+</tr>
+<tr>
+<td><code>schema_registry</code></td>
+<td>Compiled pack schemas + versions (routing context + validation source)</td>
+</tr>
+<tr>
+<td><code>eval_case</code></td>
+<td>Auto-generated + fixture eval cases (§10)</td>
+</tr>
+<tr>
+<td><code>cost_ledger</code></td>
+<td>Per-day LLM spend for the cost guard</td>
+</tr>
+</tbody>
+</table>
+<h2 id="44-harnessapi-the-adapter-contract">4.4 <code>HarnessAPI</code> — the adapter contract<a class="headerlink" href="#44-harnessapi-the-adapter-contract" title="Permanent link">&para;</a></h2>
+<p>The entire runtime-facing surface. Adapters translate their runtime's tool-call convention into these; nothing else is exposed:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">capture</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">source_ref</span><span class="p">,</span> <span class="n">attachments</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CaptureReceipt</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="c1"># CaptureReceipt: entry_id, routed=[...(domain, object_type, operation, disposition)], status</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">query</span><span class="p">(</span><span class="n">domain</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">object_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">rows</span>          <span class="c1"># read-only</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">correct</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">entry_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">object_uid</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrectionReceipt</span>  <span class="c1"># NL or explicit</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="n">review_list</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s2">&quot;pending&quot;</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">items</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="n">review_resolve</span><span class="p">(</span><span class="n">approval_id</span><span class="p">,</span> <span class="n">decision</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExecutionReceipt</span>                  <span class="c1"># approve ⇒ applied exactly once</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">new_domain</span><span class="p">(</span><span class="n">goal_text</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WizardSession</span>          <span class="c1"># §6; wizard continues via wizard_reply()</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="n">wizard_reply</span><span class="p">(</span><span class="n">session_id</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WizardTurn</span>
+</code></pre></div>
+<p>Every mutating call returns a <strong>receipt</strong> (PRD reliability requirement): what was decided, what was applied, canonical UIDs touched, projection status (<code>refreshed | pending</code>).</p>
+<h2 id="45-end-to-end-data-flow">4.5 End-to-end data flow<a class="headerlink" href="#45-end-to-end-data-flow" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>flowchart TD
+    subgraph ingress
+        TG["hermes-agent plugin&lt;br/&gt;(Telegram/WhatsApp/CLI)"]
+        WEB["app shell capture box"]
+        CLI["&lt;name&gt; CLI"]
+    end
+    TG --&gt; API["HarnessAPI"]
+    WEB --&gt; API
+    CLI --&gt; API
+    API --&gt; LED[("ledger.sqlite&lt;br/&gt;capture_event + entry")]
+    LED --&gt; R1["L1: pack regex rules&lt;br/&gt;(zero tokens)"]
+    R1 --&gt;|"high confidence, simple"| POL["policy evaluation"]
+    R1 --&gt;|"ambiguous / structured / multi-domain"| R2["L2: LLM interpreter&lt;br/&gt;pack summaries + field contracts + few-shot bank"]
+    R2 --&gt; POL
+    POL --&gt;|auto_apply| AE["ApplyEngine"]
+    POL --&gt;|review| AQ["approval_queue"]
+    POL --&gt;|confirm| CH["ask user in-channel"]
+    AQ --&gt;|approve| EXEC["CanonicalChangeExecutor"]
+    EXEC --&gt; AE
+    AE --&gt; DOM[("domains.sqlite&lt;br/&gt;pack__object tables")]
+    AE --&gt; PO["projection_outbox"]
+    PO --&gt; PC["ProjectionCoordinator"]
+    PC --&gt; MD["markdown vault (managed regions)"]
+    PC --&gt; FEED["app feeds / block data"]
+    CORR["correction (any ingress)"] --&gt; API
+    CORR -.-&gt; FS["few-shot bank"] &amp; EC["eval_case corpus"]</code></pre>
+<hr />
+<h1 id="5-domain-pack-specification">5. Domain Pack specification<a class="headerlink" href="#5-domain-pack-specification" title="Permanent link">&para;</a></h1>
+<p>The Domain Pack is the remix surface — the single artifact a community member authors (or the wizard generates) to add a domain. <strong>A pack is data, never code</strong> in v1: no arbitrary Python execution from third-party packs (§12.4). The generic ApplyEngine executes declared operations against the compiled schema; packs that outgrow declarative operations can ship a Python handler <strong>only</strong> via a separately-installed pip package that registers through the entry-point mechanism, which is an explicit trust decision by the user.</p>
+<h2 id="51-layout">5.1 Layout<a class="headerlink" href="#51-layout" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>sourdough/
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>├── pack.yaml            # manifest
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>├── schema.yaml          # object types + fields
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>├── routing.yaml         # rules, example utterances, LLM hints
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>├── operations.yaml      # allowed operations per object type
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>├── policy.yaml          # apply-policy defaults
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>├── projections.yaml     # app blocks config + markdown templates
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>├── prompts/             # optional interpreter prompt fragments
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>├── evals/
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>│   ├── fixtures.jsonl   # golden cases, ship with the pack
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>│   └── corrections.jsonl# user-local, auto-appended (gitignored in pack repos)
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>└── migrations/          # generated SQL, one file per schema version
+</code></pre></div>
+<p>Install = directory drop-in at <code>~/.&lt;name&gt;/packs/&lt;pack&gt;/</code>, or <code>pip install &lt;name&gt;-pack-sourdough</code> (entry-point group <code>&lt;name&gt;.packs</code>), or <code>&lt;name&gt; pack add &lt;git-url&gt;</code>. Discovery is directory scan + entry-point scan at startup; <code>&lt;name&gt; pack list/validate/upgrade</code> manage lifecycle.</p>
+<h2 id="52-packyaml-manifest">5.2 <code>pack.yaml</code> (manifest)<a class="headerlink" href="#52-packyaml-manifest" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sourdough</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.2.0</span><span class="w">            </span><span class="c1"># semver; MAJOR = breaking schema change</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Sourdough</span><span class="nv"> </span><span class="s">Journey&quot;</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Track</span><span class="nv"> </span><span class="s">starters,</span><span class="nv"> </span><span class="s">bakes,</span><span class="nv"> </span><span class="s">experiments,</span><span class="nv"> </span><span class="s">and</span><span class="nv"> </span><span class="s">what</span><span class="nv"> </span><span class="s">you</span><span class="nv"> </span><span class="s">learn.&quot;</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="nt">author</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;...&quot;</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="nt">license</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">MIT</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="nt">core_compat</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&gt;=0.3,&lt;2&quot;</span><span class="w">   </span><span class="c1"># core validates on load</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="nt">aliases</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">bread</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">baking.sourdough</span><span class="p p-Indicator">]</span><span class="w">   </span><span class="c1"># legacy/alternate domain names accepted at ingress</span>
+</code></pre></div>
+<h2 id="53-schemayaml-object-types">5.3 <code>schema.yaml</code> (object types)<a class="headerlink" href="#53-schemayaml-object-types" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">objects</span><span class="p">:</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">bake</span><span class="p">:</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="nt">title_field</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">loaf_name</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="nt">fields</span><span class="p">:</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">      </span><span class="nt">loaf_name</span><span class="p">:</span><span class="w">   </span><span class="p p-Indicator">{</span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="nv">text</span><span class="p p-Indicator">,</span><span class="nt"> required</span><span class="p">:</span><span class="w"> </span><span class="nv">true</span><span class="p p-Indicator">}</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">      </span><span class="nt">baked_at</span><span class="p">:</span><span class="w">    </span><span class="p p-Indicator">{</span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="nv">datetime</span><span class="p p-Indicator">,</span><span class="nt"> required</span><span class="p">:</span><span class="w"> </span><span class="nv">true</span><span class="p p-Indicator">,</span><span class="nt"> default</span><span class="p">:</span><span class="w"> </span><span class="nv">capture_time</span><span class="p p-Indicator">}</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">      </span><span class="nt">flour_mix</span><span class="p">:</span><span class="w">   </span><span class="p p-Indicator">{</span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="nv">text</span><span class="p p-Indicator">}</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">      </span><span class="nt">hydration</span><span class="p">:</span><span class="w">   </span><span class="p p-Indicator">{</span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="nv">number</span><span class="p p-Indicator">,</span><span class="nt"> unit</span><span class="p">:</span><span class="w"> </span><span class="nv">percent</span><span class="p p-Indicator">,</span><span class="nt"> min</span><span class="p">:</span><span class="w"> </span><span class="nv">40</span><span class="p p-Indicator">,</span><span class="nt"> max</span><span class="p">:</span><span class="w"> </span><span class="nv">120</span><span class="p p-Indicator">}</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">      </span><span class="nt">bulk_hours</span><span class="p">:</span><span class="w">  </span><span class="p p-Indicator">{</span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="nv">number</span><span class="p p-Indicator">,</span><span class="nt"> unit</span><span class="p">:</span><span class="w"> </span><span class="nv">hours</span><span class="p p-Indicator">}</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">      </span><span class="nt">result</span><span class="p">:</span><span class="w">      </span><span class="p p-Indicator">{</span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="nv">enum</span><span class="p p-Indicator">,</span><span class="nt"> values</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">dense</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">decent</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">good</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">great</span><span class="p p-Indicator">],</span><span class="nt"> allow_other</span><span class="p">:</span><span class="w"> </span><span class="nv">true</span><span class="p p-Indicator">}</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">      </span><span class="nt">notes</span><span class="p">:</span><span class="w">       </span><span class="p p-Indicator">{</span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="nv">text</span><span class="p p-Indicator">,</span><span class="nt"> long</span><span class="p">:</span><span class="w"> </span><span class="nv">true</span><span class="p p-Indicator">}</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">      </span><span class="nt">photos</span><span class="p">:</span><span class="w">      </span><span class="p p-Indicator">{</span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="nv">attachment</span><span class="p p-Indicator">,</span><span class="nt"> many</span><span class="p">:</span><span class="w"> </span><span class="nv">true</span><span class="p p-Indicator">}</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">    </span><span class="nt">links</span><span class="p">:</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">      </span><span class="nt">starter</span><span class="p">:</span><span class="w">     </span><span class="p p-Indicator">{</span><span class="nt">to</span><span class="p">:</span><span class="w"> </span><span class="nv">sourdough.starter</span><span class="p p-Indicator">,</span><span class="nt"> cardinality</span><span class="p">:</span><span class="w"> </span><span class="nv">many_to_one</span><span class="p p-Indicator">}</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="w">  </span><span class="nt">starter</span><span class="p">:</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="w">    </span><span class="nt">fields</span><span class="p">:</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="w">      </span><span class="nt">name</span><span class="p">:</span><span class="w">        </span><span class="p p-Indicator">{</span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="nv">text</span><span class="p p-Indicator">,</span><span class="nt"> required</span><span class="p">:</span><span class="w"> </span><span class="nv">true</span><span class="p p-Indicator">}</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="w">      </span><span class="nt">created_on</span><span class="p">:</span><span class="w">  </span><span class="p p-Indicator">{</span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="nv">date</span><span class="p p-Indicator">}</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="w">      </span><span class="nt">status</span><span class="p">:</span><span class="w">      </span><span class="p p-Indicator">{</span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="nv">enum</span><span class="p p-Indicator">,</span><span class="nt"> values</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">active</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">dormant</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">retired</span><span class="p p-Indicator">]}</span>
+</code></pre></div>
+<p>Field types (closed set in v1): <code>text, number, integer, boolean, date, datetime, duration, enum, attachment, location</code>. <code>unit</code> is declared, never assumed (a hard lesson from the private system's supplement-dose ambiguity). <code>links</code> may target other packs (<code>to: travel.trip</code>) — that is the PRD's "domain-owned facts with explicit cross-domain links."</p>
+<p>The <strong>schema compiler</strong> turns this into: (a) <code>CREATE TABLE sourdough__bake ...</code> DDL in <code>migrations/</code>, (b) a <code>schema_registry</code> row (field contract JSON used as LLM routing context and apply-time validation), (c) block data bindings (§9).</p>
+<h2 id="54-routingyaml">5.4 <code>routing.yaml</code><a class="headerlink" href="#54-routingyaml" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">rules</span><span class="p">:</span><span class="w">                                  </span><span class="c1"># L1, zero-token; ordered</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">match</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;(bak(ed|ing)|loaf|boule|batard)&quot;</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="nt">object</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bake</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span><span class="nt">confidence_boost</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">match</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;(starter|levain)\\b&quot;</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">    </span><span class="nt">object</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">starter</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="nt">examples</span><span class="p">:</span><span class="w">                               </span><span class="c1"># doubles as few-shot seed AND eval fixtures</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">text</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;baked</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">75%</span><span class="nv"> </span><span class="s">hydration</span><span class="nv"> </span><span class="s">country</span><span class="nv"> </span><span class="s">loaf,</span><span class="nv"> </span><span class="s">bulk</span><span class="nv"> </span><span class="s">5h,</span><span class="nv"> </span><span class="s">came</span><span class="nv"> </span><span class="s">out</span><span class="nv"> </span><span class="s">great&quot;</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">    </span><span class="nt">expect</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">object</span><span class="p">:</span><span class="w"> </span><span class="nv">bake</span><span class="p p-Indicator">,</span><span class="nt"> operation</span><span class="p">:</span><span class="w"> </span><span class="nv">create</span><span class="p p-Indicator">,</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="nt">             fields</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">hydration</span><span class="p">:</span><span class="w"> </span><span class="nv">75</span><span class="p p-Indicator">,</span><span class="nt"> bulk_hours</span><span class="p">:</span><span class="w"> </span><span class="nv">5</span><span class="p p-Indicator">,</span><span class="nt"> result</span><span class="p">:</span><span class="w"> </span><span class="nv">great</span><span class="p p-Indicator">}}</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">text</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;fed</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">rye</span><span class="nv"> </span><span class="s">starter&quot;</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">    </span><span class="nt">expect</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">object</span><span class="p">:</span><span class="w"> </span><span class="nv">starter</span><span class="p p-Indicator">,</span><span class="nt"> operation</span><span class="p">:</span><span class="w"> </span><span class="nv">update</span><span class="p p-Indicator">}</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="nt">negative_examples</span><span class="p">:</span><span class="w">                      </span><span class="c1"># guard against over-matching</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">text</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;the</span><span class="nv"> </span><span class="s">app</span><span class="nv"> </span><span class="s">build</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">toast&quot;</span><span class="w">      </span><span class="c1"># dev talk, not baking</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="nt">llm_hints</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="w">  </span><span class="no">Hydration is baker&#39;s percentage. &quot;Doubled in 4h&quot; describes the starter,</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="w">  </span><span class="no">not bulk fermentation.</span>
+</code></pre></div>
+<p>Minimum 8 examples + 2 negative examples per pack — <strong>enforced by <code>pack validate</code></strong>, because routing quality on user-defined domains is the product's make-or-break (§7).</p>
+<h2 id="55-operationsyaml-policyyaml">5.5 <code>operations.yaml</code> + <code>policy.yaml</code><a class="headerlink" href="#55-operationsyaml-policyyaml" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># operations.yaml — the closed vocabulary the ApplyEngine may execute</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nt">bake</span><span class="p">:</span><span class="w">    </span><span class="p p-Indicator">[</span><span class="nv">create</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">update</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">correct</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">delete</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="nt">starter</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">create</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">update</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">correct</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">merge</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">delete</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># policy.yaml — seeds apply_policy rows; user overrides win and survive pack upgrades</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nt">defaults</span><span class="p">:</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">operation</span><span class="p">:</span><span class="w"> </span><span class="nv">create</span><span class="p p-Indicator">,</span><span class="nt">  min_confidence</span><span class="p">:</span><span class="w"> </span><span class="nv">0.8</span><span class="p p-Indicator">,</span><span class="nt"> action</span><span class="p">:</span><span class="w"> </span><span class="nv">auto_apply</span><span class="p p-Indicator">}</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">operation</span><span class="p">:</span><span class="w"> </span><span class="nv">update</span><span class="p p-Indicator">,</span><span class="nt">  min_confidence</span><span class="p">:</span><span class="w"> </span><span class="nv">0.85</span><span class="p p-Indicator">,</span><span class="nt"> action</span><span class="p">:</span><span class="w"> </span><span class="nv">auto_apply</span><span class="p p-Indicator">}</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">operation</span><span class="p">:</span><span class="w"> </span><span class="nv">correct</span><span class="p p-Indicator">,</span><span class="nt"> action</span><span class="p">:</span><span class="w"> </span><span class="nv">auto_apply</span><span class="p p-Indicator">}</span><span class="w">      </span><span class="c1"># explicit user corrections always apply</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">operation</span><span class="p">:</span><span class="w"> </span><span class="nv">delete</span><span class="p p-Indicator">,</span><span class="nt">  action</span><span class="p">:</span><span class="w"> </span><span class="nv">review</span><span class="p p-Indicator">}</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">operation</span><span class="p">:</span><span class="w"> </span><span class="nv">merge</span><span class="p p-Indicator">,</span><span class="nt">   action</span><span class="p">:</span><span class="w"> </span><span class="nv">review</span><span class="p p-Indicator">}</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">match</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">channel</span><span class="p">:</span><span class="w"> </span><span class="nv">email</span><span class="p p-Indicator">},</span><span class="nt"> action</span><span class="p">:</span><span class="w"> </span><span class="nv">review</span><span class="p p-Indicator">}</span><span class="w">     </span><span class="c1"># channel-conditional rows supported</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="nt">fallback</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">unfiled_card</span><span class="w">                            </span><span class="c1"># never-drop tier for this domain</span>
+</code></pre></div>
+<p>Actions: <code>auto_apply | review | confirm | reject</code>. <code>confirm</code> asks the user in-channel and applies on affirmative reply (used for sensitive domains, e.g. medication regimens).</p>
+<h2 id="56-projectionsyaml">5.6 <code>projections.yaml</code><a class="headerlink" href="#56-projectionsyaml" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nt">app</span><span class="p">:</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">icon</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;🍞&quot;</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="nt">views</span><span class="p">:</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="nv">bakes</span><span class="p p-Indicator">,</span><span class="nt">   title</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Bakes&quot;</span><span class="p p-Indicator">,</span><span class="nt">   block</span><span class="p">:</span><span class="w"> </span><span class="nv">timeline</span><span class="p p-Indicator">,</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="nt">       object</span><span class="p">:</span><span class="w"> </span><span class="nv">bake</span><span class="p p-Indicator">,</span><span class="nt"> config</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">date_field</span><span class="p">:</span><span class="w"> </span><span class="nv">baked_at</span><span class="p p-Indicator">,</span><span class="nt"> media_field</span><span class="p">:</span><span class="w"> </span><span class="nv">photos</span><span class="p p-Indicator">}}</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="nv">search</span><span class="p p-Indicator">,</span><span class="nt">  title</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Find&quot;</span><span class="p p-Indicator">,</span><span class="nt">    block</span><span class="p">:</span><span class="w"> </span><span class="nv">search</span><span class="p p-Indicator">,</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="nt">       objects</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">bake</span><span class="p p-Indicator">],</span><span class="nt"> config</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">facets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">flour_mix</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">result</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">hydration</span><span class="p p-Indicator">]}}</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="nv">starters</span><span class="p p-Indicator">,</span><span class="nt"> title</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Starters&quot;</span><span class="p p-Indicator">,</span><span class="nt"> block</span><span class="p">:</span><span class="w"> </span><span class="nv">list</span><span class="p p-Indicator">,</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="nt">       object</span><span class="p">:</span><span class="w"> </span><span class="nv">starter</span><span class="p p-Indicator">,</span><span class="nt"> config</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">group_by</span><span class="p">:</span><span class="w"> </span><span class="nv">status</span><span class="p p-Indicator">}}</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="nv">stats</span><span class="p p-Indicator">,</span><span class="nt">   title</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Progress&quot;</span><span class="p p-Indicator">,</span><span class="nt"> block</span><span class="p">:</span><span class="w"> </span><span class="nv">stats</span><span class="p p-Indicator">,</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="nt">       object</span><span class="p">:</span><span class="w"> </span><span class="nv">bake</span><span class="p p-Indicator">,</span><span class="nt"> config</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">measures</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[{</span><span class="nt">field</span><span class="p">:</span><span class="w"> </span><span class="nv">result</span><span class="p p-Indicator">,</span><span class="nt"> agg</span><span class="p">:</span><span class="w"> </span><span class="nv">distribution</span><span class="p p-Indicator">},</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="w">                                         </span><span class="p p-Indicator">{</span><span class="nt">field</span><span class="p">:</span><span class="w"> </span><span class="nv">hydration</span><span class="p p-Indicator">,</span><span class="nt"> agg</span><span class="p">:</span><span class="w"> </span><span class="nv">trend</span><span class="p p-Indicator">}]}}</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="nt">markdown</span><span class="p">:</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="w">  </span><span class="nt">folder</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Sourdough&quot;</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="w">  </span><span class="nt">note_template</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bake_note.md.j2</span><span class="w">       </span><span class="c1"># rendered inside managed regions only</span>
+</code></pre></div>
+<h2 id="57-pack-evolution-migrations">5.7 Pack evolution &amp; migrations<a class="headerlink" href="#57-pack-evolution-migrations" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Schema edits go through <code>&lt;name&gt; pack migrate &lt;pack&gt;</code>: diffs old vs new <code>schema.yaml</code>, generates additive SQL (new columns/tables, enum widening) into <code>migrations/</code>, bumps version. <strong>Destructive changes</strong> (drop/rename/narrow) require <code>--breaking</code>, generate a MAJOR bump, and emit a data-preserving migration plan (rename = add + backfill + tombstone old column) — never silent data loss.</li>
+<li>On pack upgrade, core applies pending pack migrations with the same <code>schema_version</code> runner as substrate migrations, then re-registers the field contract.</li>
+<li>The wizard's hardening loop (§6) uses exactly this path, so generated and hand-edited packs stay migratable forever.</li>
+</ul>
+<hr />
+<h1 id="6-guided-domain-creation">6. Guided domain creation<a class="headerlink" href="#6-guided-domain-creation" title="Permanent link">&para;</a></h1>
+<p>The flagship flow. It must work identically in <strong>chat</strong> (via any runtime adapter) and the <strong>CLI/app shell wizard</strong>, because the same <code>wizard/</code> engine drives both.</p>
+<h2 id="61-flow">6.1 Flow<a class="headerlink" href="#61-flow" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>flowchart LR
+    G["1· Goal in plain language"] --&gt; P["2· LLM proposes provisional pack&lt;br/&gt;(objects, fields, units, enums,&lt;br/&gt;10 example utterances)"]
+    P --&gt; I["3· Hardening interview&lt;br/&gt;3–6 targeted questions"]
+    I --&gt; GEN["4· Generate pack + migration&lt;br/&gt;+ fixtures from examples"]
+    GEN --&gt; DRY["5· Dry-run routing over examples&lt;br/&gt;(all must route correctly)"]
+    DRY --&gt; TEST["6· Test drive: user sends 5 real captures"]
+    TEST --&gt; H["7· Hardening loop (open-ended):&lt;br/&gt;plain-language edits → pack diff + migration"]
+    H --&gt; TEST</code></pre>
+<p>Interview questions are <em>targeted</em>, generated from what the proposal left ambiguous — cadence ("per bake or per day?"), units ("hydration in percent or grams?"), key views ("do you care more about browsing history or searching by ingredient?"), correction style, privacy (does this domain need <code>confirm</code> policies?). Never more than 6 questions; the PRD's promise is a working app from ordinary language, not a form.</p>
+<h2 id="62-hardening-is-a-first-class-ongoing-verb">6.2 Hardening is a first-class, ongoing verb<a class="headerlink" href="#62-hardening-is-a-first-class-ongoing-verb" title="Permanent link">&para;</a></h2>
+<p>After creation, any time, in any channel:</p>
+<blockquote>
+<p>"in sourdough, split flour_mix into flour_type and mix_ratio, and add a 'crumb shot' photo field"</p>
+</blockquote>
+<p>→ wizard produces a <strong>pack diff preview</strong> (fields added/renamed/typed, migration summary, affected policies/views) → user confirms → migration applies → <code>schema_registry</code> + few-shot context update → an eval case is appended asserting the new field routes. This is PRD item #3 ("plain-language schema hardening") and it reuses §5.7 wholesale.</p>
+<h2 id="63-provisional-schema-quality-guardrails">6.3 Provisional-schema quality guardrails<a class="headerlink" href="#63-provisional-schema-quality-guardrails" title="Permanent link">&para;</a></h2>
+<ul>
+<li>The generator prompt includes the <strong>pack authoring style guide</strong> (field naming, unit discipline, enum-with-<code>allow_other</code> bias, "events vs regimens" distinction learned from the private health domain).</li>
+<li>Generated packs always pass <code>pack validate</code> before activation (schema compiles, ≥8 examples route in dry-run, policies well-formed).</li>
+<li>Everything is reviewable text on disk — a power user can open <code>schema.yaml</code> in an editor at any point; the wizard is a convenience layer over the same files.</li>
+</ul>
+<hr />
+<h1 id="7-multi-domain-routing-design">7. Multi-domain routing design<a class="headerlink" href="#7-multi-domain-routing-design" title="Permanent link">&para;</a></h1>
+<p>Routing is the product's make-or-break: the PRD demands the tool be "VERY good at routing and identifying what a message is about, whether it spans multiple contexts." The private system's two-layer design is proven; the OSS work is generalizing it to <strong>runtime-defined domains</strong> and <strong>multi-domain fan-out</strong>.</p>
+<h2 id="71-layer-1-zero-token-rules-the-hot-path">7.1 Layer 1 — zero-token rules (the hot path)<a class="headerlink" href="#71-layer-1-zero-token-rules-the-hot-path" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Rules come from installed packs' <code>routing.yaml</code> (compiled at pack load into one ordered matcher), plus <strong>learned aliases</strong> promoted from corrections. No hardcoded domain list anywhere in core — the private <code>STRUCTURED_DOMAIN_PREFIXES</code> constant is replaced by a per-pack <code>interpretation: structured|simple</code> flag in <code>pack.yaml</code> (structured ⇒ always escalate to L2 for field extraction; simple ⇒ eligible for L1-only capture).</li>
+<li>Confidence model (ported): exactly one pack matches ⇒ 0.85 (+pack-declared boosts, capped); multiple packs match ⇒ 0.5 and escalate; none ⇒ 0.3 and escalate.</li>
+<li><strong>Rule demotion (ported):</strong> rules repeatedly implicated in corrections get their confidence capped, pushing their traffic to L2 until fixed. This is the cheap half of the learning loop.</li>
+<li>L1-only capture is permitted only when: single match ∧ confidence ≥ 0.85 ∧ pack is <code>simple</code> ∧ text is short ∧ no correction intent detected. Everything else escalates.</li>
+</ul>
+<h2 id="72-layer-2-one-llm-call-structured-fan-out">7.2 Layer 2 — one LLM call, structured fan-out<a class="headerlink" href="#72-layer-2-one-llm-call-structured-fan-out" title="Permanent link">&para;</a></h2>
+<p>One call per escalated capture. Context assembled from: (a) compact pack summaries — name, description, 3 example utterances each; (b) full field contracts from <code>schema_registry</code> for the L1-shortlisted packs (all packs' summaries, but contracts only for likely ones — token discipline); (c) the few-shot correction bank (§8.4); (d) open-context hints packs may register (e.g. travel's "currently active trip" — generalized from the private open-trip context).</p>
+<p>Output schema (enforced via structured output / JSON-schema mode, retry once on invalid — ported behavior):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="p">{</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">&quot;captures&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;domain&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;food&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;object_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;dining_note&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;operation&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;create&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">     </span><span class="nt">&quot;span&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;amazing tsukemen at Rokurinsha&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;confidence&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.9</span><span class="p">,</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">     </span><span class="nt">&quot;fields&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;dish&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;tsukemen&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;venue&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Rokurinsha&quot;</span><span class="p">},</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">     </span><span class="nt">&quot;links&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">&quot;to_domain&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;travel&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;relation&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;occurred_during&quot;</span><span class="p">}]},</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;domain&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;travel&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;object_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;timeline_item&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;operation&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;create&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="w">     </span><span class="nt">&quot;span&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;at Tokyo Station before the 3pm shinkansen&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;confidence&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.85</span><span class="p">,</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">     </span><span class="nt">&quot;fields&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;place&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Tokyo Station&quot;</span><span class="p">}}</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="w">  </span><span class="p">],</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="w">  </span><span class="nt">&quot;unmatched_text&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="w">  </span><span class="nt">&quot;needs_clarification&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="w">  </span><span class="nt">&quot;clarifying_question&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="p">}</span>
+</code></pre></div>
+<ul>
+<li><strong>Fan-out:</strong> each element becomes its own <code>change_request</code>, policy-evaluated independently — one message can auto-apply into food while its travel half goes to review. <code>links</code> create cross-domain link records between the resulting canonical objects (PRD: "a single capture may connect travel, food, health, and finance without merging them into one universal schema").</li>
+<li><strong><code>unmatched_text</code></strong> non-null triggers the never-drop ladder for the remainder. <strong><code>needs_clarification</code></strong> with a <code>confirm</code>-capable channel asks the user one question; otherwise the capture goes to review with the question attached (the review queue shows <em>what the router wanted to know</em> — a major triage UX win).</li>
+</ul>
+<h2 id="73-never-drop-ladder-ported-generalized">7.3 Never-drop ladder (ported, generalized)<a class="headerlink" href="#73-never-drop-ladder-ported-generalized" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Pack-declared fallback (e.g. travel's dated flexible timeline item).</li>
+<li><strong>Unfiled domain card</strong> — structured-ish JSON preserved, no domain commitment.</li>
+<li>Ledger-only entry.</li>
+</ol>
+<p>Nothing is ever rejected. Fallback tier is recorded on the entry so evals can measure "how often do we fail to route" per pack.</p>
+<h2 id="74-cost-calibration">7.4 Cost &amp; calibration<a class="headerlink" href="#74-cost-calibration" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Daily LLM cost guard (ported): configurable USD cap; past it, rules-only + review flagging. Cost per interpretation recorded in <code>cost_ledger</code>; surfaced in health UI.</li>
+<li><strong>Calibration harness (new):</strong> the eval corpus (§10) reports confidence calibration per pack (do 0.9-confidence routes actually succeed 90% of the time?) so the auto-apply thresholds in <code>policy.yaml</code> are tuned from data, not vibes. Miscalibrated packs get a docs-linked warning from <code>pack validate --stats</code>.</li>
+</ul>
+<hr />
+<h1 id="8-correction-supersession-workflow">8. Correction &amp; supersession workflow<a class="headerlink" href="#8-correction-supersession-workflow" title="Permanent link">&para;</a></h1>
+<p>The PRD's second core capability: "safely correcting routing, extraction, and interpretation errors without losing provenance," in one conversational interaction.</p>
+<h2 id="81-the-one-message-contract">8.1 The one-message contract<a class="headerlink" href="#81-the-one-message-contract" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>"that bake was 80% hydration not 75" · "the Rokurinsha note should be under travel too" · "undo that last capture" · "merge those two starters"</p>
+</blockquote>
+<p>Any ingress accepts corrections. The router detects correction intent (ported <code>CORRECTION_INTENT_RE</code> + LLM confirmation); the interpreter resolves the target (most-recent-matching entry/object, or explicit ID from the app UI) and produces a correction operation.</p>
+<h2 id="82-correction-semantics-all-ported">8.2 Correction semantics (all ported)<a class="headerlink" href="#82-correction-semantics-all-ported" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>amend</code></td>
+<td>New <code>object_revision</code> with changed fields; prior revision preserved</td>
+</tr>
+<tr>
+<td><code>move</code></td>
+<td>Re-route entry to another domain/object; original interpretation superseded, not deleted</td>
+</tr>
+<tr>
+<td><code>merge</code></td>
+<td>Two canonical objects → survivor + tombstone with link; review-gated by default</td>
+</tr>
+<tr>
+<td><code>undo</code></td>
+<td>Reverting revision appended (never row deletion); projections refreshed</td>
+</tr>
+<tr>
+<td><code>mark_wrong</code></td>
+<td>Records the error without knowing the fix — feeds the eval corpus as a "known bad" case</td>
+</tr>
+</tbody>
+</table>
+<p>Every correction writes a <code>correction_event</code> with <code>wrong_json</code>/<code>right_json</code>/<code>reason_code</code> and (where applied) the linked change request — the provenance triple that powers §8.4 and §10. <strong>No correction leaves orphaned canonical records</strong> (PRD): the executor refuses correction application unless referential integrity checks pass, and FK checks are a runtime health gate.</p>
+<h2 id="83-supersession-rules">8.3 Supersession rules<a class="headerlink" href="#83-supersession-rules" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Interpretations are versioned; a correction inserts version N+1 and marks N superseded. Queries default to latest; provenance queries can walk the chain.</li>
+<li>Canonical objects never lose revisions. "Delete" = tombstone revision; hard purge is an explicit, separate, confirm-gated maintenance command (privacy escape hatch).</li>
+</ul>
+<h2 id="84-the-learning-loop">8.4 The learning loop<a class="headerlink" href="#84-the-learning-loop" title="Permanent link">&para;</a></h2>
+<ol>
+<li><code>correction_event</code> lands →</li>
+<li>nightly (or on-demand) <strong>few-shot bank rebuild</strong> selects representative wrong→right pairs per reason code, keeps the bank under a token budget, injects into L2 prompts (ported <code>build_fewshot_bank.py</code>);</li>
+<li>rule demotion caps offending L1 rules (§7.1);</li>
+<li>an <strong>eval case is auto-appended</strong> (§10) — the new, product-defining step;</li>
+<li>repeated corrections of the same shape surface in the app as a suggested pack edit ("you've corrected hydration units 3× — add <code>unit: percent</code>?") → one tap opens the hardening flow (§6.2).</li>
+</ol>
+<hr />
+<h1 id="9-universal-app-shell-block-system">9. Universal app shell &amp; block system<a class="headerlink" href="#9-universal-app-shell-block-system" title="Permanent link">&para;</a></h1>
+<p>One local web app renders every domain. Domains differ by <strong>which blocks they compose</strong>, not by generated code — travel reads as list/timeline, recipes as search-heavy, workouts as history + future planning, exactly per the locked product decision.</p>
+<h2 id="91-built-in-block-catalog-v1">9.1 Built-in block catalog (v1)<a class="headerlink" href="#91-built-in-block-catalog-v1" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Block</th>
+<th>Renders</th>
+<th>Config surface (examples)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>capture_feed</code></td>
+<td>Reverse-chron entries w/ routing badges + one-tap correct</td>
+<td>domains filter</td>
+</tr>
+<tr>
+<td><code>list</code></td>
+<td>Sortable/groupable table of objects</td>
+<td>columns, group_by, sort</td>
+</tr>
+<tr>
+<td><code>timeline</code></td>
+<td>Date-anchored cards w/ media</td>
+<td>date_field, media_field, range zoom</td>
+</tr>
+<tr>
+<td><code>detail</code></td>
+<td>One object: fields, revision history, provenance chain, linked objects</td>
+<td>field layout</td>
+</tr>
+<tr>
+<td><code>search</code></td>
+<td>Full-text (SQLite FTS5) + facet filters</td>
+<td>objects, facets</td>
+</tr>
+<tr>
+<td><code>stats</code></td>
+<td>Distributions, trends, streaks</td>
+<td>measures: field × agg</td>
+</tr>
+<tr>
+<td><code>history</code></td>
+<td>Periodized past view (weeks/months) w/ comparisons</td>
+<td>period, measures</td>
+</tr>
+<tr>
+<td><code>planner</code></td>
+<td>Future-dated items + "plan next" creation affordance</td>
+<td>date_field, statuses</td>
+</tr>
+<tr>
+<td><code>review_queue</code></td>
+<td>Global: pending approvals w/ diff preview, approve/deny/edit, bulk triage, SLO counters</td>
+<td>filters</td>
+</tr>
+</tbody>
+</table>
+<p><code>review_queue</code>, <code>capture_feed</code>, and <code>detail</code> are also <strong>global surfaces</strong> (not per-domain): the review queue is the operational heart of the product and gets first-class treatment (backlog lesson, §3.4).</p>
+<h2 id="92-how-blocks-bind-to-data">9.2 How blocks bind to data<a class="headerlink" href="#92-how-blocks-bind-to-data" title="Permanent link">&para;</a></h2>
+<p>Blocks never query SQL directly. Each block declares a <strong>data contract</strong> (e.g. <code>timeline</code> needs <code>object</code>, a <code>datetime</code> field, optional attachment field); the pack's <code>projections.yaml</code> binds contract slots to schema fields; the core API serves a generic <code>/api/blocks/&lt;view_id&gt;/data</code> endpoint that compiles the binding into safe, parameterized queries (RO connection, enforced by the ported store discipline). Adding a field to a schema automatically makes it available to facets/columns/measures.</p>
+<h2 id="93-the-remix-path-for-custom-blocks">9.3 The remix path for custom blocks<a class="headerlink" href="#93-the-remix-path-for-custom-blocks" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Config-level remix (most users):</strong> rearrange views, choose blocks, tune facets/measures — pure YAML.</li>
+<li><strong>Custom block (React devs):</strong> a block = React component + JSON-schema for its config + declared data contract, registered in <code>app/src/blocks/registry.ts</code>. Ships in-tree via PR, or side-loaded from <code>~/.&lt;name&gt;/blocks/</code> (dev mode, built with the provided Vite config). Custom blocks are trusted code and documented as such (§12.4).</li>
+<li><strong>Bespoke app (power users):</strong> consume the same HTTP API from any external app — the pattern proven privately by Roamboard/MiseKit, which remain the reference examples in docs (described, not shipped).</li>
+</ol>
+<h2 id="94-correction-ux-in-the-shell">9.4 Correction UX in the shell<a class="headerlink" href="#94-correction-ux-in-the-shell" title="Permanent link">&para;</a></h2>
+<p>Every rendered object carries its provenance: hover/tap → original capture text, interpretation confidence, revision history. Inline edit = a <code>correct</code> call (same path as chat — invariant 10), never a raw row update. The capture feed's "wrong domain?" one-tap opens a move/merge dialog. <strong>The app shell is a client of the harness, with no privileged write path.</strong></p>
+<hr />
+<h1 id="10-evaluation-replay-framework">10. Evaluation replay framework<a class="headerlink" href="#10-evaluation-replay-framework" title="Permanent link">&para;</a></h1>
+<p>The PRD elevates this to release scope: "every correction becomes a replayable test case." The private system has all the raw material (correction_event, <code>reinterpret_history.py</code>, verification gate) but never wired it into a regenerating corpus — <strong>this is the flagship new build</strong>, and it is also our answer to the hardest OSS problem: keeping routing quality high across thousands of user-defined domains we will never see.</p>
+<h2 id="101-eval-case-format-eval_case-table-jsonl-export">10.1 Eval case format (<code>eval_case</code> table + JSONL export)<a class="headerlink" href="#101-eval-case-format-eval_case-table-jsonl-export" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="p">{</span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ec_01J...&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;source&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;correction&quot;</span><span class="p">,</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w"> </span><span class="nt">&quot;raw_text&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;baked an 80% loaf, bulk 4h&quot;</span><span class="p">,</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w"> </span><span class="nt">&quot;context&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;packs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;sourdough@1.2.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;food@2.0.1&quot;</span><span class="p">],</span><span class="w"> </span><span class="nt">&quot;date&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-07-16&quot;</span><span class="p">,</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">             </span><span class="nt">&quot;open_hints&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[]},</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w"> </span><span class="nt">&quot;expected&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;captures&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">&quot;domain&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;sourdough&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;object_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;bake&quot;</span><span class="p">,</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">              </span><span class="nt">&quot;operation&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;create&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;fields&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;hydration&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">80</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;bulk_hours&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">}}]},</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w"> </span><span class="nt">&quot;provenance&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;correction_event_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1234</span><span class="p">},</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w"> </span><span class="nt">&quot;created_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-07-16T10:00:00Z&quot;</span><span class="p">}</span>
+</code></pre></div>
+<p>Three sources: <strong>pack fixtures</strong> (ship with packs, from <code>routing.yaml</code> examples), <strong>corrections</strong> (auto-appended when a correction resolves — expected = the corrected interpretation, input = the <em>original</em> raw capture and pack context), <strong>curated</strong> (hand-written contract cases: approval-executes-once, never-drop ladder, multi-domain fan-out).</p>
+<h2 id="102-replay-runner">10.2 Replay runner<a class="headerlink" href="#102-replay-runner" title="Permanent link">&para;</a></h2>
+<p><code>&lt;name&gt; eval [--packs ...] [--live-llm]</code></p>
+<ul>
+<li><strong>Frozen clock</strong> injected everywhere (the wall-clock flakiness lesson is codified: no eval may read real time).</li>
+<li><strong>LLM cassettes by default:</strong> recorded request/response pairs keyed by a normalized prompt hash make CI deterministic and free. <code>--live-llm</code> re-records and reports drift (run nightly against a pinned model, not per-PR).</li>
+<li>Scoring: routing accuracy (domain/object/operation exact), field extraction (per-field precision/recall), disposition correctness (auto vs review), calibration curves (§7.4). Output: per-pack scorecard + diff vs the committed baseline snapshot.</li>
+</ul>
+<h2 id="103-gates">10.3 Gates<a class="headerlink" href="#103-gates" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>CI (per PR):</strong> full corpus replay with cassettes; any regression vs baseline fails the build. Substrate contract suites (approval-executes-exactly-once, never-drop, idempotency, FK-clean, projection convergence) run alongside — the ported verification-gate pattern with invariant-based assertions only.</li>
+<li><strong>Release:</strong> live-LLM replay on the pinned model + <code>pack validate --stats</code> on bundled packs + the §12 leak scan.</li>
+<li><strong>False completed-action interpretations</strong> (system claims something applied that didn't) are tagged as their own eval category and are <strong>release-blocking at zero occurrences</strong> — a direct PRD safety requirement.</li>
+</ul>
+<h2 id="104-the-remixer-workflow">10.4 The remixer workflow<a class="headerlink" href="#104-the-remixer-workflow" title="Permanent link">&para;</a></h2>
+<p><code>&lt;name&gt; eval</code> runs the user's <em>own</em> corpus (their fixtures + their corrections) against <em>their</em> installed packs — every remixer gets a personal regression suite for free, and <code>pack publish</code> refuses packs whose fixtures don't pass. Users can export sanitized correction-derived cases (<code>&lt;name&gt; eval export --sanitize</code>, PII-stripped + reviewed in a diff) as PR contributions to upstream packs — the community flywheel: <strong>using the product generates the test suite that protects the product.</strong></p>
+<hr />
+<h1 id="11-phased-implementation-plan-p0p9">11. Phased implementation plan (P0–P9)<a class="headerlink" href="#11-phased-implementation-plan-p0p9" title="Permanent link">&para;</a></h1>
+<p>Assumes a 2-engineer team. Total ≈ <strong>28 eng-weeks (~3.5 calendar months)</strong> with P5 ∥ P6 parallelized. Every phase ends with a verifiable acceptance gate; do not start the next phase's dependent work with a red gate (contract-freeze discipline that already saved the private system twice).</p>
+<p><strong>Dependency graph:</strong> P0 → P1 → P2 → P3 → P4 → {P5 ∥ P6} → P7 → P8 → P9. (P7's runner skeleton should be stood up during P2 — see P2 checklist — so eval cases accumulate from the first router commit.)</p>
+<h2 id="p0-repo-bootstrap-extraction-guardrails-2-wk">P0 — Repo bootstrap &amp; extraction guardrails (2 wk)<a class="headerlink" href="#p0-repo-bootstrap-extraction-guardrails-2-wk" title="Permanent link">&para;</a></h2>
+<p><strong>Goal:</strong> a fresh public-ready repo where it is <em>structurally difficult</em> to leak personal data, plus the ported substrate DDL.</p>
+<ul>
+<li>[ ] Decide the name (§13.1); register GitHub org, PyPI names (<code>&lt;name&gt;-core</code>, <code>&lt;name&gt;-pack-*</code> prefix), domain for docs.</li>
+<li>[ ] Fresh repo (NO history from private repos; private repos never added as remotes — enforce with a pre-push hook + CI check on remote URLs).</li>
+<li>[ ] MIT LICENSE, CODE_OF_CONDUCT, CONTRIBUTING (with the pack authoring style guide seed), SECURITY.md.</li>
+<li>[ ] CI skeleton: ruff + pyright + pytest on 3.11–3.13; Node build for <code>app/</code>.</li>
+<li>[ ] <strong>Leak gates in CI from day one:</strong> gitleaks; custom scanner (denylist file of personal names/places/emails kept in a <em>private</em> repo, fetched via secret in CI); binary-file and <code>*.sqlite</code> blockers; fixture linter (all example data must come from <code>examples/synthetic/</code>).</li>
+<li>[ ] Write the substrate DDL (§4.3) as migrations <code>ledger_001_substrate.sql</code> etc., cleanly re-typed (not copied) from the private migrations, with the vocabulary drift fixed (singular domain names, one target-vocabulary format).</li>
+<li>[ ] Port the migration runner + <code>schema_version</code> mechanics with tests.</li>
+<li>[ ] Decision record (ADR-001..004): HTTP adapter contract, two-database layout, ULID identity, packs-are-data.</li>
+</ul>
+<p><strong>Gate:</strong> CI green on a walking skeleton (<code>&lt;name&gt; init</code> creates both DBs, migrations apply, integrity+FK checks pass); a seeded fake-PII commit is rejected by the leak gates (test the guard, not just install it).</p>
+<h2 id="p1-core-substrate-3-wk">P1 — Core substrate (3 wk)<a class="headerlink" href="#p1-core-substrate-3-wk" title="Permanent link">&para;</a></h2>
+<p><strong>Goal:</strong> capture-first ledger with idempotency, receipts, and never-drop — the invariants live here.</p>
+<ul>
+<li>[ ] Port <code>store.py</code> discipline → <code>core/ledger/</code> + <code>core/security/</code>: RO/RW connections, parameterized-write helpers, <code>safe_join</code>, <code>redact_secrets</code> (unit-tested against the private system's attack cases: path traversal, secret echo).</li>
+<li>[ ] <code>capture()</code> transaction: validate → insert <code>capture_event</code> + <code>entry</code> + <code>source_link</code> (+tags) → return receipt. Interpretation is <em>staged after</em> the durable insert (invariant 1); partial-completion semantics documented and tested.</li>
+<li>[ ] Idempotency: dedupe by <code>source_ref</code>; replay-safe re-capture returns the original receipt.</li>
+<li>[ ] Never-drop ladder data model: entry statuses <code>applied/review/ledger_only/unfiled</code> + unfiled-card storage.</li>
+<li>[ ] <code>query()</code> read-only API with domain/type/filter/FTS5 params.</li>
+<li>[ ] <code>HarnessAPI</code> façade + FastAPI wiring for <code>capture/query</code>; CLI <code>capture</code>, <code>init</code>, <code>serve</code> (API-only mode).</li>
+<li>[ ] Attachment storage (content-addressed files under <code>~/.&lt;name&gt;/attachments/</code>).</li>
+<li>[ ] Health endpoint: integrity_check + FK check per store, counts, last-capture timestamp.</li>
+</ul>
+<p><strong>Gate:</strong> contract test suite green: capture-first ordering observable, idempotent double-capture, receipts complete, FK/integrity clean under crash-injection tests (kill between substeps; ledger anchor survives).</p>
+<h2 id="p2-pack-system-registry-driven-routing-4-wk">P2 — Pack system &amp; registry-driven routing (4 wk)<a class="headerlink" href="#p2-pack-system-registry-driven-routing-4-wk" title="Permanent link">&para;</a></h2>
+<p><strong>Goal:</strong> domains defined at runtime; the two-layer router with multi-domain fan-out. <em>The make-or-break phase.</em></p>
+<ul>
+<li>[ ] Pack loader/validator: parse the five YAML files, semver/compat checks, ≥8 examples + ≥2 negatives enforced, directory + entry-point discovery, <code>pack list/validate/add</code>.</li>
+<li>[ ] Schema compiler: <code>schema.yaml</code> → DDL migration + <code>schema_registry</code> contract JSON + field-binding metadata. Pack migration apply path.</li>
+<li>[ ] <code>_template</code> pack + <code>pack new</code> scaffold.</li>
+<li>[ ] L1 matcher compiled from installed packs: ordered rules, confidence model, boosts/caps, rule-demotion hooks (wired to correction events in P3).</li>
+<li>[ ] <code>llm/</code> provider abstraction: OpenAI-compatible client (covers DeepSeek/OpenAI/OpenRouter/Ollama) + Anthropic; JSON-schema structured output w/ prompted-JSON fallback + retry-once.</li>
+<li>[ ] L2 interpreter: context assembly (pack summaries, shortlisted field contracts, hints), fan-out output schema, span handling, <code>unmatched_text</code> → never-drop ladder, clarification channel-awareness.</li>
+<li>[ ] Cross-domain link records on fan-out.</li>
+<li>[ ] Cost guard + <code>cost_ledger</code> + per-capture cost on receipts.</li>
+<li>[ ] <strong>Stand up the eval runner skeleton now</strong> (fixture replay + cassettes, minimal scoring) so every routing commit is measured from the start; full framework lands in P7.</li>
+<li>[ ] Temporary dev pack ("plants" or similar synthetic domain) used purely for routing tests.</li>
+</ul>
+<p><strong>Gate:</strong> with two synthetic packs installed, the routing eval fixture set (≥60 cases incl. 15 multi-domain and 10 negatives) scores ≥90% routing accuracy with cassettes; a message spanning both packs produces two policy-independent change requests with a link record; cost guard trips correctly in a fixture.</p>
+<h2 id="p3-apply-policy-corrections-3-wk">P3 — Apply, policy &amp; corrections (3 wk)<a class="headerlink" href="#p3-apply-policy-corrections-3-wk" title="Permanent link">&para;</a></h2>
+<p><strong>Goal:</strong> policy-gated exactly-once apply and the full correction/supersession loop.</p>
+<ul>
+<li>[ ] Port ApplyEngine/DomainRegistry/OperationSpec; generic declarative handler executes <code>operations.yaml</code> vocab against compiled schemas (create/update/correct/merge/delete w/ tombstones).</li>
+<li>[ ] Port object journal: canonical ULIDs, revisions, changed-field diffs.</li>
+<li>[ ] Policy evaluator: <code>policy.yaml</code> seeds <code>apply_policy</code> rows; user overrides persist across pack upgrades; <code>confirm</code> action w/ channel callback.</li>
+<li>[ ] Port CanonicalChangeExecutor: approve → apply <strong>exactly once</strong>, execution receipts, projection scheduling stub.</li>
+<li>[ ] Approval queue API: list/resolve with decision-vs-application state separately queryable.</li>
+<li>[ ] Correction intent detection + target resolution; <code>correct()</code> API (NL + explicit); the five correction actions (§8.2); <code>correction_event</code> writes.</li>
+<li>[ ] Few-shot bank builder + injection into L2 prompts; rule demotion wired.</li>
+<li>[ ] Correction → auto-append <code>eval_case</code> (closing the private system's gap).</li>
+</ul>
+<p><strong>Gate:</strong> contract suites green: approve-applies-exactly-once (incl. double-resolve and crash-between attempts), one-message correction round-trip (wrong capture → NL correction → revision + provenance chain + eval case exists), merge leaves no orphans (FK gate), policy matrix fixture (auto/review/confirm × confidence) fully covered.</p>
+<h2 id="p4-projections-review-queue-api-2-wk">P4 — Projections &amp; review queue API (2 wk)<a class="headerlink" href="#p4-projections-review-queue-api-2-wk" title="Permanent link">&para;</a></h2>
+<p><strong>Goal:</strong> durable, idempotent projections; the review surface.</p>
+<ul>
+<li>[ ] Port ProjectionCoordinator: outbox, <code>mark_dirty</code>/<code>drain</code>, per-adapter watermarks, retry-from-durable-state; background drain loop in <code>serve</code>.</li>
+<li>[ ] Markdown adapter: managed-region writer (free zones sacred), pack <code>note_template</code> rendering, vault layout from <code>projections.yaml</code> (generic vault; Obsidian just opens it — the "optional Obsidian adapter" of the PRD).</li>
+<li>[ ] Block-data adapter: materialized view-data cache or direct compiled queries (choose direct-first; cache only if profiling demands).</li>
+<li>[ ] Projection lag metrics in health output; <code>pending</code> status on receipts until convergence (PRD: projection state visibly pending after canonical changes).</li>
+<li>[ ] Review queue API: filters, diff previews (proposed vs current canonical), bulk operations, SLO counters (pending count, overdue count, oldest item age).</li>
+</ul>
+<p><strong>Gate:</strong> kill-the-daemon convergence test (canonical commit with projections down → restart → projections converge, watermark advances, receipt flips to refreshed); managed-region fuzz test (random user edits outside markers always survive re-render); review SLO counters accurate against fixtures.</p>
+<h2 id="p5-universal-app-shell-4-wk-parallel-with-p6">P5 — Universal app shell (4 wk) — parallel with P6<a class="headerlink" href="#p5-universal-app-shell-4-wk-parallel-with-p6" title="Permanent link">&para;</a></h2>
+<p><strong>Goal:</strong> the product becomes visible: one SPA, nine blocks, review-first operations.</p>
+<ul>
+<li>[ ] SPA scaffold (Vite+React+TS), served from FastAPI static mount; local-only default binding; token-gated API if bound beyond localhost.</li>
+<li>[ ] Block registry + data-contract binding compiler + <code>/api/blocks/&lt;view&gt;/data</code> endpoint (RO, parameterized).</li>
+<li>[ ] Ship the nine built-in blocks (§9.1) against synthetic packs; responsive; keyboard-friendly.</li>
+<li>[ ] Global surfaces: home (per-domain cards from pack manifests), capture box, capture feed w/ one-tap correction, review queue UI (approve/deny/edit-then-approve, bulk triage), health panel (store integrity, projection lag, LLM spend, eval score).</li>
+<li>[ ] Detail view provenance chain: capture text → interpretation (confidence) → revisions.</li>
+<li>[ ] Correction dialogs (move/merge/amend) calling <code>correct()</code> — no privileged writes.</li>
+<li>[ ] Custom-block side-load dev path + docs page.</li>
+<li>[ ] Empty states that teach ("No domains yet — describe what you want to track").</li>
+</ul>
+<p><strong>Gate:</strong> scripted walkthrough on synthetic data passes: install two packs → capture from web box → see it in timeline/search/stats → correct from detail view → revision chain visible → review queue drains to zero → health panel all green. Lighthouse perf ≥85 local.</p>
+<h2 id="p6-guided-domain-creation-wizard-3-wk-parallel-with-p5">P6 — Guided domain creation wizard (3 wk) — parallel with P5<a class="headerlink" href="#p6-guided-domain-creation-wizard-3-wk-parallel-with-p5" title="Permanent link">&para;</a></h2>
+<p><strong>Goal:</strong> the flagship "describe your passion → working app" flow, in chat and CLI/web.</p>
+<ul>
+<li>[ ] Wizard engine: session state machine (goal → proposal → interview → generate → dry-run → test-drive → hardening), resumable, channel-agnostic (<code>new_domain</code>/<code>wizard_reply</code> API).</li>
+<li>[ ] Proposal generator prompt + pack authoring style guide; outputs full pack files + 10 examples.</li>
+<li>[ ] Interview question generator (max 6, targeted at ambiguities: cadence/units/views/privacy).</li>
+<li>[ ] Generate → <code>pack validate</code> → dry-run routing over examples (all must route; failures regenerate with feedback).</li>
+<li>[ ] Test-drive mode: next N captures get verbose routing explanations + instant-correct affordance.</li>
+<li>[ ] Hardening loop: NL edit → pack diff preview → confirm → migration + registry refresh + fixture append (§6.2). Also triggered by repeated-correction suggestions (§8.4).</li>
+<li>[ ] CLI <code>new-domain</code> + app-shell wizard UI (same engine).</li>
+<li>[ ] Wizard evals: 10 golden goal-statements (incl. "sourdough journey") must produce packs that pass validation and route their own examples ≥95%.</li>
+</ul>
+<p><strong>Gate:</strong> cold start to working domain in ≤10 minutes: fresh install → one-sentence goal → interview → capture 5 synthetic messages → all visible in app blocks → one hardening edit round-trips with a migration. Recorded as the demo script for P9.</p>
+<h2 id="p7-evaluation-replay-framework-complete-2-wk">P7 — Evaluation replay framework, complete (2 wk)<a class="headerlink" href="#p7-evaluation-replay-framework-complete-2-wk" title="Permanent link">&para;</a></h2>
+<p><strong>Goal:</strong> finish §10 beyond the P2 skeleton; make quality enforceable.</p>
+<ul>
+<li>[ ] Cassette store: normalized prompt-hash keying, record/replay modes, drift report (<code>--live-llm</code>).</li>
+<li>[ ] Frozen-clock injection audit across core (no <code>datetime.now()</code> outside the clock provider — lint rule).</li>
+<li>[ ] Full scoring: routing/field/disposition/calibration + per-pack scorecards + committed baseline snapshots + regression diff.</li>
+<li>[ ] Correction→eval_case backfill command for pre-P3 data (<code>eval backfill</code>).</li>
+<li>[ ] <code>eval export --sanitize</code> (PII strip + human diff review step) for community contribution.</li>
+<li>[ ] CI wiring: PR gate (cassettes, zero regressions), nightly live-LLM job (pinned model), release gate incl. zero false-completed-action cases.</li>
+<li>[ ] Curated contract-case set: approval-exactly-once, never-drop ladder, multi-domain fan-out, idempotent re-capture, projection convergence.</li>
+</ul>
+<p><strong>Gate:</strong> deliberately break a router heuristic on a branch → CI fails with a legible per-pack diff; restore → green. Nightly live job produces a drift report artifact.</p>
+<h2 id="p8-demo-reference-packs-hermes-agent-adapter-3-wk">P8 — Demo &amp; reference packs + hermes-agent adapter (3 wk)<a class="headerlink" href="#p8-demo-reference-packs-hermes-agent-adapter-3-wk" title="Permanent link">&para;</a></h2>
+<p><strong>Goal:</strong> proof the remix surface works, plus the first runtime adapter (distribution).</p>
+<ul>
+<li>[ ] <strong>Food demonstration pack:</strong> recipes/dining/ideas with the concept→recipe→experiment→observation lifecycle distilled from the private design (§23 of the as-is spec) — the "look how deep a pack can go" showcase. ≥25 fixtures.</li>
+<li>[ ] <strong>Travel reference pack:</strong> trips/timeline items/bookings-lite, generalized from the private travel domain (no Roamboard); demonstrates open-context hints (active trip), cross-domain links (dining ↔ trip), planner block. ≥25 fixtures.</li>
+<li>[ ] Both packs authored <em>through the public pack format only</em> — any missing capability found while building them is a core bug to fix now (dogfood gate).</li>
+<li>[ ] hermes-agent adapter: <code>plugin.yaml</code> + <code>register(ctx)</code> exposing <code>capture/query/correct/review/new_domain</code> tools over HTTP to <code>&lt;name&gt; serve</code>; agent behavioral guidance snippet (capture-first instructions) as a documented skill/SOUL fragment; publish via pip entry-point <code>hermes_agent.plugins</code>.</li>
+<li>[ ] Adapter conformance test: scripted hermes-agent session (capture → correct → review) against a live local stack; pin supported hermes-agent version range.</li>
+<li>[ ] Founder-as-user-0 validation: Finn re-expresses ≥2 of his real private domains as private packs on a production install; friction log filed as issues (personal packs and data are NOT committed anywhere public).</li>
+<li>[ ] Quickstart: <code>pipx install &lt;name&gt;-core &amp;&amp; &lt;name&gt; init &amp;&amp; &lt;name&gt; serve</code> + optional hermes-agent hookup guide.</li>
+</ul>
+<p><strong>Gate:</strong> on a clean machine (fresh VM), the quickstart + food pack + a Telegram capture via hermes-agent → app timeline, in under 15 minutes, following only public docs. Both packs' fixtures green in CI.</p>
+<h2 id="p9-docs-audit-launch-2-wk">P9 — Docs, audit &amp; launch (2 wk)<a class="headerlink" href="#p9-docs-audit-launch-2-wk" title="Permanent link">&para;</a></h2>
+<p><strong>Goal:</strong> ship it.</p>
+<ul>
+<li>[ ] Docs site (MkDocs Material): concepts (ledger/packs/routing/corrections/evals — largely condensed from this document), quickstart, pack authoring guide + style guide, block remix guide, adapter guide, architecture page with the §4.5 diagram.</li>
+<li>[ ] "Remix in an afternoon" tutorial (build a plant-care pack from scratch).</li>
+<li>[ ] Pack gallery page (food, travel, template, community-candidate list).</li>
+<li>[ ] <strong>Final leak audit (release-blocking):</strong> full-repo + full-docs scan with the private denylist; manual review of every fixture/example/screenshot; verify git history contains zero commits authored before P0; confirm no personal data, secrets, or private URLs anywhere.</li>
+<li>[ ] External security pass on the API surface (localhost binding defaults, token auth, path safety, SQL parameterization) + SECURITY.md disclosure process.</li>
+<li>[ ] README with the 90-second demo GIF (P6 gate recording); versioned v0.x release + changelog; PyPI publish.</li>
+<li>[ ] Launch: Show HN post, awesome-hermes-agent PRs (both lists), Nous community post, lobste.rs.</li>
+<li>[ ] Post-launch triage rotation + issue templates (bug / pack submission / routing miss w/ eval-case attach).</li>
+</ul>
+<p><strong>Gate:</strong> docs walkthrough executed by someone outside the build team on a clean machine with zero verbal help; leak audit signed off; release tagged; launch posts live.</p>
+<h2 id="effort-summary">Effort summary<a class="headerlink" href="#effort-summary" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Weeks</th>
+<th>Parallel</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P0 Bootstrap &amp; guardrails</td>
+<td>2</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P1 Core substrate</td>
+<td>3</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P2 Packs &amp; routing</td>
+<td>4</td>
+<td>eval skeleton inside</td>
+</tr>
+<tr>
+<td>P3 Apply &amp; corrections</td>
+<td>3</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P4 Projections &amp; review API</td>
+<td>2</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P5 App shell</td>
+<td>4</td>
+<td>∥ P6</td>
+</tr>
+<tr>
+<td>P6 Domain wizard</td>
+<td>3</td>
+<td>∥ P5</td>
+</tr>
+<tr>
+<td>P7 Eval framework</td>
+<td>2</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P8 Packs &amp; adapter</td>
+<td>3</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P9 Docs &amp; launch</td>
+<td>2</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>28 eng-wk</strong></td>
+<td><strong>~3.5 months for 2 eng</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="12-security-privacy-extraction-protocol">12. Security, privacy &amp; extraction protocol<a class="headerlink" href="#12-security-privacy-extraction-protocol" title="Permanent link">&para;</a></h1>
+<h2 id="121-the-fresh-repo-rule-absolute">12.1 The fresh-repo rule (absolute)<a class="headerlink" href="#121-the-fresh-repo-rule-absolute" title="Permanent link">&para;</a></h2>
+<p>The private HermesWorkspace repo has personal SQLite databases and 297 personal notes <strong>in git history</strong>. Therefore: the public repo starts empty; porting is <em>reading private code and re-typing/adapting it in the new repo</em>; no <code>git filter-repo</code>, no subtree, no shared remotes. CI enforces: no <code>*.sqlite</code>, no binary blobs without allowlist, gitleaks + private-denylist scan on every push (P0).</p>
+<h2 id="122-what-stays-private-forever">12.2 What stays private, forever<a class="headerlink" href="#122-what-stays-private-forever" title="Permanent link">&para;</a></h2>
+<p>Finn's data and vault; Roamboard and MiseKit (they become <em>described</em> reference architectures in docs, not shipped code); persona docs (SOUL/AGENTS/CONTEXT — the public repo ships neutral templates); his personal packs; the PII denylist file itself.</p>
+<h2 id="123-runtime-security-posture-inherited-hardened">12.3 Runtime security posture (inherited + hardened)<a class="headerlink" href="#123-runtime-security-posture-inherited-hardened" title="Permanent link">&para;</a></h2>
+<ul>
+<li>All writes parameterized; table/column names validated against the compiled schema registry (no user-string SQL).</li>
+<li>RO connections for every query path incl. block data.</li>
+<li><code>safe_join</code> path discipline for vault/attachment writes; workspace-rooted only.</li>
+<li>Secret redaction on anything echoed into notes/receipts/logs (invariant 12).</li>
+<li>API binds 127.0.0.1 by default; non-local binding requires explicit flag + bearer token.</li>
+<li>No telemetry. Ever. (It is also the ecosystem's norm and a positioning asset.)</li>
+</ul>
+<h2 id="124-third-party-trust-model">12.4 Third-party trust model<a class="headerlink" href="#124-third-party-trust-model" title="Permanent link">&para;</a></h2>
+<p>Packs are data (YAML/SQL-generated/JSONL) — installing one cannot execute code; the loader validates and the ApplyEngine only executes the closed operation vocabulary. Two explicitly-trusted extension tiers exist and are documented as such: pip-installed packs with Python handlers (entry-point, user chose to install code) and side-loaded custom blocks (user-built React). LLM prompt-injection via captured text is mitigated by: interpreter output constrained to the structured schema, policy gates on destructive ops, and <code>confirm</code> for sensitive domains — captured text can never directly trigger tool execution.</p>
+<hr />
+<h1 id="13-risks-open-decisions">13. Risks &amp; open decisions<a class="headerlink" href="#13-risks-open-decisions" title="Permanent link">&para;</a></h1>
+<h2 id="131-name-decide-in-p0">13.1 Name (decide in P0)<a class="headerlink" href="#131-name-decide-in-p0" title="Permanent link">&para;</a></h2>
+<p>Requirements: not "Hermes" (Nous collision), pronounceable, pypi/gh/domain available, evokes structure-for-passions. Candidates to check: <strong>Trellis</strong> (structure your passions grow on — front-runner), Loam, Almanac, Fieldbook, Waypost, Lorebook, Tally. Run trademark + package-name checks before P0 exit.</p>
+<h2 id="132-engineering-risks">13.2 Engineering risks<a class="headerlink" href="#132-engineering-risks" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Risk</th>
+<th>Likelihood</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Routing quality collapses on arbitrary user domains</td>
+<td>Med-High</td>
+<td>Mandatory pack examples/negatives; eval-first culture from P2; calibration reporting; test-drive mode; clarification path (never guess silently)</td>
+</tr>
+<tr>
+<td>hermes-agent API drift breaks the adapter</td>
+<td>Med</td>
+<td>HTTP adapter isolation; pinned version range + conformance test in CI; adapter is ~300 LOC, cheap to update; MCP adapter as second leg post-v1</td>
+</tr>
+<tr>
+<td>LLM structured-output inconsistency across providers</td>
+<td>Med</td>
+<td>JSON-schema mode where available, prompted-JSON + retry fallback everywhere (proven pattern); cassette tests per provider</td>
+</tr>
+<tr>
+<td>Scope creep in the app shell (it wants to become a framework)</td>
+<td>Med</td>
+<td>Nine blocks, hard cap for v1; custom-block escape hatch absorbs pressure</td>
+</tr>
+<tr>
+<td>Wizard generates plausible-but-bad schemas</td>
+<td>Med</td>
+<td>Style guide in prompt; validate+dry-run gates; hardening loop makes fixes cheap; schemas are always inspectable text</td>
+</tr>
+<tr>
+<td>Personal-data leak during extraction</td>
+<td>Low (with protocol)</td>
+<td>§12.1 gates + P9 release-blocking audit</td>
+</tr>
+<tr>
+<td>Non-technical setup friction kills adoption breadth</td>
+<td>Med</td>
+<td>pipx one-liner; zero-channel local mode; channels optional; 15-min clean-machine gate (P8)</td>
+</tr>
+<tr>
+<td>Community packs of low quality dilute the brand</td>
+<td>Med</td>
+<td><code>pack validate</code> bar; gallery curation; fixture-pass requirement for listing</td>
+</tr>
+</tbody>
+</table>
+<h2 id="133-product-decisions-already-made-do-not-relitigate">13.3 Product decisions already made (do not relitigate)<a class="headerlink" href="#133-product-decisions-already-made-do-not-relitigate" title="Permanent link">&para;</a></h2>
+<p>Runtime-agnostic core + hermes-agent adapter first · one universal app with remixable blocks (no per-domain codegen) · MIT · packs-are-data · SQLite-first · HTTP adapter contract · corrections auto-append evals.</p>
+<h2 id="134-deferred-post-v1-with-design-hooks-in-place">13.4 Deferred (post-v1) with design hooks in place<a class="headerlink" href="#134-deferred-post-v1-with-design-hooks-in-place" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Postgres export / hosted multiplayer</strong> (PRD §14): ULIDs + UTC + soft cross-DB refs keep this a translation. Design doc only in v1; the remote-edits-return-as-proposals model is invariant 9.</li>
+<li><strong>Obsidian reverse-sync</strong> (managed-region edit → review-gated correction): the region format ships in v1; the watcher is post-v1.</li>
+<li><strong>OpenClaw + MCP adapters</strong>; voice capture; email ingestion; import pipelines (CSV/Apple Health-style) as pack-declared importers.</li>
+<li>Health/finance packs as experimental after routing+correction guarantees stabilize (per PRD).</li>
+</ul>
+<hr />
+<h1 id="14-handover-appendix">14. Handover appendix<a class="headerlink" href="#14-handover-appendix" title="Permanent link">&para;</a></h1>
+<h2 id="141-glossary">14.1 Glossary<a class="headerlink" href="#141-glossary" title="Permanent link">&para;</a></h2>
+<p><strong>capture_event</strong> raw inbound payload w/ provenance · <strong>entry</strong> user-facing capture unit · <strong>interpretation</strong> versioned structured reading of an entry · <strong>change_request</strong> proposed domain operation · <strong>canonical_object</strong> stable-ULID domain record · <strong>object_revision</strong> append-only change journal · <strong>correction_event</strong> wrong→right provenance record · <strong>approval queue</strong> review items w/ decision state independent of application state · <strong>CanonicalChangeExecutor</strong> approve→apply-exactly-once · <strong>ProjectionCoordinator</strong> outbox/watermark projection refresher · <strong>pack</strong> the domain definition artifact (§5) · <strong>block</strong> a reusable app view component (§9) · <strong>never-drop ladder</strong> fallback tiers ensuring no capture is rejected · <strong>cassette</strong> recorded LLM request/response for deterministic replay.</p>
+<h2 id="142-reference-map-into-the-private-system-for-the-porting-team-read-only">14.2 Reference map into the private system (for the porting team, read-only)<a class="headerlink" href="#142-reference-map-into-the-private-system-for-the-porting-team-read-only" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>To understand…</th>
+<th>Read (private)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Whole-system behavior &amp; invariants</td>
+<td><code>HermesWorkspace/docs/HERMES_AS_IS_E2E_SPEC_2026-07-16.md</code> (esp. §6, §7, §17, §20–24)</td>
+</tr>
+<tr>
+<td>Ledger/store discipline &amp; security</td>
+<td><code>~/.hermes/plugins/logbook/store.py</code></td>
+</tr>
+<tr>
+<td>L1 classifier + confidence + demotion</td>
+<td><code>~/.hermes/plugins/logbook/classify.py</code></td>
+</tr>
+<tr>
+<td>L2 escalation, cost guard, few-shot injection</td>
+<td><code>HermesWorkspace/lib/interpret/router.py</code>, <code>stage.py</code></td>
+</tr>
+<tr>
+<td>ApplyEngine / executor / journal</td>
+<td><code>HermesWorkspace/lib/apply/engine.py</code>, <code>canonical_executor.py</code>, <code>object_journal.py</code></td>
+</tr>
+<tr>
+<td>Projection coordination + managed notes</td>
+<td><code>HermesWorkspace/lib/feed/projection_coordinator.py</code>, <code>managed_notes.py</code></td>
+</tr>
+<tr>
+<td>Correction bank + replay seeds</td>
+<td><code>HermesWorkspace/scripts/build_fewshot_bank.py</code>, <code>reinterpret_history.py</code></td>
+</tr>
+<tr>
+<td>Verification-gate pattern</td>
+<td><code>HermesWorkspace/tests/run_verification_gate.py</code>, <code>tests/test_wave0_contracts.py</code></td>
+</tr>
+<tr>
+<td>hermes-agent plugin API</td>
+<td><code>~/.hermes/hermes-agent/hermes_cli/plugins.py</code>, <code>tools/registry.py</code>, and the logbook <code>plugin.yaml</code>/<code>__init__.py</code></td>
+</tr>
+<tr>
+<td>Deep domain design thinking (health/recipes)</td>
+<td>as-is spec §21–23 — the source of the pack style guide's hardest-won rules (units, regimen-vs-event, lifecycle promotion)</td>
+</tr>
+</tbody>
+</table>
+<p>Access model: porting engineers get read access to the private repos for reference; the extraction protocol (§12.1) governs everything that crosses into public.</p>
+<h2 id="143-verification-quick-reference-private-system-for-behavior-comparison">14.3 Verification quick-reference (private system, for behavior comparison)<a class="headerlink" href="#143-verification-quick-reference-private-system-for-behavior-comparison" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nb">cd</span><span class="w"> </span>~/HermesWorkspace<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>.venv/bin/python<span class="w"> </span>tests/run_verification_gate.py
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="nb">cd</span><span class="w"> </span>~/dev/roamboard<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$HOME</span><span class="s2">/.nvm/versions/node/v22.16.0/bin:</span><span class="nv">$PATH</span><span class="s2">&quot;</span><span class="w"> </span>pnpm<span class="w"> </span><span class="nb">test</span>
+</code></pre></div>
+<h2 id="144-definition-of-done-for-the-public-v1">14.4 Definition of done for the public v1<a class="headerlink" href="#144-definition-of-done-for-the-public-v1" title="Permanent link">&para;</a></h2>
+<p>Every PRD item in the §1.5 table shipped and gated · all twelve §3.3 invariants covered by contract tests · P8 clean-machine 15-minute gate passed · P9 leak audit signed · eval baseline committed with CI regression gate live · launch posts published.</p>
+<hr />
+<p><em>Prepared 2026-07-16 from the as-is production snapshot, the codebase extraction inventory, and market research current as of July 2026. Waves 0–5 of the private remediation plan are treated as complete; where public-v1 design deviates from private behavior, the deviation is deliberate and noted inline.</em></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      MIT-licensed. No telemetry. Local-first.
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "navigation.top", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,2036 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Local-first personal agent harness — capture natural language, get structured domain data and a remixable app. The structured-life data layer for agent runtimes.">
+      
+      
+        <meta name="author" content="Domain Foundry contributors">
+      
+      
+      
+        <link rel="prev" href="../QUICKSTART/">
+      
+      
+        <link rel="next" href="../concepts/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>User stories & evidence - Domain Foundry</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#user-stories-and-the-evidence-behind-each" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Domain Foundry" class="md-header__button md-logo" aria-label="Domain Foundry" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Domain Foundry
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              User stories & evidence
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/finnqiao/domain_foundry" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    domain-foundry/domain_foundry
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Domain Foundry" class="md-nav__button md-logo" aria-label="Domain Foundry" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Domain Foundry
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/finnqiao/domain_foundry" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    domain-foundry/domain_foundry
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Get started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/connect-your-agent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Connect your agent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/adopt-in-place/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt onto your setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/howto-non-technical/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to: no terminal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/howto-technical/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to: developers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/testing-runbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../QUICKSTART/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart (CLI)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User stories & evidence
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User stories & evidence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-ive-never-done-this-before-walk-me-through-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. "I've never done this before. Walk me through it."
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-i-know-exactly-what-i-want-dont-ask-me-anything" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. "I know exactly what I want. Don't ask me anything."
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-i-already-have-a-database-let-me-bring-it-and-keep-working" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. "I already have a database. Let me bring it and keep working."
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-i-keep-notes-in-obsidian-a-folder-layer-on-top-dont-replace-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. "I keep notes in Obsidian / a folder. Layer on top, don't replace it."
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-spend-my-money-on-the-calls-that-matter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. "Spend my money on the calls that matter."
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-tell-me-when-its-broken-dont-quietly-do-worse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. "Tell me when it's broken. Don't quietly do worse."
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gate-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gate summary
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Gate summary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-one-gate-that-is-red-and-why-it-isnt-in-the-table-above" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The one gate that is red, and why it isn't in the table above
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/ledger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The ledger
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/packs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Domain packs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/routing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hybrid routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/corrections/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Corrections
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/replay/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation replay
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Authoring
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PACK_AUTHORING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pack authoring guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial-plant-care/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial: remix in an afternoon
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CUSTOM_BLOCKS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom blocks & remix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gallery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pack gallery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adapter-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapter guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../LEAK_AUDIT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Leak audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../LEAKSCAN_PHASE9/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Leakscan (Phase 9)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PRIVATE_OVERLAY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Private overlay
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MESH_AS_BUILT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mesh as-built
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../OPEN_GATES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Open gates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../RETIREMENT_RUNBOOK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Retirement runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PHASE_STATUS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../FOUNDER_VALIDATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Founder validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-ive-never-done-this-before-walk-me-through-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. "I've never done this before. Walk me through it."
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-i-know-exactly-what-i-want-dont-ask-me-anything" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. "I know exactly what I want. Don't ask me anything."
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-i-already-have-a-database-let-me-bring-it-and-keep-working" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. "I already have a database. Let me bring it and keep working."
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-i-keep-notes-in-obsidian-a-folder-layer-on-top-dont-replace-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. "I keep notes in Obsidian / a folder. Layer on top, don't replace it."
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-spend-my-money-on-the-calls-that-matter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. "Spend my money on the calls that matter."
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-tell-me-when-its-broken-dont-quietly-do-worse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. "Tell me when it's broken. Don't quietly do worse."
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gate-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gate summary
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Gate summary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-one-gate-that-is-red-and-why-it-isnt-in-the-table-above" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The one gate that is red, and why it isn't in the table above
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="user-stories-and-the-evidence-behind-each">User stories, and the evidence behind each<a class="headerlink" href="#user-stories-and-the-evidence-behind-each" title="Permanent link">&para;</a></h1>
+<p>Every story below is written from the user's side, paired with the command that
+serves it and the <strong>reproducible evidence</strong> that it works. Where something is
+unproven, that is stated as unproven rather than left implied.</p>
+<p>Reproduce the whole table:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>scripts/quickstart_gate.sh<span class="w">     </span><span class="c1"># onboarding + capture + import lifecycle</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>scripts/release_audit.sh<span class="w">       </span><span class="c1"># leakscan · clock · ruff · pytest · docs · eval replay</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>pytest<span class="w">                         </span><span class="c1"># 281 passed / 2 skipped</span>
+</code></pre></div>
+<hr />
+<h2 id="1-ive-never-done-this-before-walk-me-through-it">1. "I've never done this before. Walk me through it."<a class="headerlink" href="#1-ive-never-done-this-before-walk-me-through-it" title="Permanent link">&para;</a></h2>
+<p><strong>Story.</strong> I don't know what a model tier is, I'm not sure which API key I have,
+and I don't want to read a config reference before I can write down my first
+note.</p>
+<p><strong>What serves it.</strong> <code>domain-foundry setup</code> with no arguments. It asks which
+provider you have a key for, suggests a model for each tier, proves the key
+works, then asks what you want to do first — and runs that step for you.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span>domain-foundry<span class="w"> </span>setup
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="go">Domain Foundry needs a model to route captures. You bring the key.</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="go">  *1. Anthropic (Claude)</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="go">      One key covers both tiers.</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="go">   2. OpenAI</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="go">   3. DeepSeek</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="go">   ...</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="go">Which provider? [1]:</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="go">Two tiers. Routine handles every capture; sota handles the calls</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="go">that rewrite a record or change a schema.</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="go">  routine model [claude-haiku-4-5]:</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="go">  sota model [claude-opus-5]:</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="go">Checking each tier can reach its model:</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="go">  routine  claude-haiku-4-5             ok — reachable</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="go">  sota     claude-opus-5                ok — reachable</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="go">Where do you want to start?</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="go">  1. Start from a ready-made log (food, plants, sourdough, travel)</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="go">  2. Describe a log in your own words and have one built</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="go">  3. Pull in notes you already have (a folder, an Obsidian vault)</span>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="go">  4. Attach a structured source (SQLite table, JSON/JSONL export)</span>
+</code></pre></div>
+<p><strong>Evidence.</strong></p>
+<table>
+<thead>
+<tr>
+<th>Claim</th>
+<th>How it's proved</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The flow completes and installs a working pack</td>
+<td>Driven with piped answers end-to-end; <code>pack add food</code> runs and prints the next command to try</td>
+</tr>
+<tr>
+<td>A declined key is never written to disk</td>
+<td><code>test_key_is_not_written_by_default</code> — asserts the secret is absent from the file and that <code>api_key_env</code> is recorded instead</td>
+</tr>
+<tr>
+<td>A stored key is not world-readable</td>
+<td><code>test_stored_key_is_chmod_600</code></td>
+</tr>
+<tr>
+<td><code>_template</code> is not offered as a starting point</td>
+<td>Filtered in <code>cli.py</code>; it is pack-author scaffolding and a dead end for a newcomer</td>
+</tr>
+<tr>
+<td>A capture is never lost even with no model at all</td>
+<td><code>--provider none</code> → <code>mode = "heuristic"</code>, and a capture still routes to <code>food</code> by keyword rules and applies</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="2-i-know-exactly-what-i-want-dont-ask-me-anything">2. "I know exactly what I want. Don't ask me anything."<a class="headerlink" href="#2-i-know-exactly-what-i-want-dont-ask-me-anything" title="Permanent link">&para;</a></h2>
+<p><strong>Story.</strong> I have a dotfile with my keys. I want this configured in one
+non-interactive command, in a script, on a fresh machine, and I do not want a
+new config file becoming the source of truth for settings I already manage.</p>
+<p><strong>What serves it.</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>domain-foundry<span class="w"> </span>setup<span class="w"> </span>--provider<span class="w"> </span>anthropic<span class="w"> </span>--sota<span class="w"> </span>claude-opus-5<span class="w"> </span>-y<span class="w"> </span>--no-probe
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>domain-foundry<span class="w"> </span>setup<span class="w"> </span>--show<span class="w">     </span><span class="c1"># what resolved, and from where</span>
+</code></pre></div>
+<p>Settings resolve <strong>env &gt; config file &gt; provider default</strong>. An install that
+predates the config file behaves identically; exported variables always win.</p>
+<p><strong>Evidence.</strong></p>
+<table>
+<thead>
+<tr>
+<th>Claim</th>
+<th>How it's proved</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Env beats the config file</td>
+<td><code>test_env_beats_config_file</code>; also asserted live in <code>quickstart_gate.sh</code> (<code>DOMAIN_FOUNDRY_SOTA_MODEL=claude-sonnet-5</code> overrides a written config)</td>
+</tr>
+<tr>
+<td>Config beats the registry default</td>
+<td><code>test_config_file_beats_registry_default</code></td>
+</tr>
+<tr>
+<td>An env-only install still works with no config file at all</td>
+<td><code>test_legacy_env_only_install_still_works</code></td>
+</tr>
+<tr>
+<td>A hand-broken config does not brick the CLI</td>
+<td><code>test_malformed_config_does_not_brick_the_cli</code> — malformed TOML falls back to env/defaults instead of raising on every command</td>
+</tr>
+<tr>
+<td><code>--show</code> never leaks a key</td>
+<td><code>test_resolved_status_never_leaks_a_key</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="3-i-already-have-a-database-let-me-bring-it-and-keep-working">3. "I already have a database. Let me bring it and keep working."<a class="headerlink" href="#3-i-already-have-a-database-let-me-bring-it-and-keep-working" title="Permanent link">&para;</a></h2>
+<p><strong>Story.</strong> Three years of entries live in a SQLite table with my own column
+names. I want them in here without exporting to Markdown first, without a
+migration script I have to maintain, and <strong>without any risk to the original</strong>.</p>
+<p><strong>What serves it.</strong> <code>domain-foundry import</code> — a short YAML maps source rows to a
+domain's objects; dry-run is the default.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># preview: where would every row land? writes nothing</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>domain-foundry<span class="w"> </span>import<span class="w"> </span>-m<span class="w"> </span>my_mapping.yaml<span class="w"> </span>--sqlite<span class="w"> </span>~/old-app.sqlite
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># your table isn&#39;t named like the mapping entity? remap it, and filter</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>domain-foundry<span class="w"> </span>import<span class="w"> </span>-m<span class="w"> </span>my_mapping.yaml<span class="w"> </span>--sqlite<span class="w"> </span>~/old-app.sqlite<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span>--table<span class="w"> </span><span class="nv">entries</span><span class="o">=</span>journal_entries<span class="w"> </span>--where<span class="w"> </span><span class="nv">entries</span><span class="o">=</span><span class="s2">&quot;deleted_at IS NULL&quot;</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>domain-foundry<span class="w"> </span>import<span class="w"> </span>-m<span class="w"> </span>my_mapping.yaml<span class="w"> </span>--json<span class="w"> </span>~/export/<span class="w"> </span>--apply
+</code></pre></div>
+<p><strong>Evidence.</strong></p>
+<table>
+<thead>
+<tr>
+<th>Claim</th>
+<th>How it's proved</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Your database is not modified, even by <code>--apply</code></td>
+<td>sha256 of the source file captured before and after a successful 2-row <code>--apply</code>: <strong>identical</strong>. Opened via a <code>file:…?mode=ro</code> URI</td>
+</tr>
+<tr>
+<td>Re-running does not duplicate</td>
+<td>Full lifecycle asserted in <code>quickstart_gate.sh</code>: dry-run <code>would_import=8</code> → <code>--apply</code> <code>imported=8</code> → re-apply <code>skipped_existing=8</code></td>
+</tr>
+<tr>
+<td>A partial import cannot pass quietly</td>
+<td>Every row is classified imported / skipped / failed, and the command <strong>exits non-zero</strong> unless <code>accounted_for == source_total</code>. Verified: importing into a workspace without the target pack reports <code>failed=4</code> with <code>no pack installed for domain 'japanese'</code> and exits 1</td>
+</tr>
+<tr>
+<td>Skips are explained per row</td>
+<td><code>--markdown</code> prints e.g. <code>hermes:travel:trip:3 (skipped_invalid): missing required fields: name</code></td>
+</tr>
+<tr>
+<td>A table name cannot be injected</td>
+<td><code>SqliteTableSource</code> rejects non-identifier table names before interpolation</td>
+</tr>
+</tbody>
+</table>
+<p>This is the path three years of real Hermes data was migrated on.</p>
+<hr />
+<h2 id="4-i-keep-notes-in-obsidian-a-folder-layer-on-top-dont-replace-it">4. "I keep notes in Obsidian / a folder. Layer on top, don't replace it."<a class="headerlink" href="#4-i-keep-notes-in-obsidian-a-folder-layer-on-top-dont-replace-it" title="Permanent link">&para;</a></h2>
+<p><strong>Story.</strong> My notes are already where I want them. I want structure derived from
+them, not a new place to type.</p>
+<p><strong>What serves it.</strong> <code>domain-foundry ingest</code> — read-only, idempotent, dry-run
+first, with <code>--watch</code> to keep pulling in new notes. Non-terminal users get the
+same engine behind <strong>Add a source</strong> in the app.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>domain-foundry<span class="w"> </span>ingest<span class="w"> </span>~/Notes<span class="w"> </span>--dry-run<span class="w">       </span><span class="c1"># preview routing, writes nothing</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>domain-foundry<span class="w"> </span>ingest<span class="w"> </span>~/Notes<span class="w"> </span>--only<span class="w"> </span>bouldering
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>domain-foundry<span class="w"> </span>ingest<span class="w"> </span>~/logs/journal.log<span class="w"> </span>--split<span class="w"> </span>lines
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>domain-foundry<span class="w"> </span>ingest<span class="w"> </span>~/Notes<span class="w"> </span>--watch
+</code></pre></div>
+<p><strong>Evidence.</strong> Idempotency is on <code>(channel, source_ref)</code>, so a re-scan captures
+only what changed; covered by <code>tests/unit/test_ingest.py</code> and the
+<a href="../tutorial/testing-runbook/">testing runbook</a> §3. Nothing at the source is
+moved, renamed, or edited. Write-back to a vault is a separate, opt-in,
+managed-region-only path (<code>projections reproject --vault</code>, dry-run by default).</p>
+<hr />
+<h2 id="5-spend-my-money-on-the-calls-that-matter">5. "Spend my money on the calls that matter."<a class="headerlink" href="#5-spend-my-money-on-the-calls-that-matter" title="Permanent link">&para;</a></h2>
+<p><strong>Story.</strong> Most of what I write is unambiguous. I don't want a frontier model
+priced for every trivial capture — but when it's a correction, or it's rewriting
+a schema, I want the good model.</p>
+<p><strong>What serves it.</strong> Two tiers, with automatic escalation.</p>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Handles</th>
+<th>Shape</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>routine</code></td>
+<td>every capture's routing + field extraction</td>
+<td>high volume, low stakes</td>
+</tr>
+<tr>
+<td><code>sota</code></td>
+<td>corrections, structural/schema ops, low confidence, multi-domain fan-out</td>
+<td>rare, high stakes</td>
+</tr>
+</tbody>
+</table>
+<p>Escalation (<code>select_model_tier</code>) fires when a routing rule declares <code>tier: sota</code>,
+on any update/delete/merge/correct operation, on correction-shaped text, on
+<code>no_match</code>/<code>multi_pack</code>, or below 0.7 confidence. A daily cost guard caps spend
+(<code>DOMAIN_FOUNDRY_DAILY_COST_CAP</code>, default <code>$0.25</code>) with per-tier sub-caps.</p>
+<p><strong>Evidence.</strong></p>
+<table>
+<thead>
+<tr>
+<th>Claim</th>
+<th>How it's proved</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The request shape is right per model, not per provider</td>
+<td><code>test_sampling_param_support_per_model</code> (9 models). Haiku 4.5 <em>accepts</em> <code>temperature</code> but <em>rejects</em> <code>output_config.effort</code>; Opus 5 is the reverse</td>
+</tr>
+<tr>
+<td>An unknown model degrades safely</td>
+<td><code>test_unknown_model_gets_the_conservative_shape</code> — a model newer than the table gets no sampling params and no optional extras</td>
+</tr>
+<tr>
+<td>A rejected optional parameter doesn't fail the capture</td>
+<td><code>test_400_retries_without_optional_params</code></td>
+</tr>
+<tr>
+<td>An auth failure isn't retried pointlessly</td>
+<td><code>test_401_does_not_retry</code> — and the error stays one readable line</td>
+</tr>
+<tr>
+<td>Spend is metered per tier</td>
+<td><code>tests/unit/test_llm_tiering.py</code> — token-derived cost against the pricing table, per-tier caps enforced</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>⚠️ <strong>Unproven:</strong> the per-model request-shape table is encoded from the
+published API contract and unit-tested against a mocked transport, but has
+<strong>never been executed against a real key</strong> — no credential was available in the
+build environment. A wrong row is a 400, and a 400 is invisible (see story 6).
+One live <code>setup --probe</code> per provider settles it; tracked as a human gate in
+<a href="https://github.com/finnqiao/domain_foundry/blob/main/LAUNCH_CHECKLIST.md"><code>LAUNCH_CHECKLIST.md</code></a> §1.
+The <strong>failure</strong> path <em>is</em> proved end-to-end: a bad key yields
+<code>HTTP 401: invalid x-api-key</code> on both tiers.</p>
+</blockquote>
+<hr />
+<h2 id="6-tell-me-when-its-broken-dont-quietly-do-worse">6. "Tell me when it's broken. Don't quietly do worse."<a class="headerlink" href="#6-tell-me-when-its-broken-dont-quietly-do-worse" title="Permanent link">&para;</a></h2>
+<p><strong>Story.</strong> The failure I fear most is the silent one — where it looks like it's
+working and isn't.</p>
+<p><strong>Why this needed explicit work.</strong> Domain Foundry catches LLM failures into the
+keyword heuristic so a capture is never lost. That is the right behaviour, and it
+has a nasty consequence: <strong>a misconfigured model looks exactly like "no key set
+yet"</strong> — captures keep succeeding, just with worse routing. Three real bugs hid
+there, and none of them presented as an error.</p>
+<p><strong>What serves it.</strong></p>
+<ul>
+<li><code>setup</code> probes each tier with one cheap live call, so a bad key fails at setup
+  rather than at every capture.</li>
+<li>A capture that tried a model and failed carries <code>llm_error</code> on the receipt and
+  prints a warning; it is never conflated with an unconfigured install.</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>domain-foundry<span class="w"> </span>capture<span class="w"> </span><span class="s2">&quot;cooked shoyu ramen, came out great&quot;</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="go">  ...</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="go">  &quot;llm_error&quot;: &quot;LLMError: Anthropic LLM failed: HTTP 401: invalid x-api-key&quot;</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="go">warning: model routing failed (…) — captured with keyword rules only.</span>
+</code></pre></div>
+<p><strong>Evidence.</strong></p>
+<table>
+<thead>
+<tr>
+<th>Claim</th>
+<th>How it's proved</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Completing setup actually changes the capture path</td>
+<td><code>test_config_mode_live_reaches_the_capture_path</code> — regression for a bug where a finished setup still routed on keyword rules until <code>DOMAIN_FOUNDRY_LLM=live</code> was separately exported</td>
+</tr>
+<tr>
+<td><code>--home /elsewhere</code> reads that workspace's config</td>
+<td><code>test_explicit_home_reads_that_workspaces_config</code>, <code>test_router_threads_its_workspace_home</code></td>
+</tr>
+<tr>
+<td>Setup can't claim success without a reachable key</td>
+<td><code>test_is_already_configured_gates_the_interview</code> — a <em>named but unset</em> env var no longer counts as a credential</td>
+</tr>
+<tr>
+<td>A failed model call is visible, not swallowed</td>
+<td>End-to-end: stored-but-invalid key → <code>llm_error</code> on the receipt + CLI warning, capture still kept and routed by rules</td>
+</tr>
+<tr>
+<td>Nothing configured still means no spend</td>
+<td><code>test_no_config_and_no_env_stays_heuristic</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="gate-summary">Gate summary<a class="headerlink" href="#gate-summary" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Gate</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pytest</code></td>
+<td><strong>281 passed / 2 skipped</strong> (2 skips are opt-in live-LLM smokes)</td>
+</tr>
+<tr>
+<td><code>ruff check core tests scripts adapters</code></td>
+<td>clean</td>
+</tr>
+<tr>
+<td><code>scripts/release_audit.sh</code></td>
+<td><strong>8/8 PASS</strong> — leakscan · clock audit · no tracked DBs · history starts at P0 · ruff · pytest · mkdocs build · eval corpus replay</td>
+</tr>
+<tr>
+<td><code>scripts/quickstart_gate.sh</code></td>
+<td>PASS — onboarding write, env override, single- and cross-domain capture, import lifecycle</td>
+</tr>
+<tr>
+<td>GitHub Actions <code>ci</code> → <strong>Pyright</strong></td>
+<td>❌ <strong>red, and has been since 2026-07-17</strong> — see below</td>
+</tr>
+</tbody>
+</table>
+<h3 id="the-one-gate-that-is-red-and-why-it-isnt-in-the-table-above">The one gate that is red, and why it isn't in the table above<a class="headerlink" href="#the-one-gate-that-is-red-and-why-it-isnt-in-the-table-above" title="Permanent link">&para;</a></h3>
+<p><code>scripts/release_audit.sh</code> runs ruff and pytest but <strong>not</strong> Pyright. GitHub
+Actions <code>ci</code> does. So the local aggregate gate has been reporting 8/8 while CI
+was failing — a real blind spot, and the reason to state it here rather than
+quietly present the green half.</p>
+<p>Pyright reports <strong>45 errors locally / 56 in CI</strong> (the extra 11 are phantom import
+errors for <code>domain_foundry_roamboard</code>, a private-overlay adapter CI does not
+install). Every one predates this work; distribution:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>  9  routing/router.py           (tuple return-type mismatches, lines 111–315)
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>  6  corrections/service.py      (int | None → ConvertibleToInt, lines 902–977)
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>  6  tests/unit/test_clock_audit.py
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>  5  tests/unit/test_leakscan.py
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>  5  tests/unit/test_llm_tiering.py
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>  … 9 more files with 1–3 each
+</code></pre></div>
+<p><strong>Zero are attributable to the bring-your-own-key work.</strong> <code>config.py</code>,
+<code>onboarding.py</code>, <code>llm/providers.py</code>, <code>llm/provider.py</code>, <code>llm/pricing.py</code>,
+<code>cli.py</code> and <code>test_byo_setup.py</code> are clean; the <code>router.py</code> and
+<code>service.py</code> errors sit at lines untouched by the two-line <code>home=</code> threading
+added there. Verify:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>pyright<span class="w"> </span>--outputjson<span class="w"> </span><span class="p">|</span><span class="w"> </span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;…group errors by file…&quot;</span><span class="w">   </span><span class="c1"># 0 in the files above</span>
+</code></pre></div>
+<p>Clearing this debt is a focused follow-up, not a launch blocker for the stories
+above — but the <code>ci</code> badge stays red until it is done, and that should not be
+presented as anything else.</p>
+<p>Still human gates, unchanged: PyPI name availability, the 90-second demo GIF, an
+external security pass, a lived production week, and one live <code>setup --probe</code> per
+documented provider.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      MIT-licensed. No telemetry. Local-first.
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "navigation.top", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

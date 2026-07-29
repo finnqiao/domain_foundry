@@ -1,0 +1,1868 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Local-first personal agent harness — capture natural language, get structured domain data and a remixable app. The structured-life data layer for agent runtimes.">
+      
+      
+        <meta name="author" content="Domain Foundry contributors">
+      
+      
+      
+        <link rel="prev" href="../RETIREMENT_RUNBOOK/">
+      
+      
+        <link rel="next" href="../FOUNDER_VALIDATION/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Phase status - Domain Foundry</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#phase-status" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Domain Foundry" class="md-header__button md-logo" aria-label="Domain Foundry" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Domain Foundry
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Phase status
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/finnqiao/domain_foundry" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    domain-foundry/domain_foundry
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Domain Foundry" class="md-nav__button md-logo" aria-label="Domain Foundry" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Domain Foundry
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/finnqiao/domain_foundry" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    domain-foundry/domain_foundry
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Get started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/connect-your-agent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Connect your agent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/adopt-in-place/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt onto your setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/howto-non-technical/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to: no terminal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/howto-technical/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to: developers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/testing-runbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../QUICKSTART/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart (CLI)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../USER_STORIES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User stories & evidence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/ledger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The ledger
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/packs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Domain packs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/routing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hybrid routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/corrections/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Corrections
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/replay/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation replay
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Authoring
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PACK_AUTHORING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pack authoring guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial-plant-care/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial: remix in an afternoon
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CUSTOM_BLOCKS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom blocks & remix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gallery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pack gallery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adapter-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapter guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../LEAK_AUDIT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Leak audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../LEAKSCAN_PHASE9/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Leakscan (Phase 9)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PRIVATE_OVERLAY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Private overlay
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MESH_AS_BUILT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mesh as-built
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../OPEN_GATES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Open gates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../RETIREMENT_RUNBOOK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Retirement runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase status
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#p3-gate-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P3 gate evidence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#p4-gate-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P4 gate evidence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#p5-gate-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P5 gate evidence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#p6-gate-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P6 gate evidence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#p7-gate-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P7 gate evidence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#p8-gate-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P8 gate evidence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#p9-gate-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P9 gate evidence
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="P9 gate evidence">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#human-launch-gates-remaining-not-done-by-the-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Human launch gates remaining (NOT done by the build)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick commands
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../FOUNDER_VALIDATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Founder validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#p3-gate-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P3 gate evidence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#p4-gate-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P4 gate evidence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#p5-gate-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P5 gate evidence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#p6-gate-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P6 gate evidence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#p7-gate-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P7 gate evidence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#p8-gate-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P8 gate evidence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#p9-gate-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P9 gate evidence
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="P9 gate evidence">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#human-launch-gates-remaining-not-done-by-the-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Human launch gates remaining (NOT done by the build)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick commands
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="phase-status">Phase status<a class="headerlink" href="#phase-status" title="Permanent link">&para;</a></h1>
+<p>Tracking implementation of <code>docs/OPEN_SOURCE_HARNESS_PLAN.md</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Status</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P0 Bootstrap &amp; guardrails</td>
+<td><strong>Done</strong></td>
+<td>Fresh repo, MIT, ADRs, CI, leakscan, substrate DDL, migration runner</td>
+</tr>
+<tr>
+<td>P1 Core substrate</td>
+<td><strong>Done</strong></td>
+<td>capture/query/health, HarnessAPI, FastAPI, CLI, attachments, contract tests</td>
+</tr>
+<tr>
+<td>P2 Packs &amp; routing</td>
+<td><strong>Done</strong></td>
+<td>Pack loader/compiler, L1/L2 router, cost guard, heuristic/cassette LLM, eval gate ≥90%</td>
+</tr>
+<tr>
+<td>P3 Apply &amp; corrections</td>
+<td><strong>Done</strong></td>
+<td>ApplyEngine, journal, policy, CanonicalChangeExecutor, correct/review APIs, few-shot + eval_case</td>
+</tr>
+<tr>
+<td>P4 Projections &amp; review API</td>
+<td><strong>Done</strong></td>
+<td>ProjectionCoordinator (outbox/drain/watermarks/retry + serve loop), managed-region markdown adapter, direct-query block data, projection lag in health, receipts pending→refreshed, enriched review queue (filters/diffs/bulk/SLO)</td>
+</tr>
+<tr>
+<td>P5 App shell</td>
+<td><strong>Done</strong></td>
+<td>Vite+React SPA served from FastAPI static mount; nine built-in blocks + registry; global surfaces (home/capture feed/review queue/health); detail provenance chain; correction dialogs (amend/move/merge/undo/mark-wrong); custom-block side-load + in-app docs; teaching empty states</td>
+</tr>
+<tr>
+<td>P6 Domain wizard</td>
+<td><strong>Done</strong></td>
+<td>Wizard engine (goal→interview→generate→validate→dry-run→test-drive→hardening), resumable sessions, archetype+generic proposal generator, <code>new_domain</code>/<code>wizard_reply</code> API, CLI <code>new-domain</code> + <code>wizard reply</code>, HTTP endpoints, pack authoring style guide</td>
+</tr>
+<tr>
+<td>P7 Eval framework</td>
+<td><strong>Done</strong></td>
+<td>Cassette drift + <code>--live-llm</code>; frozen-clock audit (lint+test); full scoring (routing/field/disposition/calibration) + per-pack scorecards + committed baseline + regression diff; <code>eval backfill</code>/<code>eval export --sanitize</code>; PR replay gate + nightly live-LLM stub; curated contract-case set</td>
+</tr>
+<tr>
+<td>P8 Demo &amp; reference packs + hermes-agent adapter</td>
+<td><strong>Done</strong></td>
+<td><code>food</code> + <code>travel</code> packs (authored purely through the public pack format), each with ≥25 green routing fixtures incl. cross-domain dining↔trip links; hermes-agent plugin (<code>register(ctx)</code> + <code>plugin.yaml</code> + skill fragment + <code>hermes_agent.plugins</code> entry point) with a live-stack conformance test; quickstart + automated clean-machine gate; founder friction-log checklist</td>
+</tr>
+<tr>
+<td>P9 Docs &amp; launch</td>
+<td><strong>Done</strong> (in-repo)</td>
+<td>MkDocs Material site (concepts/architecture+data-flow diagram/adapter/security/gallery/remix tutorial); release-blocking leak audit + <code>release_audit.sh</code>; API bearer-token security contract test; README polish + <code>CHANGELOG.md</code>; launch artifacts (<code>docs/launch/*</code>, awesome-list blurbs, issue templates) + <code>LAUNCH_CHECKLIST.md</code>. <strong>Human launch gates remain</strong> (see below).</td>
+</tr>
+</tbody>
+</table>
+<h2 id="p3-gate-evidence">P3 gate evidence<a class="headerlink" href="#p3-gate-evidence" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Approve → apply exactly once (double-resolve + crash-between recovery)</li>
+<li>One-message correction round-trip: capture → NL amend → revision + supersession + <code>correction_event</code> + <code>eval_case</code> + fewshot bank</li>
+<li>Merge leaves no orphan canonical rows (FK clean)</li>
+<li>Policy matrix: auto_apply / review / confirm × confidence + user overrides</li>
+</ul>
+<h2 id="p4-gate-evidence">P4 gate evidence<a class="headerlink" href="#p4-gate-evidence" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Kill-the-daemon convergence</strong> (<code>tests/contract/test_projection_convergence.py</code>): canonical commit with the drain loop down → receipt <code>pending</code>, outbox <code>pending</code>, no watermark → restart (fresh <code>HarnessAPI</code>) → <code>drain_projections()</code> converges every adapter → outbox <code>done</code>, per-adapter watermark advances on each new commit, receipt flips to <code>refreshed</code>, managed markdown note materialized. Failed adapter leaves the row <code>pending</code>/<code>failed</code> and a healthy coordinator retries from durable state.</li>
+<li><strong>Managed-region fuzz</strong> (<code>tests/contract/test_managed_region_fuzz.py</code>): 300 randomized user edits outside the markers always survive re-render; managed regions update in place; new sections append without touching free zones; on-disk write→hand-edit→re-render round-trip preserves user free text.</li>
+<li><strong>Review SLO counters accurate</strong> (<code>tests/contract/test_review_slo.py</code>): pending / overdue / oldest-age counts correct against aged fixtures; proposed-vs-canonical diff previews; bulk approve drains the queue to zero.</li>
+<li><strong>Projection lag in health + block data</strong> (<code>tests/unit/test_projections.py</code>): health reports pending depth + oldest age + per-adapter watermarks; direct-query timeline/list/stats bindings; <code>mark_dirty</code> coalesces pending rows.</li>
+<li><strong>HTTP surface + serve loop</strong> (<code>tests/contract/test_api.py::test_p4_endpoints_and_drain_loop</code>): FastAPI lifespan starts/stops the background drain loop cleanly; <code>/api/blocks/*</code>, <code>/api/review/stats</code>, <code>/api/projections/drain</code> respond.</li>
+<li>Full suite green: <strong>43 passed</strong> (<code>python -m pytest</code>). <code>ruff check core tests scripts</code> clean. <code>python scripts/leakscan.py</code> OK. <code>pyright</code> clean on all P4 modules.</li>
+</ul>
+<h2 id="p5-gate-evidence">P5 gate evidence<a class="headerlink" href="#p5-gate-evidence" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Scripted walkthrough on synthetic data</strong> (<code>tests/contract/test_app_shell.py</code>): install two packs (<code>sourdough</code> + <code>plants</code> via <code>/api/packs/activate</code>) → capture from the web box (<code>POST /api/capture</code>, routes to <code>sourdough.bake</code>, <code>applied</code>) → see it in <strong>timeline / search / stats / history / planner</strong> (<code>/api/blocks/&lt;view&gt;/data</code>, all nine blocks exercisable against the synthetic packs) → open the <strong>detail view</strong> (<code>/api/objects/&lt;domain&gt;/&lt;object_type&gt;/&lt;uid&gt;</code>) with the full provenance chain (capture text → interpretation confidence → revisions) → <strong>correct</strong> from detail (amend hydration 75→80 via <code>/api/correct</code>, no privileged write) → <strong>revision chain visible</strong> (new <code>object_revision</code> with <code>hydration: 75 → 80</code>) → <strong>review queue drains to zero</strong> (<code>/api/review</code> diffs + <code>/api/review/bulk-resolve</code> + SLO counters) → <strong>health panel green</strong> (<code>/api/health</code>: ledger/domains integrity ok, projection lag 0, LLM spend under cap, on-demand routing score).</li>
+<li><strong>Real-browser confirmation</strong> (headless Chrome, live <code>domain-foundry serve</code>): the same walkthrough was driven through the built SPA end-to-end — empty-state home → install domains → capture receipt with routing badges → capture feed → domain tabs (Bakes/Find/Progress/History/Plan/Starters) → detail modal with provenance → correction dialog applies hydration 75→80 and the new revision renders in the provenance panel → review queue clear with SLO counters → health cards all green (routing score 94%) → in-app custom-block docs. No visual glitches or console errors.</li>
+<li><strong>Security posture:</strong> API binds <code>127.0.0.1</code> by default; non-local bind refuses to start without <code>DOMAIN_FOUNDRY_API_TOKEN</code> (bearer-gated, <code>test_api.py::test_non_local_bind_requires_token</code>). Block data stays read-only + parameterized (unknown/unsafe fields rejected). The shell is a pure API client — every mutation goes through <code>capture()</code> / <code>correct()</code> / review endpoints.</li>
+<li><strong>Lighthouse note (skipped):</strong> a full Lighthouse perf run needs a headless-Chrome + CI budget this box does not carry, so the P5 gate is met via the API+DOM contract test (<code>test_app_shell.py</code>) plus the SPA <code>tsc</code> typecheck + <code>vite build</code>. The bundle is lean (~72 kB gzipped JS, ~4 kB gzipped CSS), responsive (single-column ≤820px), and keyboard-friendly (Esc closes modals, ⌘/Ctrl+Enter captures, tablist nav) as a lightweight stand-in.</li>
+<li>Full suite green: <strong>66 passed</strong> (<code>python -m pytest</code>) incl. 4 new app-shell contract tests. <code>ruff check core tests scripts</code> clean. <code>python scripts/leakscan.py</code> OK. Frontend <code>npm run build</code> (tsc + vite) green.</li>
+</ul>
+<h2 id="p6-gate-evidence">P6 gate evidence<a class="headerlink" href="#p6-gate-evidence" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Cold start to working domain</strong> (<code>tests/contract/test_wizard.py::test_cold_start_gate</code>): one-sentence goal → interview (≤6 targeted questions) → <code>skip</code> accepts defaults → generate → <code>pack validate</code> → dry-run routing → <strong>activate</strong> → a real <code>capture()</code> routes into the freshly generated <code>sourdough</code> domain, and driving a capture through <code>wizard_reply</code> returns a verbose routing explanation + instant-correct affordance.</li>
+<li><strong>≥10 golden goal-statements</strong> (<code>test_golden_goal_generates_valid_routing_pack</code>, incl. "sourdough journey"): 12 goals each produce a pack that passes full validation and routes its own examples <strong>100%</strong> in dry-run (threshold ≥95%). Archetypes (sourdough/running/reading/coffee/workouts) + generic activity-log fallback for anything else. HeuristicProvider only — no live LLM.</li>
+<li><strong>Hardening round-trips with a migration</strong> (<code>test_hardening_edit_round_trips_with_migration</code>): NL edit "add a crumb_photo field" → pack diff preview (nothing applied) → <code>confirm</code> → <code>ALTER TABLE</code> migration written to the pack + executed against <code>domains.sqlite</code> (column now exists), <code>schema_registry</code> refreshed, pack still validates, and a routing fixture/eval case appended. Rename + cancel path covered (<code>test_hardening_rename_and_cancel</code>).</li>
+<li><strong>Resumable + channel-agnostic</strong> (<code>test_session_is_resumable</code>): a fresh <code>HarnessAPI</code> (new process) resumes a persisted session by id and completes it. Same engine drives CLI (<code>domain-foundry new-domain</code>), HTTP (<code>POST /api/wizard</code>, <code>POST /api/wizard/{id}/reply</code>), and any runtime adapter.</li>
+<li><strong>Repeated-correction hook</strong> (§8.4): <code>wizard_suggest(domain)</code> surfaces a hardening suggestion once a reason-code is corrected ≥3×.</li>
+<li>Also fixed a latent P2 router crash (<code>new_ulid</code> imported conditionally inside <code>_persist</code> but used on the unfiled never-drop path) that any unroutable capture could trigger; hoisted the import. This unblocked 4 previously-red P5 app-shell tests.</li>
+<li>Full suite green: <strong>66 passed</strong> (<code>python -m pytest</code>). <code>ruff check core tests scripts</code> clean. <code>python scripts/leakscan.py</code> OK. Wizard modules pyright-clean (remaining pyright warnings are pre-existing <code>int(cur.lastrowid)</code> casts in P2 <code>router.py</code>).</li>
+</ul>
+<h2 id="p7-gate-evidence">P7 gate evidence<a class="headerlink" href="#p7-gate-evidence" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Deliberately-breakable regression path</strong> (<code>tests/contract/test_eval_regression.py::test_break_then_restore_regression</code>): score the pristine synthetic corpus → committed baseline; mutate one <strong>sourdough</strong> fixture's expected <code>operation</code> so routing misses → <code>diff_baseline</code> reports <code>has_regression</code> with the legible per-pack line <code>sourdough: routing_accuracy 0.886 -&gt; …</code>, and the drop is <strong>isolated to that pack</strong> (<code>plants</code> unaffected); restore the fixture → green. This is the "break a heuristic on a branch → CI fails with a per-pack diff; restore → green" gate (§10.3).</li>
+<li><strong>Full scoring + scorecards</strong> (<code>test_eval_scoring.py</code>): routing accuracy, per-field precision/recall/F1, disposition accuracy, and confidence-bucket <strong>calibration curves</strong> per pack; overall + per-pack scorecards serialized to a compact committed baseline (<code>examples/synthetic/eval_baseline.json</code>, 65 cases, routing 0.938, <strong>0 false-completed-action cases</strong>). Fresh replay diffs clean against the committed baseline (the PR gate).</li>
+<li><strong>False-completed-action = release-blocking at zero</strong> (<code>test_zero_false_completed_actions_on_negatives</code>, <code>test_false_completed_action_is_release_blocking</code>): every negative case is checked for any real-domain <code>auto_apply</code> span (zero across the corpus); an injected count of 1 fails the baseline diff.</li>
+<li><strong>Cassette store</strong>: normalized prompt-hash keys, <code>replay</code>/<code>record</code>/<code>live</code> modes; <code>live</code> mode re-records and accumulates a <strong>drift report</strong> (recorded-vs-live diffs) surfaced via <code>eval --live-llm</code>. Deterministic replay over the heuristic inner keeps the PR gate free and reproducible.</li>
+<li><strong>Frozen-clock audit</strong> (<code>scripts/clock_audit.py</code> + <code>tests/unit/test_clock_audit.py</code>): bans bare <code>datetime.now()</code>/<code>datetime.utcnow()</code>/<code>time.time()</code>/<code>time.monotonic()</code> anywhere under <code>core/</code> except the injectable clock provider (<code>clock.py</code>); the audit is green today and the guard-the-guard test proves it catches an injected violation. Wired as a CI step.</li>
+<li><strong>Correction→corpus backfill</strong> (<code>eval backfill</code>, <code>test_backfill_creates_eval_cases_from_pre_p3_corrections</code>): synthesizes <code>eval_case</code> rows from pre-P3 <code>correction_event</code> rows that lack them (expected = corrected <code>right_json</code>, input = original capture text); idempotent (re-runs create nothing new); <code>--dry-run</code> supported.</li>
+<li><strong>Sanitized export</strong> (<code>eval export --sanitize</code>, <code>test_export_sanitizes_pii</code>): strips secrets + PII (email/URL/phone/handle/IP/home-paths) from correction-derived cases and emits contribution-ready JSONL plus a redaction report for the human diff-review step (§10.4).</li>
+<li><strong>Curated contract-case set</strong> (<code>tests/contract/test_curated_contract.py</code>): the five named invariants — approval-executes-exactly-once, never-drop ladder, multi-domain fan-out, idempotent re-capture, projection convergence — collected as one self-contained gate that runs alongside the corpus replay (§10.1/§10.3).</li>
+<li><strong>CI wiring</strong>: <code>.github/workflows/ci.yml</code> adds a frozen-clock audit step and an <strong>eval corpus replay regression gate</strong> (<code>domain-foundry eval --full --min-accuracy 0.9</code>, fails on any per-pack regression or false-completed-action increase vs the committed baseline). <code>.github/workflows/nightly-eval.yml</code> is the on-demand/scheduled <strong>live-LLM</strong> job against a <strong>pinned model</strong> (<code>gpt-4o-mini</code>, bumping is a reviewed change), uploads a drift-report artifact, degrades gracefully without an API key, and documents the release gate (zero false-completed-action cases + pinned-model replay + leak scan).</li>
+<li>Full suite green: <strong>82 passed</strong> (<code>python -m pytest</code>, +16 P7 tests). <code>ruff check core tests scripts</code> clean. <code>python scripts/clock_audit.py</code> OK. <code>python scripts/leakscan.py</code> OK. New P7 modules (<code>evals/*</code>, cassette provider, CLI, audit script) are pyright-clean (remaining pyright errors are pre-existing <code>int(cur.lastrowid)</code> casts in P2/P3 modules).</li>
+</ul>
+<h2 id="p8-gate-evidence">P8 gate evidence<a class="headerlink" href="#p8-gate-evidence" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Food demonstration pack</strong> (<code>packs/food/</code>, <code>tests/contract/test_demo_packs.py</code>): the full concept→recipe→experiment→observation lifecycle across five linked objects (<code>idea</code> → <code>recipe</code> → <code>cook</code> → <code>dining</code> → <code>observation</code>), authored entirely through the public six-file pack format (no core changes needed — dogfood gate clean). <code>pack validate food</code> OK; <strong>32 committed routing fixtures</strong> (<code>packs/food/evals/fixtures.jsonl</code>, ≥25) replay <strong>100%</strong> green (create + lifecycle-transition <code>update</code> operations + negatives) with the deterministic heuristic router.</li>
+<li><strong>Travel reference pack</strong> (<code>packs/travel/</code>): trips / timeline items / bookings-lite generalized from the private travel domain with <strong>synthetic places only</strong> ("Port City", "River Station", "Old Town" — no real names copied). Demonstrates open-context hints (the <code>active</code> trip as the default owner, via <code>llm_hints</code>), a <code>planner</code> block, and <strong>cross-domain links (dining↔trip)</strong> into <code>food.dining</code>. <code>pack validate travel</code> OK; <strong>31 committed fixtures</strong> (≥25) replay <strong>100%</strong> green with <code>food</code>+<code>travel</code> active, and the four cross-domain fixtures each fan out into two linked domains.</li>
+<li><strong>Both packs are data-only</strong> (ADR-004) and did not require any core capability to be added — validated through <code>pack validate</code> and the routing replay, same path as the wizard and the bundled <code>plants</code>/<code>sourdough</code> packs. They live outside the default corpus/<code>eval_baseline.json</code>, so the P7 PR regression gate is unaffected.</li>
+<li><strong>hermes-agent adapter</strong> (<code>adapters/hermes_agent/</code>): installable <code>domain-foundry-hermes-agent</code> package with a <code>register(ctx)</code> entry point published on the <code>hermes_agent.plugins</code> group (<code>pyproject.toml</code>), a declarative <code>plugin.yaml</code>, and seven tools (<code>capture</code> / <code>query</code> / <code>correct</code> / <code>review_list</code> / <code>review_resolve</code> / <code>new_domain</code> / <code>wizard_reply</code>) mapped onto the <code>domain-foundry serve</code> HTTP surface via a thin injectable client. Capture-first behavioral guidance shipped as a documented skill fragment (<code>SKILL.md</code>, also exported as <code>CAPTURE_FIRST_GUIDANCE</code>). Supported hermes-agent range <strong><code>&gt;=0.4,&lt;0.7</code></strong> pinned in the README + <code>SUPPORTED_HERMES_AGENT</code>.</li>
+<li><strong>Adapter conformance test</strong> (<code>tests/contract/test_hermes_agent_adapter.py</code>): a scripted <strong>capture → query → correct → review</strong> session runs through the adapter's tools against a live in-process FastAPI stack (Starlette <code>TestClient</code>); the NL correction (<code>hydration 75 → 80</code>) is confirmed durable via the read surface; <code>register(ctx)</code> wires all seven tools + injects the guidance; version range asserted. (+4 tests)</li>
+<li><strong>Quickstart + clean-machine gate</strong>: <code>docs/QUICKSTART.md</code> covers <code>pipx</code>/editable install → <code>init</code> → <code>pack add</code> → capture → <code>serve</code> → optional hermes-agent hookup. <code>scripts/quickstart_gate.sh</code> automates the pack-install + single-domain + cross-domain capture path against a throwaway <code>--home</code> using only the public CLI (green). The manual browser/agent slice is documented for the 15-minute gate.</li>
+<li><strong>Founder-as-user-0</strong>: <code>docs/FOUNDER_VALIDATION.md</code> is the private friction-log process checklist (cold-start ≥2 real domains → test-drive → correct → harden → live-in-it → file synthetic-repro issues). Personal packs/data are never committed; <code>leakscan.py</code> is the backstop. Public CI proves the mechanism on synthetic corpora; the lived validation is run privately.</li>
+<li>Full suite green: <strong>90 passed</strong> (<code>python -m pytest</code>, +8 P8 tests). <code>ruff check core tests scripts adapters</code> clean. <code>python scripts/leakscan.py</code> OK. <code>python scripts/clock_audit.py</code> OK. New packs + adapter contain <strong>synthetic data only</strong> (PII/real-remote scan clean).</li>
+</ul>
+<h2 id="p9-gate-evidence">P9 gate evidence<a class="headerlink" href="#p9-gate-evidence" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Docs site builds</strong> (<code>mkdocs build</code> → exit 0): MkDocs Material site under <code>docs/</code> wired via root <code>mkdocs.yml</code>, with concept pages (ledger/packs/routing/corrections/replay), an architecture page carrying the §4.5 end-to-end data-flow <strong>mermaid</strong> diagram, an adapter guide, a security posture page, a pack gallery (food/travel/plants/sourdough/template + a community-candidate list), and a "remix in an afternoon" plant-care tutorial. Docs deps added as the <code>docs</code> optional-dependency group (<code>mkdocs</code>, <code>mkdocs-material</code>) + <code>docs/requirements.txt</code>. Build warnings are only cross-tree relative links (scripts/adapters outside <code>docs_dir</code>); the build itself succeeds.</li>
+<li><strong>Final leak audit — release-blocking, GREEN</strong> (<code>docs/LEAK_AUDIT.md</code>, <code>scripts/release_audit.sh</code>): <code>python scripts/leakscan.py</code> OK; <code>python scripts/clock_audit.py</code> OK; <strong>no tracked <code>*.sqlite</code>/<code>*.db</code>/off-allowlist binaries</strong>; <strong>git history starts at the P0 bootstrap</strong> (<code>Bootstrap domain_foundry P0/P1 substrate.</code>, 7 commits, no pre-P0 import); manual review confirms fixtures/examples are synthetic (travel uses invented places), the only <code>@</code>/secret-shaped strings are PII-sanitizer/redactor test inputs, and the only "finn/hermes/HermesWorkspace" strings are the denylist patterns <em>inside the guard scripts themselves</em>. <code>scripts/release_audit.sh</code> aggregates all release-blocking gates (leakscan + clock + no-DBs + P0-history + ruff + pytest + <code>mkdocs build</code> + eval corpus replay) and prints <strong>release audit OK</strong>.</li>
+<li><strong>Security posture</strong> (<code>docs/security.md</code>, <code>SECURITY.md</code>): documents localhost-by-default binding, non-local-bind-refuses-without-token, bearer-gated endpoints, read-only + parameterized query paths with schema-validated identifiers, <code>safe_join</code> path safety, secret redaction, prompt-injection containment, extension trust tiers, and the private disclosure process. New <strong>API security contract test</strong> (<code>tests/security/test_api_auth.py</code>) closes a gap: with a token set, endpoints return 401 (missing) / 403 (wrong) / 401 (malformed scheme) and 200 (valid) for both reads and mutations; the localhost default stays open. (+2 tests)</li>
+<li><strong>README polish + changelog</strong> (<code>README.md</code>, <code>CHANGELOG.md</code>): pitch + 5-minute quickstart + docs index + name-status note; a <strong>demo-GIF placeholder</strong> (HTML comment + prose line pointing at the <code>LAUNCH_CHECKLIST.md</code> recording gate — no fabricated binary committed); Keep-a-Changelog <code>v0.1.0</code> stub summarizing P0–P9. PyPI publish steps live (unexecuted) in <code>LAUNCH_CHECKLIST.md</code>.</li>
+<li><strong>Launch prep (prepared, not executed)</strong>: <code>docs/launch/{show-hn,lobsters,nous,awesome-list-blurbs}.md</code> drafts; <code>.github/ISSUE_TEMPLATE/{bug_report,routing_miss,pack_submission,config}.{md,yml}</code> (bug / routing-miss-as-eval-case / pack-submission, plus a private-security contact link); <code>LAUNCH_CHECKLIST.md</code> covers name decision, pre-flight, demo GIF, PyPI publish, launch posts, and <strong>post-launch triage</strong> (labels + severity + synthetic-repro-into-eval-case rotation). Name decision recorded as an open ADR (<code>docs/adr/ADR-005-name-decision.md</code>); <strong>no launch post is live and nothing was published</strong>.</li>
+<li>Full suite green: <strong>92 passed</strong> (<code>python -m pytest</code>, +2 P9 security tests). <code>ruff check core tests scripts adapters</code> clean. <code>python scripts/clock_audit.py</code> OK. <code>python scripts/leakscan.py</code> OK. <code>mkdocs build</code> OK. <code>domain-foundry eval --full --min-accuracy 0.9</code> OK.</li>
+</ul>
+<h3 id="human-launch-gates-remaining-not-done-by-the-build">Human launch gates remaining (NOT done by the build)<a class="headerlink" href="#human-launch-gates-remaining-not-done-by-the-build" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Name decision</strong> (provisional): <strong>Domain Foundry</strong> chosen; mechanical rename done (ADR-005). Still need PyPI/GitHub/domain/trademark availability checks before publish.</li>
+<li><strong>PyPI publish</strong> (core + hermes-agent adapter) and the GitHub release/tag push — steps in <code>LAUNCH_CHECKLIST.md §3</code>, not executed.</li>
+<li><strong>Launch posts</strong>: Show HN, lobste.rs, Nous, and awesome-list PRs — drafts prepared, posted by hand.</li>
+<li><strong>External security pass</strong> on the API surface by an independent reviewer.</li>
+<li><strong>Founder-as-user-0</strong> lived validation (private; <code>docs/FOUNDER_VALIDATION.md</code>).</li>
+<li><strong>90-second demo GIF</strong> recording against synthetic packs (then re-audit + commit).</li>
+</ol>
+<h2 id="quick-commands">Quick commands<a class="headerlink" href="#quick-commands" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>domain-foundry<span class="w"> </span>init
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>domain-foundry<span class="w"> </span>pack<span class="w"> </span>add<span class="w"> </span>packs/plants
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>domain-foundry<span class="w"> </span>pack<span class="w"> </span>add<span class="w"> </span>packs/sourdough
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>domain-foundry<span class="w"> </span>pack<span class="w"> </span>add<span class="w"> </span>packs/food<span class="w">            </span><span class="c1"># P8 demo pack (concept→recipe→experiment→observation)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>domain-foundry<span class="w"> </span>pack<span class="w"> </span>add<span class="w"> </span>packs/travel<span class="w">          </span><span class="c1"># P8 reference pack (trips/timeline/bookings + dining↔trip links)</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>scripts/quickstart_gate.sh<span class="w">                    </span><span class="c1"># automated clean-machine gate (pack install + capture path)</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>pip<span class="w"> </span>install<span class="w"> </span>./adapters/hermes_agent<span class="w">          </span><span class="c1"># P8 hermes-agent plugin (hermes_agent.plugins entry point)</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>domain-foundry<span class="w"> </span>capture<span class="w"> </span><span class="s2">&quot;baked a 75% hydration country loaf&quot;</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>domain-foundry<span class="w"> </span>correct<span class="w"> </span><span class="s2">&quot;that bake was 80% hydration not 75&quot;</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>domain-foundry<span class="w"> </span>review<span class="w"> </span>list
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>domain-foundry<span class="w"> </span>review<span class="w"> </span>stats
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>domain-foundry<span class="w"> </span>projections<span class="w"> </span>drain
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>domain-foundry<span class="w"> </span><span class="nb">eval</span><span class="w">                          </span><span class="c1"># deterministic cassette replay (routing gate)</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>domain-foundry<span class="w"> </span><span class="nb">eval</span><span class="w"> </span>--full<span class="w">                   </span><span class="c1"># per-pack scorecards + regression diff vs baseline</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>domain-foundry<span class="w"> </span><span class="nb">eval</span><span class="w"> </span>--full<span class="w"> </span>--update-baseline<span class="w"> </span><span class="c1"># rewrite committed baseline snapshot</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>domain-foundry<span class="w"> </span><span class="nb">eval</span><span class="w"> </span>--full<span class="w"> </span>--live-llm<span class="w"> </span>--no-baseline<span class="w">  </span><span class="c1"># nightly: re-record + drift report</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>domain-foundry<span class="w"> </span><span class="nb">eval</span><span class="w"> </span>backfill<span class="w">                 </span><span class="c1"># pre-P3 corrections -&gt; eval_case rows</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>domain-foundry<span class="w"> </span><span class="nb">eval</span><span class="w"> </span><span class="nb">export</span><span class="w"> </span>--out<span class="w"> </span>contrib.jsonl<span class="w"> </span>--sanitize<span class="w">  </span><span class="c1"># PII-stripped contribution</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="c1"># P6 — guided domain creation</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>domain-foundry<span class="w"> </span>new-domain<span class="w"> </span><span class="s2">&quot;I want to track my sourdough journey&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="w">  </span>--reply<span class="w"> </span>skip<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="w">  </span>--reply<span class="w"> </span><span class="s2">&quot;baked a country loaf at 80% hydration&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="w">  </span>--reply<span class="w"> </span><span class="s2">&quot;add a crumb_photo field&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="w">  </span>--reply<span class="w"> </span>confirm
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>domain-foundry<span class="w"> </span>wizard<span class="w"> </span>reply<span class="w"> </span>&lt;session_id&gt;<span class="w"> </span><span class="s2">&quot;fed the rye starter&quot;</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="c1"># P9 — docs, audit &amp; release</span>
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[docs]&quot;</span><span class="w">                     </span><span class="c1"># mkdocs + mkdocs-material (or: pip install -r docs/requirements.txt)</span>
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>mkdocs<span class="w"> </span>build<span class="w">                                 </span><span class="c1"># build the docs site (mkdocs serve to preview)</span>
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>scripts/release_audit.sh<span class="w">                     </span><span class="c1"># aggregate release-blocking gate (leakscan+clock+history+ruff+pytest+mkdocs+eval)</span>
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      MIT-licensed. No telemetry. Local-first.
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "navigation.top", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

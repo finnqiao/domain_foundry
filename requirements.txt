@@ -1,0 +1,7 @@
+# Documentation build dependencies (MkDocs Material).
+# Mirrors the `docs` optional-dependency group in pyproject.toml so the site can
+# be built without installing the full core (e.g. on a docs-only CI runner):
+#   pip install -r docs/requirements.txt && mkdocs build
+# Or, from a checkout:  pip install -e ".[docs]" && mkdocs build
+mkdocs>=1.6.0
+mkdocs-material>=9.5.0
