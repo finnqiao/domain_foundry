@@ -65,6 +65,7 @@ nav:
       - "How-to: developers": tutorial/howto-technical.md
       - Testing runbook: tutorial/testing-runbook.md
   - Quickstart (CLI): QUICKSTART.md
+  - User stories & evidence: USER_STORIES.md
   - Concepts:
       - Overview: concepts/index.md
       - The ledger: concepts/ledger.md

@@ -1,0 +1,29 @@
+[
+  {
+    "harness": "cli",
+    "ok": true
+  },
+  {
+    "harness": "mcp",
+    "ok": true,
+    "steps": [
+      "tools/list",
+      "new_domain",
+      "wizard_reply(skip)",
+      "capture",
+      "query",
+      "correct",
+      "review_list",
+      "health"
+    ]
+  },
+  {
+    "harness": "telegram",
+    "ok": true,
+    "replies": 5
+  },
+  {
+    "harness": "hermes",
+    "ok": true
+  }
+]

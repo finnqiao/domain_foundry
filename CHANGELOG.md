@@ -6,6 +6,46 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added (bring-your-own-key onboarding)
+
+- **`domain-foundry setup`** — guided first-run flow: pick a provider, pick a
+  model per tier, verify the key with one cheap live call per tier, then pick a
+  starting point (ready-made pack / describe a log / pull in notes / attach a
+  database). `--provider … -y` skips every question for expert installs, and
+  `--show` prints what each setting resolved to and from where (keys redacted).
+- **Provider registry** (`llm/providers.py`) — Anthropic, OpenAI, DeepSeek,
+  OpenRouter, local/self-hosted, and an explicit offline choice, each with a
+  suggested routine/sota pair. Suggestions only; the user overrides either tier.
+- **Workspace config** (`~/.domain_foundry/config.toml`) — settings now resolve
+  **env > config file > provider default**, so an env-var-only install is
+  unchanged. The file records *which env var holds the key* by default;
+  `--store-key` opts into writing it, and then the file is `chmod 0600`.
+- **`domain-foundry import`** — exposes the mapping-driven importer that
+  previously had no CLI: SQLite (`mode=ro`) and JSON/JSONL sources, `--table` /
+  `--where` / `--order-by` remapping, dry-run by default, `--markdown`
+  reconciliation, and a non-zero exit unless every source row is accounted for.
+
+### Fixed
+
+- **Anthropic requests sent `temperature`, which current models reject with HTTP
+  400.** Because the router catches LLM failures into the keyword heuristic, this
+  did not surface as an error — it looked identical to "no key configured". The
+  request shape is now resolved per model (sampling params, `output_config.effort`,
+  `max_tokens` headroom for models that think by default), with a minimal-body
+  retry on 400 only. 401/429/5xx no longer retry, and errors are one readable line
+  instead of an httpx MDN dump.
+- **Completing setup changed nothing.** `get_default_provider` read only the
+  `DOMAIN_FOUNDRY_LLM` env var, so a finished setup — key stored, probe green —
+  still routed on keyword rules until the user separately exported
+  `DOMAIN_FOUNDRY_LLM=live`. It now honours the config's `mode`.
+- **`--home /elsewhere` ignored that workspace's config.** `Router` and the
+  corrections service now thread their workspace home into provider construction.
+- `TierSettings.configured` treated a *named but unset* env var as a working
+  credential, so setup could report success with no reachable key.
+- `DEFAULT_SOTA_MODEL` was stale (`claude-sonnet-4-6`); pricing table refreshed,
+  and `tier_for_model` no longer assumes every Claude model is sota (Haiku is the
+  suggested routine model).
+
 ### Added (convergence finish)
 
 - `packs/x_radar/` — signal/person pack + agent.yaml.

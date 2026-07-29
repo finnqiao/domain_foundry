@@ -54,6 +54,22 @@ green as of this commit (see [`docs/LEAK_AUDIT.md`](docs/LEAK_AUDIT.md)).
   [`docs/security.md`](docs/security.md).
 - 🔒 Founder-as-user-0 validation completed privately — see
   [`docs/FOUNDER_VALIDATION.md`](docs/FOUNDER_VALIDATION.md).
+- 🔒 **One live `setup` probe per provider you intend to document.** The
+  Anthropic request shape (which models reject `temperature`, which accept
+  `output_config.effort`) is encoded from the published API contract and covered
+  by unit tests against a mocked transport — but it has **not** been executed
+  against a real key, because no credential was available in the build
+  environment. A wrong entry in that table is a 400 that the router swallows into
+  keyword routing, i.e. invisible. The probe is the check, and it takes seconds:
+
+  ```bash
+  ANTHROPIC_API_KEY=... domain-foundry setup --provider anthropic -y --probe
+  # expect: routine claude-haiku-4-5 ok / sota claude-opus-5 ok
+  ```
+
+  Verified so far: a **bad** key correctly reports `HTTP 401: invalid x-api-key`
+  on both tiers (so the failure path and the transport are real). The success
+  path is unproven.
 
 ## 2. Demo GIF 🔒
 
@@ -72,9 +88,22 @@ and a PyPI API token.
 # 2. Tag.
 git tag -a v0.1.0 -m "domain_foundry v0.1.0"
 
-# 3. Build sdist + wheel.
+# 3. Build the SPA and stage it into the package, then build sdist + wheel.
+#    Skipping the stage step ships a wheel with no web app: `domain-foundry serve`
+#    returns JSON and the README quickstart's "then open 127.0.0.1:8787" is a lie.
+( cd app && npm ci && npm run build )
+scripts/stage_webapp.sh              # app/dist -> core/domain_foundry_core/_webapp
 python -m pip install --upgrade build twine
 python -m build                      # writes dist/*.tar.gz + dist/*.whl
+
+# 3b. Verify the wheel actually contains the app and the reference packs.
+python - <<'PY'
+import glob, zipfile
+names = zipfile.ZipFile(sorted(glob.glob("dist/*.whl"))[-1]).namelist()
+assert any("_webapp/index.html" in n for n in names), "wheel has no SPA — run scripts/stage_webapp.sh"
+assert any("_bundled/food/pack.yaml" in n for n in names), "wheel has no reference packs"
+print("wheel contents OK")
+PY
 
 # 4. Smoke-test on TestPyPI first.
 python -m twine upload --repository testpypi dist/*

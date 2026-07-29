@@ -18,12 +18,68 @@ This puts a `domain-foundry` command on your PATH.
 
 ## 2. Initialize the workspace
 
+Either let `setup` walk you through it (it runs `init` for you):
+
+```bash
+domain-foundry setup
+```
+
+…or do it yourself, if you'd rather configure models by hand:
+
 ```bash
 domain-foundry init
 ```
 
 Creates `~/.domain_foundry/` with the two SQLite databases (`ledger.sqlite`,
 `domains.sqlite`) and applies substrate migrations.
+
+### Bring your own key
+
+Nothing ships with a model. `setup` asks which provider you have a key for
+(Anthropic, OpenAI, DeepSeek, OpenRouter, anything OpenAI-compatible you host
+yourself, or none at all), suggests a model for each of the two tiers, and makes
+one cheap live call per tier to prove the key works:
+
+```
+Checking each tier can reach its model:
+  routine  claude-haiku-4-5             ok — reachable
+  sota     claude-opus-5                ok — reachable
+```
+
+That probe matters: without it, a wrong key or a renamed model shows up as
+*silence*. Captures keep succeeding, because routing falls back to keyword rules
+— so the failure looks exactly like "I haven't set a key yet".
+
+**The two tiers, and why there are two:**
+
+| Tier | Handles | Shape of the call |
+|---|---|---|
+| `routine` | every capture's routing + field extraction | high volume, low stakes |
+| `sota` | corrections, structural/schema-affecting ops, low-confidence and multi-domain fan-out | rare, high stakes |
+
+Escalation is automatic (`select_model_tier`): a routing rule can declare
+`tier: sota`, and anything that updates/deletes/merges, reads as a correction,
+comes back below 0.7 confidence, or matches multiple packs escalates on its own.
+
+**Settings resolve in three layers, most specific first** — environment
+variables, then the config file `setup` wrote (`~/.domain_foundry/config.toml`),
+then the provider's suggestion. So an expert setup that lives in a dotfile keeps
+working untouched:
+
+```bash
+export DOMAIN_FOUNDRY_SOTA_MODEL=claude-opus-5
+export DOMAIN_FOUNDRY_SOTA_API_KEY=...
+domain-foundry setup --show      # what resolved, and from where (keys redacted)
+```
+
+By default the config file records *which env var holds your key*, not the key
+itself. `--store-key` opts into writing it, and then the file is `chmod 0600`.
+
+Non-interactive, for scripts and clean-machine installs:
+
+```bash
+domain-foundry setup --provider anthropic --sota claude-opus-5 -y --no-probe
+```
 
 ## 3. Add a demonstration pack
 
