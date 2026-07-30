@@ -70,7 +70,7 @@ green as of this commit (see [`docs/LEAK_AUDIT.md`](docs/LEAK_AUDIT.md)).
   surfaced three things the red badge was hiding: Pyright runs *before* pytest in
   the workflow, so **the suite had not run in CI for twelve days**; the adapter
   E2E proofs under `adapters/*/tests/` were outside `testpaths` and so **gated
-  nothing** (now collected — 281 → 287 tests); and one **real latent bug** —
+  nothing** (now collected — 281 → 288 tests); and one **real latent bug** —
   `capture_hints.py` called `NominatimClient()` without its required cache, so
   capture-time geocoding raised `TypeError` inside a bare `except` and silently
   never ran. Fixed with regression tests.

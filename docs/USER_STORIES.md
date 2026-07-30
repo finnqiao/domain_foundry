@@ -8,8 +8,8 @@ Reproduce the whole table:
 
 ```bash
 scripts/quickstart_gate.sh     # onboarding + capture + import lifecycle
-scripts/release_audit.sh       # leakscan · clock · ruff · pytest · docs · eval replay
-pytest                         # 281 passed / 2 skipped
+scripts/release_audit.sh       # leakscan · clock · ruff · pyright · pytest · docs · eval replay
+pytest                         # 288 passed / 2 skipped
 ```
 
 ---
@@ -249,7 +249,7 @@ the type errors themselves:
   MCP / Telegram / hermes-agent proofs under `adapters/*/tests/` were never
   collected by a bare `pytest` or by CI — the same three proofs that had once
   been green on a no-op. They are in `testpaths` now, which is where the jump
-  from 281 to 287 tests comes from.
+  from 281 to 288 tests comes from.
 
 Turning the gates green surfaced **three real bugs that no green local run could
 have shown**, each in a different blind spot:

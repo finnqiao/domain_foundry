@@ -140,11 +140,12 @@ importer (`import`). See [`docs/PHASE_STATUS.md`](docs/PHASE_STATUS.md),
 [`docs/USER_STORIES.md`](docs/USER_STORIES.md) and
 [`CHANGELOG.md`](CHANGELOG.md).
 
-**Gates:** 281 passed / 2 skipped · ruff clean · `release_audit.sh` 8/8 ·
-`quickstart_gate.sh` green. Remaining work is human gates — PyPI name
-availability, the demo GIF, an external security pass, a lived production week,
-and one live `setup --probe` per documented provider. Per-claim evidence, and
-what is deliberately *not* proven, is in
+**Gates:** 288 passed / 2 skipped · ruff clean · pyright 0 errors ·
+`release_audit.sh` 9/9 · `quickstart_gate.sh` green · GitHub Actions `ci` and
+`leakscan` green on Python 3.11/3.12/3.13. Remaining work is human gates — the
+demo GIF, an external security pass, a lived production week, one live
+`setup --probe` per documented provider, and claiming the (verified available)
+PyPI names. Per-claim evidence, and what is deliberately *not* proven, is in
 [`docs/USER_STORIES.md`](docs/USER_STORIES.md).
 
 > **Name:** provisional public name is **Domain Foundry** (`domain-foundry-core` /
