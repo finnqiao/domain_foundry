@@ -679,10 +679,21 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#the-one-gate-that-is-red-and-why-it-isnt-in-the-table-above" class="md-nav__link">
+  <a href="#what-clearing-the-last-red-gate-turned-up" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The one gate that is red, and why it isn't in the table above
+        What clearing the last red gate turned up
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pypi" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PyPI
       
     </span>
   </a>
@@ -1568,10 +1579,21 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#the-one-gate-that-is-red-and-why-it-isnt-in-the-table-above" class="md-nav__link">
+  <a href="#what-clearing-the-last-red-gate-turned-up" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The one gate that is red, and why it isn't in the table above
+        What clearing the last red gate turned up
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pypi" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PyPI
       
     </span>
   </a>
@@ -1609,8 +1631,8 @@ serves it and the <strong>reproducible evidence</strong> that it works. Where so
 unproven, that is stated as unproven rather than left implied.</p>
 <p>Reproduce the whole table:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>scripts/quickstart_gate.sh<span class="w">     </span><span class="c1"># onboarding + capture + import lifecycle</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>scripts/release_audit.sh<span class="w">       </span><span class="c1"># leakscan · clock · ruff · pytest · docs · eval replay</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>pytest<span class="w">                         </span><span class="c1"># 281 passed / 2 skipped</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>scripts/release_audit.sh<span class="w">       </span><span class="c1"># leakscan · clock · ruff · pyright · pytest · docs · eval replay</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>pytest<span class="w">                         </span><span class="c1"># 288 passed / 2 skipped</span>
 </code></pre></div>
 <hr />
 <h2 id="1-ive-never-done-this-before-walk-me-through-it">1. "I've never done this before. Walk me through it."<a class="headerlink" href="#1-ive-never-done-this-before-walk-me-through-it" title="Permanent link">&para;</a></h2>
@@ -1919,54 +1941,86 @@ there, and none of them presented as an error.</p>
 <tbody>
 <tr>
 <td><code>pytest</code></td>
-<td><strong>281 passed / 2 skipped</strong> (2 skips are opt-in live-LLM smokes)</td>
+<td><strong>288 passed / 2 skipped</strong> (2 skips are opt-in live-LLM smokes)</td>
 </tr>
 <tr>
 <td><code>ruff check core tests scripts adapters</code></td>
 <td>clean</td>
 </tr>
 <tr>
+<td><code>pyright</code></td>
+<td><strong>0 errors</strong></td>
+</tr>
+<tr>
 <td><code>scripts/release_audit.sh</code></td>
-<td><strong>8/8 PASS</strong> — leakscan · clock audit · no tracked DBs · history starts at P0 · ruff · pytest · mkdocs build · eval corpus replay</td>
+<td><strong>9/9 PASS</strong> — leakscan · clock audit · no tracked DBs · history starts at P0 · ruff · pyright · pytest · mkdocs build · eval corpus replay</td>
 </tr>
 <tr>
 <td><code>scripts/quickstart_gate.sh</code></td>
 <td>PASS — onboarding write, env override, single- and cross-domain capture, import lifecycle</td>
 </tr>
 <tr>
-<td>GitHub Actions <code>ci</code> → <strong>Pyright</strong></td>
-<td>❌ <strong>red, and has been since 2026-07-17</strong> — see below</td>
+<td>GitHub Actions <code>ci</code> + <code>leakscan</code></td>
+<td>green</td>
 </tr>
 </tbody>
 </table>
-<h3 id="the-one-gate-that-is-red-and-why-it-isnt-in-the-table-above">The one gate that is red, and why it isn't in the table above<a class="headerlink" href="#the-one-gate-that-is-red-and-why-it-isnt-in-the-table-above" title="Permanent link">&para;</a></h3>
-<p><code>scripts/release_audit.sh</code> runs ruff and pytest but <strong>not</strong> Pyright. GitHub
-Actions <code>ci</code> does. So the local aggregate gate has been reporting 8/8 while CI
-was failing — a real blind spot, and the reason to state it here rather than
-quietly present the green half.</p>
-<p>Pyright reports <strong>45 errors locally / 56 in CI</strong> (the extra 11 are phantom import
-errors for <code>domain_foundry_roamboard</code>, a private-overlay adapter CI does not
-install). Every one predates this work; distribution:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>  9  routing/router.py           (tuple return-type mismatches, lines 111–315)
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>  6  corrections/service.py      (int | None → ConvertibleToInt, lines 902–977)
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>  6  tests/unit/test_clock_audit.py
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>  5  tests/unit/test_leakscan.py
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>  5  tests/unit/test_llm_tiering.py
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>  … 9 more files with 1–3 each
-</code></pre></div>
-<p><strong>Zero are attributable to the bring-your-own-key work.</strong> <code>config.py</code>,
-<code>onboarding.py</code>, <code>llm/providers.py</code>, <code>llm/provider.py</code>, <code>llm/pricing.py</code>,
-<code>cli.py</code> and <code>test_byo_setup.py</code> are clean; the <code>router.py</code> and
-<code>service.py</code> errors sit at lines untouched by the two-line <code>home=</code> threading
-added there. Verify:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>pyright<span class="w"> </span>--outputjson<span class="w"> </span><span class="p">|</span><span class="w"> </span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;…group errors by file…&quot;</span><span class="w">   </span><span class="c1"># 0 in the files above</span>
-</code></pre></div>
-<p>Clearing this debt is a focused follow-up, not a launch blocker for the stories
-above — but the <code>ci</code> badge stays red until it is done, and that should not be
-presented as anything else.</p>
-<p>Still human gates, unchanged: PyPI name availability, the 90-second demo GIF, an
-external security pass, a lived production week, and one live <code>setup --probe</code> per
-documented provider.</p>
+<h3 id="what-clearing-the-last-red-gate-turned-up">What clearing the last red gate turned up<a class="headerlink" href="#what-clearing-the-last-red-gate-turned-up" title="Permanent link">&para;</a></h3>
+<p><code>ci</code> had been red since 2026-07-17 on 45 Pyright errors, and
+<code>release_audit.sh</code> ran ruff and pytest but <strong>not</strong> Pyright — so the local gate
+reported 8/8 over a failing CI for twelve days. Two consequences were worse than
+the type errors themselves:</p>
+<ul>
+<li><strong>Pyright runs before pytest in the workflow</strong>, so the test suite had not
+  actually run in CI for those twelve days either.</li>
+<li><strong>The adapter E2E tests gated nothing.</strong> <code>testpaths</code> was <code>["tests"]</code>, so the
+  MCP / Telegram / hermes-agent proofs under <code>adapters/*/tests/</code> were never
+  collected by a bare <code>pytest</code> or by CI — the same three proofs that had once
+  been green on a no-op. They are in <code>testpaths</code> now, which is where the jump
+  from 281 to 288 tests comes from.</li>
+</ul>
+<p>Turning the gates green surfaced <strong>three real bugs that no green local run could
+have shown</strong>, each in a different blind spot:</p>
+<table>
+<thead>
+<tr>
+<th>Bug</th>
+<th>Why it was invisible</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>capture_hints.py</code> called <code>NominatimClient()</code> with no argument, but the constructor requires a cache — <code>TypeError</code> on every call, inside <code>except Exception: return out</code>. Setting <code>DOMAIN_FOUNDRY_GEOCODE_ON_CAPTURE=1</code> never geocoded anything and never said so.</td>
+<td>Nothing exercised the opt-in path. Caught by the type checker; now has two regression tests that assert coordinates actually land, not merely that nothing raised.</td>
+</tr>
+<tr>
+<td>The <strong>wheel shipped with no web app</strong> despite <code>stage_webapp.sh</code> staging it and the wheel target declaring the artifact. <code>python -m build</code> builds the wheel <em>from the sdist</em>, and the sdist target did not declare it.</td>
+<td>The existing test asserted only that a string appeared in <code>pyproject.toml</code> — config text, not outcome. Replaced with a test that builds the real distributions and opens the archive; confirmed it fails when the sdist artifact is removed.</td>
+</tr>
+<tr>
+<td><code>adapters/mcp</code> declared an unbounded <code>mcp&gt;=1.2.0</code>, but <code>server.py</code> imports <code>mcp.server.fastmcp.FastMCP</code>, which the 2.x line moved. A fresh resolve takes 2.0.0 and the server won't start — so <strong><code>pipx install domain-foundry-mcp</code> was broken for anyone installing today</strong>.</td>
+<td>The local venv held 1.28.1, so every local run passed. Only a clean-resolve environment can see version skew between a developer's venv and a new user's install. Capped at <code>&lt;2</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>The failure mode they share is the one this project keeps rediscovering: the thing
+that hides a bug is usually a broad <code>except</code>, a test that asserts configuration
+instead of outcome, or an environment that differs from a new user's.</p>
+<p>Structural fixes so these cannot go quiet again: <code>pyright</code> is a blocking step in
+<code>release_audit.sh</code> (the local gate can no longer be weaker than the merge gate);
+the adapter E2E proofs are in <code>testpaths</code> and CI editable-installs the adapters so
+the MCP proof's <strong>subprocess</strong> resolves (<code>pythonpath</code> alone cannot reach a child
+process); <code>pyright.extraPaths</code> matches <code>pytest.pythonpath</code>; and CI's <code>ruff</code> now
+covers <code>adapters</code> like the audit script does.</p>
+<p>Still human gates: the 90-second demo GIF, an external security pass, a lived
+production week, and one live <code>setup --probe</code> per documented provider.</p>
+<h3 id="pypi">PyPI<a class="headerlink" href="#pypi" title="Permanent link">&para;</a></h3>
+<p>All five names are <strong>available and unclaimed</strong> as of 2026-07-29:
+<code>domain-foundry</code>, <code>domain-foundry-core</code>, <code>domain-foundry-mcp</code>,
+<code>domain-foundry-telegram</code>, <code>domain-foundry-hermes-agent</code>. Distributions build
+clean and <code>twine check</code> passes on both; the wheel is verified to contain the SPA
+and all nine reference packs. Publishing needs a PyPI token, which is a human
+step.</p>
 
 
 
