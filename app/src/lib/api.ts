@@ -4,6 +4,7 @@
 
 import type {
   BlockData,
+  AskResponse,
   CaptureReceipt,
   CatalogEntry,
   CorrectionReceipt,
@@ -13,8 +14,19 @@ import type {
   ObjectDetail,
   PackCard,
   PackView,
+  ProvidersStatus,
+  ApplyResult,
+  HardeningResult,
+  RoamboardReport,
+  RoamboardShadow,
+  PackImportReport,
   ReviewItem,
   ReviewStats,
+  SearchResult,
+  WizardTurn,
+  QuizActivity,
+  QuizSession,
+  ScheduleStatus,
 } from "./types";
 
 // A bearer token can be injected at build/runtime for non-local binds.
@@ -71,11 +83,20 @@ export interface IngestReport {
 }
 
 export const api = {
-  capture: (text: string, channel = "web") =>
-    req<CaptureReceipt>("/api/capture", {
+  capture: (
+    text: string,
+    options: { channel?: string; domainHint?: string } | string = {},
+  ) => {
+    const opts = typeof options === "string" ? { channel: options } : options;
+    return req<CaptureReceipt>("/api/capture", {
       method: "POST",
-      body: JSON.stringify({ text, channel }),
-    }),
+      body: JSON.stringify({
+        text,
+        channel: opts.channel ?? "web",
+        domain_hint: opts.domainHint ?? null,
+      }),
+    });
+  },
 
   query: (params: { q?: string; domain?: string; status?: string; limit?: number } = {}) => {
     const qs = new URLSearchParams();
@@ -136,7 +157,86 @@ export const api = {
     }),
 
   health: () => req<HealthReport>("/api/health"),
+  providers: () => req<ProvidersStatus>("/api/settings/providers"),
+  ask: async (
+    question: string,
+    options: { domain?: string; limit?: number } = {},
+  ): Promise<AskResponse> => {
+    try {
+      return await req<AskResponse>("/api/ask", {
+        method: "POST",
+        body: JSON.stringify({
+          question,
+          domain: options.domain ?? null,
+          limit: options.limit ?? 20,
+        }),
+      });
+    } catch (error) {
+      // If an older daemon is missing /api/ask, fall back to read-only search
+      // and label the answer as search-only.
+      if (!(error instanceof ApiError) || error.status !== 404) throw error;
+      const rows = await api.query({ q: question, domain: options.domain, limit: options.limit ?? 20 });
+      return {
+        question,
+        answer: rows.length ? "Closest matches from your captured data:" : "I don't have that in your captured data yet.",
+        citations: rows.slice(0, 5).map((row) => ({
+          object_uid: null,
+          entry_id: row.id,
+          domain: row.domain,
+          object_type: row.object_type,
+          snippet: row.raw_text ?? row.summary ?? "",
+        })),
+        mode: rows.length ? "search_only" : "refusal",
+        cap_hit: false,
+      };
+    }
+  },
+  searchLedger: (query: string, options: { domain?: string; objectType?: string; kind?: "entry" | "canonical" } = {}) => {
+    const qs = new URLSearchParams({ q: query });
+    if (options.domain) qs.set("domain", options.domain);
+    if (options.objectType) qs.set("object_type", options.objectType);
+    if (options.kind) qs.set("kind", options.kind);
+    return req<SearchResult>(`/api/search?${qs.toString()}`);
+  },
+  refileEntry: (entryId: string, domain: string) =>
+    req<{ applied: boolean; entry_id: string; domain: string; status: string; error?: string }>(
+      `/api/entries/${encodeURIComponent(entryId)}/refile`,
+      { method: "POST", body: JSON.stringify({ domain }) },
+    ),
   evalRouting: () => req<EvalReport>("/api/eval"),
+  quizStats: (domain: string) =>
+    req<{
+      domain: string;
+      due_count?: number;
+      reviewed_today?: number;
+      streak_days?: number;
+      grade_distribution?: Record<string, number>;
+      total_reviews?: number;
+      review_count?: number;
+    }>(`/api/quiz/stats?domain=${encodeURIComponent(domain)}`),
+  quizStart: (options: { domain?: string; limit?: number } = {}) =>
+    req<QuizSession>("/api/quiz/start", {
+      method: "POST",
+      body: JSON.stringify({ domain: options.domain ?? "japanese", limit: options.limit ?? null }),
+    }),
+  quizNext: (domain: string, userId = "default") =>
+    req<QuizSession & { active: boolean }>(
+      `/api/quiz/next?domain=${encodeURIComponent(domain)}&user_id=${encodeURIComponent(userId)}`,
+    ),
+  quizGrade: (domain: string, grade: string, sessionId?: string) =>
+    req<QuizSession & { grade: string; done: boolean }>("/api/quiz/grade", {
+      method: "POST",
+      body: JSON.stringify({ domain, grade, session_id: sessionId ?? null }),
+    }),
+  quizActivity: (domain: string) =>
+    req<QuizActivity>(`/api/quiz/activity?domain=${encodeURIComponent(domain)}`),
+  schedules: (domain: string) =>
+    req<ScheduleStatus>(`/api/schedules?domain=${encodeURIComponent(domain)}`),
+  setScheduleStatus: (domain: string, scheduleId: string, status: string) =>
+    req<{ domain: string; schedule_id: string; status: string }>(
+      `/api/schedules/${encodeURIComponent(domain)}/${encodeURIComponent(scheduleId)}/status`,
+      { method: "POST", body: JSON.stringify({ status }) },
+    ),
 
   // Bolt existing notes/logs onto foundries. Preview is read-only; commit pulls
   // in. Both are local, server-side operations (distinct from the sealed write
@@ -145,4 +245,73 @@ export const api = {
     req<IngestReport>("/api/ingest/preview", { method: "POST", body: JSON.stringify(body) }),
   ingestCommit: (body: IngestBody) =>
     req<IngestReport>("/api/ingest", { method: "POST", body: JSON.stringify(body) }),
+
+  roamboardPreview: (feedPath: string) =>
+    req<RoamboardReport>("/api/import/roamboard/preview", {
+      method: "POST",
+      body: JSON.stringify({ feed_path: feedPath }),
+    }),
+  roamboardCommit: (feedPath: string, previewToken: string) =>
+    req<RoamboardReport>("/api/import/roamboard/commit", {
+      method: "POST",
+      body: JSON.stringify({ feed_path: feedPath, preview_token: previewToken }),
+    }),
+  roamboardShadow: () => req<RoamboardShadow>("/api/import/roamboard/shadow"),
+
+  packImportMappings: (domain: string) =>
+    req<{ mappings: Record<string, unknown>[] }>(
+      `/api/import/pack/${encodeURIComponent(domain)}/mappings`,
+    ).then((r) => r.mappings),
+  packImportPreview: (body: { domain: string; mapping_id: string; source_path?: string }) =>
+    req<PackImportReport>("/api/import/pack/preview", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  packImportCommit: (body: {
+    domain: string;
+    mapping_id: string;
+    source_path?: string;
+    preview_token: string;
+  }) =>
+    req<PackImportReport>("/api/import/pack/commit", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  apply: (body: {
+    domain: string;
+    operation: string;
+    object_type: string;
+    fields: Record<string, unknown>;
+    object_uid?: string;
+    entry_id?: string;
+  }) => req<ApplyResult>("/api/apply", { method: "POST", body: JSON.stringify(body) }),
+
+  hardeningPreview: (domain: string, text: string) =>
+    req<HardeningResult>(`/api/domains/${encodeURIComponent(domain)}/hardening/preview`, {
+      method: "POST",
+      body: JSON.stringify({ text }),
+    }),
+  hardeningApply: (domain: string, text: string) =>
+    req<HardeningResult>(`/api/domains/${encodeURIComponent(domain)}/hardening/apply`, {
+      method: "POST",
+      body: JSON.stringify({ text }),
+    }),
+  hardeningRollback: (domain: string) =>
+    req<HardeningResult>(`/api/domains/${encodeURIComponent(domain)}/rollback`, { method: "POST" }),
+
+  wizardStart: (goal: string) =>
+    req<WizardTurn>("/api/wizard", {
+      method: "POST",
+      body: JSON.stringify({ goal_text: goal }),
+    }),
+  wizardReply: (sessionId: string, text: string) =>
+    req<WizardTurn>(`/api/wizard/${encodeURIComponent(sessionId)}/reply`, {
+      method: "POST",
+      body: JSON.stringify({ text }),
+    }),
+  wizardSuggest: (domain: string) =>
+    req<{ suggestion: { suggestion?: string; idea_id?: string; apply_edit?: string } | null }>(
+      `/api/wizard/${encodeURIComponent(domain)}/suggest`,
+    ),
 };

@@ -1,0 +1,66 @@
+compatibility:
+  core: ">=0.1,<2"
+  capabilities:
+    imports: ">=1,<2"
+    sessions: ">=1,<2"
+    schedules: ">=1,<2"
+
+capabilities:
+  imports:
+    version: 1
+    mappings:
+      - id: japanese_cards
+        title: Japanese cards
+        channel: japanese-card-import
+        source: json_or_jsonl
+        fixture: evals/import_fixture
+        entities:
+          - name: jp_vocab
+            domain: japanese
+            object_type: jp_vocab
+            source_ref_template: "japanese:cards:jp_vocab:{id}"
+            id_field: id
+            timestamp_field: created_at
+            updated_at_field: updated_at
+            raw_text_template: "{word} ({reading}) — {meaning}"
+            required_source_fields: [word]
+            field_map:
+              word: word
+              reading: reading
+              meaning: meaning
+              jlpt_level: jlpt_level
+              next_review: next_review
+              notes: notes
+          - name: jp_grammar
+            domain: japanese
+            object_type: jp_grammar
+            source_ref_template: "japanese:cards:jp_grammar:{id}"
+            id_field: id
+            timestamp_field: created_at
+            updated_at_field: updated_at
+            raw_text_template: "{form} — {meaning}"
+            required_source_fields: [form]
+            field_map:
+              form: form
+              meaning: meaning
+              jlpt_level: jlpt_level
+              example_jp: example_jp
+              example_en: example_en
+
+  sessions:
+    version: 1
+    id: quiz
+    kind: review
+    agent_session: quiz
+    state: [cards, index, correct, grades]
+    lifecycle: [start, resume, grade, complete]
+
+  schedules:
+    version: 1
+    id: daily_review
+    agent_schedule: daily_review
+    timezone: Pacific/Honolulu
+    missed_run_policy: next_window
+    visible: true
+    pausable: true
+    revocable: true

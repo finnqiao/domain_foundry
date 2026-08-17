@@ -109,6 +109,42 @@ def test_travel_pack_parity_lat_lng_and_event_log():
     assert "lat" in ddl and "lng" in ddl
 
 
+def test_travel_ui_actions_and_checklist_view_are_declarative():
+    pack = load_pack(REPO / "packs" / "travel", validate=True)
+    actions = {
+        (action.object_type, action.operation, tuple(action.fields))
+        for action in pack.policy.ui_actions
+    }
+    assert ("packing_item", "update", ("packed",)) in actions
+    assert ("booking", "update", ("status",)) in actions
+    assert pack.policy.allows_ui_action(
+        object_type="packing_item", operation="update", fields={"packed": True}
+    )
+    assert not pack.policy.allows_ui_action(
+        object_type="packing_item",
+        operation="update",
+        fields={"packed": True, "notes": "not declared"},
+    )
+    assert not pack.policy.allows_ui_action(
+        object_type="packing_item", operation="delete", fields={}
+    )
+
+    packing = next(view for view in pack.projections.app["views"] if view["id"] == "packing")
+    assert packing["block"] == "list"
+    assert packing["object"] == "packing_item"
+    assert packing["config"]["group_by"] == "category"
+    assert packing["config"]["actions"] == [
+        {
+            "id": "toggle-packed",
+            "label": "Packed",
+            "operation": "update",
+            "fields": ["packed"],
+            "field": "packed",
+        }
+    ]
+    assert pack.projections.app["accent"] == "#2e6f95"
+
+
 def test_phase3_agent_yaml_surface():
     for name in ("japanese", "food", "travel"):
         pack = load_pack(REPO / "packs" / name, validate=True)
@@ -131,6 +167,52 @@ def test_japanese_interactive_sessions_schedules_for_expert():
     assert "start_session(quiz)" in daily.action
     assert "quiz_grade" in pack.agent.tools
     assert pack.agent.autonomy.get("quiz") == "interactive"
+
+
+def test_slice3_capabilities_are_declared_and_compatible():
+    sourdough = load_pack(REPO / "packs" / "sourdough", validate=True)
+    assert set(sourdough.capabilities) == {"derived_metrics", "media", "compare"}
+    assert sourdough.compatibility.capabilities["derived_metrics"] == ">=1,<2"
+    metric_ids = {
+        metric["id"] for metric in sourdough.capabilities["derived_metrics"]["metrics"]
+    }
+    assert {"hydration_percent", "hydration_delta", "bulk_hours_delta"} <= metric_ids
+    assert sourdough.capabilities["media"]["galleries"][0]["source"] == "capture_attachments"
+    compare = sourdough.capabilities["compare"]["comparisons"][0]
+    assert compare["object"] == "bake"
+    assert set(compare["metrics"]) <= metric_ids
+    assert {view["block"] for view in sourdough.projections.app["views"]} >= {
+        "gallery",
+        "compare",
+    }
+    assert set(sourdough.operations["bake"]) >= {"create", "update", "correct"}
+    assert (REPO / "packs" / "sourdough" / "evals" / "fixtures.jsonl").is_file()
+
+    japanese = load_pack(REPO / "packs" / "japanese", validate=True)
+    assert {"imports", "sessions", "schedules"} <= set(japanese.capabilities)
+    mapping = japanese.capabilities["imports"]["mappings"][0]
+    assert mapping["id"] == "japanese_cards"
+    assert {entity["object_type"] for entity in mapping["entities"]} == {
+        "jp_vocab",
+        "jp_grammar",
+    }
+    assert japanese.capabilities["schedules"]["missed_run_policy"] == "next_window"
+    assert (REPO / "packs" / "japanese" / "evals" / "import_fixture").is_dir()
+
+
+def test_unknown_or_new_capability_version_is_rejected(tmp_path: Path):
+    import shutil
+
+    src = REPO / "packs" / "sourdough"
+    dest = tmp_path / "sourdough"
+    shutil.copytree(src, dest)
+    capabilities = dest / "capabilities.yaml"
+    capabilities.write_text(
+        capabilities.read_text(encoding="utf-8").replace("version: 1", "version: 2", 1),
+        encoding="utf-8",
+    )
+    with pytest.raises(PackValidationError, match="newer than supported"):
+        load_pack(dest, validate=True)
 
 
 def test_template_fails_until_renamed_examples_ok():

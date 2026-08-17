@@ -63,12 +63,17 @@ artifacts = ["core/domain_foundry_core/_webapp/**"]
 # would have nothing to add. Mirrors loader.bundled_packs_root()'s fallback.
 [tool.hatch.build.targets.wheel.force-include]
 "packs" = "domain_foundry_core/packs/_bundled"
+# The wizard acceptance corpus is runtime data, not a test-only checkout file.
+# Keep it in the wheel so installed `new-domain` can run the held-out gate.
+"examples/heldout" = "domain_foundry_core/examples/heldout"
+"atlas" = "domain_foundry_core/atlas/_bundled"
 
 [tool.hatch.build.targets.sdist]
 include = [
   "core/domain_foundry_core",
   "packs",
   "examples",
+  "atlas",
   "LICENSE",
   "README.md",
 ]

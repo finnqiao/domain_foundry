@@ -36,6 +36,15 @@ WAS_N_NOT_M = re.compile(
     r"\bwas\s+(\d+(?:\.\d+)?)\s*%?\s+not\s+(\d+(?:\.\d+)?)",
     re.I,
 )
+# Explicit patch forms the amend error copy already suggests, e.g. "rating = 9".
+FIELD_EQ_RE = re.compile(
+    r"\b([a-z_][a-z0-9_]*)\s*=\s*(\d+(?:\.\d+)?%?|[A-Za-z][\w-]{0,40})\b",
+    re.I,
+)
+FIELD_TO_RE = re.compile(
+    r"\b(?:set\s+)?([a-z_][a-z0-9_]*)\s+to\s+(\d+(?:\.\d+)?%?|[A-Za-z][\w-]{0,40})\b",
+    re.I,
+)
 
 
 @dataclass
@@ -76,11 +85,13 @@ def parse_correction_text(text: str) -> ParsedCorrection:
     m = HYDRATION_RE.search(text)
     if m:
         fields["hydration"] = float(m.group(1))
+        fields["_wrong"] = float(m.group(2))
     m2 = FIELD_WAS_RE.search(text)
     if m2:
         fname = m2.group(1).lower()
         right = m2.group(2).rstrip("%")
         fields[fname] = _num_or_str(right)
+        fields["_wrong"] = _num_or_str(m2.group(3).rstrip("%"))
     if not fields:
         m3 = WAS_N_NOT_M.search(text)
         if m3 and "hydration" in text.lower():
@@ -91,6 +102,11 @@ def parse_correction_text(text: str) -> ParsedCorrection:
             # generic numeric amend — caller may map
             fields["_value"] = float(m3.group(1))
             fields["_wrong"] = float(m3.group(2))
+
+    if not _user_fields(fields):
+        m4 = FIELD_EQ_RE.search(text) or FIELD_TO_RE.search(text)
+        if m4:
+            fields[m4.group(1).lower()] = _num_or_str(m4.group(2).rstrip("%"))
 
     # result enums
     for result in ("dense", "decent", "good", "great"):
@@ -103,6 +119,10 @@ def parse_correction_text(text: str) -> ParsedCorrection:
         reason_code="amend_fields",
         raw_text=text,
     )
+
+
+def _user_fields(fields: dict[str, Any]) -> dict[str, Any]:
+    return {k: v for k, v in fields.items() if not k.startswith("_")}
 
 
 def _num_or_str(value: str) -> Any:

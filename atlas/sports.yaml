@@ -1,0 +1,149 @@
+nodes:
+  - id: sports
+    kind: bucket
+    title: Sports
+    aliases: [sport, athletic, training, workout, gym, fitness]
+    pitch: Games, training, and whether you're actually getting better.
+  - id: sports.soccer
+    kind: practice
+    title: Soccer
+    aliases: [football, futbol, futsal, pickup]
+    pitch: Sessions, pickups, and the notes a generic workout log will miss.
+  - id: sports.soccer.training_log
+    kind: idea
+    title: Training log
+    aliases: [soccer training, session log]
+    pitch: What you worked on — first touch, finishing, minutes — not just “went to the gym”.
+    jobs: [event_log, improvement]
+    provenance: both
+    domain_slug: soccer
+    identity_hint: session_name
+    example: pickup at the park, played 8, first touch was sloppy in the rain
+    jargon: [first touch, weak foot, box, through ball]
+    world_analogs:
+      - {name: Teambuildr / team apps, one_liner: Club training diaries}
+  - id: sports.soccer.pickup_map
+    kind: idea
+    title: Pickup map
+    aliases: [pickup games, where we play]
+    pitch: Where the games are, who showed, and the pitch condition.
+    jobs: [event_log, atlas]
+    provenance: foundry
+    domain_slug: pickup
+    identity_hint: pitch_name
+    example: Sunday pickup at McKinley, 10v10, grass was long
+    jargon: [pickup, turf, 7v7]
+  - id: sports.soccer.tactical_notebook
+    kind: idea
+    title: Tactical notebook
+    aliases: [tactics, formation notes]
+    pitch: Patterns you noticed — not a FIFA tactics screen, your actual games.
+    jobs: [catalog, event_log]
+    provenance: foundry
+    domain_slug: tactics
+    identity_hint: pattern_name
+    example: they kept overloading our left, we never tucked the 8
+    jargon: [overloaded, half space, press]
+  - id: sports.climbing
+    kind: practice
+    title: Climbing
+    aliases: [bouldering, boulder, sport climbing, crag, gym climbing]
+    pitch: Sends, projects, and grades at the gym or crag.
+  - id: sports.climbing.session_log
+    kind: idea
+    title: Session log
+    aliases: [climbing log, bouldering log, sends]
+    pitch: Routes, grades, and whether you sent, flashed, or worked it.
+    jobs: [event_log]
+    provenance: both
+    domain_slug: climbing
+    identity_hint: route_name
+    example: sent a tough V5 on the overhang, crux was the heel hook
+    jargon: [heel hook, crux, flash, send, overhang]
+    world_analogs:
+      - {name: Topo / Crag, one_liner: Outdoor route logs}
+  - id: sports.climbing.project_board
+    kind: idea
+    title: Project board
+    aliases: [projects, send list]
+    pitch: A catalog of projects plus the sessions you threw at them.
+    jobs: [catalog, event_log, improvement]
+    provenance: foundry
+    domain_slug: projects
+    identity_hint: route_name
+    example: still projecting the red overhang, heel hook is the move
+    jargon: [project, beta, limit]
+  - id: sports.running
+    kind: practice
+    title: Running
+    aliases: [run, jog, 5k, marathon]
+    pitch: Runs, paces, and whether the work is landing.
+  - id: sports.running.run_log
+    kind: idea
+    title: Run log
+    aliases: [running log]
+    pitch: Distance, time, and how it felt — with a trend if you care.
+    jobs: [event_log, improvement]
+    provenance: world
+    domain_slug: running
+    identity_hint: run_name
+    example: easy 8k along the canal, legs heavy from yesterday
+    jargon: [easy, tempo, strides, splits]
+    world_analogs:
+      - {name: Strava, one_liner: Activity social network}
+  - id: sports.cycling
+    kind: practice
+    title: Cycling
+    aliases: [bike, ride, zwift]
+    pitch: Rides and whether the legs are coming around.
+  - id: sports.cycling.ride_log
+    kind: idea
+    title: Ride log
+    aliases: [bike log]
+    pitch: Route, distance, and how the ride felt.
+    jobs: [event_log, improvement, atlas]
+    provenance: world
+    domain_slug: cycling
+    identity_hint: ride_name
+    example: 42 km along the coast in 1 hour 38 minutes
+    jargon: [ftp, cadence, gravel]
+    world_analogs:
+      - {name: Strava, one_liner: Ride log and segments}
+  - id: sports.strength
+    kind: practice
+    title: Strength
+    aliases: [gym, lifting, weights, workout]
+    pitch: Sessions, lifts, and progress that isn't a spreadsheet religion.
+  - id: sports.strength.session_log
+    kind: idea
+    title: Lifting log
+    aliases: [workout log, gym log]
+    pitch: What you lifted and how it felt — enough to see if you're stronger.
+    jobs: [event_log, improvement]
+    provenance: world
+    domain_slug: lifting
+    identity_hint: session_name
+    example: dumbbell rows felt strong, added extra reps on the bench
+    jargon: [RPE, sets, deload]
+    world_analogs:
+      - {name: Strong, one_liner: Set-by-set lifting log}
+
+edges:
+  - {from: sports, to: sports.soccer, rel: child}
+  - {from: sports, to: sports.climbing, rel: child}
+  - {from: sports, to: sports.running, rel: child}
+  - {from: sports, to: sports.cycling, rel: child}
+  - {from: sports, to: sports.strength, rel: child}
+  - {from: sports.soccer, to: sports.soccer.training_log, rel: child}
+  - {from: sports.soccer, to: sports.soccer.pickup_map, rel: child}
+  - {from: sports.soccer, to: sports.soccer.tactical_notebook, rel: child}
+  - {from: sports.climbing, to: sports.climbing.session_log, rel: child}
+  - {from: sports.climbing, to: sports.climbing.project_board, rel: child}
+  - {from: sports.running, to: sports.running.run_log, rel: child}
+  - {from: sports.cycling, to: sports.cycling.ride_log, rel: child}
+  - {from: sports.strength, to: sports.strength.session_log, rel: child}
+  - {from: sports.soccer.training_log, to: sports.soccer.pickup_map, rel: expands_to}
+  - {from: sports.soccer.training_log, to: sports.soccer.tactical_notebook, rel: expands_to}
+  - {from: sports.climbing.session_log, to: sports.climbing.project_board, rel: expands_to}
+  - {from: sports.running, to: sports.cycling, rel: adjacent}
+  - {from: sports.climbing, to: sports.strength, rel: adjacent}

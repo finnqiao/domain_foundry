@@ -1,0 +1,184 @@
+nodes:
+  - id: diving
+    kind: bucket
+    title: Diving
+    aliases: [scuba, dive, underwater, freediving, spearfishing, reef]
+    pitch: Time underwater — scuba, freediving, photography, and the life you see.
+  - id: diving.scuba
+    kind: practice
+    title: Scuba
+    aliases: [scuba diving, open water, rec diving, tank]
+    pitch: Dives with tanks — sites, depth, time, gas, and whether your air is improving.
+  - id: diving.scuba.dive_log
+    kind: idea
+    title: Dive log
+    aliases: [scuba log, dive diary]
+    pitch: Site, depth, time, buddy, and conditions — the classic log, on your machine.
+    jobs: [event_log, atlas]
+    provenance: world
+    domain_slug: dives
+    identity_hint: site_name
+    example: 45 min at Blue Hole, 18m, 180 bar, vis was milky
+    jargon: [NDL, safety stop, vis, current, buddy]
+    world_analogs:
+      - {name: Subsurface, one_liner: Desktop dive log with profile import}
+      - {name: MacDive, one_liner: Mac dive log}
+  - id: diving.scuba.sac_trend
+    kind: idea
+    title: SAC / air trend
+    aliases: [air consumption, SAC, RMV, gas]
+    pitch: See whether your air consumption is actually improving across dives — not just a number on one card.
+    jobs: [event_log, improvement]
+    provenance: foundry
+    domain_slug: sac
+    identity_hint: site_name
+    example: 50 min at 18m, started 200 bar, ended 70, felt calm
+    jargon: [SAC, RMV, bar, psi, working breathing]
+  - id: diving.freediving
+    kind: practice
+    title: Freediving
+    aliases: [free diving, apnea, breath hold]
+    pitch: Breath-hold dives, tables, and depth over months.
+  - id: diving.freediving.apnea_tables
+    kind: idea
+    title: Apnea tables
+    aliases: [CO2 tables, O2 tables, static]
+    pitch: CO2/O2 tables and statics so you can see the work, not just the PB.
+    jobs: [practice, improvement]
+    provenance: world
+    domain_slug: apnea
+    identity_hint: session_name
+    example: CO2 table 8 rounds, last hold 2:10, diaphragm started early
+    jargon: [static, CO2, contractions, pack]
+    world_analogs:
+      - {name: STAmina, one_liner: Apnea trainer and tables}
+  - id: diving.freediving.depth_progression
+    kind: idea
+    title: Depth progression
+    aliases: [freedive depth, CWT]
+    pitch: Depth, discipline, and how the dives felt — a trend, not a leaderboard.
+    jobs: [event_log, improvement]
+    provenance: foundry
+    domain_slug: freedive
+    identity_hint: site_name
+    example: CWT 22m at the line, equalized late, ears were fine
+    jargon: [CWT, FIM, equalization, mouth fill]
+  - id: diving.underwater_photography
+    kind: practice
+    title: Underwater photography
+    aliases: [uw photo, underwater photo, strobe, housing]
+    pitch: Shots, settings, and the animals or sites they belong to.
+  - id: diving.underwater_photography.portfolio
+    kind: idea
+    title: Shot portfolio
+    aliases: [uw gallery, dive photos]
+    pitch: A gallery of shots with site, subject, and what you'd change in the housing.
+    jobs: [catalog, media_dex, atlas]
+    provenance: both
+    domain_slug: uwphoto
+    identity_hint: shot_name
+    example: turtle at Blue Hole, 16mm, strobe too hot on the shell
+    jargon: [strobe, snoot, 16mm, backscatter]
+    world_analogs:
+      - {name: Lightroom, one_liner: "Catalog and develop, not dive-aware"}
+  - id: diving.underwater_photography.shot_log
+    kind: idea
+    title: Shot log
+    aliases: [settings log]
+    pitch: What you shot and the settings, so the next dive isn't guesswork.
+    jobs: [event_log, media_dex]
+    provenance: foundry
+    domain_slug: shots
+    identity_hint: subject
+    example: two strobes at 1/4 on the frogfish, ISO 200, 1/160
+    jargon: [TTL, snoot, ISO, backscatter]
+  - id: diving.marine_naturalism
+    kind: practice
+    title: Marine naturalism
+    aliases: [animals, species, wildlife, fish, turtle, reef life, marine life]
+    pitch: The animals you've seen — a pokedex, not a dive timer.
+  - id: diving.marine_naturalism.species_pokedex
+    kind: idea
+    title: Species pokedex
+    aliases: [pokedex, species dex, fish ID, animals I've seen]
+    pitch: A catalog of animals you've seen, with photos, where, and how many times.
+    jobs: [catalog, event_log, media_dex, atlas]
+    provenance: both
+    domain_slug: species
+    identity_hint: species_name
+    example: spotted a turtle at Blue Hole, 18m, got a photo
+    jargon: [nudibranch, frogfish, turtle, ID]
+    world_analogs:
+      - {name: iNaturalist, one_liner: Species observations with a community ID}
+  - id: diving.marine_naturalism.site_species_graph
+    kind: idea
+    title: Site ↔ species graph
+    aliases: [reef graph, what lives where]
+    pitch: Sites linked to species and sightings — what you've actually seen where.
+    jobs: [catalog, graph, atlas, event_log]
+    provenance: foundry
+    domain_slug: reefgraph
+    identity_hint: species_name
+    example: same frogfish on the wreck three dives running
+    jargon: [site, wreck, resident]
+  - id: diving.spearfishing
+    kind: practice
+    title: Spearfishing
+    aliases: [spear, freedive hunt]
+    pitch: Hunts, species, and conditions.
+  - id: diving.spearfishing.hunt_log
+    kind: idea
+    title: Hunt log
+    aliases: [spear log]
+    pitch: What you took, where, and the conditions — honest, not a trophy wall.
+    jobs: [event_log, atlas]
+    provenance: foundry
+    domain_slug: spear
+    identity_hint: species_name
+    example: one palani on the west wall, surge was annoying
+    jargon: [flopper, stringer, surge]
+  - id: diving.dive_travel
+    kind: practice
+    title: Dive travel
+    aliases: [liveaboard, dive trip]
+    pitch: Trips, sites, and what you'd book again.
+  - id: diving.dive_travel.trip_log
+    kind: idea
+    title: Dive-trip log
+    aliases: [liveaboard log]
+    pitch: A trip with sites underneath — not a generic vacation.
+    jobs: [plan, event_log, atlas]
+    provenance: both
+    analog_pack: travel
+    domain_slug: divetrip
+    identity_hint: trip_name
+    example: three days on the liveaboard, best site was the seamount
+    jargon: [liveaboard, check-out dive, nitrox]
+    world_analogs:
+      - {name: PADI travel logs, one_liner: "Trip marketing, not your data"}
+
+edges:
+  - {from: diving, to: diving.scuba, rel: child}
+  - {from: diving, to: diving.freediving, rel: child}
+  - {from: diving, to: diving.underwater_photography, rel: child}
+  - {from: diving, to: diving.marine_naturalism, rel: child}
+  - {from: diving, to: diving.spearfishing, rel: child}
+  - {from: diving, to: diving.dive_travel, rel: child}
+  - {from: diving.scuba, to: diving.scuba.dive_log, rel: child}
+  - {from: diving.scuba, to: diving.scuba.sac_trend, rel: child}
+  - {from: diving.freediving, to: diving.freediving.apnea_tables, rel: child}
+  - {from: diving.freediving, to: diving.freediving.depth_progression, rel: child}
+  - {from: diving.underwater_photography, to: diving.underwater_photography.portfolio, rel: child}
+  - {from: diving.underwater_photography, to: diving.underwater_photography.shot_log, rel: child}
+  - {from: diving.marine_naturalism, to: diving.marine_naturalism.species_pokedex, rel: child}
+  - {from: diving.marine_naturalism, to: diving.marine_naturalism.site_species_graph, rel: child}
+  - {from: diving.spearfishing, to: diving.spearfishing.hunt_log, rel: child}
+  - {from: diving.dive_travel, to: diving.dive_travel.trip_log, rel: child}
+  - {from: diving.scuba, to: diving.freediving, rel: adjacent}
+  - {from: diving.scuba, to: diving.underwater_photography, rel: adjacent}
+  - {from: diving.underwater_photography, to: diving.marine_naturalism, rel: adjacent}
+  - {from: diving.freediving, to: diving.spearfishing, rel: adjacent}
+  - {from: diving.scuba.dive_log, to: diving.scuba.sac_trend, rel: expands_to}
+  - {from: diving.scuba.dive_log, to: diving.marine_naturalism.species_pokedex, rel: expands_to}
+  - {from: diving.underwater_photography.portfolio, to: diving.marine_naturalism.species_pokedex, rel: expands_to}
+  - {from: diving.marine_naturalism.species_pokedex, to: diving.marine_naturalism.site_species_graph, rel: expands_to}

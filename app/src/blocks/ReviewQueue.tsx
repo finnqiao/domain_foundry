@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "../lib/api";
-import { fmtAge, fmtFieldName, fmtValue } from "../lib/format";
+import { fmtAge } from "../lib/format";
 import type { PackCard, ReviewItem, ReviewStats } from "../lib/types";
 import { EmptyState } from "./kit";
+import { DiffTable } from "./DiffTable";
 import { CorrectionDialog } from "../components/CorrectionDialog";
 
 // Global review queue (plan §9.1, §3.4 backlog lesson): pending approvals with
@@ -16,7 +17,7 @@ export function ReviewQueue({ packs, refreshKey, onChanged }: { packs: PackCard[
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  async function load() {
+  const load = useCallback(async () => {
     try {
       const [it, st] = await Promise.all([api.review(), api.reviewStats()]);
       setItems(it);
@@ -25,12 +26,11 @@ export function ReviewQueue({ packs, refreshKey, onChanged }: { packs: PackCard[
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     }
-  }
+  }, []);
 
   useEffect(() => {
     void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshKey]);
+  }, [load, refreshKey]);
 
   async function resolveOne(id: string, decision: string) {
     setBusy(true);
@@ -76,7 +76,7 @@ export function ReviewQueue({ packs, refreshKey, onChanged }: { packs: PackCard[
       {items.length === 0 ? (
         <EmptyState
           title="Review queue is clear"
-          hint="Nothing awaiting a decision. Confidence-gated captures apply automatically; only ambiguous or sensitive ones land here."
+          hint="Nothing waiting. Clear notes file themselves; anything fuzzy lands here."
         />
       ) : (
         <>
@@ -168,22 +168,5 @@ function Slo({ label, value, warn }: { label: string; value: number | string; wa
       <span className="slo-value">{value}</span>
       <span className="slo-label">{label}</span>
     </div>
-  );
-}
-
-function DiffTable({ diff }: { diff: NonNullable<ReviewItem["diff"]> }) {
-  return (
-    <table className="diff-table">
-      <tbody>
-        {diff.fields.map((f) => (
-          <tr key={f.field} className={f.changed ? "diff-changed" : ""}>
-            <th>{fmtFieldName(f.field)}</th>
-            <td className="diff-current">{fmtValue(f.current)}</td>
-            <td className="diff-arrow">→</td>
-            <td className="diff-proposed">{fmtValue(f.proposed)}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
   );
 }

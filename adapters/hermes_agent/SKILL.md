@@ -14,13 +14,17 @@ words, not the source of truth.
 - The user **amends or contradicts** a prior capture ("actually it was 80% not
   75%", "that was the rye starter not wheat") → call `domain_foundry_correct`
   with their correction sentence. One message, one correction — never re-capture.
-- The user **asks "what did I…"** → call `domain_foundry_query` (read-only).
+- The user **asks "what did I…" / "when was my last…"** → call
+  `domain_foundry_ask` (read-only, grounded in their records). Use
+  `domain_foundry_query` when you need the raw rows.
 - There are **pending approvals** → surface them with
   `domain_foundry_review_list`; only call `domain_foundry_review_resolve` after the
   user explicitly approves or rejects.
 - The user wants to **track a brand-new kind of thing** → call
-  `domain_foundry_new_domain` with their plain-language goal and relay the
-  wizard's questions; feed answers back with `domain_foundry_wizard_reply`.
+  `domain_foundry_new_domain` and relay the idea-atlas neighborhood (refine /
+  expand / idea cards). Do not pick an idea for them. Continue with
+  `domain_foundry_wizard_reply`. Use `domain_foundry_atlas_search` to browse
+  without installing.
 
 ## Rules
 

@@ -8,13 +8,14 @@ os.environ.setdefault("DOMAIN_FOUNDRY_LLM", "heuristic")
 
 from domain_foundry_core.api.harness import HarnessAPI
 from domain_foundry_core.ingest import ingest, iter_records
+from tests.conftest import land_wizard
 
 
 def _notes(tmp_path):
     d = tmp_path / "notes"
     (d / "climbing").mkdir(parents=True)
-    (d / "climbing" / "a.md").write_text("good bouldering session at the gym, felt strong")
-    (d / "climbing" / "b.md").write_text("another bouldering day, flashed a V4")
+    (d / "climbing" / "a.md").write_text("sent a tough V5 on the overhang, crux was the heel hook")
+    (d / "climbing" / "b.md").write_text("another bouldering day, flashed a V4 on the overhang")
     (d / "shopping.md").write_text("milk, eggs, coffee")
     return d
 
@@ -25,10 +26,7 @@ def test_ingest_is_non_destructive_and_idempotent(tmp_path):
 
     api = HarnessAPI(tmp_path / "home")
     api.init()
-    api.new_domain("track my bouldering climbing sessions")
-    # activate via wizard skip
-    sid = api.new_domain("track my bouldering sessions")["session_id"]
-    api.wizard_reply(sid, "skip")
+    land_wizard(api, "track my bouldering sessions")
 
     first = ingest(api, notes)
     assert first.scanned == 3
@@ -49,8 +47,7 @@ def test_dry_run_writes_nothing(tmp_path):
     notes = _notes(tmp_path)
     api = HarnessAPI(tmp_path / "home")
     api.init()
-    sid = api.new_domain("track my bouldering sessions")["session_id"]
-    api.wizard_reply(sid, "skip")
+    land_wizard(api, "track my bouldering sessions")
 
     report = ingest(api, notes, dry_run=True)
     assert report.scanned == 3
@@ -72,8 +69,7 @@ def test_only_filter_pulls_one_domain(tmp_path):
     notes = _notes(tmp_path)
     api = HarnessAPI(tmp_path / "home")
     api.init()
-    sid = api.new_domain("track my bouldering sessions")["session_id"]
-    api.wizard_reply(sid, "skip")
+    land_wizard(api, "track my bouldering sessions")
     # heuristic routes the two keyworded notes to bouldering; shopping.md does not.
     report = ingest(api, notes, only="bouldering")
     assert report.captured == 2
@@ -102,8 +98,11 @@ def test_ingest_endpoints(tmp_path):
     commit = c.post("/api/ingest", json={"path": str(notes)})
     assert commit.status_code == 200
     assert commit.json()["captured"] == 3
-    # remote capture stays disabled (in-process write path only)
-    assert c.post("/api/capture").status_code == 410
+    # remote capture is served by the same daemon (ADR-006)
+    r = c.post("/api/capture", json={"text": "ingest-adjacent capture", "channel": "web"})
+    assert r.status_code == 200
+    # and a bodyless POST is a validation error, not a crash
+    assert c.post("/api/capture").status_code == 422
 
 
 def test_watch_picks_up_new_files(tmp_path):
@@ -112,8 +111,7 @@ def test_watch_picks_up_new_files(tmp_path):
     notes = _notes(tmp_path)  # 3 files to start
     api = HarnessAPI(tmp_path / "home")
     api.init()
-    sid = api.new_domain("track my bouldering sessions")["session_id"]
-    api.wizard_reply(sid, "skip")
+    land_wizard(api, "track my bouldering sessions")
 
     added = []
 

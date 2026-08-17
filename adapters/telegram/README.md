@@ -12,10 +12,12 @@ SQLite; the only network hop is to Telegram to receive and send messages.
 ## What it feels like
 
 > **You:** /new track my bouldering sessions
-> **Bot:** 🎉 *bouldering* is live. Just text me your bouldering notes.
+> **Bot:** Sports → climbing. Ideas: session log, ticklist, training cycle…
+> **You:** skip
+> **Bot:** *bouldering* is ready. Send a real note and we’ll file it.
 > **You:** sent a tough V5 on the overhang today, crux was the heel hook
 > **Bot:** ✅ Logged to *bouldering* (entry).
-> **You:** actually that felt more moderate than hard
+> **You:** actually the rating was moderate not hard
 > **Bot:** ✏️ Corrected — and saved as a regression test.
 > **You:** /query bouldering
 > **Bot:** 📚 *bouldering* — 1 shown: • sent a tough V5 on the overhang…

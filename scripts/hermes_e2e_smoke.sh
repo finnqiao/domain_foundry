@@ -129,9 +129,10 @@ done
 curl -sf "$URL/api/health" >/dev/null || { friction "serve failed to become healthy on $URL"; exit 1; }
 log "serve healthy"
 
-# --- direct tool path (no LLM; in-process writes per mesh P0) ---------------
-# DOMAIN_FOUNDRY_URL is intentionally NOT exported to the tool block: that env
-# var forces the HTTP client, and HTTP writes 410 since mesh P0.
+# --- direct tool path (no LLM; permitted in-process embedding) ---------------
+# The LocalHarnessClient path remains supported under ADR-006 while this
+# adapter passes the Gate-1 conformance suite. The daemon below is the
+# canonical path for clients that do not embed the harness.
 "$HERMES_PY" - <<'PY' | tee -a "$FRICTION_LOG"
 import json, os
 from domain_foundry_hermes_agent import build_tools
@@ -155,12 +156,12 @@ if not uid.startswith("sourdough:bake:"):
     print("FRICTION: ambiguous correction hit", uid, "expected sourdough bake")
 PY
 
-# --- HTTP server stays a read-only viewer: writes must 410 -------------------
+# --- canonical HTTP write seam -----------------------------------------------
 WRITE_STATUS="$(curl -s -o /dev/null -w '%{http_code}' -X POST "$URL/api/capture" \
   -H 'Content-Type: application/json' -d '{"text": "should be rejected"}')"
 log "HTTP_WRITE_STATUS $WRITE_STATUS"
-if [[ "$WRITE_STATUS" != "410" ]]; then
-  friction "expected 410 on HTTP write, got $WRITE_STATUS"
+if [[ "$WRITE_STATUS" != "200" ]]; then
+  friction "expected 200 on HTTP write, got $WRITE_STATUS"
 fi
 
 # --- optional live LLM oneshot ----------------------------------------------

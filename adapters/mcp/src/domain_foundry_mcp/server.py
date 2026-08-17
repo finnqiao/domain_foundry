@@ -22,9 +22,10 @@ CAPTURE_FIRST_GUIDANCE = (
     "Capture first: send the user's raw words to domain_foundry_capture before "
     "you interpret them. The harness stores the message verbatim, then routes it "
     "to a typed domain record (or a review card when unsure). Never paraphrase a "
-    "capture into a summary — preserve the exact words. To fix a mistake, call "
-    "domain_foundry_correct with a plain-language correction; the canonical record "
-    "is amended and the change becomes a permanent regression test."
+    "capture into a summary — preserve the exact words. To answer questions about "
+    "what they logged, call domain_foundry_ask (grounded, read-only). To fix a "
+    "mistake, call domain_foundry_correct with a plain-language correction; the "
+    "canonical record is amended and the change becomes a permanent regression test."
 )
 
 
@@ -85,6 +86,18 @@ def build_server(home: Path | str | None = None) -> FastMCP:
         return {"rows": [r.model_dump() for r in rows]}
 
     @mcp.tool()
+    def domain_foundry_ask(
+        question: str, domain: str | None = None, limit: int = 20
+    ) -> dict[str, Any]:
+        """Answer a question using only the user's captured records.
+
+        Read-only. Prefer this when the user asks "what did I…", "when was my
+        last…", or similar. Answers cite the records they used. Use query when
+        you need the raw rows instead of a grounded answer.
+        """
+        return api.ask(question, domain=domain, limit=limit)
+
+    @mcp.tool()
     def domain_foundry_correct(
         text: str | None = None,
         entry_id: str | None = None,
@@ -121,21 +134,58 @@ def build_server(home: Path | str | None = None) -> FastMCP:
 
     @mcp.tool()
     def domain_foundry_new_domain(goal: str, test_drive: int = 5) -> dict[str, Any]:
-        """Start the guided wizard to create a new domain from a plain-language
-        goal (e.g. "track my bouldering sessions"). Returns the proposal and the
-        wizard session id; continue with domain_foundry_wizard_reply."""
+        """Start the idea-atlas wizard. Returns a neighborhood (refine / expand /
+        idea cards) and a session id — never an installed pack. Continue with
+        domain_foundry_wizard_reply until the user commits an idea. Do not pick
+        for them."""
         return api.new_domain(goal, test_drive=test_drive)
 
     @mcp.tool()
     def domain_foundry_wizard_reply(session_id: str, text: str) -> dict[str, Any]:
-        """Send one reply to an open wizard session (answer a question, accept
-        defaults with "skip", or test-drive a capture)."""
+        """Send one reply to an open wizard session (pick an idea, refine a
+        topic, 'just a simple log', 'show schema', or 'skip')."""
         return api.wizard_reply(session_id, text)
+
+    @mcp.tool()
+    def domain_foundry_atlas_search(goal: str, cursor_id: str | None = None) -> dict[str, Any]:
+        """Search the idea atlas. Returns breadcrumb, refine children, expand
+        neighbors, and app ideas (world + foundry) for the matched neighborhood."""
+        return api.atlas_search(goal, cursor_id=cursor_id)
+
+    @mcp.tool()
+    def domain_foundry_inspect_pack(name: str) -> dict[str, Any]:
+        """Read an installed (or bundled) pack's YAML files without changing it."""
+        return api.inspect_pack(name)
+
+    @mcp.tool()
+    def domain_foundry_suggest(domain: str) -> dict[str, Any]:
+        """Neighbor-idea or hardening suggestion from recent captures in a domain."""
+        return {"suggestion": api.wizard_suggest(domain)}
+
+    @mcp.tool()
+    def domain_foundry_apply_pack_edit(
+        domain: str, text: str, confirm: bool = False
+    ) -> dict[str, Any]:
+        """Preview a natural-language pack edit. Pass confirm=true to apply
+        (writes a migration). Always preview first."""
+        return api.apply_pack_edit(domain, text, confirm=confirm)
 
     @mcp.tool()
     def domain_foundry_health() -> dict[str, Any]:
         """Integrity + FK checks, entry counts, and today's LLM spend."""
         return api.health_panel()
+
+    @mcp.tool()
+    def domain_foundry_activate_pack(name: str) -> dict[str, Any]:
+        """Install a bundled Domain Pack so captures can route to it."""
+        result = api.activate_pack(name)
+        harness._drain()
+        return result
+
+    @mcp.tool()
+    def domain_foundry_export(domain: str | None = None) -> dict[str, Any]:
+        """Export canonical objects as secrets-free JSON."""
+        return api.export_data(domain=domain)
 
     return mcp
 

@@ -1,7 +1,7 @@
 """Phase 5 Concierge UX: stickiness, barge-in, not_mine, switch.
 
 Each behavior is gated by ConciergeUXFlags / DOMAIN_FOUNDRY_MESH_* env vars.
-The scripted conversation enables all four (defaults ON) and asserts the
+The scripted conversation enables all four explicitly and asserts the
 full interleaving path from the mesh design §5.3.
 """
 
@@ -57,7 +57,7 @@ def test_flags_default_sensible_for_tests(monkeypatch: pytest.MonkeyPatch):
     for flag in (FLAG_STICKINESS, FLAG_BARGE_IN, FLAG_NOT_MINE, FLAG_SWITCH):
         monkeypatch.delenv(flag, raising=False)
     flags = ConciergeUXFlags.from_env()
-    assert flags.stickiness and flags.barge_in and flags.not_mine and flags.switch
+    assert not flags.stickiness and not flags.barge_in and not flags.not_mine and not flags.switch
 
 
 def test_stickiness_flag_gates_ambiguous_followups(

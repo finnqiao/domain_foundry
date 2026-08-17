@@ -9,6 +9,14 @@ from domain_foundry_core.clock import set_clock
 from domain_foundry_core.paths import Workspace
 
 
+def land_wizard(api, goal: str, reply: str = "skip"):
+    """Start a domain and accept the atlas pick so tests reach a live pack."""
+    turn = api.new_domain(goal)
+    if turn.get("state") == "fork":
+        turn = api.wizard_reply(turn["session_id"], reply)
+    return turn
+
+
 @pytest.fixture
 def frozen_clock():
     fixed = datetime(2026, 7, 16, 12, 0, 0, tzinfo=UTC)

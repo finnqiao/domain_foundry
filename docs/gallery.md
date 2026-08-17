@@ -1,63 +1,79 @@
-# Pack gallery
+# Passion gallery
 
-Every pack below is **data only** ([ADR-004](adr/ADR-004-packs-are-data.md)),
-authored purely through the public six-file pack format, and ships with
-synthetic fixtures. Install any of them with `domain-foundry pack add packs/<name>`.
+The **[idea atlas](concepts/idea-atlas.md)** is the library of what’s out there
+(topics and app ideas). Bundled packs are **compiled outcomes** — analogs you
+can install in one shot when you already know you want the kitchen-sink version.
 
-## Bundled reference packs
-
-### :material-food-fork-drink: `food` — the deep showcase
-
-The "look how deep a pack can go" pack. It models the full
-concept→recipe→experiment→observation lifecycle across five linked objects
-(`idea` → `recipe` → `cook` → `dining` → `observation`) and demonstrates
-lifecycle-transition `update` operations. **32 committed routing fixtures**
-replay 100% green.
+Saying “food” in create-a-domain does **not** dump the Food Lab pack. It opens
+the food neighborhood (recipes vs nutrition vs dining). `pack add food` remains
+the explicit “install everything” analog.
 
 ```bash
-domain-foundry pack add packs/food
+domain-foundry atlas search "food"
+domain-foundry pack add food          # analog: install the showcase pack
+```
+
+## Bundled analogs
+
+### :material-food-fork-drink: `food`
+
+Kitchen-sink analog: recipes, cooks, dining, observations. Use it when you want
+the full Food Lab, not when you only said “food”.
+
+```bash
+domain-foundry pack add food
 domain-foundry capture "cooked a batch of shoyu ramen, came out great"
 ```
 
-### :material-map-marker-path: `travel` — cross-domain links
+### :material-map-marker-path: `travel`
 
-Trips / timeline items / bookings-lite with **synthetic places only** ("Port
-City", "River Station", "Old Town"). Demonstrates open-context hints (the
-`active` trip as default owner), a `planner` block, and **cross-domain links**
-(`dining ↔ trip`) into `food.dining`. **31 committed fixtures** replay 100%
-green; four of them fan out into two linked domains.
+Trips, timeline items, and light bookings with **synthetic places only**
+("Port City", "River Station", "Old Town"). Can link a dinner into `food`.
 
 ```bash
-domain-foundry pack add packs/travel
+domain-foundry pack add travel
 domain-foundry capture "dinner at River Station Grill, then heading to Port City in March"
 ```
 
-### :material-flower: `plants` — the beginner pack
+### :material-flower: `plants`
 
-Watering / repotting / observations for houseplants. Events (`care_event`) vs
-entities (`plant`) done cleanly, with a care-log timeline, a grouped plant list,
-faceted search, and activity stats. This is the pack the
-[remix-in-an-afternoon tutorial](tutorial-plant-care.md) builds from scratch.
+Watering, repotting, and plant notes. Good first passion — also the subject of the
+[remix-in-an-afternoon tutorial](tutorial-plant-care.md).
 
 ```bash
-domain-foundry pack add packs/plants
+domain-foundry pack add plants
 domain-foundry capture "watered the monstera, soil still damp"
 ```
 
-### :material-bread-slice: `sourdough` — the wizard archetype
+### :material-bread-slice: `sourdough`
 
-The canonical single-event domain (`bake`): hydration, flour mix, crumb result.
-Doubles as the wizard's "sourdough journey" golden archetype.
+Bakes: hydration, flour mix, crumb. The default activation demo.
 
 ```bash
-domain-foundry pack add packs/sourdough
+domain-foundry pack add sourdough
 domain-foundry capture "baked a 75% hydration country loaf, came out great"
 ```
 
+### :material-ideogram-cjk: `japanese`
+
+Vocab / grammar review sessions (local quiz shell). Fixture-backed; live calendar
+and provider behavior remain human gates.
+
+```bash
+domain-foundry pack add japanese
+```
+
+### Also bundled
+
+| Name | Notes |
+|---|---|
+| `health` | Fitness / labs / supplements-style objects (genericized demo) |
+| `dev` | Developer scratch passion |
+| `x_radar` | Experimental; prefer a private overlay for personal variants |
+
 ## Starter template
 
-`packs/_template/` is the empty skeleton — the six YAML files with the required
-keys and nothing else. Copy it (or run the wizard) to start a new domain.
+`packs/_template/` is the empty skeleton. Copy it (or run the wizard):
 
 ```bash
 cp -r packs/_template packs/mydomain
@@ -65,30 +81,29 @@ $EDITOR packs/mydomain/schema.yaml
 domain-foundry pack validate mydomain
 ```
 
-Or let the wizard generate one from a sentence:
+Or describe a passion in one sentence:
 
 ```bash
 domain-foundry new-domain "I want to track my climbing sessions"
 ```
 
-## Community-candidate list
+## Ideas for contributors (not bundled yet)
 
-These are good first community packs — small, well-scoped passions that fit the
-events-vs-entities model cleanly. **Not yet shipped**; they are ideas for
-contributors (see [Contributing](../CONTRIBUTING.md) and the pack-submission
-issue template).
-
-| Candidate | Core object(s) | Notes |
+| Candidate | Shape | Notes |
 |---|---|---|
-| `running` | `run` (event) | distance/pace/route; a wizard archetype already. |
-| `reading` | `book` (entity) + `session` (event) | pages/rating; entity-vs-event practice. |
-| `coffee` | `brew` (event) | dose/ratio/method; unit discipline showcase. |
-| `climbing` | `session` (event) + `route` (entity) | grade enums with `allow_other`. |
-| `garden` | `bed` (entity) + `task` (event) | seasonal; complements `plants`. |
-| `workouts` | `workout` (event) | sets/reps; a wizard archetype already. |
-| `birding` | `sighting` (event) | species + location; enum `allow_other` is essential. |
-| `practice` | `session` (event) | instrument practice minutes + focus area. |
+| `running` | `run` | distance/pace/route |
+| `reading` | `book` + `session` | pages/rating |
+| `coffee` | `brew` | dose/ratio/method — wizard can scaffold this today |
+| `climbing` | `session` + `route` | grade enums with `allow_other` |
+| `garden` | `bed` + `task` | seasonal; complements `plants` |
+| `workouts` | `workout` | sets/reps |
+| `birding` | `sighting` | species + location |
+| `practice` | `session` | instrument minutes + focus |
+
+Held-out synthetic packs for `coffee` and `climbing` live under
+`examples/heldout/packs/` for evals — they are not installed by
+`pack add coffee` / `pack add climbing`.
 
 To propose one, open a **pack submission** issue with the manifest, ≥8 routing
-examples, and ≥2 negatives; a pack must pass `pack validate` and its own routing
+examples, and ≥2 negatives; it must pass `pack validate` and its own routing
 dry-run to be listed.

@@ -1,0 +1,7 @@
+{"id": "atlas_food", "goal": "food", "expect_refine": ["cooking", "nutrition", "dining"], "expect_idea_mix": true, "forbid_only_meal_log": true}
+{"id": "atlas_diving", "goal": "diving", "expect_refine": ["freediving", "underwater photography", "photo"], "expect_ideas": ["sac", "pokedex", "dive log"], "expect_world_analog": true}
+{"id": "atlas_scuba", "goal": "scuba", "expect_refine": ["freediving", "photo"], "expect_ideas": ["sac", "pokedex", "dive log"], "expect_world_analog": true}
+{"id": "atlas_sports", "goal": "sports", "expect_refine": ["soccer"], "not_generic_workout": true}
+{"id": "atlas_soccer", "goal": "soccer", "expect_ideas": ["training", "pickup", "tactical"], "not_generic_workout": true}
+{"id": "atlas_recipe_tracker", "goal": "recipe tracker", "expect_highlight": ["recipe"], "expect_expand": ["cook", "dining", "map"]}
+{"id": "atlas_underwater_animals", "goal": "I want to remember the animals I see underwater", "expect_ideas": ["pokedex", "species", "naturalism"], "expect_world_analog": true}

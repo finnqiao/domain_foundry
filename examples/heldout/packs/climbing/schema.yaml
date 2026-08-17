@@ -1,0 +1,11 @@
+objects:
+  session:
+    title_field: route
+    fields:
+      route: {type: text, required: true}
+      climbed_at: {type: datetime, required: true, default: capture_time}
+      grade: {type: text}
+      attempts: {type: integer, min: 0}
+      style: {type: enum, values: [flash, onsight, redpoint, repeat], allow_other: true}
+      notes: {type: text, long: true}
+

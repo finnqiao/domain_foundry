@@ -1,0 +1,8 @@
+app:
+  icon: "Cl"
+  views:
+    - {id: sessions, title: "Sessions", block: timeline, object: session, config: {date_field: climbed_at}}
+    - {id: routes, title: "Routes", block: list, object: session, config: {group_by: grade}}
+markdown:
+  folder: "Climbing"
+

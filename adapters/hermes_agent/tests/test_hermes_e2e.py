@@ -45,22 +45,24 @@ def _run(echo: bool = False):
         activated = client.wizard_reply(sid, "skip")
     cap = call("domain_foundry_capture", text="good bouldering session at the gym, felt strong")
     q = call("domain_foundry_query", domain="bouldering")
+    asked = call("domain_foundry_ask", question="what did I log?", domain="bouldering")
     # Offline (no model), corrections resolve through the deterministic
     # "<field> was <x> not <y>" form. A vaguer phrasing needs L2 — asserting on
     # one here would pass on an *empty* amend rather than a real one.
     corr = call("domain_foundry_correct", text="actually the rating was moderate not hard")
     rev = call("domain_foundry_review_list")
     return {"new_domain": turn, "activated": activated, "capture": cap,
-            "query": q, "correct": corr, "review": rev, "client": client}
+            "query": q, "ask": asked, "correct": corr, "review": rev, "client": client}
 
 
 def test_hermes_adapter_end_to_end():
     r = _run()
-    assert r["new_domain"]["domain"] == "bouldering"
+    assert r["activated"]["domain"] == "bouldering"
     routed = (r["capture"].get("routed") or [{}])[0]
     assert routed["domain"] == "bouldering"
     assert r["capture"]["status"] == "applied"
     assert len(r["query"]["rows"]) >= 1
+    assert r["ask"].get("answer")
     assert r["correct"]["applied"] is True
     assert bool(r["correct"].get("eval_case_id")) is True
     # The amend must actually change the canonical record — an empty field set

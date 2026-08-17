@@ -7,19 +7,26 @@ _Driven over real stdio MCP `tools/call`, exactly as an MCP client does._
 [
   "domain_foundry_capture",
   "domain_foundry_query",
+  "domain_foundry_ask",
   "domain_foundry_correct",
   "domain_foundry_review_list",
   "domain_foundry_review_resolve",
   "domain_foundry_new_domain",
   "domain_foundry_wizard_reply",
-  "domain_foundry_health"
+  "domain_foundry_atlas_search",
+  "domain_foundry_inspect_pack",
+  "domain_foundry_suggest",
+  "domain_foundry_apply_pack_edit",
+  "domain_foundry_health",
+  "domain_foundry_activate_pack",
+  "domain_foundry_export"
 ]
 
 ### new_domain
 {
-  "session_id": "wz_01KYA7EXY7MSVMM5MX4YCZRS2N",
-  "state": "interview",
-  "domain": "bouldering"
+  "session_id": "wz_01M02EMFHKARDE4NSBP5CRB1F0",
+  "state": "fork",
+  "domain": null
 }
 
 ### wizard_reply(skip)
@@ -40,6 +47,12 @@ _Driven over real stdio MCP `tools/call`, exactly as an MCP client does._
 {
   "rows": 1,
   "first": "good bouldering session at the gym, felt strong"
+}
+
+### ask
+{
+  "mode": "search_only",
+  "has_answer": true
 }
 
 ### correct

@@ -29,6 +29,8 @@ class CaptureReceipt(BaseModel):
     # Set when L2 was attempted and the model call failed; the capture still
     # lands (never-drop), but the user needs to know routing was degraded.
     llm_error: str | None = None
+    # Optional domain scope supplied by an in-domain capture surface.
+    domain_hint: str | None = None
 
 
 class EntryRow(BaseModel):

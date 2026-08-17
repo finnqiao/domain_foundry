@@ -1,0 +1,13 @@
+objects:
+  brew:
+    title_field: brew_name
+    fields:
+      brew_name: {type: text, required: true}
+      brewed_at: {type: datetime, required: true, default: capture_time}
+      method: {type: enum, values: [v60, espresso, aeropress, french_press], allow_other: true}
+      coffee_g: {type: number, unit: grams, min: 0}
+      water_g: {type: number, unit: grams, min: 0}
+      yield_g: {type: number, unit: grams, min: 0}
+      taste: {type: text, long: true}
+      photos: {type: attachment, many: true}
+

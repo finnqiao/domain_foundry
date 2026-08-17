@@ -29,7 +29,6 @@ export function CaptureFeed({ packs, refreshKey }: { packs: PackCard[]; refreshK
 
   useEffect(() => {
     void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshKey]);
 
   if (err) return <p className="error">{err}</p>;

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -28,7 +29,26 @@ from domain_foundry_core.projections.coordinator import (
     projection_status_for_change_request,
 )
 from domain_foundry_core.routing.router import Router
-from domain_foundry_core.security.store import connect_ro
+from domain_foundry_core.security.store import connect_ro, connect_rw
+
+_APP_ACCENT_RE = re.compile(r"^#[0-9a-fA-F]{3,8}$")
+
+
+def _constrained_app_config(raw: dict[str, Any]) -> dict[str, str]:
+    """Expose only the two pack-level visual tokens the shell supports."""
+    icon = raw.get("icon")
+    if (
+        not isinstance(icon, str)
+        or not icon.strip()
+        or len(icon) > 8
+        or any(char in icon for char in "<>&")
+        or any(ord(char) < 32 for char in icon)
+    ):
+        icon = "📦"
+    accent = raw.get("accent")
+    if not isinstance(accent, str) or not _APP_ACCENT_RE.fullmatch(accent):
+        accent = ""
+    return {"icon": icon, "accent": accent}
 
 
 class HarnessAPI:
@@ -69,7 +89,9 @@ class HarnessAPI:
         source_ref: str | None = None,
         attachments: list[dict[str, Any]] | None = None,
         actor: str | None = None,
+        domain_hint: str | None = None,
     ) -> CaptureReceipt:
+        domain_hint = (domain_hint or "").strip() or None
         receipt = self.captures.capture(
             text,
             channel=channel,
@@ -87,7 +109,12 @@ class HarnessAPI:
             pass
 
         # Invariant 1: interpretation is staged *after* durable capture insert
-        routed = self.router.route_entry(receipt.entry_id, text, channel=channel)
+        routed = self.router.route_entry(
+            receipt.entry_id,
+            text,
+            channel=channel,
+            only_domains=[domain_hint] if domain_hint else None,
+        )
         # P3: auto_apply dispositions execute exactly once; review stays queued
         pipe = self.pipeline.process_entry(receipt.entry_id, channel=channel)
 
@@ -116,6 +143,7 @@ class HarnessAPI:
             idempotent_replay=False,
             summary=receipt.summary,
             llm_error=routed.llm_error,
+            domain_hint=domain_hint,
         )
 
     def query(
@@ -161,6 +189,126 @@ class HarnessAPI:
         )
         return result.model_dump()
 
+    def ask(
+        self,
+        question: str,
+        *,
+        domain: str | None = None,
+        limit: int = 20,
+        _llm: Any | None = None,
+    ) -> dict[str, Any]:
+        """Answer a grounded, read-only question under the daily cost cap."""
+        from domain_foundry_core.ask.answerer import compose_answer, extractive_answer
+        from domain_foundry_core.ask.executor import execute
+        from domain_foundry_core.ask.planner import fallback_plan, plan_ask
+        from domain_foundry_core.ask.schema import build_catalog
+        from domain_foundry_core.llm.pricing import estimate_cost_usd
+        from domain_foundry_core.llm.provider import (
+            get_default_provider,
+            is_heuristic_provider,
+        )
+        from domain_foundry_core.routing.cost import CostGuard
+
+        question = question.strip()
+        if not question:
+            raise ValueError("question is required")
+        domain = (domain or "").strip() or None
+        bounded_limit = max(1, min(int(limit), 100))
+
+        guard = CostGuard(self.workspace.ledger_db)
+        llm = _llm or get_default_provider(
+            cassette_dir=self.workspace.home / "cassettes",
+            home=self.workspace.home,
+        )
+        self.packs.reload()
+        catalog = build_catalog(self.packs)
+        no_model = is_heuristic_provider(llm)
+        cap_hit = False
+        usages: list[Any] = []
+        total_cost = 0.0
+        model: str | None = None
+
+        def record_usage(usage: Any, *, default_tier: str) -> None:
+            nonlocal total_cost, model
+            if usage is None:
+                return
+            cost = estimate_cost_usd(
+                model=usage.model,
+                input_tokens=usage.input_tokens,
+                output_tokens=usage.output_tokens,
+            )
+            if cost > 0:
+                guard.record(
+                    provider=usage.provider or getattr(llm, "name", "llm"),
+                    model=usage.model,
+                    input_tokens=usage.input_tokens,
+                    output_tokens=usage.output_tokens,
+                    cost_usd=cost,
+                    entry_id=None,
+                    tier=usage.tier or default_tier,
+                )
+            total_cost += cost
+            model = usage.model or model
+            usages.append(usage)
+
+        routine_allowed = guard.allow_llm(tier="routine")
+        use_llm = not no_model and routine_allowed
+        cap_hit = not routine_allowed
+
+        if use_llm:
+            try:
+                plan, usage = plan_ask(
+                    question, catalog, llm, tier="routine", domain=domain
+                )
+                record_usage(usage, default_tier="routine")
+            except Exception:
+                plan = None
+                # A planner repair is the only sota escalation, and it is
+                # independently gated so the retry cannot bypass the cap.
+                if guard.allow_llm(tier="sota"):
+                    try:
+                        plan, usage = plan_ask(
+                            question, catalog, llm, tier="sota", domain=domain
+                        )
+                        record_usage(usage, default_tier="sota")
+                    except Exception:
+                        plan = None
+                if plan is None:
+                    plan = fallback_plan(question, domain=domain)
+        else:
+            plan = fallback_plan(question, domain=domain)
+
+        if plan.limit != bounded_limit:
+            plan = plan.model_copy(update={"limit": bounded_limit})
+        result = execute(plan, self.workspace, self.packs)
+
+        answer = None
+        if use_llm and guard.allow_llm(tier="routine"):
+            try:
+                answer, usage = compose_answer(question, result, llm, tier="routine")
+                record_usage(usage, default_tier="routine")
+            except Exception:
+                # A read-only extractive response is safer than surfacing a
+                # provider error after the query has already been executed.
+                answer = None
+        elif use_llm:
+            cap_hit = True
+        if answer is None:
+            answer = extractive_answer(result)
+
+        return {
+            "question": question,
+            "answer": answer.text,
+            "citations": [citation.model_dump() for citation in answer.citations],
+            "mode": answer.mode,
+            "plan": plan.model_dump(),
+            "model": model,
+            "cost_usd": round(total_cost, 6),
+            "spend_today_usd": guard.spent_today(),
+            "daily_cap_usd": guard.config.daily_usd_cap,
+            "cap_hit": cap_hit,
+        }
+
     def health(self) -> HealthReport:
         return self.captures.health()
 
@@ -192,17 +340,68 @@ class HarnessAPI:
 
     def pack_add(self, src: Path, *, force: bool = False) -> dict[str, Any]:
         pack = self.packs.add(Path(src), force=force)
-        expert = self.register_expert(pack.name) if pack.agent is not None else None
-        out: dict[str, Any] = {
+        if pack.agent is not None:
+            # Register for mesh honesty; hobby CLI receipts omit the stub.
+            self.register_expert(pack.name)
+        return {
             "name": pack.name,
             "version": pack.version,
+            "title": pack.manifest.title,
             "path": str(pack.root),
+        }
+
+    def pack_inspect(self, name_or_source: str | Path) -> dict[str, Any]:
+        """Inspect a pack source or installed name without changing the workspace."""
+        return self.packs.inspect(name_or_source)
+
+    def pack_preview(self, source: Path) -> dict[str, Any]:
+        """Validate a source and expose its declared permissions before install."""
+        return self.packs.preview(Path(source))
+
+    def pack_install(self, source: Path, *, force: bool = False) -> dict[str, Any]:
+        """Install a pack source through the registry lifecycle contract."""
+        return self.packs.install(Path(source), force=force)
+
+    def pack_activate(self, name: str) -> dict[str, Any]:
+        """Activate an already-installed pack through the registry lifecycle."""
+        pack = self.packs.activate(name)
+        summary = {
+            "name": pack.name,
+            "version": pack.version,
+            "title": pack.manifest.title,
+            "description": pack.manifest.description,
+            "permissions": list(pack.manifest.permissions),
+            "objects": sorted(pack.objects),
+            "capabilities": sorted(pack.capabilities),
+            "path": str(pack.root),
+        }
+        out: dict[str, Any] = {
+            "status": "activated",
+            "name": pack.name,
+            "version": pack.version,
+            "title": pack.manifest.title,
+            "pack": summary,
         }
         if pack.agent is not None:
             out["agent"] = pack.agent.model_dump()
-        if expert is not None:
-            out["expert"] = expert
+            out["expert"] = self.register_expert(pack.name)
         return out
+
+    def pack_upgrade(self, source: Path) -> dict[str, Any]:
+        """Upgrade a pack source through the registry snapshot lifecycle."""
+        return self.packs.upgrade(Path(source))
+
+    def pack_rollback(self, name: str, backup: Path | None = None) -> dict[str, Any]:
+        """Restore the selected pack backup through the registry lifecycle."""
+        return self.packs.rollback(name, Path(backup) if backup is not None else None)
+
+    def pack_export(self, name: str, destination: Path) -> dict[str, Any]:
+        """Export an installed pack to an explicitly supplied destination."""
+        return self.packs.export(name, Path(destination))
+
+    def pack_uninstall(self, name: str) -> dict[str, Any]:
+        """Explicitly remove an installed pack through the registry lifecycle."""
+        return self.packs.uninstall(name)
 
     def pack_new(self, name: str) -> dict[str, Any]:
         """Scaffold a new pack from _template into the workspace packs dir."""
@@ -362,6 +561,125 @@ class HarnessAPI:
         )
         return receipt.to_dict()
 
+    def refile_entry(self, entry_id: str, domain: str) -> dict[str, Any]:
+        """Re-route an entry into a named pack through the normal apply path."""
+        from domain_foundry_core.clock import now_iso
+
+        domain = domain.strip()
+        self.packs.reload()
+        if self.packs.get(domain) is None:
+            return {
+                "applied": False,
+                "entry_id": entry_id,
+                "error": f"pack not installed: {domain}",
+            }
+
+        conn = connect_rw(self.workspace.ledger_db)
+        try:
+            row = conn.execute(
+                """
+                SELECT e.id, e.status, e.domain, c.raw_text, c.channel
+                FROM entry e
+                JOIN capture_event c ON c.id = e.capture_event_id
+                WHERE e.id = ?
+                """,
+                (entry_id,),
+            ).fetchone()
+            if row is None:
+                return {
+                    "applied": False,
+                    "entry_id": entry_id,
+                    "error": "entry not found",
+                }
+            if row["status"] == "applied" and row["domain"] == domain:
+                return {
+                    "applied": True,
+                    "entry_id": entry_id,
+                    "domain": domain,
+                    "status": "applied",
+                    "idempotent_replay": True,
+                }
+            conn.execute(
+                "UPDATE interpretation SET status = 'superseded' WHERE entry_id = ?",
+                (entry_id,),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+        routed = self.router.route_entry(
+            entry_id,
+            str(row["raw_text"] or ""),
+            channel="refile",
+            only_domains=[domain],
+        )
+        pipe = self.pipeline.process_entry(entry_id, channel="refile")
+        status = pipe.status
+
+        if status in {"unfiled", "ledger_only"}:
+            # The explicit destination is authoritative even when the scoped
+            # heuristic cannot infer a pack rule. Create through apply_operation
+            # so canonical journaling and provenance remain intact.
+            pack = self.packs.get(domain)
+            assert pack is not None
+            object_type = next(iter(pack.objects))
+            obj = pack.objects[object_type]
+            fields: dict[str, Any] = {}
+            title_field = obj.title_field or next(iter(obj.fields), None)
+            if title_field:
+                fields[title_field] = str(row["raw_text"] or "")[:80]
+            if "notes" in obj.fields:
+                fields["notes"] = str(row["raw_text"] or "")
+            applied = self.apply_operation(
+                domain=domain,
+                operation="create",
+                object_type=object_type,
+                fields=fields,
+                entry_id=entry_id,
+                channel="refile",
+                actor="user",
+            )
+            if not applied.get("ok"):
+                return {
+                    "applied": False,
+                    "entry_id": entry_id,
+                    "domain": domain,
+                    "error": applied.get("error") or "refile failed",
+                }
+            status = "applied"
+
+        conn = connect_rw(self.workspace.ledger_db)
+        try:
+            conn.execute(
+                "UPDATE unfiled_card SET status = 'filed', updated_at = ? "
+                "WHERE entry_id = ? AND status = 'open'",
+                (now_iso(), entry_id),
+            )
+            conn.execute(
+                "UPDATE entry SET status = ?, domain = ?, updated_at = ? WHERE id = ?",
+                (status, domain, now_iso(), entry_id),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+        return {
+            "applied": status == "applied",
+            "entry_id": entry_id,
+            "domain": domain,
+            "status": status,
+            "routed": [
+                {
+                    "domain": span.domain,
+                    "object_type": span.object_type,
+                    "operation": span.operation,
+                    "disposition": span.disposition,
+                }
+                for span in routed.spans
+            ],
+            "idempotent_replay": False,
+        }
+
     def review_list(
         self,
         status: str = "pending",
@@ -444,7 +762,7 @@ class HarnessAPI:
     def drain_projections(
         self, *, adapters: list[str] | None = None, limit: int = 100
     ) -> dict[str, Any]:
-        report = self.projections.drain_until_empty(limit=limit)
+        report = self.projections.drain_until_empty(adapters=adapters, limit=limit)
         return report.to_dict()
 
     def reproject_vault(
@@ -518,6 +836,99 @@ class HarnessAPI:
         except BlockDataError as exc:
             return {"error": str(exc)}
 
+    def export_data(self, *, domain: str | None = None) -> dict[str, Any]:
+        """Return a secrets-free JSON export of live canonical objects."""
+        from domain_foundry_core.clock import now_iso
+        from domain_foundry_core.security.redact import redact_secrets
+        from domain_foundry_core.security.store import connect_ro
+
+        def redact_value(value: Any) -> Any:
+            if isinstance(value, str):
+                return redact_secrets(value)
+            if isinstance(value, dict):
+                return {key: redact_value(item) for key, item in value.items()}
+            if isinstance(value, list):
+                return [redact_value(item) for item in value]
+            return value
+
+        # Map entry_id → (raw_text, residue) from ledger for never-drop export.
+        residue_by_entry: dict[str, dict[str, Any]] = {}
+        raw_by_entry: dict[str, str] = {}
+        ledger = connect_ro(self.workspace.ledger_db)
+        try:
+            for row in ledger.execute(
+                """
+                SELECT e.id AS entry_id, c.raw_text,
+                       (
+                         SELECT cr.payload_json FROM change_request cr
+                         WHERE cr.entry_id = e.id
+                         ORDER BY cr.id DESC LIMIT 1
+                       ) AS payload_json
+                FROM entry e
+                JOIN capture_event c ON c.id = e.capture_event_id
+                """
+            ).fetchall():
+                eid = str(row["entry_id"])
+                raw_by_entry[eid] = str(row["raw_text"] or "")
+                payload = {}
+                if row["payload_json"]:
+                    try:
+                        payload = json.loads(row["payload_json"])
+                    except Exception:
+                        payload = {}
+                residue_by_entry[eid] = payload.get("residue") or {}
+        finally:
+            ledger.close()
+
+        self.packs.reload()
+        names = [domain] if domain else [pack.name for pack in self.packs.list()]
+        domains: dict[str, Any] = {}
+        counts: dict[str, dict[str, int]] = {}
+        for name in names:
+            pack = self.packs.get(name)
+            if pack is None:
+                raise ValueError(f"pack not installed: {name}")
+            objects: dict[str, list[dict[str, Any]]] = {}
+            counts[name] = {}
+            for object_type, object_spec in pack.objects.items():
+                rows = self.block_data.export_rows(name, object_type)
+                exported: list[dict[str, Any]] = []
+                field_names = set(object_spec.fields)
+                for row in rows:
+                    fields = {
+                        key: redact_value(row[key])
+                        for key in field_names
+                        if key in row
+                    }
+                    entry_id = row.get("entry_id")
+                    item: dict[str, Any] = {
+                        "object_uid": row.get("object_uid"),
+                        "entry_id": entry_id,
+                        "created_at": row.get("created_at"),
+                        "updated_at": row.get("updated_at"),
+                        "fields": fields,
+                    }
+                    if entry_id:
+                        eid = str(entry_id)
+                        if eid in raw_by_entry and raw_by_entry[eid]:
+                            item["raw_text"] = redact_value(raw_by_entry[eid])
+                        res = residue_by_entry.get(eid) or {}
+                        if res:
+                            item["residue"] = redact_value(res)
+                    exported.append(item)
+                objects[object_type] = exported
+                counts[name][object_type] = len(exported)
+            domains[name] = {
+                "pack_version": pack.version,
+                "objects": objects,
+            }
+        return {
+            "format": "domain-foundry-export/1",
+            "exported_at": now_iso(),
+            "domains": domains,
+            "counts": counts,
+        }
+
     # -------------------------------------------------------- app shell (P5)
     def pack_cards(self) -> list[dict[str, Any]]:
         """Installed packs as home cards: icon, title, views, live object counts."""
@@ -525,7 +936,7 @@ class HarnessAPI:
         cards: list[dict[str, Any]] = []
         counts = self._object_counts_by_domain()
         for pack in self.packs.list():
-            app_cfg = pack.projections.app or {}
+            app_cfg = _constrained_app_config(pack.projections.app or {})
             views = self.block_data.views(pack.name)
             cards.append(
                 {
@@ -533,8 +944,11 @@ class HarnessAPI:
                     "title": pack.manifest.title,
                     "description": pack.manifest.description,
                     "icon": app_cfg.get("icon") or "📦",
+                    "accent": app_cfg.get("accent") or None,
                     "version": pack.version,
                     "objects": list(pack.objects),
+                    "capabilities": pack.capabilities,
+                    "compatibility": pack.compatibility.model_dump(),
                     "views": [
                         {"id": v.get("id"), "title": v.get("title"), "block": v.get("block")}
                         for v in views
@@ -560,13 +974,14 @@ class HarnessAPI:
                 continue
             if pack.name.startswith("_"):
                 continue
-            app_cfg = pack.projections.app or {}
+            app_cfg = _constrained_app_config(pack.projections.app or {})
             out.append(
                 {
                     "name": pack.name,
                     "title": pack.manifest.title,
                     "description": pack.manifest.description,
                     "icon": app_cfg.get("icon") or "📦",
+                    "accent": app_cfg.get("accent") or None,
                     "version": pack.version,
                     "installed": pack.name in installed,
                 }
@@ -574,6 +989,8 @@ class HarnessAPI:
         return sorted(out, key=lambda c: c["name"])
 
     def activate_pack(self, name: str) -> dict[str, Any]:
+        if self.packs.get_by_alias(name) is not None:
+            return self.pack_activate(name)
         pack = self.packs.activate_bundled(name)
         out: dict[str, Any] = {
             "name": pack.name,
@@ -770,8 +1187,110 @@ class HarnessAPI:
         return self.wizard.wizard_reply(session_id, text)
 
     def wizard_suggest(self, domain: str) -> dict[str, Any] | None:
-        """Suggest a hardening edit when a domain has repeated corrections (§8.4)."""
+        """Suggest a neighbor idea or hardening edit for a live domain."""
         return self.wizard.suggest_hardening(domain)
+
+    def atlas_search(self, goal: str, cursor_id: str | None = None) -> dict[str, Any]:
+        """Return an idea-atlas neighborhood for a goal (no install)."""
+        overlay = self.workspace.home / "atlas"
+        from domain_foundry_core.atlas.query import query_neighborhood
+
+        return query_neighborhood(
+            goal,
+            overlay=overlay if overlay.is_dir() else None,
+            cursor_id=cursor_id,
+        )
+
+    def inspect_pack(self, name: str) -> dict[str, Any]:
+        """Return pack YAML (and atlas hint) for an installed or bundled pack."""
+        self.packs.reload()
+        pack = self.packs.get(name)
+        if pack is None:
+            from domain_foundry_core.packs.loader import bundled_packs_root, load_pack
+
+            bundled = bundled_packs_root() / name
+            if not (bundled / "pack.yaml").is_file():
+                raise ValueError(f"pack not found: {name}")
+            pack = load_pack(bundled, validate=False)
+        files: dict[str, str] = {}
+        for fname in (
+            "pack.yaml",
+            "schema.yaml",
+            "routing.yaml",
+            "operations.yaml",
+            "policy.yaml",
+            "projections.yaml",
+            "capabilities.yaml",
+            "agent.yaml",
+        ):
+            path = pack.root / fname
+            if path.is_file():
+                files[fname] = path.read_text(encoding="utf-8")
+        status = None
+        status_path = pack.root / "foundry_status.json"
+        if status_path.is_file():
+            import json as _json
+
+            try:
+                status = _json.loads(status_path.read_text(encoding="utf-8"))
+            except Exception:
+                status = None
+        return {
+            "name": pack.name,
+            "title": pack.manifest.title,
+            "objects": list(pack.objects),
+            "files": files,
+            "status": status,
+        }
+
+    def apply_pack_edit(self, domain: str, edit_text: str, *, confirm: bool = False) -> dict[str, Any]:
+        """Preview a pack edit, or apply it when ``confirm`` is true."""
+        if not confirm:
+            preview = self.hardening_preview(domain, edit_text)
+            preview["confirm"] = False
+            return preview
+        return self.hardening_apply(domain, edit_text)
+
+    def atlas_validate(self) -> dict[str, Any]:
+        from domain_foundry_core.atlas.loader import load_atlas, validate_atlas, graph_stats
+
+        overlay = self.workspace.home / "atlas"
+        graph = load_atlas(overlay if overlay.is_dir() else None)
+        return {"errors": validate_atlas(graph), "stats": graph_stats(graph)}
+
+    def hardening_preview(self, domain: str, edit_text: str) -> dict[str, Any]:
+        from domain_foundry_core.wizard.hardening import build_plan
+
+        self.packs.reload()
+        pack = self.packs.get(domain)
+        if pack is None:
+            raise ValueError(f"pack not installed: {domain}")
+        plan = build_plan(edit_text, pack)
+        if not plan.ok:
+            raise ValueError(plan.error or "could not build a hardening plan")
+        return {"domain": domain, "edit_text": edit_text, "plan": plan.to_dict()}
+
+    def hardening_apply(self, domain: str, edit_text: str) -> dict[str, Any]:
+        from domain_foundry_core.wizard.hardening import apply_plan, build_plan
+
+        self.packs.reload()
+        pack = self.packs.get(domain)
+        if pack is None:
+            raise ValueError(f"pack not installed: {domain}")
+        plan = build_plan(edit_text, pack)
+        if not plan.ok:
+            raise ValueError(plan.error or "could not build a hardening plan")
+        result = apply_plan(self.workspace, pack, plan, edit_text=edit_text)
+        self.packs.reload()
+        return result
+
+    def hardening_rollback(self, domain: str) -> dict[str, Any]:
+        from domain_foundry_core.wizard.hardening_safety import restore_latest_snapshot
+
+        result = restore_latest_snapshot(self.workspace, domain, registry=self.packs)
+        self.packs.reload()
+        self.packs.ensure_schemas_applied()
+        return result
 
     # -------------------------------------------------------- quiz / SRS (mesh P2)
     def apply_operation(
@@ -817,6 +1336,36 @@ class HarnessAPI:
             "error": result.error,
             "details": result.details,
         }
+
+    def apply_ui_action(
+        self,
+        *,
+        domain: str,
+        operation: str,
+        object_type: str,
+        fields: dict[str, Any] | None = None,
+        object_uid: str | None = None,
+        entry_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Apply only an exact field combination declared UI-safe by the pack."""
+        self.packs.reload()
+        pack = self.packs.get(domain)
+        if pack is None:
+            raise ValueError(f"pack not installed: {domain}")
+        if not pack.policy.allows_ui_action(
+            object_type=object_type, operation=operation, fields=fields
+        ):
+            raise PermissionError("That action is not available from the app.")
+        return self.apply_operation(
+            domain=domain,
+            operation=operation,
+            object_type=object_type,
+            fields=fields,
+            object_uid=object_uid,
+            entry_id=entry_id,
+            channel="web",
+            actor="web-ui",
+        )
 
     def quiz_start(
         self,
@@ -919,6 +1468,64 @@ class HarnessAPI:
         except Exception:
             pass
         return _quiz_stats(self.workspace, domain=domain)
+
+    def quiz_activity(
+        self, *, domain: str = "japanese", user_id: str = "default", limit: int = 20
+    ) -> dict[str, Any]:
+        """Recent session lifecycle rows for a pack-declared session surface."""
+        from dataclasses import asdict
+
+        from domain_foundry_core.mesh.sessions import DomainSessionStore
+
+        sessions = DomainSessionStore(self.workspace).list(
+            domain, user_id=user_id, session_type="quiz", limit=limit
+        )
+        return {
+            "domain": domain,
+            "sessions": [asdict(session) for session in sessions],
+        }
+
+    def schedule_status(self, *, domain: str = "japanese") -> dict[str, Any]:
+        """Visible declaration + durable control state; no live calendar claim."""
+        from domain_foundry_core.mesh.schedules import ScheduleRunStore
+
+        self.packs.reload()
+        pack = self.packs.get(domain)
+        if pack is None or pack.agent is None:
+            return {"domain": domain, "schedules": []}
+        store = ScheduleRunStore(self.workspace)
+        schedules: list[dict[str, Any]] = []
+        for spec in pack.agent.schedules:
+            run = store.get(domain, spec.id)
+            schedules.append(
+                {
+                    "id": spec.id,
+                    "cron": spec.cron,
+                    "message": spec.message,
+                    "status": store.status(domain, spec.id),
+                    "last_fired_at": run.last_fired_at if run else None,
+                    "next_due_at": run.next_due_at if run else None,
+                    "fire_count": run.fire_count if run else 0,
+                    "timezone": (pack.capabilities.get("schedules") or {}).get("timezone"),
+                    "missed_run_policy": (pack.capabilities.get("schedules") or {}).get(
+                        "missed_run_policy"
+                    ),
+                    "human_gate": True,
+                }
+            )
+        return {"domain": domain, "schedules": schedules}
+
+    def set_schedule_status(self, domain: str, schedule_id: str, status: str) -> dict[str, Any]:
+        from domain_foundry_core.mesh.schedules import ScheduleRunStore
+
+        self.packs.reload()
+        pack = self.packs.get(domain)
+        if pack is None or pack.agent is None:
+            raise ValueError(f"no scheduled pack installed for {domain!r}")
+        if not any(spec.id == schedule_id for spec in pack.agent.schedules):
+            raise ValueError(f"unknown schedule {schedule_id!r} for {domain!r}")
+        next_status = ScheduleRunStore(self.workspace).set_status(domain, schedule_id, status)
+        return {"domain": domain, "schedule_id": schedule_id, "status": next_status}
 
     def evaluate_schedules(
         self,

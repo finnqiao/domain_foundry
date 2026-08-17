@@ -6,6 +6,7 @@ from domain_foundry_core.api.harness import HarnessAPI
 from domain_foundry_core.llm.provider import HeuristicProvider
 from domain_foundry_core.paths import Workspace
 from domain_foundry_core.projections.blockdata import BlockDataError, BlockDataService
+from domain_foundry_core.projections.capabilities import annotate_derived
 from domain_foundry_core.routing.router import Router
 
 
@@ -59,6 +60,80 @@ def test_block_data_rejects_unknown_view(workspace: Workspace):
         pass
     else:  # pragma: no cover
         raise AssertionError("expected BlockDataError")
+
+
+def test_declarative_metrics_are_evaluated_without_domain_branch():
+    from pathlib import Path
+
+    from domain_foundry_core.packs.loader import load_pack
+
+    pack = load_pack(Path(__file__).resolve().parents[2] / "packs" / "sourdough")
+    rows = annotate_derived(
+        pack,
+        "bake",
+        [
+            {"hydration": 75, "flour_g": 500, "water_g": 375, "bulk_hours": 5},
+            {"hydration": 80, "flour_g": 500, "water_g": 400, "bulk_hours": 4},
+        ],
+    )
+    assert rows[0]["derived"]["hydration_percent"] == 75.0
+    assert rows[1]["derived"]["hydration_percent"] == 80.0
+    assert rows[1]["derived"]["hydration_delta"] == 5.0
+    assert rows[1]["derived"]["bulk_hours_delta"] == -1.0
+
+
+def test_declared_compare_and_gallery_views_use_generic_projection_paths(workspace: Workspace):
+    api = _ready(workspace)
+    for _index, fields in enumerate(
+        [
+            {"loaf_name": "country", "hydration": 75, "flour_g": 500, "water_g": 375, "bulk_hours": 5},
+            {"loaf_name": "batard", "hydration": 80, "flour_g": 500, "water_g": 400, "bulk_hours": 4},
+        ]
+    ):
+        result = api.apply_operation(
+            domain="sourdough",
+            operation="create",
+            object_type="bake",
+            fields=fields,
+            channel="test",
+            actor="test",
+        )
+        assert result["ok"], result
+        assert result["object_uid"]
+
+    service = BlockDataService(workspace, registry=api.packs)
+    comparison = service.view_data("sourdough", "compare")
+    assert comparison["block"] == "compare"
+    assert comparison["count"] == 2
+    assert {metric["id"] for metric in comparison["metrics"]} == {
+        "hydration_percent",
+        "hydration_delta",
+        "bulk_hours_delta",
+    }
+    assert any(row["derived"]["hydration_percent"] == 80.0 for row in comparison["rows"])
+
+    # The gallery declaration reads capture attachments through the generic
+    # entry/provenance link; it does not know the sourdough domain.
+    receipt = api.capture(
+        "baked a crumb-photo test loaf",
+        channel="test",
+        source_ref="slice3-media-1",
+        attachments=[{"data": b"synthetic-image", "filename": "crumb.jpg", "content_type": "image/jpeg"}],
+    )
+    assert receipt.entry_id
+    gallery = service.view_data("sourdough", "gallery")
+    assert gallery["block"] == "gallery"
+    assert gallery["count"] == 1
+    assert gallery["items"][0]["attachment"]["content_type"] == "image/jpeg"
+
+
+def test_capability_projection_module_has_no_sourdough_special_case():
+    from pathlib import Path
+
+    module = Path(__file__).resolve().parents[2] / "core" / "domain_foundry_core" / "projections" / "capabilities.py"
+    blockdata = module.with_name("blockdata.py")
+    assert "sourdough" not in module.read_text(encoding="utf-8").lower()
+    assert "sourdough" not in blockdata.read_text(encoding="utf-8").lower()
 
 
 def test_health_reports_projection_lag(workspace: Workspace):

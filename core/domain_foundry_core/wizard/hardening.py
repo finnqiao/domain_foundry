@@ -34,12 +34,13 @@ _DATE_HINT = re.compile(r"(date|day|_at$|_on$|time)", re.IGNORECASE)
 
 @dataclass
 class SchemaChange:
-    kind: str  # add_field | rename_field | split_field
+    kind: str  # add_field | rename_field | split_field | add_object | add_capability | identity
     object: str
     field: str = ""
     field_type: str = "text"
     rename_to: str = ""
     into: list[str] = dataclass_field(default_factory=list)
+    capability: str = ""
 
     def describe(self) -> str:
         if self.kind == "add_field":
@@ -48,6 +49,12 @@ class SchemaChange:
             return f"rename {self.object}.{self.field} → {self.rename_to}"
         if self.kind == "split_field":
             return f"split {self.object}.{self.field} into {', '.join(self.into)}"
+        if self.kind == "add_object":
+            return f"add object {self.object}"
+        if self.kind == "add_capability":
+            return f"add capability {self.capability}"
+        if self.kind == "identity":
+            return f"identity field → {self.field}"
         return self.kind
 
 
@@ -62,6 +69,8 @@ class HardeningPlan:
     summary: list[str]
     ok: bool = True
     error: str | None = None
+    added_objects: list[str] = dataclass_field(default_factory=list)
+    added_capabilities: list[str] = dataclass_field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -70,6 +79,8 @@ class HardeningPlan:
             "summary": self.summary,
             "added": [{"name": n, "sql_type": t} for n, t in self.added_columns],
             "renamed": [{"from": o, "to": n} for o, n in self.renamed_columns],
+            "added_objects": list(self.added_objects),
+            "added_capabilities": list(self.added_capabilities),
             "migration_sql": self.migration_sql,
             "ok": self.ok,
             "error": self.error,
@@ -86,6 +97,9 @@ def looks_like_edit(text: str) -> bool:
         or bool(re.search(r"\badd a[n]?\b.+\bfield\b", text, re.IGNORECASE))
         or bool(re.search(r"\brename\s+[a-z_][a-z0-9_]*\s+(?:to|into)\s+[a-z_]", text, re.IGNORECASE))
         or bool(re.search(r"\bsplit\s+[a-z_][a-z0-9_]*\s+into\s+[a-z_]", text, re.IGNORECASE))
+        or bool(re.search(r"\badd a[n]?\s+[a-z_][a-z0-9_]*\s+object\b", text, re.IGNORECASE))
+        or bool(re.search(r"\badd a[n]?\s+(media|map|compare)\s+capability\b", text, re.IGNORECASE))
+        or bool(re.search(r"\bidentity should be\b", text, re.IGNORECASE))
     )
 
 
@@ -117,6 +131,44 @@ def parse_edit(text: str, pack: DomainPack) -> list[SchemaChange]:
     text = (text or "").strip()
     changes: list[SchemaChange] = []
     default_object = _target_object(text, pack)
+
+    for m in re.finditer(
+        r"add\s+a[n]?\s+['\"]?(?P<name>[a-z_][a-z0-9_]*)['\"]?\s+object",
+        text, re.IGNORECASE,
+    ):
+        name = m.group("name").lower()
+        if name in pack.objects or name in {"field", "column"}:
+            continue
+        ident = "name" if name.endswith("s") else f"{name}_name"
+        if name in {"species", "recipe", "plant", "site"}:
+            ident = f"{name}_name"
+        changes.append(SchemaChange(kind="add_object", object=name, field=ident))
+
+    for m in re.finditer(
+        r"add\s+a[n]?\s+(?P<cap>media|map|compare|gallery)\s+capability",
+        text, re.IGNORECASE,
+    ):
+        cap = m.group("cap").lower()
+        if cap == "gallery":
+            cap = "media"
+        changes.append(SchemaChange(
+            kind="add_capability", object=default_object, capability=cap,
+        ))
+
+    for m in re.finditer(
+        r"identity should be\s+['\"]?(?P<name>[a-z_][a-z0-9_]*)['\"]?",
+        text, re.IGNORECASE,
+    ):
+        new_ident = m.group("name").lower()
+        old = pack.objects[default_object].title_field
+        if new_ident != old:
+            changes.append(SchemaChange(
+                kind="identity", object=default_object, field=new_ident, rename_to=new_ident,
+            ))
+            if old and old in pack.objects[default_object].fields:
+                changes.append(SchemaChange(
+                    kind="rename_field", object=default_object, field=old, rename_to=new_ident,
+                ))
 
     # split X into A and B
     for m in re.finditer(
@@ -188,16 +240,53 @@ def build_plan(text: str, pack: DomainPack) -> HardeningPlan:
             ok=False, error="could not parse a schema edit from the request",
         )
     target_obj = changes[0].object
-    tname = table_name(pack.name, target_obj)
+    tname = table_name(pack.name, target_obj) if target_obj in pack.objects else table_name(pack.name, next(iter(pack.objects)))
     added: list[tuple[str, str]] = []
     renamed: list[tuple[str, str]] = []
+    added_objects: list[str] = []
+    added_caps: list[str] = []
     summary: list[str] = []
-    sql_lines = [f"-- hardening migration for {pack.name}.{target_obj}", "PRAGMA foreign_keys = ON;"]
+    sql_lines = [f"-- hardening migration for {pack.name}", "PRAGMA foreign_keys = ON;"]
 
     existing = set(pack.objects[target_obj].fields) if target_obj in pack.objects else set()
     for ch in changes:
         summary.append(ch.describe())
-        if ch.kind == "add_field":
+        if ch.kind == "add_object":
+            if ch.object in pack.objects or ch.object in added_objects:
+                continue
+            if not _IDENT_RE.match(ch.object):
+                continue
+            added_objects.append(ch.object)
+            ident = ch.field or "name"
+            new_table = table_name(pack.name, ch.object)
+            sql_lines.append(
+                f"CREATE TABLE IF NOT EXISTS {new_table} ("
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                "object_uid TEXT UNIQUE, entry_id TEXT, "
+                "created_at TEXT NOT NULL, updated_at TEXT NOT NULL, "
+                "tombstoned INTEGER NOT NULL DEFAULT 0, "
+                f"{ident} TEXT, notes TEXT);"
+            )
+            sql_lines.append(
+                f"CREATE INDEX IF NOT EXISTS {new_table}_entry_idx ON {new_table}(entry_id);"
+            )
+        elif ch.kind == "add_capability":
+            if ch.capability and ch.capability not in added_caps:
+                added_caps.append(ch.capability)
+            if ch.capability == "media":
+                if "photos" not in existing and target_obj in pack.objects:
+                    added.append(("photos", "TEXT"))
+                    existing.add("photos")
+                    sql_lines.append(f"ALTER TABLE {tname} ADD COLUMN photos TEXT;")
+            elif ch.capability == "map":
+                for col in ("lat", "lng"):
+                    if col not in existing and target_obj in pack.objects:
+                        added.append((col, "REAL"))
+                        existing.add(col)
+                        sql_lines.append(f"ALTER TABLE {tname} ADD COLUMN {col} REAL;")
+        elif ch.kind == "identity":
+            continue
+        elif ch.kind == "add_field":
             if not _IDENT_RE.match(ch.field) or ch.field in existing:
                 continue
             sqlt = _SQL_TYPE.get(ch.field_type, "TEXT")
@@ -217,7 +306,7 @@ def build_plan(text: str, pack: DomainPack) -> HardeningPlan:
                     existing.add(new_field)
                     sql_lines.append(f"ALTER TABLE {tname} ADD COLUMN {new_field} TEXT;")
 
-    if not added and not renamed:
+    if not added and not renamed and not added_objects and not added_caps:
         return HardeningPlan(
             domain=pack.name, object=target_obj, changes=changes,
             added_columns=[], renamed_columns=[], migration_sql="", summary=summary,
@@ -226,6 +315,7 @@ def build_plan(text: str, pack: DomainPack) -> HardeningPlan:
     return HardeningPlan(
         domain=pack.name, object=target_obj, changes=changes,
         added_columns=added, renamed_columns=renamed,
+        added_objects=added_objects, added_capabilities=added_caps,
         migration_sql="\n".join(sql_lines) + "\n", summary=summary,
     )
 
@@ -261,11 +351,27 @@ def apply_plan(
     if not plan.ok:
         return {"applied": False, "error": plan.error}
 
+    from domain_foundry_core.wizard.hardening_safety import create_snapshot
+
+    snapshot_obj = plan.object if plan.object in pack.objects else next(iter(pack.objects))
+    snapshot = create_snapshot(workspace, pack, snapshot_obj)
+
     schema_path = pack.root / "schema.yaml"
     schema_raw = yaml.safe_load(schema_path.read_text(encoding="utf-8")) or {"objects": {}}
-    obj_fields = schema_raw["objects"].setdefault(plan.object, {}).setdefault("fields", {})
 
     for ch in plan.changes:
+        if ch.kind == "add_object":
+            ident = ch.field or "name"
+            schema_raw.setdefault("objects", {})[ch.object] = {
+                "title_field": ident,
+                "fields": {
+                    ident: {"type": "text", "required": True},
+                    "notes": {"type": "text"},
+                },
+            }
+            _ensure_object_operations(pack, ch.object)
+            continue
+        obj_fields = schema_raw["objects"].setdefault(ch.object, {}).setdefault("fields", {})
         if ch.kind == "add_field" and ch.field not in obj_fields:
             entry: dict[str, Any] = {"type": ch.field_type}
             if ch.field_type == "enum":
@@ -274,9 +380,22 @@ def apply_plan(
             obj_fields[ch.field] = entry
         elif ch.kind == "rename_field" and ch.field in obj_fields:
             obj_fields[ch.rename_to] = obj_fields.pop(ch.field)
+            title_field = schema_raw["objects"][ch.object].get("title_field")
+            if title_field == ch.field:
+                schema_raw["objects"][ch.object]["title_field"] = ch.rename_to
         elif ch.kind == "split_field":
             for new_field in ch.into:
                 obj_fields.setdefault(new_field, {"type": "text"})
+        elif ch.kind == "identity":
+            schema_raw["objects"][ch.object]["title_field"] = ch.field
+            obj_fields.setdefault(ch.field, {"type": "text", "required": True})
+        elif ch.kind == "add_capability":
+            if ch.capability == "media":
+                obj_fields.setdefault("photos", {"type": "attachment"})
+            elif ch.capability == "map":
+                obj_fields.setdefault("lat", {"type": "number"})
+                obj_fields.setdefault("lng", {"type": "number"})
+            _merge_capability(pack, ch.capability, ch.object)
 
     schema_path.write_text(
         yaml.safe_dump(schema_raw, sort_keys=False, allow_unicode=True), encoding="utf-8"
@@ -310,27 +429,19 @@ def apply_plan(
         "migration_path": str(migration_path),
         "added": [n for n, _ in plan.added_columns],
         "renamed": [{"from": o, "to": n} for o, n in plan.renamed_columns],
+        "added_objects": list(plan.added_objects),
+        "added_capabilities": list(plan.added_capabilities),
         "summary": plan.summary,
+        "snapshot": snapshot,
         "fixture": fixture,
     }
 
 
 def _execute_alters(workspace: Workspace, plan: HardeningPlan) -> None:
-    tname = table_name(plan.domain, plan.object)
     conn = connect_rw(workspace.domains_db)
     try:
-        existing_cols = {
-            row["name"] for row in conn.execute(f"PRAGMA table_info({tname})").fetchall()
-        }
-        for name, sqlt in plan.added_columns:
-            if name not in existing_cols:
-                conn.execute(f"ALTER TABLE {tname} ADD COLUMN {name} {sqlt}")
-                existing_cols.add(name)
-        for old, new in plan.renamed_columns:
-            if old in existing_cols and new not in existing_cols:
-                conn.execute(f"ALTER TABLE {tname} RENAME COLUMN {old} TO {new}")
-                existing_cols.discard(old)
-                existing_cols.add(new)
+        if plan.migration_sql.strip():
+            conn.executescript(plan.migration_sql)
         conn.commit()
     finally:
         conn.close()
@@ -343,15 +454,22 @@ def _append_fixture(
     routing_path = pack.root / "routing.yaml"
     routing_raw = yaml.safe_load(routing_path.read_text(encoding="utf-8")) or {}
     examples = routing_raw.setdefault("examples", [])
-    base_text = examples[0]["text"] if examples else f"logged a {plan.object}"
-    new_field = plan.added_columns[0][0] if plan.added_columns else (
-        plan.renamed_columns[0][1] if plan.renamed_columns else "field"
-    )
-    fixture_text = f"{base_text} — noting the {new_field.replace('_', ' ')}"
-    examples.append({
-        "text": fixture_text,
-        "expect": {"object": plan.object, "operation": "create"},
-    })
+    rules = routing_raw.setdefault("rules", [])
+    if plan.added_objects:
+        obj = plan.added_objects[0]
+        fixture_text = f"added a new {obj} to the catalog"
+        examples.append({"text": fixture_text, "expect": {"object": obj, "operation": "create"}})
+        rules.append({"match": re.escape(obj), "object": obj, "confidence_boost": 0.25})
+    else:
+        base_text = examples[0]["text"] if examples else f"logged a {plan.object}"
+        new_field = plan.added_columns[0][0] if plan.added_columns else (
+            plan.renamed_columns[0][1] if plan.renamed_columns else "field"
+        )
+        fixture_text = f"{base_text} — noting the {new_field.replace('_', ' ')}"
+        examples.append({
+            "text": fixture_text,
+            "expect": {"object": plan.object, "operation": "create"},
+        })
     routing_path.write_text(
         yaml.safe_dump(routing_raw, sort_keys=False, allow_unicode=True), encoding="utf-8"
     )
@@ -362,9 +480,87 @@ def _append_fixture(
         raw_text=fixture_text,
         expected={
             "captures": [
-                {"domain": pack.name, "object_type": plan.object, "operation": "create"}
+                {
+                    "domain": pack.name,
+                    "object_type": (plan.added_objects[0] if plan.added_objects else plan.object),
+                    "operation": "create",
+                }
             ]
         },
         context={"packs": [pack.name], "date": now_iso()[:10], "hardening_edit": edit_text},
     )
     return {"eval_case_id": eval_id, "example_text": fixture_text}
+
+
+def _ensure_object_operations(pack: DomainPack, object_name: str) -> None:
+    path = pack.root / "operations.yaml"
+    raw = yaml.safe_load(path.read_text(encoding="utf-8")) if path.is_file() else {}
+    raw = raw if isinstance(raw, dict) else {}
+    raw.setdefault(object_name, ["create", "update", "correct", "delete"])
+    path.write_text(yaml.safe_dump(raw, sort_keys=False, allow_unicode=True), encoding="utf-8")
+
+
+def _merge_capability(pack: DomainPack, capability: str, object_name: str) -> None:
+    path = pack.root / "capabilities.yaml"
+    raw = yaml.safe_load(path.read_text(encoding="utf-8")) if path.is_file() else {}
+    raw = raw if isinstance(raw, dict) else {}
+    caps = raw.setdefault("capabilities", {})
+    compat = raw.setdefault("compatibility", {"core": ">=0.1,<2", "capabilities": {}})
+    compat.setdefault("capabilities", {})
+    views_path = pack.root / "projections.yaml"
+    views_raw = yaml.safe_load(views_path.read_text(encoding="utf-8")) if views_path.is_file() else {}
+    views_raw = views_raw if isinstance(views_raw, dict) else {}
+    app = views_raw.setdefault("app", {})
+    views = app.setdefault("views", [])
+    if capability == "media":
+        caps["media"] = {
+            "version": 1,
+            "galleries": [
+                {
+                    "id": "photos",
+                    "title": "Gallery",
+                    "object": object_name,
+                    "field": "photos",
+                    "source": "capture_attachments",
+                    "accept": ["image/jpeg", "image/png", "image/webp"],
+                }
+            ],
+        }
+        compat["capabilities"]["media"] = ">=1,<2"
+        if not any(v.get("block") == "gallery" for v in views):
+            views.append(
+                {
+                    "id": f"{object_name}_gallery",
+                    "title": "Gallery",
+                    "block": "gallery",
+                    "object": object_name,
+                    "config": {"gallery": "photos"},
+                }
+            )
+    elif capability == "map":
+        if not any(v.get("block") == "map" for v in views):
+            views.append(
+                {
+                    "id": f"{object_name}_map",
+                    "title": "Map",
+                    "block": "map",
+                    "object": object_name,
+                    "config": {},
+                }
+            )
+    elif capability == "compare":
+        caps.setdefault(
+            "compare",
+            {
+                "version": 1,
+                "comparisons": [
+                    {"id": f"{object_name}_compare", "title": "Compare", "object": object_name}
+                ],
+            },
+        )
+        compat["capabilities"]["compare"] = ">=1,<2"
+    path.write_text(yaml.safe_dump(raw, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    views_path.write_text(
+        yaml.safe_dump(views_raw, sort_keys=False, allow_unicode=True), encoding="utf-8"
+    )
+

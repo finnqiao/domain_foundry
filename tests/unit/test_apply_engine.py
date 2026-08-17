@@ -9,7 +9,7 @@ def test_uncoercible_number_drops_field_not_the_row(tmp_path):
     api = HarnessAPI(tmp_path)
     api.init()
     sess = api.new_domain("keep notes on the cocktails I make and drink")
-    api.wizard_reply(sess["session_id"], "skip")
+    api.wizard_reply(sess["session_id"], "just a simple log")
 
     class _JunkNumberLLM(LLMProvider):
         name = "fake"
@@ -59,7 +59,7 @@ def test_health_surfaces_failed_change_requests(tmp_path):
     api = HarnessAPI(tmp_path)
     api.init()
     sess = api.new_domain("keep notes on the cocktails I make and drink")
-    api.wizard_reply(sess["session_id"], "skip")
+    api.wizard_reply(sess["session_id"], "just a simple log")
     api.capture("cocktails log entry: negroni")
 
     conn = sqlite3.connect(tmp_path / "db" / "ledger.sqlite")

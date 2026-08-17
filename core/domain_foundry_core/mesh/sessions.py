@@ -116,6 +116,31 @@ class DomainSessionStore:
         finally:
             conn.close()
 
+    def list(
+        self,
+        domain: str,
+        *,
+        user_id: str = "default",
+        session_type: str | None = None,
+        limit: int = 20,
+    ) -> list[DomainSession]:
+        """Return recent sessions for a visible activity/history surface."""
+        conn = self._connect()
+        try:
+            params: list[Any] = [domain, user_id]
+            sql = """
+                SELECT * FROM domain_session
+                WHERE domain = ? AND user_id = ?
+            """
+            if session_type:
+                sql += " AND session_type = ?"
+                params.append(session_type)
+            sql += " ORDER BY updated_at DESC LIMIT ?"
+            params.append(max(1, min(int(limit), 100)))
+            return [self._row(row) for row in conn.execute(sql, params).fetchall()]
+        finally:
+            conn.close()
+
     def get_sticky(
         self,
         *,

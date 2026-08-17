@@ -27,7 +27,7 @@ OUT = ROOT / "docs" / "tutorial" / "snapshots"
 DF = str(ROOT / ".venv" / "bin" / "domain-foundry")
 GOAL = "track my bouldering climbing sessions"
 CAP = "good bouldering session at the gym, felt strong"
-CORR = "actually that bouldering session felt moderate, not hard"
+CORR = "actually the rating was moderate not hard"
 ENV = {**os.environ, "DOMAIN_FOUNDRY_LLM": "heuristic"}
 
 

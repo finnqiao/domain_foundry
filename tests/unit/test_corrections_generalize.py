@@ -56,7 +56,7 @@ def cocktails(tmp_path):
     api = HarnessAPI(tmp_path)
     api.init()
     sess = api.new_domain("keep notes on the cocktails I make and drink")
-    api.wizard_reply(sess["session_id"], "skip")
+    api.wizard_reply(sess["session_id"], "just a simple log")
     return api
 
 

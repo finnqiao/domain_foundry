@@ -1,9 +1,18 @@
 # Pack authoring style guide
 
-This guide is the quality bar the domain-creation wizard (plan §6, P6) applies
-when it proposes a provisional pack, and the reference for humans hand-editing
-packs. A pack is **data, not code** (ADR-004): six YAML files, no executable
-logic. Everything here maps to `pack validate` and the routing eval gate.
+Start with an **[idea atlas](concepts/idea-atlas.md) node and its jobs**, then
+compile (or hand-write) the six YAML files. The empty `_template` pack is the
+second stop, not the first: decide *where in the world of practice this sits*
+and *which jobs it is* (catalog, event log, map, gallery, improvement…) before
+you name fields.
+
+This guide is the quality bar the domain-creation wizard applies when it
+compiles a chosen idea, and the reference for humans hand-editing packs. A pack
+is **data, not code** (ADR-004): YAML files, no executable logic. Everything
+here maps to `pack validate` and the routing eval gate.
+
+Local atlas overlay: drop YAML in `~/.domain_foundry/atlas/` (same node ids
+shadow the shipped graph). Lint with `domain-foundry atlas validate`.
 
 ## The six files
 

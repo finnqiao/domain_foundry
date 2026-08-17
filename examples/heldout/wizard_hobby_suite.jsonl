@@ -1,0 +1,11 @@
+# Held-out wizard acceptance suite. The first eight are the review's failing
+# captures and are intentionally independent of generated examples.
+{"id": "ho_bouldering_1", "goal_key": "bouldering", "goal": "track my bouldering sessions", "capture": "sent a tough V5 on the overhang today, crux was the heel hook", "expect": {"routes": true, "object_type": null}, "tags": ["review-8", "no-hobby-word"]}
+{"id": "ho_rockets_1", "goal_key": "rocket", "goal": "track my model rocket launches", "capture": "launched my Estes Alpha III to about 300 feet, recovery was clean", "expect": {"routes": true, "object_type": null}, "tags": ["review-8", "no-hobby-word"]}
+{"id": "ho_guitar_1", "goal_key": "guitar", "goal": "keep track of my guitar practice", "capture": "worked on sweep-picked arpeggios for 45 minutes", "expect": {"routes": true, "object_type": null}, "tags": ["review-8", "no-hobby-word"]}
+{"id": "ho_dreams_1", "goal_key": "dream", "goal": "journal my dreams", "capture": "dreamed I was walking through an endless library", "expect": {"routes": true, "object_type": null}, "tags": ["review-8"]}
+{"id": "ho_meditation_1", "goal_key": "meditation", "goal": "track my meditation practice", "capture": "sat for 20 minutes this morning, mind kept wandering", "expect": {"routes": true, "object_type": null}, "tags": ["review-8", "no-hobby-word"]}
+{"id": "ho_reading_1", "goal_key": "reading", "goal": "keep track of my reading", "capture": "finished The Dispossessed last night, five stars", "expect": {"routes": true, "object_type": null}, "tags": ["review-8", "no-hobby-word"]}
+{"id": "ho_cycling_1", "goal_key": "cycling", "goal": "track my cycling rides", "capture": "rode 42 km along the coast in 1 hour 38 minutes", "expect": {"routes": true, "object_type": null}, "tags": ["review-8", "no-hobby-word"]}
+{"id": "ho_coffee_1", "goal_key": "coffee", "goal": "keep a coffee brewing log", "capture": "V60 Ethiopian, 15g in and 250g out, tasted like blueberry", "expect": {"routes": true, "object_type": null}, "tags": ["review-8", "no-hobby-word"]}
+{"id": "ho_climbing_1", "goal_key": "climbing", "goal": "track my climbing sessions", "capture": "flashed the blue route after two attempts, the crux was a heel hook", "expect": {"routes": true, "object_type": null}, "tags": ["slice-3-heldout", "no-hobby-word"]}

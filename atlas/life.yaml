@@ -1,0 +1,408 @@
+nodes:
+  - id: plants
+    kind: bucket
+    title: Plants
+    aliases: [houseplants, garden, gardening, plant care]
+    pitch: Collections, watering, pests, and what the leaves are telling you.
+  - id: plants.houseplants
+    kind: practice
+    title: Houseplants
+    aliases: [indoor plants, plant care]
+    pitch: The shelf, the watering, the yellowing leaf.
+  - id: plants.houseplants.care_log
+    kind: idea
+    title: Plant care
+    aliases: [watering log, houseplant care]
+    pitch: Plants as a catalog, watering and repotting as events.
+    jobs: [catalog, event_log]
+    provenance: both
+    analog_pack: plants
+    domain_slug: plants
+    identity_hint: plant_name
+    example: watered the monstera, soil still damp
+    jargon: [monstera, pothos, repot, mist]
+    world_analogs:
+      - {name: Planta, one_liner: Watering reminders}
+  - id: plants.houseplants.collection
+    kind: idea
+    title: Plant collection
+    aliases: [plant dex]
+    pitch: A pokedex of what you own — species, light, status — not only the last watering.
+    jobs: [catalog, media_dex]
+    provenance: foundry
+    analog_pack: plants
+    domain_slug: plantdex
+    identity_hint: plant_name
+    example: added a calathea to the shelf, still acclimating
+    jargon: [acclimating, variegation]
+  - id: plants.pests
+    kind: practice
+    title: Pests & disease
+    aliases: [spider mites, fungus gnats, scale]
+    pitch: What showed up and what you did.
+  - id: plants.pests.journal
+    kind: idea
+    title: Pest journal
+    aliases: [infestation log]
+    pitch: Outbreaks, treatments, and whether they actually cleared.
+    jobs: [event_log, lab]
+    provenance: foundry
+    domain_slug: pests
+    identity_hint: plant_name
+    example: gnats in the fiddle leaf, let the soil dry harder
+    jargon: [systemic, neem, gnats]
+
+  - id: travel
+    kind: bucket
+    title: Travel
+    aliases: [trip, trips, itinerary, vacation]
+    pitch: Trips, days, and the boring logistics that still matter.
+  - id: travel.trips
+    kind: practice
+    title: Trips
+    aliases: [itinerary, holiday]
+    pitch: A trip with days underneath.
+  - id: travel.trips.planner
+    kind: idea
+    title: Trip planner
+    aliases: [itinerary app]
+    pitch: Dates, places, and the checklist — a plan you can talk to.
+    jobs: [plan, atlas, event_log]
+    provenance: both
+    analog_pack: travel
+    domain_slug: travel
+    identity_hint: trip_name
+    example: heading to Port City in March, dinner at River Station
+    jargon: [layover, shoulder season]
+    world_analogs:
+      - {name: Wanderlog, one_liner: Collaborative itineraries}
+
+  - id: learning
+    kind: bucket
+    title: Learning
+    aliases: [study, language, japanese, flashcards, anki]
+    pitch: Cards, sessions, and what is actually due.
+  - id: learning.languages
+    kind: practice
+    title: Languages
+    aliases: [japanese, vocab, grammar]
+    pitch: Vocab, grammar, and review sessions.
+  - id: learning.languages.review
+    kind: idea
+    title: Review sessions
+    aliases: [srs, anki, japanese]
+    pitch: Cards plus a local quiz — due work you can pause.
+    jobs: [practice, catalog]
+    provenance: both
+    analog_pack: japanese
+    domain_slug: japanese
+    identity_hint: prompt
+    example: reviewed 20 vocab, あげる still shaky
+    jargon: [srs, leech, due]
+    world_analogs:
+      - {name: Anki, one_liner: Spaced repetition}
+
+  - id: health
+    kind: bucket
+    title: Health
+    aliases: [medical, labs, sleep, symptoms]
+    pitch: Body notes you want on your machine, not in a portal silo.
+  - id: health.logs
+    kind: practice
+    title: Body logs
+    aliases: [symptoms, sleep, labs]
+    pitch: Sleep, symptoms, labs — whatever you actually track.
+  - id: health.logs.symptom
+    kind: idea
+    title: Symptom log
+    aliases: [how I feel]
+    pitch: What flared, when, and what you'd tell a clinician later.
+    jobs: [event_log, improvement]
+    provenance: both
+    analog_pack: health
+    domain_slug: health
+    identity_hint: note
+    example: slept 6 hours, headache after lunch
+    jargon: [flare, onset]
+    world_analogs:
+      - {name: Apple Health / paper diaries, one_liner: Streams without your schema}
+
+  - id: music
+    kind: bucket
+    title: Music
+    aliases: [guitar, piano, practice, instrument]
+    pitch: Practice, repertoire, and whether the hard bit moved.
+  - id: music.practice
+    kind: practice
+    title: Instrument practice
+    aliases: [guitar, piano, violin]
+    pitch: Sessions with a piece or a technique, not a vague “practiced”.
+  - id: music.practice.session
+    kind: idea
+    title: Practice log
+    aliases: [guitar practice]
+    pitch: What you worked on and for how long — with a trend if you want one.
+    jobs: [event_log, practice, improvement]
+    provenance: foundry
+    domain_slug: guitar
+    identity_hint: piece
+    example: worked on sweep-picked arpeggios for 45 minutes
+    jargon: [metronome, barre, arpeggio]
+    world_analogs:
+      - {name: Tonara / practice diaries, one_liner: Timed practice}
+
+  - id: reading
+    kind: bucket
+    title: Reading
+    aliases: [books, novels, book log]
+    pitch: What you read and what stuck.
+  - id: reading.books
+    kind: practice
+    title: Books
+    aliases: [reading log, bookshelf]
+    pitch: Titles, when you finished, and a note you'd actually reread.
+  - id: reading.books.log
+    kind: idea
+    title: Reading log
+    aliases: [book tracker]
+    pitch: Finished books with a rating you can stand by later.
+    jobs: [catalog, event_log]
+    provenance: world
+    domain_slug: reading
+    identity_hint: title
+    example: finished The Dispossessed last night, five stars
+    jargon: [reread, DNF]
+    world_analogs:
+      - {name: Goodreads, one_liner: Social reading shelf}
+
+  - id: craft
+    kind: bucket
+    title: Craft
+    aliases: [making, origami, knitting, woodworking]
+    pitch: Handmade things and the attempts behind them.
+  - id: craft.making
+    kind: practice
+    title: Handmade
+    aliases: [origami, knitting, sewing]
+    pitch: Pieces and the session that made them.
+  - id: craft.making.log
+    kind: idea
+    title: Make log
+    aliases: [origami log]
+    pitch: What you made and what you'd change in the next fold or seam.
+    jobs: [catalog, event_log, media_dex]
+    provenance: foundry
+    domain_slug: origami
+    identity_hint: piece_name
+    example: folded a new crane from the leftover kami, crease was soft
+    jargon: [crease, wet fold, blocking]
+
+  - id: photography
+    kind: bucket
+    title: Photography
+    aliases: [photos, camera, film]
+    pitch: Shots, gear, and what you actually keep.
+  - id: photography.catalog
+    kind: practice
+    title: Photo catalog
+    aliases: [portfolio, film]
+    pitch: A catalog with a gallery, not a camera-roll dump.
+  - id: photography.catalog.gallery
+    kind: idea
+    title: Photo catalog
+    aliases: [shot catalog]
+    pitch: Keepers with where and why — local, not another cloud.
+    jobs: [catalog, media_dex, atlas]
+    provenance: both
+    domain_slug: photos
+    identity_hint: shot_name
+    example: golden hour at the harbor, 35mm, kept three frames
+    jargon: [keeper, contact sheet]
+    world_analogs:
+      - {name: Lightroom, one_liner: Catalog and develop}
+
+  - id: outdoors
+    kind: bucket
+    title: Outdoors
+    aliases: [hiking, camping, trail]
+    pitch: Days outside that aren't a gym session.
+  - id: outdoors.hikes
+    kind: practice
+    title: Hiking
+    aliases: [trail, backpack]
+    pitch: Trails, conditions, and whether you'd go again.
+  - id: outdoors.hikes.log
+    kind: idea
+    title: Hike log
+    aliases: [trail log]
+    pitch: Route, time, and a note for the next time.
+    jobs: [event_log, atlas, improvement]
+    provenance: world
+    domain_slug: hikes
+    identity_hint: trail_name
+    example: ridge trail in the fog, 11k, knees complained on the descent
+    jargon: [scree, switchback]
+    world_analogs:
+      - {name: AllTrails, one_liner: Route social network}
+
+  - id: home
+    kind: bucket
+    title: Home
+    aliases: [house, apartment, maintenance]
+    pitch: The boring work that keeps a place running.
+  - id: home.maintenance
+    kind: practice
+    title: Maintenance
+    aliases: [repairs, chores]
+    pitch: What broke, what you did, when it will fail again.
+  - id: home.maintenance.log
+    kind: idea
+    title: Home log
+    aliases: [repair log]
+    pitch: Filters, leaks, and the last time you actually did it.
+    jobs: [catalog, event_log]
+    provenance: foundry
+    domain_slug: home
+    identity_hint: item
+    example: replaced the HVAC filter, last one was six months ago
+    jargon: [filter, gasket]
+
+  - id: collecting
+    kind: bucket
+    title: Collecting
+    aliases: [collection, catalog, inventory]
+    pitch: Things you keep on purpose.
+  - id: collecting.catalog
+    kind: practice
+    title: Catalogs
+    aliases: [inventory]
+    pitch: A catalog with photos, not a spreadsheet graveyard.
+  - id: collecting.catalog.dex
+    kind: idea
+    title: Collection dex
+    aliases: [inventory app]
+    pitch: Identity, acquired-on, and a photo — a pokedex for objects.
+    jobs: [catalog, media_dex]
+    provenance: foundry
+    domain_slug: collection
+    identity_hint: item_name
+    example: added the 1982 field guide, spine is sun-faded
+    jargon: [lot, provenance]
+
+  - id: animals
+    kind: bucket
+    title: Animals
+    aliases: [pets, wildlife, birding]
+    pitch: Pets at home, or wildlife you keep noticing.
+  - id: animals.wildlife
+    kind: practice
+    title: Wildlife
+    aliases: [birding, species]
+    pitch: Sightings with a place — a pokedex for the living world.
+  - id: animals.wildlife.dex
+    kind: idea
+    title: Wildlife dex
+    aliases: [bird log, species log]
+    pitch: What you saw, where, and a photo if you got one.
+    jobs: [catalog, event_log, media_dex, atlas]
+    provenance: both
+    domain_slug: wildlife
+    identity_hint: species_name
+    example: spotted a heron at the canal at dusk
+    jargon: [lifer, ID]
+    world_analogs:
+      - {name: iNaturalist / eBird, one_liner: Community sighting logs}
+
+  - id: making
+    kind: bucket
+    title: Making / code
+    aliases: [dev, coding, side project]
+    pitch: Notes on work you do with tools, not a Jira clone.
+  - id: making.dev
+    kind: practice
+    title: Dev notes
+    aliases: [engineering journal]
+    pitch: What you tried and what you'd tell tomorrow-you.
+  - id: making.dev.log
+    kind: idea
+    title: Dev scratch
+    aliases: [engineering log]
+    pitch: Short notes with a date — local, not Slack archaeology.
+    jobs: [event_log]
+    provenance: foundry
+    analog_pack: dev
+    domain_slug: dev
+    identity_hint: title
+    example: tried the new router, still dropping the trailing slash
+    jargon: [repro, flake]
+
+  - id: wellness
+    kind: bucket
+    title: Wellness
+    aliases: [meditation, mood, journal]
+    pitch: Inner weather, without a streak-shame app.
+  - id: wellness.mind
+    kind: practice
+    title: Mind
+    aliases: [meditation, mood, dreams]
+    pitch: Sits, moods, dreams — pick one and keep it honest.
+  - id: wellness.mind.sit
+    kind: idea
+    title: Sit log
+    aliases: [meditation log]
+    pitch: How long you sat and how it actually was.
+    jobs: [event_log, practice]
+    provenance: foundry
+    domain_slug: meditation
+    identity_hint: sit
+    example: sat for 20 minutes this morning, mind kept wandering
+    jargon: [noting, wander]
+  - id: wellness.mind.dreams
+    kind: idea
+    title: Dream journal
+    aliases: [dreams]
+    pitch: The dream in your words, dated, searchable later.
+    jobs: [event_log]
+    provenance: foundry
+    domain_slug: dreams
+    identity_hint: summary
+    example: dreamed I was walking through an endless library
+    jargon: [lucid, fragment]
+
+edges:
+  - {from: plants, to: plants.houseplants, rel: child}
+  - {from: plants, to: plants.pests, rel: child}
+  - {from: plants.houseplants, to: plants.houseplants.care_log, rel: child}
+  - {from: plants.houseplants, to: plants.houseplants.collection, rel: child}
+  - {from: plants.pests, to: plants.pests.journal, rel: child}
+  - {from: plants.houseplants.care_log, to: plants.houseplants.collection, rel: expands_to}
+  - {from: plants.houseplants, to: plants.pests, rel: adjacent}
+  - {from: travel, to: travel.trips, rel: child}
+  - {from: travel.trips, to: travel.trips.planner, rel: child}
+  - {from: learning, to: learning.languages, rel: child}
+  - {from: learning.languages, to: learning.languages.review, rel: child}
+  - {from: health, to: health.logs, rel: child}
+  - {from: health.logs, to: health.logs.symptom, rel: child}
+  - {from: music, to: music.practice, rel: child}
+  - {from: music.practice, to: music.practice.session, rel: child}
+  - {from: reading, to: reading.books, rel: child}
+  - {from: reading.books, to: reading.books.log, rel: child}
+  - {from: craft, to: craft.making, rel: child}
+  - {from: craft.making, to: craft.making.log, rel: child}
+  - {from: photography, to: photography.catalog, rel: child}
+  - {from: photography.catalog, to: photography.catalog.gallery, rel: child}
+  - {from: photography, to: diving.underwater_photography, rel: adjacent}
+  - {from: outdoors, to: outdoors.hikes, rel: child}
+  - {from: outdoors.hikes, to: outdoors.hikes.log, rel: child}
+  - {from: home, to: home.maintenance, rel: child}
+  - {from: home.maintenance, to: home.maintenance.log, rel: child}
+  - {from: collecting, to: collecting.catalog, rel: child}
+  - {from: collecting.catalog, to: collecting.catalog.dex, rel: child}
+  - {from: animals, to: animals.wildlife, rel: child}
+  - {from: animals.wildlife, to: animals.wildlife.dex, rel: child}
+  - {from: animals.wildlife, to: diving.marine_naturalism, rel: adjacent}
+  - {from: making, to: making.dev, rel: child}
+  - {from: making.dev, to: making.dev.log, rel: child}
+  - {from: wellness, to: wellness.mind, rel: child}
+  - {from: wellness.mind, to: wellness.mind.sit, rel: child}
+  - {from: wellness.mind, to: wellness.mind.dreams, rel: child}

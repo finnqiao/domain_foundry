@@ -51,6 +51,7 @@ class MockTelegram:
 
 CONVERSATION = [
     "/new track my bouldering climbing sessions",
+    "skip",
     "good bouldering session at the gym, felt strong",
     "actually the rating was moderate not hard",
     "/query bouldering",
@@ -74,10 +75,11 @@ def test_telegram_conversation_loop() -> None:
     sent, bridge = _run()
     texts = [m["text"] for m in sent]
     assert len(texts) == len(CONVERSATION), "every message should get a reply"
-    assert "is live" in texts[0]  # /new activated the domain
-    assert "Logged to" in texts[1] and "bouldering" in texts[1]  # capture routed
-    assert "Corrected" in texts[2]  # correction applied
-    assert "bouldering" in texts[3]  # /query shows records
+    assert "Pick an idea" in texts[0] or "Refine" in texts[0] or "idea" in texts[0].lower()
+    assert "ready" in texts[1].lower()
+    assert "Logged to" in texts[2] and "bouldering" in texts[2]  # capture routed
+    assert "Corrected" in texts[3]  # correction applied
+    assert "bouldering" in texts[4]  # /query shows records
     # the capture is really in the ledger, routed to bouldering
     rows = bridge.api.query(domain="bouldering")
     assert len(rows) >= 1

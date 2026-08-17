@@ -2,11 +2,11 @@
 
 **Describe your passion. Get an app. Talk to it.**
 
-**Domain Foundry** (`domain-foundry`) is a local-first personal agent harness that
-turns natural-language captures into structured, domain-specific data and usable
-applications — remixable to any domain that is your passion.
+**Domain Foundry** turns what you say into neat, correctable notes for the things
+you care about — baking, plants, travel, or anything you describe — and keeps
+them on your own computer.
 
-> The structured-life data layer for agent runtimes.
+> Say what happened. See it filed. Fix a mistake in one sentence. It stays local.
 
 <!--
   DEMO GIF PLACEHOLDER — do not commit a fabricated binary.
@@ -18,27 +18,28 @@ applications — remixable to any domain that is your passion.
 
 _A 90-second demo GIF will live here once recorded (synthetic data only) — see [`LAUNCH_CHECKLIST.md`](LAUNCH_CHECKLIST.md)._
 
-## Product promise
+## What you get
 
-1. **Capture first** — raw message + provenance are stored before interpretation.
-2. **Never drop** — ambiguity becomes review, an unfiled card, or ledger-only state.
-3. **One-message corrections** — fix the canonical record; history is preserved.
-4. **Your app, your schema** — describe a domain; get a working pack and app view.
-5. **Local first** — canonical data lives in SQLite on your machine; no telemetry.
-6. **Provably improving** — corrections become replayable eval cases.
+1. **Write it down first** — your exact words are saved before anything is sorted.
+2. **Never lose a note** — if it isn't sure where something belongs, it waits in Inbox.
+3. **Fix it in one sentence** — say “actually it was Tuesday” and the record updates.
+4. **Your passion, your app** — describe an interest; get a place to log and browse it.
+5. **Local first** — data lives in plain files on your machine; no telemetry.
+6. **Gets better when you correct it** — each fix teaches it for next time.
 
 ## Quickstart (5 minutes)
 
 ```bash
-pipx install domain-foundry-core   # or, from a checkout: pip install -e .
+# From this checkout (PyPI publish is still a human launch gate):
+pip install -e .
+# After publish: pipx install domain-foundry-core
 domain-foundry setup               # bring your own key; pick where to start
 domain-foundry serve
 ```
 
-`setup` is the guided path: it asks which provider you have a key for, suggests a
-model for each tier, makes one cheap live call to prove the key actually works,
-then asks what you want to do first — start from a ready-made log, describe your
-own, pull in notes you already have, or attach a database.
+`setup` asks which provider you have a key for, suggests models, checks the key
+works, then asks what you want to do first — start from a ready-made log, describe
+your own, or pull in notes you already have.
 
 Already know what you want? Skip every question:
 
@@ -48,11 +49,10 @@ domain-foundry init && domain-foundry pack add food
 ```
 
 Environment variables (`DOMAIN_FOUNDRY_SOTA_MODEL`, `…_API_KEY`, `…_BASE_URL`)
-override anything `setup` writes, so a config that lives in your dotfiles keeps
-working and needs no config file at all. `domain-foundry setup --show` prints
-what every setting resolved to, and where it came from, with keys redacted.
+override anything `setup` writes. `domain-foundry setup --show` prints what
+resolved, with keys redacted.
 
-Then open <http://127.0.0.1:8787> and capture from the web box or CLI:
+Then open <http://127.0.0.1:8787> and log from the app or CLI:
 
 ```bash
 domain-foundry capture "cooked a batch of shoyu ramen, came out great"
@@ -60,10 +60,10 @@ domain-foundry query --domain food
 domain-foundry health
 ```
 
-New here? Start with **[Getting started](docs/tutorial/getting-started.md)** — a
-two-track tutorial (talk to it in an app, or use the CLI). Full CLI walkthrough in
-[`docs/QUICKSTART.md`](docs/QUICKSTART.md); automated clean-machine gate via
-`scripts/quickstart_gate.sh`.
+New here? Start with **[Getting started](docs/tutorial/getting-started.md)** —
+no terminal after install, or the CLI track. Story version:
+**[Turn a hobby into an app](docs/tutorial/end-to-end.html)**. Full CLI walkthrough in
+[`docs/QUICKSTART.md`](docs/QUICKSTART.md).
 
 ## Already have data? Bolt it on
 
@@ -85,24 +85,21 @@ Your sources are never written to — databases are opened `mode=ro`, notes are
 never moved or edited — and `import` exits non-zero unless every source row is
 accounted for, so a partial migration can't pass quietly.
 
-## Connect your agent — three tested harnesses
+## Connect your chat app
 
 Talk to Domain Foundry from wherever you already are. Each of these is driven
-through the full loop (create a domain → capture → query → correct) by an
+through the full loop (describe a passion → log → ask → correct) by an
 automated end-to-end test in CI, and has a reproducible proof snapshot
 (`python scripts/tutorial_snapshots.py`):
 
-| Harness | Talk to it from | Setup |
+| Front door | Talk to it from | Setup |
 |---|---|---|
 | **[MCP](adapters/mcp#readme)** | Claude Desktop, Cursor, any MCP client | `pipx install domain-foundry-mcp` + one config block |
 | **[Telegram](adapters/telegram#readme)** | A bot you text from your phone | `pipx install domain-foundry-telegram` + @BotFather |
 | **[hermes-agent](adapters/hermes_agent#readme)** | The hermes-agent runtime | plugin install into the Hermes env |
 
-See **[Connect your agent](docs/tutorial/connect-your-agent.md)** for copy-paste
-configs and the proof snapshots. Any other MCP-capable runtime works through the
-MCP server; non-MCP runtimes use the read-only HTTP API plus the in-process write
-path — community-supported, not CI-gated.
-
+See **[Connect your chat app](docs/tutorial/connect-your-agent.md)** for copy-paste
+configs and the proof snapshots.
 ## Documentation
 
 A full MkDocs Material site lives under [`docs/`](docs/) (`mkdocs serve` to read
@@ -121,11 +118,11 @@ locally, or `pip install -e ".[docs]" && mkdocs build`):
 
 ## Architecture (sketch)
 
-- **Python core** (`domain-foundry-core`) — ledger, packs, routing, apply, projections
-- **FastAPI** — `HarnessAPI` + SPA static assets (`domain-foundry serve`)
-- **React + Vite app shell** — remixable blocks driven by pack projections
-- **SQLite × 2** — `ledger.sqlite` (substrate) + `domains.sqlite` (pack tables)
-- **Adapters** — hermes-agent plugin, MCP server, Telegram bridge (all CI-driven)
+- **Python core** (`domain-foundry-core`) — storage, routing, corrections, views
+- **Local server** — `domain-foundry serve` hosts the app and the shared API
+- **React + Vite app shell** — remixable blocks driven by passion definitions
+- **SQLite × 2** — append-only history + typed records on disk
+- **Front doors** — Claude/Cursor (MCP), Telegram, hermes-agent (all CI-driven)
 - **Bring your own key** — provider registry + `~/.domain_foundry/config.toml`,
   resolving env > config > default; two model tiers with automatic escalation
 
@@ -140,8 +137,8 @@ importer (`import`). See [`docs/PHASE_STATUS.md`](docs/PHASE_STATUS.md),
 [`docs/USER_STORIES.md`](docs/USER_STORIES.md) and
 [`CHANGELOG.md`](CHANGELOG.md).
 
-**Gates:** 288 passed / 2 skipped · ruff clean · pyright 0 errors ·
-`release_audit.sh` 9/9 · `quickstart_gate.sh` green · GitHub Actions `ci` and
+**Gates:** full pytest suite green (2 opt-in live-LLM skips) · ruff clean · pyright 0 errors ·
+`release_audit.sh` green · `quickstart_gate.sh` green · GitHub Actions `ci` and
 `leakscan` green on Python 3.11/3.12/3.13. Remaining work is human gates — the
 demo GIF, an external security pass, a lived production week, one live
 `setup --probe` per documented provider, and claiming the (verified available)

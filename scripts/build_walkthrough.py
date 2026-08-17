@@ -230,10 +230,11 @@ HTML = r"""<main>
     <p class="desc">One MCP server &rarr; every MCP client. Add a config block to Claude Desktop and
       just talk; the model calls the tools with capture-first discipline.</p>
     <div class="term"><span class="c-dim"># driven over real stdio MCP tools/call, exactly as a client does</span>
-&#9656; new_domain(&quot;track my bouldering sessions&quot;)   <span class="c-key">&rarr; bouldering</span>
+&#9656; new_domain(&quot;track my bouldering sessions&quot;)   <span class="c-key">&rarr; fork (atlas neighborhood)</span>
+&#9656; wizard_reply(&quot;skip&quot;)   <span class="c-key">&rarr; bouldering</span>
 &#9656; capture(&quot;good bouldering session, felt strong&quot;)
    <span class="c-key">{ status: &quot;applied&quot;, domain: &quot;bouldering&quot;, confidence: 0.95 }</span>
-&#9656; correct(&quot;actually that felt moderate, not hard&quot;)
+&#9656; correct(&quot;actually the rating was moderate not hard&quot;)
    <span class="c-key">{ action: &quot;amend&quot;, applied: true, eval_case: true }</span></div>
     <p class="proof-note">tested: <b>adapters/mcp/tests/test_mcp_e2e.py</b> &middot; install: <code>pipx install domain-foundry-mcp</code></p>
   </div>
@@ -242,10 +243,12 @@ HTML = r"""<main>
     <p class="desc">Text a bot from your phone. Corrections work by just saying so. Nothing leaves your
       machine except the message to Telegram itself.</p>
     <div class="term"><span class="c-you">&#128100; /new track my bouldering climbing sessions</span>
-&#129302; &#127881; bouldering is live. Just text me your notes.
+&#129302; Sports &rarr; climbing. Ideas: session log, ticklist&hellip;
+<span class="c-you">&#128100; skip</span>
+&#129302; bouldering is ready. Send a real note and we&rsquo;ll file it.
 <span class="c-you">&#128100; good bouldering session at the gym, felt strong</span>
 &#129302; &#9989; Logged to bouldering (entry).
-<span class="c-you">&#128100; actually that felt moderate, not hard</span>
+<span class="c-you">&#128100; actually the rating was moderate not hard</span>
 &#129302; &#9997;&#65039; Corrected &mdash; and saved as a regression test.</div>
     <p class="proof-note">tested: <b>adapters/telegram/tests/test_telegram_bridge.py</b> &middot; install: <code>pipx install domain-foundry-telegram</code></p>
   </div>
@@ -254,10 +257,11 @@ HTML = r"""<main>
     <p class="desc">A hermes-agent plugin that registers the harness tools with capture-first guidance
       and drives the in-process client &mdash; no HTTP hop, no server to keep alive.</p>
     <div class="term"><span class="c-dim"># the adapter's real tool surface, the exact surface hermes-agent invokes</span>
-&#9656; domain_foundry_new_domain(goal_text=&quot;track my bouldering&#8230;&quot;)  <span class="c-key">&rarr; bouldering</span>
+&#9656; domain_foundry_new_domain(goal_text=&quot;track my bouldering&#8230;&quot;)  <span class="c-key">&rarr; fork</span>
+&#9656; domain_foundry_wizard_reply(&quot;skip&quot;)  <span class="c-key">&rarr; bouldering</span>
 &#9656; domain_foundry_capture(&quot;good bouldering session&#8230;&quot;)
    <span class="c-key">status: applied &middot; domain: bouldering</span>
-&#9656; domain_foundry_correct(&quot;actually that felt moderate&#8230;&quot;)
+&#9656; domain_foundry_correct(&quot;actually the rating was moderate&#8230;&quot;)
    <span class="c-key">applied: true &middot; eval_case_id: ec_&#8230;</span></div>
     <p class="proof-note">tested: <b>adapters/hermes_agent/tests/test_hermes_e2e.py</b> &middot; regenerate all: <code>python scripts/tutorial_snapshots.py</code></p>
   </div>

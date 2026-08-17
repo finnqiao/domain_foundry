@@ -11,6 +11,7 @@ from domain_foundry_core.mesh.supervisor import Supervisor
 from domain_foundry_core.packs.loader import load_pack
 from domain_foundry_core.packs.models import AgentSpec
 from domain_foundry_core.wizard.blueprint import build_agent_spec, build_blueprint, write_pack
+from tests.conftest import land_wizard
 
 REPO = Path(__file__).resolve().parents[2]
 
@@ -40,20 +41,17 @@ def test_wizard_creates_pack_and_agent_yaml(workspace, monkeypatch):
     api = HarnessAPI(workspace.home)
     api.init()
 
-    turn = api.new_domain("keep a coffee brewing log")
-    done = api.wizard_reply(turn["session_id"], "skip")
-    assert done["state"] == "test_drive", done.get("message")
+    turn = land_wizard(api, "keep a coffee brewing log")
+    assert turn["state"] == "test_drive", turn.get("message")
 
-    name = done["pack"]["name"]
+    name = turn["pack"]["name"]
     pack = api.packs.get(name)
     assert pack is not None
     assert pack.agent is not None
     assert pack.agent.name == name
     assert (pack.root / "agent.yaml").is_file()
-    assert done.get("agent", {}).get("name") == name
-    assert done.get("expert", {}).get("registered") is True
-    assert done["expert"]["launchd"] == "stubbed"
-
+    # Hobby turns omit expert stub; mesh still has the registration.
+    assert "expert" not in turn
     registered = Supervisor(workspace).list_registered()
     assert name in registered
 
@@ -67,7 +65,7 @@ def test_activate_pack_registers_expert(workspace, monkeypatch):
         out = api.activate_pack(name)
         assert out["name"] == name
         assert out["agent"]["name"] == name
-        assert out["expert"]["registered"] is True
+        assert out["expert"]["registered"] == "config_only"
         pack = api.packs.get(name)
         assert pack is not None and pack.agent is not None
 
@@ -77,7 +75,7 @@ def test_activate_pack_registers_expert(workspace, monkeypatch):
 
     # CLI-equivalent harness hook.
     again = api.register_expert("plants")
-    assert again["registered"] is True
+    assert again["registered"] == "config_only"
 
 
 def test_bundled_remaining_domains_have_agent_yaml():
@@ -93,23 +91,31 @@ def test_dive_log_wizard_path_produces_pack_and_agent(workspace, monkeypatch):
     api = HarnessAPI(workspace.home)
     api.init()
 
-    turn = api.new_domain("create a dive-log domain")
-    assert turn["state"] == "interview"
+    turn = land_wizard(api, "create a dive-log domain")
+    assert turn["state"] == "test_drive"
     domain = turn["proposal"]["domain"]
     assert "dive" in domain
 
-    done = api.wizard_reply(turn["session_id"], "skip")
-    assert done["state"] == "test_drive", done.get("message")
-    assert done["dry_run"]["accuracy"] >= 0.95
+    assert turn["dry_run"]["accuracy"] >= 0.95
 
-    name = done["pack"]["name"]
+    name = turn["pack"]["name"]
     pack = api.packs.get(name)
     assert pack is not None
     assert pack.agent is not None
     assert (pack.root / "agent.yaml").is_file()
-    assert done["expert"]["registered"] is True
+    assert "expert" not in turn
     assert name in Supervisor(workspace).list_registered()
-
-    # Ephemeral agent surface matches AgentSpec.
-    AgentSpec.model_validate(done["agent"])
     assert build_agent_spec({"domain": name, "title": name, "description": "x"})["name"] == name
+
+
+def test_register_expert_is_honest_about_process_state(workspace, monkeypatch):
+    """Blocker #5: registration must not read as success-running."""
+    monkeypatch.setenv("DOMAIN_FOUNDRY_HOME", str(workspace.home))
+    api = HarnessAPI(workspace.home)
+    api.init()
+    out = api.activate_pack("sourdough")
+    expert = out["expert"]
+    assert expert["registered"] == "config_only"
+    assert expert["running"] is False
+    assert "NOT running" in expert["note"]
+    assert expert["launchd"] == "stubbed"

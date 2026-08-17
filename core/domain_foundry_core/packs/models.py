@@ -33,6 +33,10 @@ class PackManifest(BaseModel):
     core_compat: str = ">=0.1,<2"
     aliases: list[str] = Field(default_factory=list)
     interpretation: InterpretationMode = "simple"
+    # Packs are data-only by default.  These are narrow, user-facing
+    # declarations rather than an escape hatch for arbitrary capabilities.
+    # The loader rejects anything outside its allow-list before installation.
+    permissions: list[str] = Field(default_factory=list)
 
 
 class FieldSpec(BaseModel):
@@ -90,9 +94,30 @@ class PolicyRow(BaseModel):
     channel: str | None = None
 
 
+class UIActionSpec(BaseModel):
+    """A field-exact action that the first-party UI may invoke."""
+
+    object_type: str
+    operation: str
+    fields: list[str] = Field(default_factory=list)
+
+
 class PolicySpec(BaseModel):
     defaults: list[PolicyRow] = Field(default_factory=list)
     fallback: str = "unfiled_card"
+    ui_actions: list[UIActionSpec] = Field(default_factory=list)
+
+    def allows_ui_action(
+        self, *, object_type: str, operation: str, fields: dict[str, Any] | None
+    ) -> bool:
+        """Require an exact declared object/operation/field combination."""
+        requested = set(fields or {})
+        return any(
+            action.object_type == object_type
+            and action.operation == operation
+            and requested == set(action.fields)
+            for action in self.ui_actions
+        )
 
 
 class AppView(BaseModel):
@@ -107,6 +132,18 @@ class AppView(BaseModel):
 class ProjectionsSpec(BaseModel):
     app: dict[str, Any] = Field(default_factory=dict)
     markdown: dict[str, Any] = Field(default_factory=dict)
+
+
+class PackCompatibility(BaseModel):
+    """Compatibility claims for declarative capabilities.
+
+    Capability versions are intentionally separate from ``core_compat``: a
+    pack can load on the same core while asking for a capability that an older
+    shell cannot render.
+    """
+
+    core: str | None = None
+    capabilities: dict[str, str] = Field(default_factory=dict)
 
 
 class AgentSessionSpec(BaseModel):
@@ -149,6 +186,8 @@ class DomainPack(BaseModel):
     operations: dict[str, list[str]]
     policy: PolicySpec
     projections: ProjectionsSpec
+    capabilities: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    compatibility: PackCompatibility = Field(default_factory=PackCompatibility)
     agent: AgentSpec | None = None
 
     @property

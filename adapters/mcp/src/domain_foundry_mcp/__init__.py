@@ -6,8 +6,10 @@ Model Context Protocol tools, so any MCP client — Claude Desktop, Cursor, or a
 custom agent runtime — can drive the same local-first SQLite substrate that the
 CLI and the hermes-agent adapter use.
 
-Writes run **in-process** against ``HarnessAPI`` (the harness's HTTP write path
-is intentionally 410 Gone); nothing is proxied over the network.
+This adapter embeds ``HarnessAPI`` in-process (no network hop). The same
+operations are also served over HTTP by ``domain-foundry serve`` (ADR-006);
+in-process embedding stays legal only while this adapter passes the Gate-1
+conformance suite (docs/build-plan-2026-08/02-SLICE-1-ACTIVATION.md).
 """
 
 from __future__ import annotations

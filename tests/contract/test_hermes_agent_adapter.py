@@ -1,10 +1,10 @@
-"""Conformance test for the hermes-agent adapter (plan §11 P8; mesh P0).
+"""Conformance tests for the hermes-agent adapter (plan §11 P8; ADR-006).
 
-Drives a scripted agent session — capture → correct → review — through the
-adapter's tools using the **in-process** ``LocalHarnessClient`` (the default
-since mesh P0: writes embed HarnessAPI, no HTTP server anywhere). The HTTP
-``DomainExpertClient`` remains an explicit opt-in for remote mode and keeps a
-read-path check against the read-only FastAPI app.
+Drives a scripted agent session — capture → correct → review — twice: once
+through the **in-process** ``LocalHarnessClient`` (legal only while this
+adapter passes the Gate-1 conformance suite, see Slice 1), and once through
+the HTTP ``DomainExpertClient`` running against the real FastAPI app via
+``TestClient`` — the seed of Gate-1's HTTPDriver.
 """
 
 from __future__ import annotations
@@ -48,14 +48,19 @@ def _local_client(workspace) -> LocalHarnessClient:
 def test_scripted_capture_correct_review_session(workspace):
     client = _local_client(workspace)
     tools = {t.name: t for t in build_tools(client)}
-    assert set(tools) == {
+    assert set(tools) >= {
         "domain_foundry_capture",
         "domain_foundry_query",
+        "domain_foundry_ask",
         "domain_foundry_correct",
         "domain_foundry_review_list",
         "domain_foundry_review_resolve",
         "domain_foundry_new_domain",
         "domain_foundry_wizard_reply",
+        "domain_foundry_atlas_search",
+        "domain_foundry_inspect_pack",
+        "domain_foundry_suggest",
+        "domain_foundry_apply_pack_edit",
     }
 
     # 1. CAPTURE — verbatim message routed to sourdough.bake, auto-applied.
@@ -117,8 +122,8 @@ def test_correction_reflected_in_canonical_object(workspace):
     assert float(detail["fields"]["hydration"]) == 80.0
 
 
-def test_read_surface_still_served_over_http(workspace):
-    """The FastAPI app still serves reads (SPA path) — but rejects writes."""
+def test_http_surface_serves_reads_and_writes(workspace):
+    """The FastAPI app serves the same read/write contract as the SPA."""
     from fastapi.testclient import TestClient
 
     from domain_foundry_core.api.app import create_app
@@ -133,8 +138,51 @@ def test_read_surface_still_served_over_http(workspace):
         r = tc.get("/api/query", params={"domain": "sourdough"})
         assert r.status_code == 200
         assert r.json()["rows"]
-        gone = tc.post("/api/capture", json={"text": "x"})
-        assert gone.status_code == 410
+        posted = tc.post("/api/capture", json={"text": "fed the rye starter", "channel": "web"})
+        assert posted.status_code == 200
+
+
+def test_http_driver_capture_correct_review_journey(workspace):
+    """Gate-1 seed: DomainExpertClient drives the same journey over real HTTP."""
+    from domain_foundry_hermes_agent import DomainExpertClient
+    from fastapi.testclient import TestClient
+
+    from domain_foundry_core.api.app import create_app
+
+    setup = HarnessAPI(workspace.home)
+    setup.init()
+    setup.packs.activate_bundled("sourdough")
+
+    app = create_app(workspace.home, enable_drain_loop=False)
+    client = DomainExpertClient(session=TestClient(app))
+
+    # 1. CAPTURE over HTTP — routed to sourdough.bake, auto-applied.
+    cap = client.capture(
+        "baked a 75% hydration country loaf, bulk 5h, came out great",
+        source_ref="hermes-http-1",
+    )
+    assert cap["status"] == "applied"
+    assert any(r["domain"] == "sourdough" for r in cap["routed"])
+
+    # 2. QUERY over HTTP.
+    assert client.query(domain="sourdough")["rows"]
+
+    # 3. CORRECT over HTTP — NL amendment lands a revision.
+    corrected = client.correct(text="that bake was 80% hydration not 75")
+    assert corrected.get("error") is None
+    assert corrected["applied"] is True or corrected["revision"] is not None
+
+    # 4. REVIEW over HTTP — queue + stats + (if pending) a resolve round-trip.
+    review = client.review_list(include_diff=True)
+    assert "items" in review
+    stats = client.review_stats()
+    assert "pending" in stats
+    for item in review["items"]:
+        approval_id = item.get("approval_id") or item.get("id")
+        if approval_id:
+            res = client.review_resolve(approval_id, decision="approved")
+            assert res.get("error") is None
+            break
 
 
 def test_register_wires_tools_and_guidance(workspace, monkeypatch):
@@ -146,8 +194,22 @@ def test_register_wires_tools_and_guidance(workspace, monkeypatch):
     result = register(ctx)  # no injected client: default resolution = in-process
     assert isinstance(result.client, LocalHarnessClient)
     assert result.supported_hermes_agent == SUPPORTED_HERMES_AGENT
-    assert len(result.tools) == 7
-    assert len(ctx.registered) == 7
+    names = {t.name for t in result.tools}
+    assert names >= {
+        "domain_foundry_capture",
+        "domain_foundry_query",
+        "domain_foundry_ask",
+        "domain_foundry_correct",
+        "domain_foundry_review_list",
+        "domain_foundry_review_resolve",
+        "domain_foundry_new_domain",
+        "domain_foundry_wizard_reply",
+        "domain_foundry_atlas_search",
+        "domain_foundry_inspect_pack",
+        "domain_foundry_suggest",
+        "domain_foundry_apply_pack_edit",
+    }
+    assert {r["name"] for r in ctx.registered} == names
     assert ctx.system_prompt == CAPTURE_FIRST_GUIDANCE
     # A registered handler actually works end-to-end, with no server running.
     capture = next(r for r in ctx.registered if r["name"] == "domain_foundry_capture")

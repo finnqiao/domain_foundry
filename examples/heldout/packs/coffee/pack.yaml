@@ -1,0 +1,9 @@
+name: coffee
+version: 0.1.0
+title: "Coffee Log"
+description: "Record brews, taste notes, and repeatable ratios."
+author: "held-out fixture"
+license: MIT
+core_compat: ">=0.1,<2"
+interpretation: structured
+

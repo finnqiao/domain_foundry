@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { api } from "../lib/api";
 import type { BlockProps } from "./kit";
 import { EmptyState, ObjectCard, rowsOf } from "./kit";
 import { fmtFieldName, fmtValue } from "../lib/format";
@@ -6,20 +7,35 @@ import type { Row } from "../lib/types";
 
 const BASE = new Set(["id", "object_uid", "entry_id", "tombstoned", "created_at", "updated_at", "object_type"]);
 
-// Full-text-ish + facet search. The API serves the candidate rows; filtering
-// is client-side over the served set (direct-query, no separate FTS wiring for
-// domain objects in v1). Facets are auto-derived from low-cardinality fields.
-export function Search({ data, onOpenDetail }: BlockProps) {
+// Facets stay local to the rows in this view; free-text search asks the server's
+// FTS endpoint first and falls back to the old local filter if unavailable.
+export function Search({ data, domain, onOpenDetail }: BlockProps) {
   const rows = rowsOf(data);
   const objectType = data["object_type"] as string | undefined;
   const [q, setQ] = useState("");
   const [facet, setFacet] = useState<{ field: string; value: string } | null>(null);
+  const [serverMatches, setServerMatches] = useState<Set<string> | null>(null);
 
   const facets = useMemo(() => deriveFacets(rows), [rows]);
+
+  useEffect(() => {
+    if (q.trim().length < 2) {
+      setServerMatches(null);
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      void api
+        .searchLedger(q, { domain, objectType, kind: "canonical" })
+        .then((result) => setServerMatches(new Set(result.hits.map((hit) => hit.ref_id))))
+        .catch(() => setServerMatches(null));
+    }, 200);
+    return () => window.clearTimeout(timer);
+  }, [domain, objectType, q]);
 
   const filtered = rows.filter((row) => {
     if (facet && String(row[facet.field]) !== facet.value) return false;
     if (!q.trim()) return true;
+    if (serverMatches) return serverMatches.has(String(row["object_uid"]));
     const hay = Object.entries(row)
       .filter(([k]) => !BASE.has(k))
       .map(([, v]) => String(v ?? ""))

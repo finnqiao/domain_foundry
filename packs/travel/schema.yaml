@@ -75,6 +75,19 @@ objects:
       trip: {to: travel.trip, cardinality: many_to_one}
       timeline_item: {to: travel.timeline_item, cardinality: many_to_one}
 
+  # Packing list — deliberately small so checklist writes stay policy-gated.
+  packing_item:
+    title_field: name
+    fields:
+      name: {type: text, required: true}
+      trip: {type: text}
+      category: {type: text}
+      packed: {type: boolean, default: false}
+      quantity: {type: integer}
+      notes: {type: text, long: true}
+    links:
+      trip: {to: travel.trip, cardinality: many_to_one}
+
   # Event log — append-only travel.sqlite `event_log` parity (audit / Roamboard sync).
   # Note: source `created_at` stamps the substrate row via importer timestamp_field
   # (system created_at/updated_at columns) — do not redeclare created_at here.

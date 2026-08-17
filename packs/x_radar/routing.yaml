@@ -1,5 +1,5 @@
 rules:
-  - match: "(\\bx\\b|twitter|tweet|thread|watchlist|radar)"
+  - match: "(\\bx\\b|twitter|tweet|thread|watchlist|radar|\\bsignal\\s*:)"
     object: signal
     operation: create
     confidence_boost: 0.12

@@ -1,2 +1,2 @@
-bake: [create, update, correct, delete]
+bake: [create, update, correct, merge, delete]
 starter: [create, update, correct, merge, delete]

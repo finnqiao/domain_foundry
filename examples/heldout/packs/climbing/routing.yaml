@@ -1,0 +1,16 @@
+rules:
+  - {match: "(climb(?:ing)?|boulder(?:ing)?|route|crux|send|redpoint|flash|onsight)", object: session, confidence_boost: 0.1}
+  - {match: "(heel hook|dyno|slab|overhang|toe hook|attempt)", object: session, confidence_boost: 0.08}
+examples:
+  - {text: "sent a tough V5 on the overhang today, crux was the heel hook", expect: {object: session}}
+  - {text: "flashed the blue route after two attempts", expect: {object: session}}
+  - {text: "worked the slab problem for an hour", expect: {object: session}}
+  - {text: "redpointed the arete after finding the toe hook", expect: {object: session}}
+  - {text: "bouldering session: three V4 attempts", expect: {object: session}}
+  - {text: "the dyno felt better today", expect: {object: session, operation: update}}
+  - {text: "repeat of the overhang route", expect: {object: session}}
+  - {text: "log a climbing session on the wall", expect: {object: session}}
+negative_examples:
+  - {text: "the app build is toast"}
+  - {text: "deploy the release candidate tonight"}
+

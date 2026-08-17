@@ -1,33 +1,35 @@
-# Connect your agent
+# Connect your chat app
 
-Domain Foundry is a local harness with one job: turn what you say into typed,
-governed data. *How* you talk to it is up to you. Three front-ends are **tested
-harnesses** — each has an automated end-to-end test in CI and a reproducible
-proof snapshot:
+You already log notes in Domain Foundry. These optional front doors let you do
+the same from an app you already use. Three are **proven in CI** with a
+reproducible snapshot:
 
-| Harness | Best for | Install | Proof (CI test) |
+| Front door | Best for | Install | Proof (CI test) |
 |---|---|---|---|
-| **[MCP](#mcp)** | Claude Desktop, Cursor, any MCP client | `pipx install domain-foundry-mcp` | `adapters/mcp/tests/test_mcp_e2e.py` |
+| **[Claude / Cursor (MCP)](#mcp)** | Chat apps that speak MCP | `pipx install domain-foundry-mcp` | `adapters/mcp/tests/test_mcp_e2e.py` |
 | **[Telegram](#telegram)** | Texting a bot from your phone | `pipx install domain-foundry-telegram` | `adapters/telegram/tests/test_telegram_bridge.py` |
 | **[hermes-agent](#hermes-agent)** | The hermes-agent runtime | `uv pip install -e ./adapters/hermes_agent` | `adapters/hermes_agent/tests/test_hermes_e2e.py` |
 
-> **Tested means proven, not just present.** Each harness is driven through the
-> full loop — *create a domain → capture → query → correct → review* — by an
-> automated test, using the exact protocol a real client speaks. Regenerate every
-> proof snapshot yourself with `python scripts/tutorial_snapshots.py`.
+> **Proven means driven end to end** — create a passion → log → ask → correct —
+> over the real protocol a client speaks. Regenerate snapshots with
+> `python scripts/tutorial_snapshots.py`.
 
-All three drive the **same** in-process harness and the same SQLite files. Writes
-never go over HTTP (that path is intentionally disabled); a dead server can never
-lose a capture.
+All three write to the same local data. The browser app and any HTTP adapter use
+the local server (`domain-foundry serve`); if that server is down, those callers
+fail visibly instead of silently.
+
+To have the model **shape** a new passion (not just a simple log), add a key
+once — `domain-foundry setup --provider deepseek -y` or **Settings** in the app.
+Same key is used for Ask.
 
 ---
 
 ## MCP
 
-The [Model Context Protocol](https://modelcontextprotocol.io) server exposes eight
-tools (`domain_foundry_capture`, `_query`, `_correct`, `_review_list`,
-`_review_resolve`, `_new_domain`, `_wizard_reply`, `_health`). One server → every
-MCP client.
+The [Model Context Protocol](https://modelcontextprotocol.io) server exposes the
+tools (`domain_foundry_capture`, `_query`, `_ask`, `_correct`,
+`_review_list`, `_review_resolve`, `_new_domain`, `_wizard_reply`, `_health`,
+plus pack install and export). One server → every MCP client.
 
 **Install & connect Claude Desktop:**
 
@@ -90,10 +92,12 @@ against a mock Telegram API ([full snapshot](snapshots/telegram.md)):
 
 ```text
 👤 /new track my bouldering climbing sessions
-🤖 🎉 *bouldering* is live. Just text me your bouldering notes.
+🤖 Sports → climbing. Ideas: session log, ticklist…
+👤 skip
+🤖 *bouldering* is ready. Send a real note and we’ll file it.
 👤 good bouldering session at the gym, felt strong
 🤖 ✅ Logged to *bouldering* (entry).
-👤 actually that bouldering session felt moderate, not hard
+👤 actually the rating was moderate not hard
 🤖 ✏️ Corrected — and saved as a regression test.
 ```
 
@@ -132,12 +136,11 @@ More: [hermes-agent adapter README](https://github.com/finnqiao/domain_foundry/t
 
 ## Anything else
 
-Any MCP-capable runtime (including agent shells that speak MCP) connects through
-the **MCP** server above with no extra work — it is the recommended path for new
-integrations. Runtimes that aren't MCP-capable can call the read-only HTTP API
-(`domain-foundry serve`) for queries and drive writes through the in-process
-`HarnessAPI`, the same way the tested harnesses do. These paths work but are
-community-supported rather than CI-gated; the three above are the tested harnesses.
+Any MCP-capable runtime connects through the **MCP** server above with no extra
+work — it is the recommended path for new integrations. Other runtimes can call
+the local HTTP API (`domain-foundry serve`) for reads and writes, or embed the
+core library while it passes the conformance suite. Those paths are
+community-supported; the three above are the CI-proven ones.
 
 ## Regenerate the proofs
 

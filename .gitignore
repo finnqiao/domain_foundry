@@ -56,3 +56,6 @@ packs/**/evals/corrections.jsonl
 
 # Staged SPA for wheel builds (see scripts/stage_webapp.sh)
 core/domain_foundry_core/_webapp/
+
+# Playwright output
+app/test-results/

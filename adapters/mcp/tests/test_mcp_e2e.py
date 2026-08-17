@@ -102,6 +102,13 @@ async def _run(home: str, echo: bool = False) -> list[tuple[str, Any]]:
                           "first": (rows[0].get("raw_text") if rows else None)})
 
             r = await session.call_tool(
+                "domain_foundry_ask",
+                {"question": "what did I log?", "domain": routed.get("domain")},
+            )
+            asked = _unwrap(r)
+            log("ask", {"mode": asked.get("mode"), "has_answer": bool(asked.get("answer"))})
+
+            r = await session.call_tool(
                 "domain_foundry_correct",
                 {"text": "actually the rating was moderate not hard"},
             )
@@ -125,8 +132,13 @@ def test_mcp_end_to_end() -> None:
     steps = dict(transcript)
 
     assert "domain_foundry_capture" in steps["tools/list"]
-    assert steps["new_domain"]["domain"] == "bouldering"
-    assert steps["wizard_reply(skip)"]["state"] == "test_drive"
+    assert "domain_foundry_ask" in steps["tools/list"]
+    assert "domain_foundry_activate_pack" in steps["tools/list"]
+    assert "domain_foundry_export" in steps["tools/list"]
+    assert steps["ask"]["has_answer"] is True
+    assert steps["new_domain"].get("state") == "fork"
+    assert steps["wizard_reply(skip)"]["domain"] == "bouldering"
+    assert steps["wizard_reply(skip)"]["state"] in {"test_drive", "repair"}
     assert steps["capture"]["domain"] == "bouldering"
     assert steps["capture"]["status"] == "applied"
     assert steps["query"]["rows"] >= 1

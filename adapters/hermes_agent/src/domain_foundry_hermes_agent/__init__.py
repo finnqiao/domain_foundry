@@ -1,9 +1,9 @@
 """hermes-agent adapter for the domain_foundry harness.
 
 Exposes the harness runtime surface (capture / query / correct / review /
-new_domain) as hermes-agent tools. Writes are in-process by default
-(``LocalHarnessClient`` embedding ``HarnessAPI`` — mesh P0: no server on the
-write path); HTTP mode (``DomainExpertClient``) remains available by setting
+new_domain) as hermes-agent tools. In-process writes are supported through
+``LocalHarnessClient`` while this adapter passes the Gate-1 conformance suite;
+the canonical HTTP mode (``DomainExpertClient``) is selected by setting
 ``DOMAIN_FOUNDRY_URL``. See ``plugin.py:register`` for the entry point.
 """
 

@@ -5,9 +5,12 @@ objects:
       loaf_name: {type: text, required: true}
       baked_at: {type: datetime, required: true, default: capture_time}
       flour_mix: {type: text}
+      flour_g: {type: number, unit: grams, min: 1}
+      water_g: {type: number, unit: grams, min: 0}
       hydration: {type: number, unit: percent, min: 40, max: 120}
       bulk_hours: {type: number, unit: hours}
       result: {type: enum, values: [dense, decent, good, great], allow_other: true}
+      crumb_photos: {type: attachment, many: true}
       notes: {type: text, long: true}
     links:
       starter: {to: sourdough.starter, cardinality: many_to_one}

@@ -1,10 +1,11 @@
-"""In-process harness client — the write path with no HTTP hop (mesh P0).
+"""In-process harness client — an optional no-HTTP-hop embedding (ADR-006).
 
-``LocalHarnessClient`` exposes the same nine methods and the same response
+``LocalHarnessClient`` exposes the same methods and the same response
 shapes as :class:`~domain_foundry_hermes_agent.client.DomainExpertClient`, but
 embeds :class:`domain_foundry_core.api.harness.HarnessAPI` as a library and
-writes straight to SQLite. A dead/absent ``domain-foundry serve`` process can
-no longer block capture: "gateway down" stops being an observable state.
+writes straight to SQLite. This embedding is supported while the adapter passes
+the Gate-1 conformance suite; clients without an embedding should use the
+canonical HTTP seam.
 
 Requires ``domain-foundry-core`` importable in the same environment; the
 plugin's client resolution falls back to HTTP when it is not.
@@ -87,6 +88,15 @@ class LocalHarnessClient:
         )
         return {"rows": [r.model_dump() for r in rows]}
 
+    def ask(
+        self,
+        question: str,
+        *,
+        domain: str | None = None,
+        limit: int = 20,
+    ) -> dict[str, Any]:
+        return self._api.ask(question, domain=domain, limit=limit)
+
     def correct(
         self,
         *,
@@ -147,3 +157,18 @@ class LocalHarnessClient:
 
     def wizard_reply(self, session_id: str, text: str) -> dict[str, Any]:
         return self._api.wizard_reply(session_id, text)
+
+    def atlas_search(self, goal: str, cursor_id: str | None = None) -> dict[str, Any]:
+        return self._api.atlas_search(goal, cursor_id=cursor_id)
+
+    def inspect_pack(self, name: str) -> dict[str, Any]:
+        return self._api.inspect_pack(name)
+
+    def suggest(self, domain: str) -> dict[str, Any]:
+        return {"suggestion": self._api.wizard_suggest(domain)}
+
+    def apply_pack_edit(self, domain: str, text: str, *, confirm: bool = False) -> dict[str, Any]:
+        result = self._api.apply_pack_edit(domain, text, confirm=confirm)
+        if confirm:
+            self._drain()
+        return result

@@ -1,7 +1,7 @@
 site_name: Domain Foundry
 site_description: >-
-  Local-first personal agent harness — capture natural language, get structured
-  domain data and a remixable app. The structured-life data layer for agent runtimes.
+  Describe your passion. Get an app. Talk to it. Local-first notes that stay
+  on your machine.
 site_author: Domain Foundry contributors
 repo_url: https://github.com/finnqiao/domain_foundry
 repo_name: domain-foundry/domain_foundry
@@ -57,44 +57,59 @@ markdown_extensions:
 
 nav:
   - Home: index.md
-  - Get started:
+  - Start:
       - Getting started: tutorial/getting-started.md
-      - Connect your agent: tutorial/connect-your-agent.md
-      - Bolt onto your setup: tutorial/adopt-in-place.md
+      - "Tutorial: hobby → app": tutorial/end-to-end.html
+      - Quickstart (CLI): QUICKSTART.md
       - "How-to: no terminal": tutorial/howto-non-technical.md
       - "How-to: developers": tutorial/howto-technical.md
-      - Testing runbook: tutorial/testing-runbook.md
-  - Quickstart (CLI): QUICKSTART.md
-  - User stories & evidence: USER_STORIES.md
   - Concepts:
       - Overview: concepts/index.md
       - The ledger: concepts/ledger.md
       - Domain packs: concepts/packs.md
+      - Idea atlas: concepts/idea-atlas.md
       - Hybrid routing: concepts/routing.md
       - Corrections: concepts/corrections.md
       - Evaluation replay: concepts/replay.md
-  - Architecture: architecture.md
-  - Authoring:
+      - Architecture: architecture.md
+  - Build a pack:
       - Pack authoring guide: PACK_AUTHORING.md
       - "Tutorial: remix in an afternoon": tutorial-plant-care.md
       - Custom blocks & remix: CUSTOM_BLOCKS.md
-  - Pack gallery: gallery.md
-  - Adapter guide: adapter-guide.md
-  - Security: security.md
-  - Project:
-      - Leak audit: LEAK_AUDIT.md
-      - Leakscan (Phase 9): LEAKSCAN_PHASE9.md
-      - Private overlay: PRIVATE_OVERLAY.md
-      - Mesh as-built: MESH_AS_BUILT.md
-      - Open gates: OPEN_GATES.md
-      - Retirement runbook: RETIREMENT_RUNBOOK.md
-      - Phase status: PHASE_STATUS.md
-      - Founder validation: FOUNDER_VALIDATION.md
+      - Pack gallery: gallery.md
+  - Connect your chat app:
+      - Connect your chat app: tutorial/connect-your-agent.md
+      - Adapter guide: adapter-guide.md
+      - Bolt onto your setup: tutorial/adopt-in-place.md
+  - Operate & recover:
+      - Security: security.md
+      - Testing runbook: tutorial/testing-runbook.md
+      - Vault search: vault-search.md
+  - Decisions:
+      - "ADR-001: HTTP adapter contract": adr/ADR-001-http-adapter-contract.md
+      - "ADR-002: Two-database layout": adr/ADR-002-two-database-layout.md
+      - "ADR-003: ULID identity": adr/ADR-003-ulid-identity.md
+      - "ADR-004: Packs are data": adr/ADR-004-packs-are-data.md
+      - "ADR-005: Name decision": adr/ADR-005-name-decision.md
+      - "ADR-006: Restore the HTTP write seam": adr/ADR-006-restore-http-write-seam.md
+  - Contribute:
+      - User stories & evidence: USER_STORIES.md
 
 not_in_nav: |
   OPEN_SOURCE_HARNESS_PLAN.md
-  adr/*.md
   launch/*.md
+  LEAK_AUDIT.md
+  LEAKSCAN_PHASE9.md
+  PRIVATE_OVERLAY.md
+  MESH_AS_BUILT.md
+  OPEN_GATES.md
+  RETIREMENT_RUNBOOK.md
+  PHASE_STATUS.md
+  FOUNDER_VALIDATION.md
+  HANDOFF.md
+  PER_DOMAIN_AGENT_MESH_2026-07-20.md
+  VISION_GAP_REVIEW_2026-08-08.md
+  build-plan-2026-08/*.md
 
 validation:
   nav:

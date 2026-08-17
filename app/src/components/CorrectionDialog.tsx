@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, ApiError } from "../lib/api";
 import { fmtFieldName, fmtValue } from "../lib/format";
-import type { PackCard } from "../lib/types";
+import type { PackCard, SearchHit } from "../lib/types";
 
 export type CorrectionTarget = {
   entryId?: string;
@@ -36,16 +36,68 @@ export function CorrectionDialog({
   );
   const [targetDomain, setTargetDomain] = useState("");
   const [mergeUid, setMergeUid] = useState("");
+  const [mergeQuery, setMergeQuery] = useState("");
+  const [candidates, setCandidates] = useState<SearchHit[]>([]);
+  const [mergeError, setMergeError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const restoreRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
+    restoreRef.current = document.activeElement as HTMLElement | null;
+    const dialog = dialogRef.current;
+    dialog?.querySelector<HTMLElement>("button:not([disabled]), input, select, textarea")?.focus();
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key === "Tab" && dialog) {
+        const elements = [...dialog.querySelectorAll<HTMLElement>(
+          "button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex='-1'])",
+        )];
+        if (elements.length === 0) return;
+        const first = elements[0];
+        const last = elements[elements.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          last.focus();
+          e.preventDefault();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          first.focus();
+          e.preventDefault();
+        }
+      }
     }
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      restoreRef.current?.focus();
+    };
   }, [onClose]);
+
+  useEffect(() => {
+    if (action !== "merge" || mergeQuery.trim().length < 2 || !target.domain || !target.objectType) {
+      setCandidates([]);
+      setMergeError(null);
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      setMergeError(null);
+      void api
+        .searchLedger(mergeQuery, {
+          domain: target.domain,
+          objectType: target.objectType,
+          kind: "canonical",
+        })
+        .then((result) => setCandidates(result.hits.filter((hit) => hit.ref_id !== target.objectUid)))
+        .catch((error) => {
+          setCandidates([]);
+          setMergeError(error instanceof Error ? "Record search is not available in this server build yet." : String(error));
+        });
+    }, 200);
+    return () => window.clearTimeout(timer);
+  }, [action, mergeQuery, target.domain, target.objectType, target.objectUid]);
 
   async function submit() {
     setBusy(true);
@@ -72,7 +124,7 @@ export function CorrectionDialog({
           target_domain: targetDomain,
         });
       } else if (action === "merge") {
-        if (!mergeUid) throw new Error("Enter the survivor object UID");
+        if (!mergeUid) throw new Error("Choose the record to keep");
         await api.correct({ object_uid: target.objectUid, action: "merge", merge_into_uid: mergeUid });
       } else if (action === "undo") {
         await api.correct({ object_uid: target.objectUid, entry_id: target.entryId, action: "undo" });
@@ -88,8 +140,8 @@ export function CorrectionDialog({
   }
 
   return (
-    <div className="modal-backdrop" onClick={onClose} role="presentation">
-      <div className="modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Correct">
+    <div className="modal-backdrop" role="presentation">
+      <div ref={dialogRef} className="modal" role="dialog" aria-modal="true" aria-label="Correct">
         <header className="modal-head">
           <h2>Correct</h2>
           <button className="icon-btn" onClick={onClose} aria-label="Close">
@@ -145,14 +197,36 @@ export function CorrectionDialog({
             </label>
           )}
           {action === "merge" && (
-            <label className="field-row">
-              <span>Merge into (survivor UID)</span>
+            <div className="field-row merge-picker">
+              <span>Merge into</span>
               <input
-                value={mergeUid}
-                placeholder="object_uid of the survivor"
-                onChange={(e) => setMergeUid(e.target.value)}
+                type="search"
+                value={mergeQuery}
+                placeholder={`Search ${target.objectType ?? "records"}…`}
+                aria-label="Search for the record to keep"
+                onChange={(e) => setMergeQuery(e.target.value)}
               />
-            </label>
+              {mergeQuery.trim().length < 2 && <p className="muted">Type at least two characters to find a record.</p>}
+              {mergeError && <p className="muted">{mergeError}</p>}
+              {candidates.length > 0 && (
+                <ul className="merge-candidates" role="listbox" aria-label="Merge candidates">
+                  {candidates.map((candidate) => (
+                    <li key={candidate.ref_id}>
+                      <button
+                        type="button"
+                        role="option"
+                        aria-selected={mergeUid === candidate.ref_id}
+                        className={`chip${mergeUid === candidate.ref_id ? " chip-active" : ""}`}
+                        onClick={() => setMergeUid(candidate.ref_id)}
+                      >
+                        {candidate.snippet ?? candidate.canonical_text ?? candidate.ref_id}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {mergeUid && <p className="muted">Keeping the selected record.</p>}
+            </div>
           )}
           {action === "undo" && (
             <p className="muted">

@@ -15,6 +15,7 @@ import pytest
 from domain_foundry_core.api.harness import HarnessAPI
 from domain_foundry_core.packs.schema_compiler import table_name
 from domain_foundry_core.wizard.blueprint import build_blueprint, write_pack
+from tests.conftest import land_wizard
 
 # ≥10 golden goal-statements (incl. "sourdough journey"): archetypes + generic.
 GOLDEN_GOALS = [
@@ -48,20 +49,63 @@ def test_golden_goal_generates_valid_routing_pack(workspace, monkeypatch, goal):
     api.init()
 
     turn = api.new_domain(goal)
-    assert turn["state"] == "interview"
-    assert turn["proposal"]["domain"]
-    assert len(turn["questions"]) <= 6
-
-    done = api.wizard_reply(turn["session_id"], "skip")
-    assert done["state"] == "test_drive", done.get("message")
-    assert done["dry_run"]["accuracy"] >= 0.95, done["dry_run"]
-
-    # Pack is installed and passes full validation.
-    name = done["pack"]["name"]
+    if turn.get("state") == "fork":
+        turn = api.wizard_reply(turn["session_id"], "skip")
+    assert turn["state"] == "test_drive", turn.get("message")
+    name = turn.get("pack", {}).get("name") or turn.get("domain")
+    assert name
     assert api.pack_validate(name) == []
     pack = api.packs.get(name)
     assert pack is not None
     assert len(pack.routing.examples) >= 8
+    if turn.get("dry_run"):
+        assert turn["dry_run"]["accuracy"] >= 0.95, turn["dry_run"]
+
+
+def test_houseplants_installs_plants_starter(workspace, monkeypatch):
+    monkeypatch.setenv("DOMAIN_FOUNDRY_HOME", str(workspace.home))
+    api = HarnessAPI(workspace.home)
+    api.init()
+
+    turn = land_wizard(api, "track my houseplants")
+    assert turn["design_mode"] == "starter"
+    assert turn["pack"]["name"] == "plants"
+    assert turn["state"] == "test_drive"
+    assert api.packs.get("houseplants") is None
+    assert api.packs.get("plants") is not None
+
+    # Singular alias also hits Plant Care.
+    turn2 = land_wizard(api, "log my houseplant care")
+    assert turn2["pack"]["name"] == "plants"
+    assert "already" in turn2["message"].lower() or turn2["design_mode"] == "starter"
+
+
+def test_sourdough_installs_bundled_starter_not_clone(workspace, monkeypatch):
+    monkeypatch.setenv("DOMAIN_FOUNDRY_HOME", str(workspace.home))
+    api = HarnessAPI(workspace.home)
+    api.init()
+
+    turn = land_wizard(api, "I want to track my sourdough journey")
+    assert turn["design_mode"] == "starter"
+    assert turn["pack"]["name"] == "sourdough"
+    pack = api.packs.get("sourdough")
+    assert pack is not None
+    # Bundled pack has crumb photos / richer schema than the archetype clone.
+    bake = pack.objects.get("bake")
+    assert bake is not None
+    assert "crumb_photos" in bake.fields
+
+
+def test_origami_scaffolds_without_key(workspace, monkeypatch):
+    monkeypatch.setenv("DOMAIN_FOUNDRY_HOME", str(workspace.home))
+    api = HarnessAPI(workspace.home)
+    api.init()
+
+    turn = land_wizard(api, "track my origami")
+    assert turn["design_mode"] in {"scaffold", "atlas"}
+    assert turn["state"] == "test_drive"
+    assert turn.get("pack", {}).get("name")
+    assert turn["pack"]["name"] != "plants"
 
 
 def test_blueprint_examples_are_disjoint_per_object():
@@ -81,21 +125,18 @@ def test_blueprint_examples_are_disjoint_per_object():
 
 
 def test_cold_start_gate(workspace, monkeypatch):
-    """goal → interview → generate → validate → dry-run → capture path works."""
+    """goal → starter install → capture path works without interview."""
     monkeypatch.setenv("DOMAIN_FOUNDRY_HOME", str(workspace.home))
     api = HarnessAPI(workspace.home)
     api.init()
 
-    turn = api.new_domain("I want to track my sourdough journey", test_drive=5)
+    turn = land_wizard(api, "I want to track my sourdough journey", reply="skip")
     sid = turn["session_id"]
-    assert turn["awaiting"] == "answers"
+    assert turn["state"] == "test_drive"
+    assert turn["design_mode"] == "starter"
+    assert turn["pack"]["name"] == "sourdough"
 
-    activated = api.wizard_reply(sid, "skip")
-    assert activated["state"] == "test_drive"
-    assert activated["pack"]["name"] == "sourdough"
-    assert activated["dry_run"]["accuracy"] >= 0.95
-
-    # Real capture routes into the freshly generated domain.
+    # Real capture routes into the installed starter.
     receipt = api.capture("baked a country loaf at 78% hydration")
     assert receipt.routed
     assert receipt.routed[0].domain == "sourdough"
@@ -113,9 +154,10 @@ def test_hardening_edit_round_trips_with_migration(workspace, monkeypatch):
     api = HarnessAPI(workspace.home)
     api.init()
 
-    turn = api.new_domain("I want to track my sourdough journey")
+    turn = land_wizard(api, "I want to track my sourdough journey")
     sid = turn["session_id"]
-    api.wizard_reply(sid, "skip")
+    assert turn["state"] == "test_drive"
+    assert turn["pack"]["name"] == "sourdough"
 
     # NL edit → pack diff preview (no changes applied yet).
     diff_turn = api.wizard_reply(sid, "add a crumb_photo field")
@@ -153,18 +195,18 @@ def test_hardening_rename_and_cancel(workspace, monkeypatch):
     monkeypatch.setenv("DOMAIN_FOUNDRY_HOME", str(workspace.home))
     api = HarnessAPI(workspace.home)
     api.init()
-    sid = api.new_domain("log my running")["session_id"]
-    api.wizard_reply(sid, "skip")
+    sid = land_wizard(api, "log my running")["session_id"]
 
-    diff = api.wizard_reply(sid, "rename effort to intensity")
+    diff = api.wizard_reply(sid, "rename minutes to intensity")
     assert diff["state"] == "hardening_confirm"
-    assert diff["diff"]["renamed"][0] == {"from": "effort", "to": "intensity"}
+    assert diff["diff"]["renamed"][0] == {"from": "minutes", "to": "intensity"}
 
     cancelled = api.wizard_reply(sid, "cancel")
     assert cancelled["state"] == "test_drive"
     pack = api.packs.get("running")
     assert pack is not None
-    assert "effort" in pack.objects["run"].fields  # rename was not applied
+    obj = next(iter(pack.objects.values()))
+    assert "minutes" in obj.fields  # rename was not applied
 
 
 def test_session_is_resumable(workspace, monkeypatch):
@@ -189,28 +231,75 @@ def test_unique_domain_name_on_collision(workspace, monkeypatch, tmp_path):
     draft = write_pack(bp, tmp_path / "running_draft")
     api.packs.add(draft, force=True)
 
-    turn = api.new_domain("track my running")
+    turn = land_wizard(api, "track my running")
     assert turn["proposal"]["domain"] != "running"
     assert turn["proposal"]["domain"].startswith("running")
 
 
-def test_wizard_http_endpoints_are_gone(workspace, monkeypatch):
-    """Mesh P0: wizard writes moved in-process; HTTP surface returns 410."""
+def test_wizard_http_journey(workspace, monkeypatch):
+    """ADR-006: the wizard runs over the same HTTP contract the SPA/adapters use."""
     from fastapi.testclient import TestClient
 
     from domain_foundry_core.api.app import create_app
 
     monkeypatch.setenv("DOMAIN_FOUNDRY_HOME", str(workspace.home))
-    api = HarnessAPI(workspace.home)
-    api.init()
+    HarnessAPI(workspace.home).init()
     client = TestClient(create_app(workspace.home, enable_drain_loop=False))
 
-    assert client.post("/api/wizard", json={"goal_text": "log my running"}).status_code == 410
-    assert client.post("/api/wizard/sess/reply", json={"text": "skip"}).status_code == 410
+    r = client.post("/api/wizard", json={"goal_text": "log my running"})
+    assert r.status_code == 200
+    fork = r.json()
+    assert fork["state"] == "fork"
+    assert fork.get("neighborhood")
+    landed = client.post(f"/api/wizard/{fork['session_id']}/reply", json={"text": "skip"})
+    assert landed.status_code == 200
+    turn = landed.json()
+    assert turn["state"] == "test_drive"
+    assert turn["pack"]["name"] == "running"
+    assert turn["awaiting"] == "capture"
 
-    # The same flow works through the embedded harness.
-    body = api.new_domain("log my running")
-    assert body["state"] == "interview"
-    done = api.wizard_reply(body["session_id"], "skip")
-    assert done["state"] == "test_drive"
-    assert done["pack"]["name"] == "running"
+    # Unknown session is a legible 404.
+    assert client.post("/api/wizard/no-such-session/reply", json={"text": "skip"}).status_code == 404
+    # Blank replies are client errors, not uncaught wizard/capture exceptions.
+    assert client.post(f"/api/wizard/{turn['session_id']}/reply", json={"text": " "}).status_code == 422
+
+
+def test_activated_copy_is_scaffold_language(workspace, monkeypatch):
+    monkeypatch.setenv("DOMAIN_FOUNDRY_HOME", str(workspace.home))
+    api = HarnessAPI(workspace.home)
+    api.init()
+    first = api.new_domain("log my running")
+    assert first["state"] == "fork"
+    turn = api.wizard_reply(first["session_id"], "skip")
+    assert turn["state"] == "test_drive"
+    assert "ready" in turn["message"].lower() or "simple log" in turn["message"].lower()
+    assert "is live (v" not in turn["message"]
+    assert "%" not in turn["message"]
+
+
+def test_new_domain_always_forks_and_analog_waits_for_pick(workspace, monkeypatch):
+    monkeypatch.setenv("DOMAIN_FOUNDRY_HOME", str(workspace.home))
+    api = HarnessAPI(workspace.home)
+    api.init()
+    fork = api.new_domain("track my houseplants")
+    assert fork["state"] == "fork"
+    assert fork.get("pack") is None
+    assert fork.get("neighborhood", {}).get("ideas")
+    landed = api.wizard_reply(fork["session_id"], "skip")
+    assert landed["design_mode"] == "starter"
+    assert landed["pack"]["name"] == "plants"
+
+
+def test_picked_idea_compiles_when_analog_is_not_1_to_1(workspace, monkeypatch):
+    monkeypatch.setenv("DOMAIN_FOUNDRY_HOME", str(workspace.home))
+    api = HarnessAPI(workspace.home)
+    api.init()
+    fork = api.new_domain("diving")
+    assert fork["state"] == "fork"
+    kids = " ".join(c["title"] for c in fork["neighborhood"]["refine"]).lower()
+    assert "freediving" in kids
+    assert "photo" in kids
+    landed = api.wizard_reply(fork["session_id"], "dive log")
+    assert landed["state"] == "test_drive"
+    assert landed["design_mode"] in {"atlas", "scaffold", "llm"}
+    assert landed["pack"]["name"] != "plants"

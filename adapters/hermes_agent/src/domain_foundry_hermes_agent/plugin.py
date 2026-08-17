@@ -40,11 +40,16 @@ You have a domain_foundry harness attached. Follow capture-first discipline:
 3. When the user amends or contradicts something ("actually it was 80% not
    75%"), call `domain_foundry_correct` with their correction sentence. One
    message, one correction — do not re-capture.
-4. To answer "what did I…" questions, call `domain_foundry_query` (read-only).
+4. To answer "what did I…" / "when was my last…" questions, call
+   `domain_foundry_ask` (read-only, grounded in captured records). Use
+   `domain_foundry_query` when you need the raw rows.
 5. Surface pending approvals with `domain_foundry_review_list`; only resolve one
    after the user explicitly approves or rejects it.
 6. To stand up a brand-new tracking domain from a plain-language goal, call
-   `domain_foundry_new_domain` and relay the wizard's questions to the user.
+   `domain_foundry_new_domain` and relay the idea-atlas neighborhood (refine /
+   expand / idea cards). Do not pick an idea for the user. Continue with
+   `domain_foundry_wizard_reply`. Use `domain_foundry_atlas_search` to browse
+   without installing.
 
 The harness is local-first and authoritative. You are a courier for the user's
 words, not the source of truth.
@@ -83,7 +88,7 @@ def build_tools(client: Any) -> list[Tool]:
     """Construct the harness tool set bound to a client.
 
     ``client`` is duck-typed: LocalHarnessClient (in-process, default) and
-    DomainExpertClient (HTTP, opt-in) expose the same nine methods.
+    DomainExpertClient (HTTP, opt-in) expose the same methods.
     """
 
     return [
@@ -122,6 +127,26 @@ def build_tools(client: Any) -> list[Tool]:
             },
             handler=lambda domain=None, object_type=None, status=None, q=None, limit=50: client.query(
                 domain=domain, object_type=object_type, status=status, q=q, limit=limit
+            ),
+        ),
+        Tool(
+            name="domain_foundry_ask",
+            description=(
+                "Answer a question using only the user's captured records. "
+                "Prefer this for 'what did I…' / 'when was my last…' questions. "
+                "Read-only; answers cite the records they used."
+            ),
+            parameters={
+                "type": "object",
+                "properties": {
+                    "question": _string("The user's question, verbatim."),
+                    "domain": _string("Restrict to a passion, e.g. 'sourdough'."),
+                    "limit": {"type": "integer", "description": "Max records to consider (default 20)."},
+                },
+                "required": ["question"],
+            },
+            handler=lambda question, domain=None, limit=20: client.ask(
+                question, domain=domain, limit=limit
             ),
         ),
         Tool(
@@ -187,8 +212,9 @@ def build_tools(client: Any) -> list[Tool]:
         Tool(
             name="domain_foundry_new_domain",
             description=(
-                "Start the guided domain-creation wizard from a plain-language goal; "
-                "returns the session id and the next interview turn to relay."
+                "Start the idea-atlas wizard from a plain-language goal. Returns a "
+                "neighborhood (refine / expand / ideas) and a session id — not an "
+                "installed pack. Relay it; do not pick an idea for the user."
             ),
             parameters={
                 "type": "object",
@@ -214,6 +240,61 @@ def build_tools(client: Any) -> list[Tool]:
                 "required": ["session_id", "text"],
             },
             handler=lambda session_id, text: client.wizard_reply(session_id, text),
+        ),
+        Tool(
+            name="domain_foundry_atlas_search",
+            description=(
+                "Search the idea atlas. Returns breadcrumb, refine children, expand "
+                "neighbors, and app ideas (world + foundry). Does not install a pack."
+            ),
+            parameters={
+                "type": "object",
+                "properties": {
+                    "goal": _string("Topic, practice, or app idea in plain language."),
+                    "cursor_id": _string("Optional atlas node id to stay at."),
+                },
+                "required": ["goal"],
+            },
+            handler=lambda goal, cursor_id=None: client.atlas_search(goal, cursor_id=cursor_id),
+        ),
+        Tool(
+            name="domain_foundry_inspect_pack",
+            description="Read an installed or bundled pack's YAML without changing it.",
+            parameters={
+                "type": "object",
+                "properties": {"name": _string("Pack name, e.g. plants.")},
+                "required": ["name"],
+            },
+            handler=lambda name: client.inspect_pack(name),
+        ),
+        Tool(
+            name="domain_foundry_suggest",
+            description="Neighbor-idea or hardening suggestion from recent captures.",
+            parameters={
+                "type": "object",
+                "properties": {"domain": _string("Installed domain name.")},
+                "required": ["domain"],
+            },
+            handler=lambda domain: client.suggest(domain),
+        ),
+        Tool(
+            name="domain_foundry_apply_pack_edit",
+            description=(
+                "Preview a natural-language pack edit. Pass confirm=true to apply "
+                "(writes a migration). Always preview first."
+            ),
+            parameters={
+                "type": "object",
+                "properties": {
+                    "domain": _string("Installed domain name."),
+                    "text": _string("Edit in plain language, e.g. add a species object."),
+                    "confirm": {"type": "boolean", "description": "Apply the previewed edit."},
+                },
+                "required": ["domain", "text"],
+            },
+            handler=lambda domain, text, confirm=False: client.apply_pack_edit(
+                domain, text, confirm=confirm
+            ),
         ),
     ]
 
@@ -252,14 +333,14 @@ def _ctx_get(ctx: Any, key: str) -> Any:
 
 
 def _resolve_client(ctx: Any, client: Any | None) -> Any:
-    """Pick the harness client. In-process is the default (mesh P0).
+    """Pick the harness client. In-process is supported for this adapter.
 
     Priority:
       1. An explicitly injected ``client``.
       2. HTTP, when the host explicitly configured a URL (ctx ``base_url`` or
-         ``DOMAIN_FOUNDRY_URL``) — the opt-in remote mode.
+         ``DOMAIN_FOUNDRY_URL``) — the canonical remote mode.
       3. In-process :class:`LocalHarnessClient` when ``domain-foundry-core`` is
-         importable — writes go straight to SQLite; no server on the write path.
+         importable — supported because this adapter passes Gate-1.
       4. HTTP to the default local port, as the last-resort fallback.
     """
     if client is not None:

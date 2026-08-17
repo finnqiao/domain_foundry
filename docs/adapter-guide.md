@@ -1,9 +1,11 @@
 # Adapter guide
 
 An **adapter** lets a runtime (an agent framework, a chat bot, an MCP host) drive
-the harness. Every adapter is a thin **HTTP client** of the `HarnessAPI`
-([ADR-001](adr/ADR-001-http-adapter-contract.md)) — it never imports the core in
-process, so it survives venv/runtime/Python-version mismatches.
+the harness. The canonical integration seam is the **HTTP contract** served by
+`domain-foundry serve` ([ADR-001](adr/ADR-001-http-adapter-contract.md),
+re-affirmed by ADR-006). An adapter may embed `HarnessAPI` in-process only while
+it passes the Gate-1 conformance suite; otherwise it should remain a thin HTTP
+client so it survives venv/runtime/Python-version mismatches.
 
 The first shipped adapter is the **hermes-agent plugin**
 (`adapters/hermes_agent/`).
@@ -94,7 +96,9 @@ print(capture(text="baked a 75% hydration country loaf, came out great"))
 5. Add a conformance test that runs capture → correct → review against a live
    local stack, and pin the host version range.
 
-MCP is the planned second adapter and follows the same HTTP contract.
+MCP is a supported adapter and follows the same harness contract; its current
+implementation embeds `HarnessAPI` in-process and its HTTP driver is covered by
+the Gate-1 seed journey.
 
 ## Roamboard sync adapter (Phase 7)
 

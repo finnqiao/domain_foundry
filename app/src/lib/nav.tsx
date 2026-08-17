@@ -1,20 +1,22 @@
 import { createContext, useContext } from "react";
 
+export type SettingsTab = "sources" | "providers" | "health" | "docs";
+
 export type Route =
-  | { name: "home" }
-  | { name: "feed" }
-  | { name: "review" }
-  | { name: "health" }
-  | { name: "docs" }
-  | { name: "sources" }
-  | { name: "domain"; domain: string; viewId?: string };
+  | { name: "today" }
+  | { name: "passions" }
+  | { name: "domain"; domain: string; viewId?: string }
+  | { name: "inbox" }
+  | { name: "create" }
+  | { name: "settings"; tab?: SettingsTab };
 
 export type DetailTarget = { domain: string; objectType: string; uid: string };
 
 export type Nav = {
   route: Route;
-  navigate: (route: Route) => void;
+  navigate: (route: Route, opts?: { replace?: boolean }) => void;
   openDetail: (target: DetailTarget) => void;
+  closeDetail: () => void;
   refreshKey: number;
   refresh: () => void;
 };

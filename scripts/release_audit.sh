@@ -16,6 +16,7 @@
 #   7. pytest              — full suite green
 #   8. mkdocs build        — docs site builds (skipped if mkdocs absent)
 #   9. eval corpus replay  — routing gate vs committed baseline (skipped if CLI absent)
+#  10. docs claims check   — no hardcoded test counts / known-false claims in public docs
 
 set -uo pipefail
 
@@ -29,6 +30,12 @@ cd "$ROOT"
 if [[ -x "$ROOT/.venv/bin/python" ]]; then
   export PATH="$ROOT/.venv/bin:$PATH"
 fi
+
+# Hermetic workspace: the audit must give the same answer as CI regardless of
+# what lives in the operator's real ~/.domain_foundry (or whether one exists).
+DOMAIN_FOUNDRY_HOME="$(mktemp -d "${TMPDIR:-/tmp}/df-audit.XXXXXX")"
+export DOMAIN_FOUNDRY_HOME
+trap 'rm -rf "$DOMAIN_FOUNDRY_HOME"' EXIT
 
 fail=0
 pass() { printf '  \033[32mPASS\033[0m  %s\n' "$1"; }
@@ -80,7 +87,10 @@ else
   skip "mkdocs build (mkdocs not installed; pip install -e '.[docs]')"
 fi
 
+run "docs claims check" python scripts/docs_claims_check.py
+
 if command -v domain-foundry >/dev/null 2>&1; then
+  run "init (hermetic home)" domain-foundry init
   run "eval corpus replay" domain-foundry eval --full --min-accuracy 0.9
 else
   skip "eval corpus replay (domain-foundry CLI not on PATH)"

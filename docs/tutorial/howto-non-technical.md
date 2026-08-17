@@ -9,7 +9,7 @@ No spreadsheets. No forms. No "sync." You talk; it files.
 >
 > 1. Install it once (one line — ask a techy friend or paste it yourself).
 > 2. Talk to it in **Claude Desktop** or a **Telegram bot**.
-> 3. To fix something, just say so: *"actually that was a V6."*
+> 3. To fix something, just say so: *"actually the rating was moderate not hard."*
 
 ---
 
@@ -48,17 +48,18 @@ computer.
    > **You:** V60 with the Ethiopian, tasted like blueberry
    > **You:** /query coffee   ← ask what you've logged
 
-### 🖱️ Option C — Pull in notes you already have (a few clicks)
+### Option C — Pull in notes you already have (a few clicks)
 
 Already keep notes in a folder (Apple Notes export, Obsidian, plain text files)?
 
 1. Open **http://127.0.0.1:8787** in your browser (after someone runs
-   `domain-foundry serve` — one line) and click **Add a source** in the sidebar.
-2. Type the folder, click **Preview routing** — it shows where your notes *would*
+   `domain-foundry serve` — one line).
+2. Click **Settings** → **Sources**.
+3. Type the folder, click **Preview routing** — it shows where your notes *would*
    go, and **changes nothing**.
-3. Happy with it? Click **Pull in**.
+4. Happy with it? Click **Pull in**.
 
-![Add a source, inside the app: paste a folder, preview where notes land, pull in](snapshots/img/spa_sources.png)
+![Add a source, inside Settings: paste a folder, preview where notes land, pull in](snapshots/img/spa_sources.png)
 
 Your original notes are never moved, renamed, or edited — this only *copies* the
 words into your foundry.
@@ -91,7 +92,13 @@ data is just… there.
   (http://127.0.0.1:8787), click the domain on the left.
 - **Start small.** Track one thing you actually do — coffee, runs, plants, books.
   Add more foundries whenever you like by saying *"track my …"*.
+- **Want it to understand how you talk?** Add a key in **Settings**. Without one
+  you still get a simple log you can talk to; with one, describing a passion
+  picks fields that match how you actually speak (and you can still say
+  `rating = 9` to fix a number).
 
 That's the whole thing. Talk to it, and it remembers — accurately, forever, and
-only for you. When you want the technical details, see the
+only for you. The same loop as a page you can click through:
+**[Turn a hobby into an app](end-to-end.html#tutorial)** (pick **Everyone**).
+When you want the technical details, see the
 [developer guide](howto-technical.md).

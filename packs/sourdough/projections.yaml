@@ -1,9 +1,11 @@
 app:
   icon: "🍞"
   views:
-    - {id: bakes, title: "Bakes", block: timeline, object: bake, config: {date_field: baked_at}}
+    - {id: bakes, title: "Bakes", block: timeline, object: bake, config: {date_field: baked_at, derived_metrics: [hydration_percent, hydration_delta, bulk_hours_delta]}}
+    - {id: gallery, title: "Crumb gallery", block: gallery, object: bake, config: {gallery: crumb_photos}}
+    - {id: compare, title: "Compare bakes", block: compare, object: bake, config: {comparison: bakes}}
     - {id: find, title: "Find", block: search, objects: [bake], config: {facets: [flour_mix, result]}}
-    - {id: stats, title: "Progress", block: stats, object: bake, config: {measures: [{field: result, agg: distribution}, {field: hydration, agg: trend}]}}
+    - {id: stats, title: "Progress", block: stats, object: bake, config: {derived_metrics: true, measures: [{field: result, agg: distribution}, {field: hydration, agg: trend}, {field: hydration_percent, agg: trend}]}}
     - {id: history, title: "History", block: history, object: bake, config: {date_field: baked_at, period: month}}
     - {id: plan, title: "Plan", block: planner, object: bake, config: {date_field: baked_at, status_field: result}}
     - {id: starters, title: "Starters", block: list, object: starter, config: {group_by: status}}

@@ -1,0 +1,3 @@
+{"id":"coffee_001","raw_text":"V60 Ethiopian, 15g in and 250g out, tasted like blueberry","expected":{"captures":[{"domain":"coffee","object_type":"brew","operation":"create"}]}}
+{"id":"coffee_002","raw_text":"brewed an Aeropress at a 1:15 ratio","expected":{"captures":[{"domain":"coffee","object_type":"brew","operation":"create"}]}}
+{"id":"coffee_003","raw_text":"changed the grind finer for the next brew","expected":{"captures":[{"domain":"coffee","object_type":"brew","operation":"update"}]}}

@@ -148,7 +148,9 @@ def _heuristic_interpret(ctx: dict[str, Any]) -> dict[str, Any]:
             for rule in pack.get("rules") or []:
                 try:
                     if re.search(rule["match"], clause, re.IGNORECASE):
-                        score = 2 + int(10 * float(rule.get("confidence_boost") or 0))
+                        # Keep boost as a float — int(10 * 0.15) == int(10 * 0.1)
+                        # so feedback rules used to tie with the overlapping generic rule.
+                        score = 2.0 + 10.0 * float(rule.get("confidence_boost") or 0)
                         obj = rule.get("object")
                         op = rule.get("operation") or "create"
                         candidate = {
@@ -221,88 +223,11 @@ def _split_clauses(text: str) -> list[str]:
 
 
 def _extract_fields(text: str, pack: dict[str, Any] | None, object_type: str | None) -> dict[str, Any]:
-    if not pack or not object_type:
-        return {}
-    contract = (pack.get("objects") or {}).get(object_type) or {}
-    fields_spec = contract.get("fields") or {}
-    out: dict[str, Any] = {}
+    """Back-compat: schema fields only. Residue is attached on CaptureSpan."""
+    from domain_foundry_core.extract import extract_fields
 
-    # hydration percent
-    if "hydration" in fields_spec:
-        m = re.search(r"(\d{2,3})\s*%|\b(\d{2,3})\s*hydration", text, re.IGNORECASE)
-        if m:
-            out["hydration"] = float(m.group(1) or m.group(2))
-
-    if "bulk_hours" in fields_spec:
-        m = re.search(
-            r"bulk\s*(?:ferment(?:ed|ation)?\s*)?(?:for\s*)?(\d+(?:\.\d+)?)\s*h",
-            text,
-            re.IGNORECASE,
-        )
-        if not m:
-            m = re.search(r"\bbulk\s+(\d+(?:\.\d+)?)\b", text, re.IGNORECASE)
-        if m:
-            out["bulk_hours"] = float(m.group(1))
-
-    if "result" in fields_spec:
-        for val in (fields_spec["result"].get("values") or []):
-            if re.search(rf"\b{re.escape(val)}\b", text, re.IGNORECASE):
-                out["result"] = val
-                break
-        if "result" not in out and re.search(r"\bgreat\s+bake\b", text, re.IGNORECASE):
-            out["result"] = "great"
-
-    if "loaf_name" in fields_spec or "title" in fields_spec:
-        key = "loaf_name" if "loaf_name" in fields_spec else "title"
-        # use short text as title
-        out[key] = text.strip()[:80]
-
-    if "plant_name" in fields_spec:
-        m = re.search(
-            r"\b(monstera|pothos|ficus|snake plant|zz plant|calathea|fern)\b",
-            text,
-            re.IGNORECASE,
-        )
-        if m:
-            out["plant_name"] = m.group(1).lower()
-        else:
-            out["plant_name"] = text.strip()[:60]
-
-    if "action" in fields_spec:
-        action_pats = [
-            ("prune", r"\bprun(?:e|ed|ing)\b"),
-            ("mist", r"\bmist(?:ed|ing)?\b"),
-            ("fertilize", r"\bfertiliz"),
-            ("water", r"\bwater(?:ed|ing)?\b"),
-            ("repot", r"\brepot(?:ted|ting)?\b"),
-            ("observe", r"\bobserv(?:e|ed|ing)\b"),
-        ]
-        for val, pat in action_pats:
-            if re.search(pat, text, re.IGNORECASE):
-                out["action"] = val
-                break
-        if "action" not in out:
-            for val in (fields_spec["action"].get("values") or []):
-                if re.search(rf"\b{re.escape(val)}\b", text, re.IGNORECASE):
-                    out["action"] = val
-                    break
-
-    if "flour_mix" in fields_spec:
-        m = re.search(r"(\d+%\s*\w+(?:\s*/\s*\d+%\s*\w+)*)", text, re.IGNORECASE)
-        if m:
-            out["flour_mix"] = m.group(1)
-        elif re.search(r"\brye\b", text, re.IGNORECASE):
-            out["flour_mix"] = "rye"
-
-    if "name" in fields_spec and "starter" in (object_type or ""):
-        m = re.search(r"\b(rye|wheat|whole wheat|spelt)\s+starter\b", text, re.IGNORECASE)
-        if m:
-            out["name"] = f"{m.group(1).lower()} starter"
-
-    if "notes" in fields_spec and "notes" not in out:
-        out["notes"] = text.strip()
-
-    return out
+    fields, _residue = extract_fields(text, pack, object_type)
+    return fields
 
 
 def _usage_from_openai(payload: dict[str, Any], *, model: str, tier: str | None) -> TokenUsage:
@@ -356,6 +281,9 @@ class OpenAICompatibleProvider(LLMProvider):
             or "gpt-4o-mini"
         )
         self.default_tier = default_tier
+        # Reasoners and design calls routinely exceed 60s; a short timeout
+        # looks like "the model couldn't design" and falls back to a scaffold.
+        self.timeout = 180.0 if default_tier == "sota" else 60.0
 
     def complete_json(
         self,
@@ -391,7 +319,7 @@ class OpenAICompatibleProvider(LLMProvider):
                 f"{self.base_url}/chat/completions",
                 headers={"Authorization": f"Bearer {self.api_key}"},
                 json=body,
-                timeout=60.0,
+                timeout=self.timeout,
             )
             r.raise_for_status()
             payload = r.json()
@@ -415,7 +343,7 @@ class OpenAICompatibleProvider(LLMProvider):
                     f"{self.base_url}/chat/completions",
                     headers={"Authorization": f"Bearer {self.api_key}"},
                     json=body,
-                    timeout=60.0,
+                    timeout=self.timeout,
                 )
                 r.raise_for_status()
                 payload = r.json()

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { Map as MapLibreMap, MapLayerMouseEvent } from "maplibre-gl";
 import type { BlockProps } from "./kit";
 import { EmptyState, rowsOf } from "./kit";
 import type { Row } from "../lib/types";
@@ -24,25 +25,27 @@ const TYPE_LABELS: Record<string, string> = {
  */
 export function MapBlock({ data, onOpenDetail }: BlockProps) {
   const rows = rowsOf(data);
-  const features = (data["features"] as MapFeature[] | undefined) ?? [];
+  const featuresValue = data["features"] as MapFeature[] | undefined;
   const skipped = Number(data["skipped_null_geo"] ?? 0);
   const objectTypes = (data["object_types"] as string[] | undefined) ?? [];
   const [filter, setFilter] = useState<string | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<{ remove: () => void } | null>(null);
+  const mapRef = useRef<MapLibreMap | null>(null);
 
   const filteredRows = useMemo(
     () => (filter ? rows.filter((r) => r["object_type"] === filter) : rows),
     [rows, filter],
   );
   const filteredFeatures = useMemo(
-    () =>
-      filter
+    () => {
+      const features = featuresValue ?? [];
+      return filter
         ? features.filter((f) => f.properties?.["object_type"] === filter)
-        : features,
-    [features, filter],
+        : features;
+    },
+    [featuresValue, filter],
   );
 
   useEffect(() => {
@@ -89,8 +92,8 @@ export function MapBlock({ data, onOpenDetail }: BlockProps) {
           if (!bounds.isEmpty()) {
             map.fitBounds(bounds, { padding: 48, maxZoom: 13 });
           }
-          map.on("click", "venues-circle", (e: { features?: Array<{ properties?: Record<string, unknown> }> }) => {
-            const props = e.features?.[0]?.properties;
+          map.on("click", "venues-circle", (e: MapLayerMouseEvent) => {
+            const props = e.features?.[0]?.properties as Record<string, unknown> | undefined;
             if (!props || !onOpenDetail) return;
             const ot = String(props["object_type"] || "");
             const uid = String(props["object_uid"] || "");

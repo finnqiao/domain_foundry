@@ -1,0 +1,3 @@
+{"id":"climb_001","raw_text":"sent a tough V5 on the overhang today, crux was the heel hook","expected":{"captures":[{"domain":"climbing","object_type":"session","operation":"create"}]}}
+{"id":"climb_002","raw_text":"flashed the blue route after two attempts","expected":{"captures":[{"domain":"climbing","object_type":"session","operation":"create"}]}}
+{"id":"climb_003","raw_text":"the dyno felt better today","expected":{"captures":[{"domain":"climbing","object_type":"session","operation":"update"}]}}

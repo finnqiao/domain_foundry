@@ -20,18 +20,23 @@ text, (c) path writes into the markdown vault, and (d) third-party extensions
 - **Non-local bind requires a token.** Binding to anything other than
   `127.0.0.1` / `localhost` / `::1` **refuses to start** without
   `DOMAIN_FOUNDRY_API_TOKEN` (or `--token`).
-- **Bearer-gated when a token is set.** Every endpoint (including `/health`)
-  requires `Authorization: Bearer <token>`; missing → `401`, wrong → `403`.
+- **Bearer-gated when a token is set.** Every API endpoint (including
+  `/health`) requires `Authorization: Bearer <token>`; missing → `401`, wrong
+  → `403`. The served HTML shells bootstrap the token so their API calls use
+  the same posture.
 - **CORS is pinned** to the local app origins only.
 
 Verified by `tests/contract/test_api.py::test_non_local_bind_requires_token` and
 `tests/security/test_api_auth.py` (token gates endpoints; localhost default open).
 
-## No privileged write path
+## No privileged canonical-data write path
 
-The app shell, the CLI, and every adapter mutate **only** through `capture()` /
-`correct()` / review-resolve. There is no back door to write canonical rows.
-Block/query paths are **read-only**.
+The app shell, the CLI, and every adapter mutate canonical records **only**
+through `capture()` / `correct()` / review-resolve. Pack lifecycle management is
+a separate, explicit administrative surface: it previews declared permissions,
+restricts mutations to workspace-owned pack directories, and snapshots before
+upgrade/uninstall. There is no back door to write canonical rows. Block/query
+paths are **read-only**.
 
 ## SQL safety
 
@@ -78,6 +83,10 @@ Captured text can never directly trigger tool execution. It is mitigated by:
 | Custom block | React component you drop in | Yes — runs in your browser session. |
 
 Only load pip handlers and custom blocks you wrote or audited.
+
+The Slice 4 automated review record is in
+[`docs/SECURITY_REVIEW_2026-08.md`](SECURITY_REVIEW_2026-08.md). It records the
+remaining independent-review and external-user gates explicitly.
 
 ## Release-blocking leak audit
 

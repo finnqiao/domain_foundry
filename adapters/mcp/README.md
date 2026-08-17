@@ -9,9 +9,9 @@ so any MCP-capable agent drives the *same* local-first SQLite substrate as the
 CLI — capture-first ledger, hybrid routing, policy-gated apply, one-message
 corrections, and the guided domain wizard.
 
-Writes run **in-process** against `HarnessAPI` (the harness's HTTP write path is
-intentionally `410 Gone`). Nothing is proxied over the network; there is no
-telemetry.
+This adapter embeds `HarnessAPI` in-process (no network hop), while
+`domain-foundry serve` exposes the same read/write contract over HTTP. There is
+no telemetry.
 
 ## Tools
 
@@ -19,9 +19,16 @@ telemetry.
 |---|---|
 | `domain_foundry_capture` | Store a raw message, then route it to a typed domain record |
 | `domain_foundry_query` | Read canonical records (filter / full-text search) |
+| `domain_foundry_ask` | Answer a question using only captured records |
 | `domain_foundry_correct` | One-message correction → amends the record, becomes an eval case |
 | `domain_foundry_review_list` / `_resolve` | See and clear the approval queue |
-| `domain_foundry_new_domain` / `domain_foundry_wizard_reply` | Guided wizard: describe a passion → get a working domain |
+| `domain_foundry_new_domain` / `domain_foundry_wizard_reply` | Idea atlas: neighborhood first; pick an idea, then compile |
+| `domain_foundry_atlas_search` | Browse buckets → practices → ideas without installing |
+| `domain_foundry_inspect_pack` | Read pack YAML |
+| `domain_foundry_suggest` | Neighbor-idea / hardening suggestion from captures |
+| `domain_foundry_apply_pack_edit` | Preview (or confirm) a natural-language pack edit |
+| `domain_foundry_activate_pack` | Install a bundled analog pack for deterministic routing |
+| `domain_foundry_export` | Export canonical objects as secrets-free JSON |
 | `domain_foundry_health` | Integrity checks, counts, today's LLM spend |
 
 ## Install
@@ -52,10 +59,10 @@ Open **Settings → Developer → Edit Config** and add:
 Restart Claude Desktop. You'll see the Domain Foundry tools appear. Now just talk:
 
 > **You:** track my bouldering sessions
-> **Claude:** *(calls `domain_foundry_new_domain` → `domain_foundry_wizard_reply`)* Your bouldering domain is live.
+> **Claude:** *(calls `domain_foundry_new_domain` → `domain_foundry_wizard_reply`)* Your bouldering domain is scaffolded and ready for a test-drive.
 > **You:** sent a tough V5 on the overhang today, crux was the heel hook
 > **Claude:** *(calls `domain_foundry_capture`)* Logged to **bouldering** ✓
-> **You:** actually that felt more moderate than hard
+> **You:** actually the rating was moderate not hard
 > **Claude:** *(calls `domain_foundry_correct`)* Corrected — and saved as a regression test.
 
 (A full copy-paste config is in [`claude_desktop_config.example.json`](./claude_desktop_config.example.json).
@@ -70,6 +77,7 @@ The same `command`/`args` block works in Cursor and other MCP clients.)
 ## Proven end-to-end
 
 `tests/test_mcp_e2e.py` launches this server over stdio exactly as a client does,
-then drives the full loop — **wizard → capture → query → correct → review →
-health** — asserting each step. This is the harness's MCP contract; it is part of
-CI and regenerates the tutorial's MCP proof snapshot.
+then drives the core loop — **wizard → capture → query → correct → review →
+health** — and asserts the Gate 1 tools are advertised. The full Gate 1
+conformance journey additionally exercises pack activation, export, and restart
+through the real stdio subprocess in `tests/conformance`.

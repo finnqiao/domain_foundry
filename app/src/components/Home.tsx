@@ -38,9 +38,7 @@ export function Home({ packs, onInstalled }: { packs: PackCard[]; onInstalled: (
         <div className="empty empty-hero">
           <p className="empty-title">No domains yet</p>
           <p className="empty-hint">
-            Describe what you want to track — starters and bakes, plant care, dives, a reading log — and
-            you get a schema, routing, and an app view. To get going right now, install one of the
-            example domains below.
+            Pick a starter below, or create your own from a sentence — no terminal required.
           </p>
           <CatalogGrid catalog={available} onInstall={install} busy={busy} />
           {err && <p className="error">{err}</p>}

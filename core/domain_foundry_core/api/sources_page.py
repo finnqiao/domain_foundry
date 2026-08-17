@@ -88,7 +88,8 @@ SOURCES_HTML = """<!doctype html>
       split = document.getElementById('split'), out = document.getElementById('out'),
       previewBtn = document.getElementById('preview'), commitBtn = document.getElementById('commit');
 
-  fetch('/api/packs').then(function(r){return r.json()}).then(function(d){
+  var auth = window.__DE_TOKEN__ ? {'Authorization':'Bearer '+window.__DE_TOKEN__} : {};
+  fetch('/api/packs', {headers:auth}).then(function(r){return r.json()}).then(function(d){
     (d.packs || []).forEach(function(p){
       var o = document.createElement('option'); o.value = p.name; o.textContent = p.title || p.name; only.appendChild(o);
     });
@@ -124,7 +125,7 @@ SOURCES_HTML = """<!doctype html>
   function call(url, committed){
     if(!path.value.trim()){ path.focus(); return; }
     out.innerHTML = '<div class="card"><span class="hint">Reading&hellip;</span></div>';
-    fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body())})
+    fetch(url, {method:'POST', headers:Object.assign({'Content-Type':'application/json'}, auth), body:JSON.stringify(body())})
       .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
       .then(function(rep){ render(rep, committed); commitBtn.disabled = committed; })
       .catch(function(e){ out.innerHTML = '<div class="card"><span class="hint">Couldn\\'t read that path ('+e.message+'). Check the folder exists.</span></div>'; });

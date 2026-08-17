@@ -2,8 +2,9 @@
 
 Each behavior is independently gated so it can ship dark until its contract
 test is green. Env vars accept 1/true/on/yes (case-insensitive) to enable and
-0/false/off/no to disable. UX defaults are ON — sensible for the scripted UX
-suite and for production once green. Depth alerts default OFF (opt-in).
+0/false/off/no to disable. UX behavior defaults OFF while the mesh remains
+experimental. Depth alerts also default OFF (opt-in). Tests that exercise the
+UX path enable the flags explicitly.
 """
 
 from __future__ import annotations
@@ -62,20 +63,20 @@ DEFAULT_DEPTH_ALERT_THRESHOLD = 50
 class ConciergeUXFlags:
     """Independent gates for stickiness / barge-in / not_mine / switch."""
 
-    stickiness: bool = True
-    barge_in: bool = True
-    not_mine: bool = True
-    switch: bool = True
+    stickiness: bool = False
+    barge_in: bool = False
+    not_mine: bool = False
+    switch: bool = False
     sticky_ttl_s: float = DEFAULT_STICKY_TTL_S
     barge_in_min_confidence: float = DEFAULT_BARGE_IN_MIN_CONF
 
     @classmethod
     def from_env(cls) -> ConciergeUXFlags:
         return cls(
-            stickiness=_env_bool(FLAG_STICKINESS, True),
-            barge_in=_env_bool(FLAG_BARGE_IN, True),
-            not_mine=_env_bool(FLAG_NOT_MINE, True),
-            switch=_env_bool(FLAG_SWITCH, True),
+            stickiness=_env_bool(FLAG_STICKINESS, False),
+            barge_in=_env_bool(FLAG_BARGE_IN, False),
+            not_mine=_env_bool(FLAG_NOT_MINE, False),
+            switch=_env_bool(FLAG_SWITCH, False),
             sticky_ttl_s=_env_float(FLAG_STICKY_TTL_S, DEFAULT_STICKY_TTL_S),
             barge_in_min_confidence=_env_float(
                 FLAG_BARGE_IN_MIN_CONF, DEFAULT_BARGE_IN_MIN_CONF

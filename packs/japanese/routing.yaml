@@ -4,6 +4,10 @@ rules:
     object: review_event
     operation: create
     confidence_boost: 0.15
+  - match: "quiz(?:zed)?\\b.{0,40}\\b(hard|good|easy|again)\\b"
+    object: review_event
+    operation: create
+    confidence_boost: 0.15
 
   # Grammar forms / patterns
   - match: "(文法|grammar|〜|〜る|〜た|particle|助詞|活用|conjugation|jlpt\\s*n[1-5].{0,20}grammar|\\bform\\b[:：])"

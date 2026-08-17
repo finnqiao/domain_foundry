@@ -6,4 +6,4 @@ author: "domain_foundry"
 license: MIT
 core_compat: ">=0.1,<2"
 interpretation: simple
-aliases: [plant, houseplants]
+aliases: [plant, houseplant, houseplants]

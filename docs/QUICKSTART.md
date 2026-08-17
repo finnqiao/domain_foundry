@@ -79,7 +79,13 @@ Non-interactive, for scripts and clean-machine installs:
 
 ```bash
 domain-foundry setup --provider anthropic --sota claude-opus-5 -y --no-probe
+# or: --provider deepseek / openrouter / openai / local / none
 ```
+
+DeepSeek is the cheapest path that still designs a passion (routine
+`deepseek-chat`, sota `deepseek-reasoner`). OpenRouter is one key for many
+models. Export `DEEPSEEK_API_KEY` or `OPENROUTER_API_KEY` and `setup` will see
+it.
 
 ## 3. Add a demonstration pack
 

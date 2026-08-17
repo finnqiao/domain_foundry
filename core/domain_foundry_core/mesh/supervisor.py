@@ -151,10 +151,16 @@ class Supervisor:
 
         return {
             "domain": domain,
-            "registered": True,
+            "registered": "running" if running else "config_only",
             "running": running,
             "launchd": "stubbed",
-            "note": "Expert child config registered; launchd install stubbed",
+            "note": (
+                "expert process is NOT running; launchd install is stubbed. "
+                "Config persisted so a supervise loop will include this domain."
+                if not running
+                else "expert process spawned under the current supervise loop; "
+                "launchd install is stubbed."
+            ),
         }
 
     def status(self) -> SupervisorStatus:

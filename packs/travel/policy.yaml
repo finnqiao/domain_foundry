@@ -5,3 +5,6 @@ defaults:
   - {operation: delete, action: review}
   - {operation: merge, action: review}
 fallback: unfiled_card
+ui_actions:
+  - {object_type: packing_item, operation: update, fields: [packed]}
+  - {object_type: booking, operation: update, fields: [status]}

@@ -17,8 +17,16 @@ from domain_foundry_core.corrections.intent import (
 from domain_foundry_core.interpret.fewshot import append_eval_case, rebuild_fewshot_bank
 from domain_foundry_core.packs.registry import PackRegistry
 from domain_foundry_core.paths import Workspace
+from domain_foundry_core.policy.evaluator import evaluate_policy
 from domain_foundry_core.routing.l1 import L1Matcher
 from domain_foundry_core.security.store import connect_rw, last_row_id
+
+
+def _values_match(left: Any, right: Any) -> bool:
+    try:
+        return float(left) == float(right)
+    except (TypeError, ValueError):
+        return str(left).strip().lower() == str(right).strip().lower()
 
 _AMEND_SCHEMA: dict[str, Any] = {
     "type": "object",
@@ -224,34 +232,62 @@ class CorrectionService:
                         "payload": json.loads(pending["payload_json"] or "{}"),
                     }
 
-            # most recent applied object
-            row = conn.execute(
+            rows = conn.execute(
                 """
                 SELECT * FROM canonical_object
                 WHERE status = 'active'
-                ORDER BY updated_at DESC LIMIT 1
+                ORDER BY updated_at DESC LIMIT 20
                 """
-            ).fetchone()
-            if row:
-                # try find entry via source_link
-                link = conn.execute(
-                    """
-                    SELECT source_id FROM source_link
-                    WHERE target_type = 'canonical_object' AND target_id = ?
-                      AND source_type = 'entry'
-                    ORDER BY id DESC LIMIT 1
-                    """,
-                    (row["uid"],),
-                ).fetchone()
+            ).fetchall()
+            if not rows:
+                return None
+
+            def _as_target(row: Any, link_id: str | None) -> dict[str, Any]:
                 return {
                     "object_uid": row["uid"],
                     "domain": row["domain"],
                     "object_type": row["object_type"],
-                    "entry_id": link["source_id"] if link else None,
+                    "entry_id": link_id,
                     "table_name": row["table_name"],
                     "row_id": row["row_id"],
                 }
-            return None
+
+            parsed = parse_correction_text(text) if text else None
+            wrong = (parsed.fields or {}).get("_wrong") if parsed else None
+            field_keys = [
+                key for key in (parsed.fields or {}) if not key.startswith("_")
+            ] if parsed else []
+            if wrong is not None and field_keys:
+                for row in rows:
+                    link = conn.execute(
+                        """
+                        SELECT source_id FROM source_link
+                        WHERE target_type = 'canonical_object' AND target_id = ?
+                          AND source_type = 'entry'
+                        ORDER BY id DESC LIMIT 1
+                        """,
+                        (row["uid"],),
+                    ).fetchone()
+                    candidate = _as_target(row, link["source_id"] if link else None)
+                    current = self._current_fields(candidate)
+                    for field_name in field_keys:
+                        value = current.get(field_name)
+                        if value is None:
+                            continue
+                        if _values_match(value, wrong):
+                            return candidate
+
+            row = rows[0]
+            link = conn.execute(
+                """
+                SELECT source_id FROM source_link
+                WHERE target_type = 'canonical_object' AND target_id = ?
+                  AND source_type = 'entry'
+                ORDER BY id DESC LIMIT 1
+                """,
+                (row["uid"],),
+            ).fetchone()
+            return _as_target(row, link["source_id"] if link else None)
         finally:
             conn.close()
 
@@ -609,6 +645,17 @@ class CorrectionService:
                 )
 
         ts = now_iso()
+        pack = self.registry.get(str(target["domain"]))
+        policy = evaluate_policy(
+            self.ws.ledger_db,
+            domain=str(target["domain"]),
+            operation="merge",
+            object_type=str(target["object_type"]),
+            channel=channel,
+            confidence=1.0,
+            pack=pack,
+        )
+        disposition = policy.action
         cr_id = self._insert_change_request(
             entry_id=target.get("entry_id"),
             domain=str(target["domain"]),
@@ -619,12 +666,41 @@ class CorrectionService:
                 "fields": {},
                 "merge_into_uid": merge_into_uid,
                 "span": text or "",
-                "disposition": "auto_apply",
+                "disposition": disposition,
             },
             channel=channel,
             now=ts,
         )
-        # merge is review by default in policy — force via engine for explicit merge API
+        if disposition in {"review", "confirm"}:
+            from domain_foundry_core.apply.pipeline import ApplyPipeline
+
+            approval_id = ApplyPipeline(
+                self.ws, registry=self.registry, executor=self.executor
+            )._ensure_approval(cr_id, domain=str(target["domain"]))
+            ce_id = self._write_correction_event(
+                entry_id=target.get("entry_id"),
+                target_kind="object",
+                target_id=str(target["object_uid"]),
+                reason_code="merge",
+                wrong_json={"uids": [target["object_uid"], merge_into_uid]},
+                right_json={"survivor": merge_into_uid},
+                change_request_id=None,
+                now=ts,
+            )
+            return CorrectionReceipt(
+                action="merge",
+                entry_id=target.get("entry_id"),
+                object_uid=merge_into_uid,
+                correction_event_id=ce_id,
+                change_request_id=cr_id,
+                applied=False,
+                details={
+                    "approval_id": approval_id,
+                    "survivor_uid": merge_into_uid,
+                    "policy": disposition,
+                },
+            )
+
         result = self.engine.apply_spec(
             OperationSpec(
                 domain=str(target["domain"]),

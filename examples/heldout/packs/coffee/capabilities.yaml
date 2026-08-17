@@ -1,0 +1,22 @@
+compatibility:
+  core: ">=0.1,<2"
+  capabilities:
+    derived_metrics: ">=1,<2"
+    media: ">=1,<2"
+    compare: ">=1,<2"
+capabilities:
+  derived_metrics:
+    version: 1
+    object: brew
+    metrics:
+      - {id: brew_ratio, label: "Brew ratio", expression: "water_g / coffee_g", fields: [water_g, coffee_g], precision: 2}
+      - {id: yield_delta, label: "Yield Δ", expression: "yield_g - previous.yield_g", fields: [yield_g], unit: grams, precision: 1}
+  media:
+    version: 1
+    galleries:
+      - {id: brew_photos, title: "Brew photos", object: brew, field: photos, source: capture_attachments, accept: [image/jpeg, image/png, image/webp]}
+  compare:
+    version: 1
+    comparisons:
+      - {id: brews, title: "Compare brews", object: brew, label_field: brew_name, metrics: [brew_ratio, yield_delta]}
+

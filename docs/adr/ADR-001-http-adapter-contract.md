@@ -1,6 +1,6 @@
 # ADR-001: HTTP adapter contract
 
-**Status:** Accepted  
+**Status:** Accepted — re-affirmed by [ADR-006](ADR-006-restore-http-write-seam.md) (2026-08-10) after the mesh-P0 implementation diverged
 **Date:** 2026-07-16
 
 ## Context

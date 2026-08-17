@@ -42,7 +42,11 @@ _SKIP_FIELDS = frozenset(
 
 
 def flatten_searchable_text(fields: dict[str, Any] | None) -> str:
-    """Flatten object fields into a single searchable blob."""
+    """Flatten object fields into a single searchable blob.
+
+    Field names are included so measure queries like "hydration" hit the
+    canonical row even when the numeric value alone would not.
+    """
     if not fields:
         return ""
     parts: list[str] = []
@@ -54,7 +58,8 @@ def flatten_searchable_text(fields: dict[str, Any] | None) -> str:
             continue
         if isinstance(value, (dict, list)):
             continue
-        parts.append(str(value))
+        # Prefer "hydration 75" over bare "75" so Ask/search can find by field.
+        parts.append(f"{key.replace('_', ' ')} {value}")
     return " ".join(parts)
 
 

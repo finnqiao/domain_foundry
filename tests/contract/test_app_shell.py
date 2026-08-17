@@ -1,18 +1,15 @@
-"""P5 app-shell acceptance walkthrough (API + data-contract level).
+"""App-shell acceptance walkthrough over the real HTTP contract (ADR-006).
 
-Scripted synthetic-data walkthrough that mirrors the P5 acceptance gate:
+Scripted synthetic-data walkthrough mirroring the P5 acceptance gate, now
+driven the way the SPA drives it — every mutation over ``client.post``:
 
     install two packs → capture from the web box → see it in
     timeline/search/stats → correct from the detail view → revision chain
     visible → review queue drains to zero → health panel green.
 
-Mesh P0: writes go through the embedded HarnessAPI; the FastAPI surface is
-read-only (SPA block views / query / health). POST write paths assert 410.
-
-This is the lightweight API+DOM contract test called for by the P5 gate; the
-DOM layer is covered by the SPA `tsc` typecheck + `vite build` (Lighthouse is
-documented as skipped in docs/PHASE_STATUS.md — it needs a headless-Chrome
-budget the CI box does not carry).
+The embedded ``HarnessAPI`` returned by ``_client`` is kept for setup and
+inspection only (e.g. reading canonical UIDs); anything a user can click goes
+over HTTP. The browser layer above this is app/e2e/activation.spec.ts.
 """
 
 from __future__ import annotations
@@ -25,7 +22,7 @@ from domain_foundry_core.security.store import connect_ro
 
 
 def _client(workspace) -> tuple[HarnessAPI, TestClient]:
-    """Writes via the embedded harness (mesh P0); reads via the HTTP app.
+    """HTTP app + its embedded harness (harness for setup/inspection only).
 
     Return the *app's* HarnessAPI so pack activation and captures share the
     same in-memory registry as the read endpoints (two HarnessAPI instances
@@ -51,18 +48,34 @@ def _first_uid(workspace, domain: str) -> tuple[str, str]:
     return str(row["uid"]), str(row["object_type"])
 
 
+def _uids(workspace, domain: str) -> list[str]:
+    conn = connect_ro(workspace.ledger_db)
+    try:
+        rows = conn.execute(
+            "SELECT uid FROM canonical_object "
+            "WHERE domain = ? AND status = 'active' ORDER BY created_at DESC",
+            (domain,),
+        ).fetchall()
+    finally:
+        conn.close()
+    return [str(row["uid"]) for row in rows]
+
+
 def test_home_starts_empty_then_lists_installed_domains(workspace):
-    api, client = _client(workspace)
+    _api, client = _client(workspace)
     # Empty state: no domains installed yet.
     assert client.get("/api/packs").json()["packs"] == []
     catalog = {c["name"] for c in client.get("/api/packs/catalog").json()["catalog"]}
     assert {"sourdough", "plants"} <= catalog
     assert "_template" not in catalog
 
-    # Install two packs in-process (HTTP activate is gone).
-    assert api.activate_pack("sourdough")["name"] == "sourdough"
-    assert api.activate_pack("plants")["name"] == "plants"
-    assert client.post("/api/packs/activate", json={"name": "sourdough"}).status_code == 410
+    # Install two packs exactly as the SPA does (POST /api/packs/activate).
+    r = client.post("/api/packs/activate", json={"name": "sourdough"})
+    assert r.status_code == 200
+    assert r.json()["name"] == "sourdough"
+    assert client.post("/api/packs/activate", json={"name": "plants"}).json()["name"] == "plants"
+    # Unknown bundled pack is a legible 404, not a stack trace.
+    assert client.post("/api/packs/activate", json={"name": "not-a-pack"}).status_code == 404
 
     cards = client.get("/api/packs").json()["packs"]
     names = {c["name"] for c in cards}
@@ -88,17 +101,19 @@ def test_quiz_stats_http_endpoint(workspace):
 
 
 def test_full_walkthrough(workspace):
-    api, client = _client(workspace)
-    api.activate_pack("sourdough")
-    api.activate_pack("plants")
+    _api, client = _client(workspace)
+    assert client.post("/api/packs/activate", json={"name": "sourdough"}).status_code == 200
+    assert client.post("/api/packs/activate", json={"name": "plants"}).status_code == 200
 
-    # 1. Capture in-process (web channel still recorded on the receipt).
-    cap = api.capture(
-        "baked a 75% hydration country loaf, bulk 5h, came out great",
-        channel="web",
+    # 1. Capture from the web box (POST /api/capture, channel=web).
+    r = client.post(
+        "/api/capture",
+        json={"text": "baked a 75% hydration country loaf, bulk 5h, came out great", "channel": "web"},
     )
-    assert cap.status == "applied"
-    assert any(s.domain == "sourdough" for s in cap.routed)
+    assert r.status_code == 200
+    cap = r.json()
+    assert cap["status"] == "applied"
+    assert any(s["domain"] == "sourdough" for s in cap["routed"])
 
     # 2. See it in the capture feed (HTTP read).
     feed = client.get("/api/query", params={"limit": 20}).json()["rows"]
@@ -134,9 +149,15 @@ def test_full_walkthrough(workspace):
     assert detail["capture"]["raw_text"].startswith("baked a 75%")
     assert detail["interpretations"]
 
-    corrected = api.correct(object_uid=uid, action="amend", fields={"hydration": 80})
+    # 4. Correct from the detail view (amend hydration 75 → 80) — over HTTP,
+    # exactly the CorrectionDialog payload.
+    r = client.post(
+        "/api/correct",
+        json={"object_uid": uid, "action": "amend", "fields": {"hydration": 80}, "channel": "web"},
+    )
+    assert r.status_code == 200
+    corrected = r.json()
     assert corrected["applied"] is True
-    assert client.post("/api/correct", json={"object_uid": uid, "action": "amend"}).status_code == 410
 
     # 5. Revision chain is visible in the detail view.
     detail2 = client.get(f"/api/objects/sourdough/{object_type}/{uid}").json()
@@ -156,54 +177,89 @@ def test_full_walkthrough(workspace):
 
 
 def test_review_queue_drains_to_zero(workspace):
-    api, client = _client(workspace)
-    api.activate_pack("sourdough")
+    _api, client = _client(workspace)
+    assert client.post("/api/packs/activate", json={"name": "sourdough"}).status_code == 200
 
-    # A merge operation is review-gated by policy, so it lands in the queue.
-    api.capture("started a rye starter today", channel="web")
-    api.capture("fed the wheat starter this morning", channel="web")
+    client.post("/api/capture", json={"text": "baked a 75% hydration country loaf, bulk 5h", "channel": "web"})
+    client.post("/api/capture", json={"text": "baked a 68% hydration seeded rye loaf, bulk 4h", "channel": "web"})
+    uids = _uids(workspace, "sourdough")
+    assert len(uids) >= 2
 
-    # Force two review items via delete captures (delete is review by default).
-    uid, object_type = _first_uid(workspace, "sourdough")
-    # Queue a review item by proposing a delete through capture-independent path:
-    # use the merge correction which is review-gated when not forced. Instead we
-    # assert the queue API + bulk-resolve contract directly against whatever is
-    # pending; if nothing is pending the drain is trivially zero.
+    # merge is review-gated by pack policy (packs/sourdough/policy.yaml) →
+    # a deterministic pending approval.
+    r = client.post(
+        "/api/correct",
+        json={"object_uid": uids[1], "action": "merge", "merge_into_uid": uids[0], "channel": "web"},
+    )
+    assert r.status_code == 200
+
     stats = client.get("/api/review/stats").json()
-    pending_before = stats["pending"]
+    assert stats["pending"] >= 1
 
     items = client.get("/api/review", params={"include_diff": True}).json()["items"]
-    assert len(items) == pending_before
-    if items:
-        ids = [it["approval_id"] for it in items]
-        # Each item carries a proposed-vs-canonical diff for the queue UI.
-        assert "diff" in items[0]
-        res = api.review_resolve_bulk(ids, decision="approve")
-        assert res["count"] == len(ids)
-        assert client.post(
-            "/api/review/bulk-resolve",
-            json={"approval_ids": ids, "decision": "approve"},
-        ).status_code == 410
+    assert len(items) == stats["pending"]
+    assert "diff" in items[0]
+    ids = [it["approval_id"] for it in items]
+    # The SPA's decision vocabulary ("approve", not "approved") is
+    # normalized at the HTTP boundary.
+    res = client.post(
+        "/api/review/bulk-resolve",
+        json={"approval_ids": ids, "decision": "approve"},
+    )
+    assert res.status_code == 200
+    assert res.json()["count"] == len(ids)
 
     after = client.get("/api/review/stats").json()
     assert after["pending"] == 0
 
 
-def test_move_and_merge_corrections_no_privileged_write(workspace):
-    api, client = _client(workspace)
-    api.activate_pack("sourdough")
-    api.activate_pack("plants")
+def test_single_review_resolution_normalizes_spa_decision(workspace):
+    """The SPA's singular approve action reaches the executor vocabulary."""
+    _api, client = _client(workspace)
+    assert client.post("/api/packs/activate", json={"name": "sourdough"}).status_code == 200
+    assert client.post(
+        "/api/capture",
+        json={"text": "baked a 75% hydration country loaf, bulk 5h", "channel": "web"},
+    ).status_code == 200
+    assert client.post(
+        "/api/capture",
+        json={"text": "baked a 68% hydration seeded rye loaf, bulk 4h", "channel": "web"},
+    ).status_code == 200
+    uids = _uids(workspace, "sourdough")
+    queued = client.post(
+        "/api/correct",
+        json={
+            "object_uid": uids[1],
+            "action": "merge",
+            "merge_into_uid": uids[0],
+            "channel": "web",
+        },
+    )
+    assert queued.status_code == 200
+    item = client.get("/api/review", params={"include_diff": True}).json()["items"][0]
 
-    api.capture("watered the monstera, soil was dry", channel="web")
-    uid, object_type = _first_uid(workspace, "plants")
+    resolved = client.post(
+        f"/api/review/{item['approval_id']}/resolve",
+        json={"decision": "approve"},
+    )
+    assert resolved.status_code == 200
+    assert resolved.json()["applied"] is True
 
-    # move correction to another domain goes through correct() (no raw write).
-    moved = api.correct(object_uid=uid, action="move", target_domain="sourdough")
+
+def test_move_and_merge_corrections_over_http(workspace):
+    _api, client = _client(workspace)
+    client.post("/api/packs/activate", json={"name": "sourdough"})
+    client.post("/api/packs/activate", json={"name": "plants"})
+
+    client.post("/api/capture", json={"text": "watered the monstera, soil was dry", "channel": "web"})
+    uid, _object_type = _first_uid(workspace, "plants")
+
+    r = client.post(
+        "/api/correct",
+        json={"object_uid": uid, "action": "move", "target_domain": "sourdough", "channel": "web"},
+    )
+    assert r.status_code == 200
+    moved = r.json()
     assert moved["action"] == "move"
     # Either applied or a legible error — never a silent raw row update.
     assert "applied" in moved
-    # HTTP write surface remains gone.
-    assert client.post(
-        "/api/correct",
-        json={"object_uid": uid, "action": "move", "target_domain": "sourdough"},
-    ).status_code == 410

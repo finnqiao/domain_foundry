@@ -12,6 +12,7 @@
       "wizard_reply(skip)",
       "capture",
       "query",
+      "ask",
       "correct",
       "review_list",
       "health"

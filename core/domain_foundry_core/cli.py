@@ -21,12 +21,47 @@ app = typer.Typer(
 )
 pack_app = typer.Typer(help="Manage Domain Packs")
 app.add_typer(pack_app, name="pack")
-mesh_app = typer.Typer(help="Domain mesh (Concierge / Experts / Supervisor)")
+mesh_app = typer.Typer(
+    help="[EXPERIMENTAL] Domain mesh (Concierge / Experts / Supervisor)"
+)
 app.add_typer(mesh_app, name="mesh")
+
+
+@mesh_app.callback()
+def mesh_main() -> None:
+    """Domain mesh commands — EXPERIMENTAL.
+
+    The durable substrate (journal, inboxes, outbound, DLQ) is tested, but
+    expert processes do not run under launchd (`mesh install` is stubbed) and
+    registration persists config only. Behavior flags are default-conservative:
+    see core/domain_foundry_core/mesh/flags.py.
+    """
+    typer.secho(
+        "EXPERIMENTAL: mesh registration is config-only — expert processes are "
+        "not running and launchd install is stubbed.",
+        err=True,
+        fg=typer.colors.YELLOW,
+    )
 
 
 def _home(home: Path | None) -> Path:
     return (home or default_home()).expanduser().resolve()
+
+
+def _drain_quietly(api: HarnessAPI) -> None:
+    """Best-effort projection drain so CLI writes show up in the app immediately."""
+    try:
+        api.drain_projections()
+    except Exception:  # noqa: BLE001 — canonical commit already durable
+        pass
+
+
+def _heldout_suite_path() -> Path:
+    """Locate the wizard acceptance corpus in a checkout or installed wheel."""
+    relative = Path("examples") / "heldout" / "wizard_hobby_suite.jsonl"
+    checkout = Path(__file__).resolve().parents[2] / relative
+    packaged = Path(__file__).resolve().parent / relative
+    return checkout if checkout.is_file() else packaged
 
 
 @app.callback()
@@ -318,14 +353,22 @@ def capture_cmd(
     text: str = typer.Argument(..., help="Capture text"),
     channel: str = typer.Option("cli", "--channel", "-c"),
     source_ref: str | None = typer.Option(None, "--source-ref", "-s"),
+    as_json: bool = typer.Option(False, "--json", help="Emit machine JSON instead of a plain receipt"),
 ) -> None:
-    """Capture text into the ledger (capture-first, then route)."""
+    """Save text first, then file it into a passion when confident."""
+    from domain_foundry_core.receipts import describe_capture_receipt
+
     api = HarnessAPI(ctx.obj["home"])
     receipt = api.capture(text, channel=channel, source_ref=source_ref)
+    _drain_quietly(api)
     payload = receipt.model_dump()
     if payload.get("llm_error") is None:
         payload.pop("llm_error", None)
-    typer.echo(json.dumps(payload, indent=2))
+    if as_json:
+        typer.echo(json.dumps(payload, indent=2))
+    else:
+        titles = {p.name: p.manifest.title for p in api.packs.list()}
+        typer.echo(describe_capture_receipt(receipt, pack_titles=titles))
     if receipt.llm_error:
         typer.secho(
             f"warning: model routing failed ({receipt.llm_error}) — captured with "
@@ -530,6 +573,23 @@ def query_cmd(
     typer.echo(json.dumps([r.model_dump() for r in rows], indent=2))
 
 
+@app.command("ask")
+def ask_cmd(
+    ctx: typer.Context,
+    question: str = typer.Argument(..., help="A question about what you've logged"),
+    domain: str | None = typer.Option(None, "--domain", "-d"),
+    limit: int = typer.Option(20, "--limit", "-n"),
+) -> None:
+    """Ask a question about your captured records (read-only)."""
+    api = HarnessAPI(ctx.obj["home"])
+    try:
+        payload = api.ask(question, domain=domain, limit=limit)
+    except ValueError as exc:
+        typer.secho(str(exc), err=True, fg=typer.colors.RED)
+        raise typer.Exit(code=1) from exc
+    typer.echo(json.dumps(payload, indent=2, ensure_ascii=False))
+
+
 @app.command("search")
 def search_cmd(
     ctx: typer.Context,
@@ -549,6 +609,36 @@ def search_cmd(
     typer.echo(json.dumps(result, indent=2))
 
 
+@app.command("export")
+def export_cmd(
+    ctx: typer.Context,
+    domain: str | None = typer.Option(None, "--domain", "-d"),
+    out: Path | None = typer.Option(
+        None, "--out", "-o", help="Write JSON to a file (default: stdout)"
+    ),
+    json_output: bool = typer.Option(
+        False,
+        "--json",
+        help="Emit compact JSON (export is JSON by default as well).",
+    ),
+) -> None:
+    """Export your passion data as portable JSON (secrets-free)."""
+    api = HarnessAPI(ctx.obj["home"])
+    try:
+        payload = api.export_data(domain=domain)
+    except ValueError as exc:
+        typer.secho(str(exc), err=True, fg=typer.colors.RED)
+        raise typer.Exit(code=1) from exc
+    text = json.dumps(payload, ensure_ascii=False, indent=None if json_output else 2)
+    if out is not None:
+        out = out.expanduser()
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(text + "\n", encoding="utf-8")
+        typer.echo(json.dumps({"wrote": str(out), "counts": payload["counts"]}))
+    else:
+        typer.echo(text)
+
+
 @app.command("health")
 def health_cmd(ctx: typer.Context) -> None:
     """Integrity + FK checks and entry counts."""
@@ -556,6 +646,198 @@ def health_cmd(ctx: typer.Context) -> None:
     report = api.health()
     typer.echo(json.dumps(report.model_dump(), indent=2))
     raise typer.Exit(code=0 if report.ok else 1)
+
+
+@app.command("doctor")
+def doctor_cmd(
+    ctx: typer.Context,
+    port: int = typer.Option(8787, "--port", help="Port to check for availability"),
+    json_out: bool = typer.Option(False, "--json", help="Machine-readable output"),
+) -> None:
+    """One-glance install health: PASS/FAIL table + non-zero on any FAIL."""
+    import socket
+
+    from domain_foundry_core.api.app import _app_dist
+    from domain_foundry_core.onboarding import resolved_status
+    from domain_foundry_core.packs.loader import bundled_packs_root
+    from domain_foundry_core.paths import Workspace
+
+    home: Path = ctx.obj["home"]
+    workspace = Workspace(home)
+    checks: list[dict[str, str]] = []
+
+    def add_check(name: str, status: str, detail: str) -> None:
+        checks.append({"name": name, "status": status, "detail": detail})
+
+    layout_paths = (
+        workspace.db_dir,
+        workspace.packs_dir,
+        workspace.attachments_dir,
+        workspace.vault_dir,
+        workspace.blocks_dir,
+    )
+    layout_ok = workspace.home.is_dir() and all(path.is_dir() for path in layout_paths)
+    if layout_ok:
+        add_check("Home layout", "PASS", str(workspace.home))
+    else:
+        missing = [
+            str(path.relative_to(home))
+            for path in layout_paths
+            if not path.is_dir()
+        ]
+        if not workspace.home.is_dir():
+            missing.insert(0, str(workspace.home))
+        add_check(
+            "Home layout",
+            "FAIL",
+            f"missing {', '.join(missing)}; run domain-foundry init",
+        )
+
+    initialized = (
+        layout_ok
+        and workspace.ledger_db.is_file()
+        and workspace.domains_db.is_file()
+    )
+    api: HarnessAPI | None = None
+    api_error: str | None = None
+    if initialized:
+        try:
+            api = HarnessAPI(home)
+        except Exception as exc:  # noqa: BLE001 - doctor reports broken installs
+            api_error = f"{type(exc).__name__}: {exc}"
+
+    if api is None:
+        detail = "run domain-foundry init"
+        if api_error:
+            detail = f"{api_error}; run domain-foundry init"
+        add_check("Database integrity", "FAIL", detail)
+    else:
+        try:
+            report = api.health()
+        except Exception as exc:  # noqa: BLE001 - doctor reports broken installs
+            add_check("Database integrity", "FAIL", f"{type(exc).__name__}: {exc}")
+        else:
+            if not report.ok:
+                detail = (
+                    f"ledger={report.ledger.integrity}, "
+                    f"domains={report.domains.integrity}"
+                )
+                add_check("Database integrity", "FAIL", detail)
+            elif report.failed_change_requests:
+                detail = "; ".join(report.warnings) or (
+                    f"{report.failed_change_requests} change request(s) failed to apply"
+                )
+                add_check("Database integrity", "WARN", detail)
+            else:
+                add_check("Database integrity", "PASS", "ledger and domains are healthy")
+
+    try:
+        bundled_root = bundled_packs_root()
+        bundled = sorted(
+            path
+            for path in bundled_root.iterdir()
+            if path.is_dir()
+            and path.name != "_template"
+            and (path / "pack.yaml").is_file()
+        )
+    except OSError:
+        bundled = []
+
+    if api is None:
+        if bundled:
+            add_check(
+                "Packs valid",
+                "WARN",
+                f"{len(bundled)} bundled pack(s) available; workspace is not initialized",
+            )
+        else:
+            add_check("Packs valid", "FAIL", "no installed or bundled packs found")
+    else:
+        try:
+            pack_errors = api.pack_validate(None)
+            installed = api.pack_list()
+        except Exception as exc:  # noqa: BLE001 - doctor reports broken installs
+            add_check("Packs valid", "FAIL", f"{type(exc).__name__}: {exc}")
+        else:
+            if pack_errors:
+                add_check("Packs valid", "FAIL", "; ".join(pack_errors))
+            elif installed:
+                add_check(
+                    "Packs valid",
+                    "PASS",
+                    f"{len(installed)} installed pack(s) validate",
+                )
+            elif bundled:
+                add_check(
+                    "Packs valid",
+                    "PASS",
+                    f"{len(bundled)} bundled pack(s) available",
+                )
+            else:
+                add_check("Packs valid", "FAIL", "no installed or bundled packs found")
+
+    app_index = _app_dist() / "index.html"
+    if app_index.is_file():
+        add_check("Web app present", "PASS", str(app_index))
+    else:
+        add_check(
+            "Web app present",
+            "FAIL",
+            "serve will return JSON — reinstall from a staged wheel",
+        )
+
+    try:
+        provider = resolved_status(home)
+        mode = str(provider.get("mode") or "unset")
+        provider_name = str(provider.get("provider") or "none")
+        routine_info = provider.get("routine")
+        sota_info = provider.get("sota")
+        routine = isinstance(routine_info, dict) and bool(routine_info.get("live"))
+        sota = isinstance(sota_info, dict) and bool(sota_info.get("live"))
+        detail = (
+            f"provider={provider_name}, mode={mode}, "
+            f"routine.live={routine}, sota.live={sota}"
+        )
+        if mode == "live" and not (routine or sota):
+            add_check("Providers", "FAIL", f"{detail}; no configured tier is live")
+        else:
+            add_check("Providers", "INFO", detail)
+    except Exception as exc:  # noqa: BLE001 - doctor reports broken config
+        add_check("Providers", "FAIL", f"{type(exc).__name__}: {exc}")
+
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+            probe.bind(("127.0.0.1", port))
+    except (OSError, OverflowError, ValueError) as exc:
+        add_check(
+            "Port availability",
+            "FAIL",
+            f"port {port} unavailable — is serve already running? ({exc})",
+        )
+    else:
+        add_check("Port availability", "PASS", f"127.0.0.1:{port} is available")
+
+    suite = _heldout_suite_path()
+    if suite.is_file():
+        add_check("Held-out suite", "PASS", str(suite))
+    else:
+        add_check(
+            "Held-out suite",
+            "FAIL",
+            f"missing {suite}; wizard acceptance cannot run",
+        )
+
+    ok = not any(check["status"] == "FAIL" for check in checks)
+    if json_out:
+        typer.echo(json.dumps({"checks": checks, "ok": ok}, indent=2))
+    else:
+        typer.echo(f"{'check':<22} {'status':<5} detail")
+        for check in checks:
+            typer.echo(
+                f"{check['name']:<22} {check['status']:<5} {check['detail']}"
+            )
+        typer.echo(f"{'overall':<22} {'PASS' if ok else 'FAIL'}")
+    raise typer.Exit(code=0 if ok else 1)
 
 
 @app.command("serve")
@@ -567,7 +849,7 @@ def serve_cmd(
         None, "--token", envvar="DOMAIN_FOUNDRY_API_TOKEN"
     ),
 ) -> None:
-    """Run local FastAPI daemon (API + future SPA)."""
+    """Run the local app and API (http://127.0.0.1:8787)."""
     run_server(ctx.obj["home"], host=host, port=port, api_token=token)
 
 
@@ -642,6 +924,31 @@ def eval_main(
         raise typer.Exit(code=1)
 
 
+@eval_app.command("ask")
+def eval_ask_cmd(
+    ctx: typer.Context,
+    cases: Path | None = typer.Option(
+        None, "--cases", help="JSONL Ask cases (default: synthetic Ask set)"
+    ),
+    min_accuracy: float = typer.Option(0.9, "--min-accuracy"),
+    live_llm: bool = typer.Option(
+        False, "--live-llm", help="Re-record Ask cassettes against the live model"
+    ),
+) -> None:
+    """Replay the grounded, read-only Ask corpus."""
+    from domain_foundry_core.evals.ask import default_ask_cases_path, run_ask_eval
+
+    path = cases or default_ask_cases_path()
+    report = run_ask_eval(
+        path,
+        live_llm=live_llm,
+        cassette_dir=Path(ctx.obj["home"]) / "cassettes",
+    )
+    typer.echo(json.dumps(report, indent=2))
+    if report["accuracy"] < min_accuracy:
+        raise typer.Exit(code=1)
+
+
 @eval_app.command("backfill")
 def eval_backfill_cmd(
     ctx: typer.Context,
@@ -680,6 +987,7 @@ def correct_cmd(
     ),
     merge_into: str | None = typer.Option(None, "--merge-into"),
     domain: str | None = typer.Option(None, "--domain", help="Target domain for move"),
+    as_json: bool = typer.Option(False, "--json", help="Emit machine JSON"),
 ) -> None:
     """Apply a one-message correction (NL or explicit)."""
     api = HarnessAPI(ctx.obj["home"])
@@ -691,7 +999,14 @@ def correct_cmd(
         merge_into_uid=merge_into,
         target_domain=domain,
     )
-    typer.echo(json.dumps(receipt, indent=2))
+    _drain_quietly(api)
+    if as_json:
+        typer.echo(json.dumps(receipt, indent=2))
+    else:
+        if receipt.get("error"):
+            typer.echo(f"Couldn't apply that fix: {receipt['error']}")
+        else:
+            typer.echo(receipt.get("summary") or receipt.get("message") or "Fixed.")
     if receipt.get("error"):
         raise typer.Exit(code=1)
 
@@ -853,6 +1168,127 @@ def pack_add_cmd(
     typer.echo(json.dumps(info, indent=2))
 
 
+def _pack_error_detail(exc: Exception) -> str:
+    if isinstance(exc, KeyError) and exc.args:
+        return str(exc.args[0])
+    return str(exc)
+
+
+def _emit_pack_lifecycle(operation: object, *, as_json: bool = True) -> None:
+    from domain_foundry_core.receipts import pack_install_summary
+
+    try:
+        result = operation()  # type: ignore[operator]
+    except (FileExistsError, FileNotFoundError, KeyError, ValueError) as exc:
+        typer.secho(_pack_error_detail(exc), err=True, fg=typer.colors.RED)
+        raise typer.Exit(code=2) from exc
+    if isinstance(result, dict) and result.get("expert") is not None:
+        # Hobby install receipts stay quiet about mesh stubs.
+        payload = {**result}
+        payload.pop("expert", None)
+        if as_json and payload.get("status") == "activated":
+            typer.echo(json.dumps(pack_install_summary(payload), indent=2, default=str))
+            return
+        typer.echo(json.dumps(payload, indent=2, default=str))
+        return
+    typer.echo(json.dumps(result, indent=2, default=str))
+
+
+@pack_app.command("inspect")
+def pack_inspect_cmd(
+    ctx: typer.Context,
+    target: str = typer.Argument(..., help="Pack directory or installed pack name"),
+) -> None:
+    api = HarnessAPI(ctx.obj["home"])
+    _emit_pack_lifecycle(lambda: api.pack_inspect(target))
+
+
+@pack_app.command("preview")
+def pack_preview_cmd(
+    ctx: typer.Context,
+    src: str = typer.Argument(..., help="Pack directory or bundled pack name"),
+) -> None:
+    api = HarnessAPI(ctx.obj["home"])
+    _emit_pack_lifecycle(lambda: api.pack_preview(_resolve_pack_source(src)))
+
+
+@pack_app.command("install")
+def pack_install_cmd(
+    ctx: typer.Context,
+    src: str = typer.Argument(..., help="Pack directory or bundled pack name"),
+    force: bool = typer.Option(False, "--force", help="Replace an installed pack explicitly"),
+) -> None:
+    api = HarnessAPI(ctx.obj["home"])
+    _emit_pack_lifecycle(lambda: api.pack_install(_resolve_pack_source(src), force=force))
+
+
+@pack_app.command("activate")
+def pack_activate_cmd(
+    ctx: typer.Context,
+    name: str = typer.Argument(..., help="Installed pack name or alias"),
+) -> None:
+    api = HarnessAPI(ctx.obj["home"])
+    _emit_pack_lifecycle(lambda: api.pack_activate(name))
+
+
+@pack_app.command("upgrade")
+def pack_upgrade_cmd(
+    ctx: typer.Context,
+    src: str = typer.Argument(..., help="Updated pack directory or bundled pack name"),
+) -> None:
+    api = HarnessAPI(ctx.obj["home"])
+    _emit_pack_lifecycle(lambda: api.pack_upgrade(_resolve_pack_source(src)))
+
+
+@pack_app.command("rollback")
+def pack_rollback_cmd(
+    ctx: typer.Context,
+    name: str = typer.Argument(..., help="Installed pack name or alias"),
+    backup: Path | None = typer.Option(None, "--backup", help="Specific pack backup directory"),
+) -> None:
+    api = HarnessAPI(ctx.obj["home"])
+    _emit_pack_lifecycle(lambda: api.pack_rollback(name, backup))
+
+
+@pack_app.command("export")
+def pack_export_cmd(
+    ctx: typer.Context,
+    name: str = typer.Argument(..., help="Installed pack name or alias"),
+    destination: Path | None = typer.Argument(
+        None, help="New destination directory (required)"
+    ),
+    destination_option: Path | None = typer.Option(
+        None, "--destination", "-d", help="New destination directory (required)"
+    ),
+) -> None:
+    if destination is not None and destination_option is not None:
+        typer.secho(
+            "provide the export destination once, either as an argument or --destination",
+            err=True,
+            fg=typer.colors.RED,
+        )
+        raise typer.Exit(code=2)
+    target = destination or destination_option
+    if target is None:
+        typer.secho(
+            "export destination is required; pass it as an argument or --destination",
+            err=True,
+            fg=typer.colors.RED,
+        )
+        raise typer.Exit(code=2)
+    api = HarnessAPI(ctx.obj["home"])
+    _emit_pack_lifecycle(lambda: api.pack_export(name, target))
+
+
+@pack_app.command("uninstall")
+def pack_uninstall_cmd(
+    ctx: typer.Context,
+    name: str = typer.Argument(..., help="Installed pack name or alias (explicitly required)"),
+) -> None:
+    api = HarnessAPI(ctx.obj["home"])
+    _emit_pack_lifecycle(lambda: api.pack_uninstall(name))
+
+
 def _resolve_pack_source(src: str) -> Path:
     """Accept a path *or* a bundled pack name.
 
@@ -895,14 +1331,14 @@ def new_domain_cmd(
     ctx: typer.Context,
     goal: str = typer.Argument(..., help="Plain-language goal, e.g. 'track my sourdough journey'"),
     reply: list[str] = typer.Option(
-        [], "--reply", "-r", help="Scripted wizard replies (repeatable): interview answers, sample captures, edits"
+        [], "--reply", "-r", help="Scripted wizard replies (repeatable): idea pick, skip, sample captures, edits"
     ),
     test_drive: int = typer.Option(5, "--test-drive", help="Test-drive capture budget"),
 ) -> None:
-    """Guided domain creation (plan §6). Prints each wizard turn as JSON.
+    """Guided domain creation. First turn is an idea-atlas neighborhood.
 
-    With no --reply, prints the proposal + interview questions and pauses. Pass
-    --reply 'skip' to accept defaults and generate, then more --reply values to
+    With no --reply, prints the neighborhood and pauses. Pass --reply 'skip'
+    (or an idea name) to compile/install, then more --reply values to
     test-drive or harden the domain.
     """
     api = HarnessAPI(ctx.obj["home"])
@@ -916,6 +1352,30 @@ def new_domain_cmd(
 
 wizard_app = typer.Typer(help="Resume / drive domain-creation wizard sessions")
 app.add_typer(wizard_app, name="wizard")
+
+atlas_app = typer.Typer(help="Browse and lint the idea atlas")
+app.add_typer(atlas_app, name="atlas")
+
+
+@atlas_app.command("search")
+def atlas_search_cmd(
+    ctx: typer.Context,
+    goal: str = typer.Argument(..., help="A topic, practice, or app idea in plain language"),
+    cursor: str | None = typer.Option(None, "--cursor", help="Stay at this atlas node id"),
+) -> None:
+    """Print the matched neighborhood (refine / expand / ideas)."""
+    api = HarnessAPI(ctx.obj["home"])
+    typer.echo(json.dumps(api.atlas_search(goal, cursor_id=cursor), indent=2, ensure_ascii=False))
+
+
+@atlas_app.command("validate")
+def atlas_validate_cmd(ctx: typer.Context) -> None:
+    """Lint shipped atlas YAML plus ~/.domain_foundry/atlas overlay."""
+    api = HarnessAPI(ctx.obj["home"])
+    report = api.atlas_validate()
+    typer.echo(json.dumps(report, indent=2, ensure_ascii=False))
+    if report.get("errors"):
+        raise typer.Exit(code=1)
 
 
 @wizard_app.command("reply")

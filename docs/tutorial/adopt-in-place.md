@@ -193,11 +193,11 @@ each note would land (it writes nothing), then **Pull in** when it looks right.
 
 It calls the local `POST /api/ingest/preview` (read-only) and `POST /api/ingest`
 endpoints — the same non-destructive, idempotent engine as the CLI, so previews
-and re-runs behave identically. (A standalone `/sources` page is also served, for
-when the built app isn't available.)
+and re-runs behave identically. (A standalone `/sources` page is also served for
+older installs; the in-app path is **Settings → Sources**.)
 
 ## On the roadmap
 
 A one-click "watch this folder" toggle in the app (the CLI `--watch` above already
-does it), and per-source scheduling. The CLI, the endpoints, and the in-app panel
-all run on the one `HarnessAPI.ingest` engine today.
+does it), and per-source scheduling. The CLI, the endpoints, and Settings → Sources
+all share the same ingest engine today.

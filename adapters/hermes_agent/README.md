@@ -1,17 +1,25 @@
 # hermes-agent adapter (P8)
 
-A thin hermes-agent **plugin** that maps the harness runtime surface onto a
-running `domain-foundry serve` over HTTP:
+A hermes-agent **plugin** that maps the harness runtime surface onto the
+canonical `domain-foundry serve` HTTP contract, with a conformance-tested
+in-process embedding available when the host does not need a network hop:
 
-| Tool | HarnessAPI endpoint |
+| Tool / client method | HarnessAPI endpoint |
 |---|---|
 | `domain_foundry_capture` | `POST /api/capture` |
 | `domain_foundry_query` | `GET /api/query` |
+| `domain_foundry_ask` | `POST /api/ask` |
 | `domain_foundry_correct` | `POST /api/correct` |
 | `domain_foundry_review_list` | `GET /api/review` |
 | `domain_foundry_review_resolve` | `POST /api/review/{id}/resolve` |
-| `domain_foundry_new_domain` | `POST /api/wizard` |
+| `domain_foundry_new_domain` | `POST /api/wizard` (atlas neighborhood, not an install) |
 | `domain_foundry_wizard_reply` | `POST /api/wizard/{id}/reply` |
+| `domain_foundry_atlas_search` | `POST /api/atlas/search` |
+| `domain_foundry_inspect_pack` | `GET /api/packs/{name}/inspect` |
+| `domain_foundry_suggest` | `GET /api/wizard/{domain}/suggest` |
+| `domain_foundry_apply_pack_edit` | `POST /api/packs/{name}/edit` |
+| `DomainExpertClient.activate_pack` | `POST /api/packs/activate` |
+| `DomainExpertClient.export` | `GET /api/export` |
 
 It ships as `plugin.yaml` + a `register(ctx)` entry point and publishes via the
 `hermes_agent.plugins` pip entry-point group. The capture-first behavioral

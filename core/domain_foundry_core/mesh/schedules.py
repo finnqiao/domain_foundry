@@ -141,6 +141,37 @@ class ScheduleRunStore:
         finally:
             conn.close()
 
+    def status(self, domain: str, schedule_id: str) -> str:
+        conn = self._connect()
+        try:
+            row = conn.execute(
+                "SELECT status FROM schedule_control WHERE domain = ? AND schedule_id = ?",
+                (domain, schedule_id),
+            ).fetchone()
+            return str(row["status"]) if row else "active"
+        finally:
+            conn.close()
+
+    def set_status(self, domain: str, schedule_id: str, status: str) -> str:
+        if status not in {"active", "paused", "revoked"}:
+            raise ValueError("schedule status must be active, paused, or revoked")
+        ts = now_iso()
+        conn = self._connect()
+        try:
+            conn.execute(
+                """
+                INSERT INTO schedule_control (domain, schedule_id, status, updated_at)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(domain, schedule_id) DO UPDATE SET
+                    status = excluded.status, updated_at = excluded.updated_at
+                """,
+                (domain, schedule_id, status, ts),
+            )
+            conn.commit()
+            return status
+        finally:
+            conn.close()
+
     def ensure(
         self, domain: str, schedule_id: str, *, next_due_at: str | None = None
     ) -> ScheduleRun:
@@ -325,6 +356,18 @@ class ScheduleEvaluator:
         next_due = _iso(window.next_window_start)
         # Ensure a row exists so operators can inspect next_due even before first fire.
         self.store.ensure(domain, spec.id, next_due_at=next_due)
+
+        control_status = self.store.status(domain, spec.id)
+        if control_status != "active":
+            return ScheduleFireResult(
+                domain=domain,
+                schedule_id=spec.id,
+                fired=False,
+                skipped_reason=control_status,
+                window_id=window.window_id,
+                next_due_at=next_due,
+                result={"status": control_status},
+            )
 
         if _as_utc(at) < window.window_start:
             return ScheduleFireResult(

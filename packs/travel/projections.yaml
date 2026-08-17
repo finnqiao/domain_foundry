@@ -1,10 +1,19 @@
 app:
   icon: "🧭"
+  accent: "#2e6f95"
   views:
     - {id: trips, title: "Trips", block: list, object: trip, config: {group_by: status}}
     - {id: timeline, title: "Timeline", block: timeline, object: timeline_item, config: {date_field: scheduled_at}}
-    - {id: plan, title: "Plan", block: planner, object: timeline_item, config: {date_field: day, status_field: status}}
+    - {id: plan, title: "Plan", block: planner, object: timeline_item, config: {date_field: day, status_field: status, group_by: day}}
     - {id: bookings, title: "Bookings", block: list, object: booking, config: {group_by: status}}
+    - id: packing
+      title: "Packing"
+      block: list
+      object: packing_item
+      config:
+        group_by: category
+        actions:
+          - {id: toggle-packed, label: "Packed", operation: update, fields: [packed], field: packed}
     - {id: events, title: "Events", block: history, object: event_log, config: {date_field: noted_at, period: day}}
     - {id: find, title: "Find", block: search, objects: [timeline_item, booking, event_log], config: {facets: [item_type, status, booking_type, event_type]}}
     - {id: history, title: "History", block: history, object: timeline_item, config: {date_field: scheduled_at, period: day}}

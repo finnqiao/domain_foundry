@@ -59,6 +59,7 @@ class TelegramBridge:
             self.api.init()
         # None/empty = open (single-user machine). A set = allowlist (private).
         self.allowed_chat_ids = allowed_chat_ids or set()
+        self._wizard: dict[int, str] = {}
 
     # ------------------------------------------------------------------ routing
     def handle_update(self, update: dict[str, Any]) -> dict[str, Any] | None:
@@ -74,17 +75,19 @@ class TelegramBridge:
             return {"chat_id": chat_id, "text": "🔒 This bot is private."}
 
         source_ref = f"telegram:{chat_id}:{message.get('message_id')}"
-        reply = self._dispatch(text, source_ref=source_ref)
+        reply = self._dispatch(text, source_ref=source_ref, chat_id=int(chat_id))
         return {"chat_id": chat_id, "text": reply}
 
-    def _dispatch(self, text: str, *, source_ref: str) -> str:
+    def _dispatch(self, text: str, *, source_ref: str, chat_id: int) -> str:
         if text.startswith("/"):
-            return self._command(text)
+            return self._command(text, chat_id=chat_id)
+        if chat_id in self._wizard:
+            return self._wizard_continue(chat_id, text)
         if _CORRECTION_RE.search(text):
             return self._correct(text)
         return self._capture(text, source_ref=source_ref)
 
-    def _command(self, text: str) -> str:
+    def _command(self, text: str, *, chat_id: int) -> str:
         cmd, _, rest = text.partition(" ")
         cmd = cmd.lstrip("/").lower()
         rest = rest.strip()
@@ -93,7 +96,7 @@ class TelegramBridge:
         if cmd == "new":
             if not rest:
                 return "Tell me what to track, e.g. `/new track my coffee brews`"
-            return self._new_domain(rest)
+            return self._new_domain(rest, chat_id=chat_id)
         if cmd == "query":
             return self._query(rest or None)
         if cmd == "review":
@@ -125,14 +128,27 @@ class TelegramBridge:
             return f"⚠️ Couldn't apply that correction: {result['error']}"
         return "✏️ Corrected — and saved as a regression test."
 
-    def _new_domain(self, goal: str) -> str:
+    def _new_domain(self, goal: str, *, chat_id: int) -> str:
         turn = self.api.new_domain(goal)
         sid = turn.get("session_id")
         if not sid:
             return "Couldn't start that domain — try rephrasing the goal."
-        activated = self.api.wizard_reply(sid, "skip")
-        domain = activated.get("domain") or turn.get("domain")
-        return f"🎉 *{domain}* is live. Just text me your {domain} notes."
+        self._wizard[chat_id] = sid
+        message = turn.get("message") or "Pick an idea, refine a topic, or say skip."
+        return f"{message}\n\nReply with an idea name, a topic to go deeper, or `skip`."
+
+    def _wizard_continue(self, chat_id: int, text: str) -> str:
+        sid = self._wizard.get(chat_id)
+        if not sid:
+            return "No open domain conversation — send /new to start one."
+        turn = self.api.wizard_reply(sid, text)
+        state = turn.get("state")
+        if state in {"test_drive", "repair", "done", "failed"}:
+            self._wizard.pop(chat_id, None)
+        domain = turn.get("domain")
+        if state in {"test_drive", "repair"} and domain:
+            return f"🎉 *{domain}* is ready. Send me sample notes and I'll file them."
+        return turn.get("message") or "Got it."
 
     def _query(self, domain: str | None) -> str:
         rows = self.api.query(domain=domain, limit=5)

@@ -8,7 +8,7 @@ can drive the exact same code path against an in-process FastAPI app.
 
 from __future__ import annotations
 
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Protocol, cast, runtime_checkable
 
 
 class DomainExpertError(RuntimeError):
@@ -43,7 +43,9 @@ class DomainExpertClient:
         if session is None:
             import httpx
 
-            session = httpx.Client(base_url=self.base_url, timeout=timeout)
+            session = cast(
+                HttpSession, httpx.Client(base_url=self.base_url, timeout=timeout)
+            )
         self._session = session
 
     # ------------------------------------------------------------------ infra
@@ -58,7 +60,7 @@ class DomainExpertClient:
             body = getattr(resp, "text", "")
         if status >= 400:
             raise DomainExpertError(status, body)
-        return body
+        return cast(dict[str, Any], body)
 
     def _get(self, path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         clean = {k: v for k, v in (params or {}).items() if v is not None}
@@ -125,6 +127,18 @@ class DomainExpertClient:
             },
         )
 
+    def ask(
+        self,
+        question: str,
+        *,
+        domain: str | None = None,
+        limit: int = 20,
+    ) -> dict[str, Any]:
+        return self._post(
+            "/api/ask",
+            {"question": question, "domain": domain, "limit": limit},
+        )
+
     def correct(
         self,
         *,
@@ -186,3 +200,23 @@ class DomainExpertClient:
 
     def wizard_reply(self, session_id: str, text: str) -> dict[str, Any]:
         return self._post(f"/api/wizard/{session_id}/reply", {"text": text})
+
+    def atlas_search(self, goal: str, cursor_id: str | None = None) -> dict[str, Any]:
+        return self._post("/api/atlas/search", {"goal": goal, "cursor_id": cursor_id})
+
+    def inspect_pack(self, name: str) -> dict[str, Any]:
+        return self._get(f"/api/packs/{name}/inspect")
+
+    def suggest(self, domain: str) -> dict[str, Any]:
+        return self._get(f"/api/wizard/{domain}/suggest")
+
+    def apply_pack_edit(self, domain: str, text: str, *, confirm: bool = False) -> dict[str, Any]:
+        return self._post(f"/api/packs/{domain}/edit", {"text": text, "confirm": confirm})
+
+    def activate_pack(self, name: str) -> dict[str, Any]:
+        """Install a bundled Domain Pack through the HTTP contract."""
+        return self._post("/api/packs/activate", {"name": name})
+
+    def export(self, *, domain: str | None = None) -> dict[str, Any]:
+        """Export canonical data as secrets-free JSON through the HTTP contract."""
+        return self._get("/api/export", {"domain": domain})

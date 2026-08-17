@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../lib/api";
 import { fmtDate, fmtFieldName, fmtValue } from "../lib/format";
 import type { ObjectDetail, PackCard } from "../lib/types";
@@ -13,40 +13,69 @@ export function DetailModal({
   packs,
   onClose,
   onChanged,
+  onOpenDetail,
 }: {
   target: DetailTarget;
   packs: PackCard[];
   onClose: () => void;
   onChanged: () => void;
+  onOpenDetail: (target: DetailTarget) => void;
 }) {
   const [detail, setDetail] = useState<ObjectDetail | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [correcting, setCorrecting] = useState(false);
+  const correctingRef = useRef(false);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const restoreRef = useRef<HTMLElement | null>(null);
 
-  async function load() {
+  useEffect(() => {
+    correctingRef.current = correcting;
+  }, [correcting]);
+
+  const load = useCallback(async () => {
     setErr(null);
     try {
       setDetail(await api.objectDetail(target.domain, target.objectType, target.uid));
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     }
-  }
+  }, [target.domain, target.objectType, target.uid]);
 
   useEffect(() => {
     void load();
+    restoreRef.current = document.activeElement as HTMLElement | null;
+    const dialog = dialogRef.current;
+    dialog?.querySelector<HTMLElement>("button:not([disabled]), [href], input, select, textarea")?.focus();
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape" && !correcting) onClose();
+      if (e.key === "Escape" && !correctingRef.current) onClose();
+      if (e.key === "Tab" && dialog) {
+        const elements = [...dialog.querySelectorAll<HTMLElement>(
+          "button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex='-1'])",
+        )];
+        if (elements.length === 0) return;
+        const first = elements[0];
+        const last = elements[elements.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          last.focus();
+          e.preventDefault();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          first.focus();
+          e.preventDefault();
+        }
+      }
     }
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [target.uid]);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      restoreRef.current?.focus();
+    };
+  }, [load, onClose]);
 
   return (
-    <div className="modal-backdrop" onClick={onClose} role="presentation">
+    <div className="modal-backdrop" role="presentation">
       <div
+        ref={dialogRef}
         className="modal modal-wide"
-        onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-label="Object detail"
@@ -83,12 +112,24 @@ export function DetailModal({
               {detail.links.length > 0 && (
                 <>
                   <h3 className="block-heading">Links</h3>
-                  <ul className="link-list">
-                    {detail.links.map((l) => (
-                      <li key={l.to_uid}>
-                        <span className="badge">{l.relation}</span> {l.to_uid}
-                      </li>
-                    ))}
+                    <ul className="link-list">
+                      {detail.links.map((l) => (
+                        <li key={`${l.relation}-${l.to_uid}`}>
+                          <span className="badge">{l.relation}</span>{" "}
+                          {linkedTarget(l.to_uid, packs) ? (
+                            <button
+                              type="button"
+                              className="detail-link"
+                              onClick={() => {
+                                const next = linkedTarget(l.to_uid, packs);
+                                if (next) onOpenDetail(next);
+                              }}
+                            >
+                              {l.to_uid}
+                            </button>
+                          ) : <span>{l.to_uid}</span>}
+                        </li>
+                      ))}
                   </ul>
                 </>
               )}
@@ -159,4 +200,11 @@ export function DetailModal({
       )}
     </div>
   );
+}
+
+function linkedTarget(uid: string, packs: PackCard[]): DetailTarget | null {
+  const [domain, objectType] = uid.split(":");
+  if (!domain || !objectType) return null;
+  const pack = packs.find((candidate) => candidate.name === domain);
+  return pack?.objects.includes(objectType) ? { domain, objectType, uid } : null;
 }

@@ -14,12 +14,12 @@ export function Stats({ data }: BlockProps) {
   const measures = (data["measures"] as Measure[]) || [];
   const total = (data["total"] as number) ?? 0;
   if (total === 0 || measures.length === 0) {
-    return <EmptyState title="No data to summarize yet" hint="Stats populate as objects accumulate." />;
+    return <EmptyState title="No progress yet" hint="Log a few records and the trends will show up here." />;
   }
   return (
     <div className="stats-block">
       <p className="stats-total">
-        <strong>{total}</strong> objects
+        <strong>{total}</strong> records
       </p>
       {measures.map((m) => (
         <div className="measure" key={`${m.field}:${m.agg}`}>

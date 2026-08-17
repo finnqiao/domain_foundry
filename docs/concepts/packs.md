@@ -52,17 +52,20 @@ object.
 A pack is installed by any of:
 
 - a directory drop-in at `~/.domain_foundry/packs/<pack>/`,
-- `domain-foundry pack add <path-or-git-url>`,
+- `domain-foundry pack add <path-or-name>` — a local pack directory, or the
+  name of a bundled pack (e.g. `pack add food`). Git URLs are not supported
+  yet.
 - `pip install domain-foundry-pack-<name>` (entry-point group
-  `domain_foundry.packs`),
+  `domain_foundry.packs` — the entry point resolves to the pack's *directory*;
+  it does not register executable handlers),
 - a **private overlay** directory listed in `DOMAIN_FOUNDRY_PACKS_PATH`
   (personal packs can live entirely outside this repo — e.g.
-  `~/HermesWorkspace/packs/`; see [Private overlay](../PRIVATE_OVERLAY.md)).
+  `~/HermesWorkspace/packs/`; see the private-overlay maintainer notes).
 
 Discovery is a directory scan + entry-point scan at startup. Overlay paths load
 **after** workspace and entry-point packs so a same-named private pack shadows
-the public one. Lifecycle commands: `pack list`, `pack validate`, `pack add`,
-`pack upgrade`.
+the public one. Lifecycle commands today: `pack list`, `pack validate`, `pack add`,
+`pack new`. Upgrade/rollback commands are planned, not shipped.
 
 ## Trust tiers
 
@@ -70,9 +73,9 @@ Extensibility comes in three explicitly-labeled tiers:
 
 1. **Packs (data).** YAML/SQL/JSONL. Cannot execute code. The default.
 2. **Pip-installed handlers (trusted code).** A pack that outgrows declarative
-   operations may ship a Python handler *only* via a separately-installed pip
-   package registered through the `domain_foundry.packs` entry point — an
-   explicit choice by the user to install code.
+   operations will be able to ship a Python handler via a separately-installed
+   pip package (**planned** — the current loader discovers pack data directories
+   only) — an explicit choice by the user to install code.
 3. **Side-loaded custom blocks (trusted code).** React components you build and
    drop in; they run in your browser session. See
    [Custom blocks](../CUSTOM_BLOCKS.md).

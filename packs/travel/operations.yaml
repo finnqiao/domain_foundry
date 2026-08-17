@@ -1,4 +1,5 @@
 trip: [create, update, correct, merge, delete]
 timeline_item: [create, update, correct, delete]
 booking: [create, update, correct, delete]
+packing_item: [create, update, correct, delete]
 event_log: [create, correct, delete]

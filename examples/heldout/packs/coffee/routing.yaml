@@ -1,0 +1,16 @@
+rules:
+  - {match: "(coffee|brew|brewed|pour[- ]?over|espresso|aeropress|v60)", object: brew, confidence_boost: 0.1}
+  - {match: "(dose|grind|extraction|bloom|drawdown|ratio)", object: brew, confidence_boost: 0.08}
+examples:
+  - {text: "V60 Ethiopian, 15g in and 250g out, tasted like blueberry", expect: {object: brew}}
+  - {text: "brewed an Aeropress with a 1:15 ratio", expect: {object: brew}}
+  - {text: "espresso was syrupy with a long finish", expect: {object: brew}}
+  - {text: "pour over drawdown was three minutes", expect: {object: brew}}
+  - {text: "coffee bloom ran for 45 seconds", expect: {object: brew}}
+  - {text: "changed the grind finer for the next brew", expect: {object: brew, operation: update}}
+  - {text: "the V60 tasted like blueberry", expect: {object: brew}}
+  - {text: "compare today's brew to yesterday's", expect: {object: brew}}
+negative_examples:
+  - {text: "the app build is toast"}
+  - {text: "deploy the release candidate tonight"}
+

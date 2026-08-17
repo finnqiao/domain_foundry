@@ -1,0 +1,8 @@
+{"id":"sd_001","raw_text":"baked a 75% hydration country loaf with 500g flour and 375g water","expected":{"captures":[{"domain":"sourdough","object_type":"bake","operation":"create"}]},"tags":["sourdough","bake","metrics"]}
+{"id":"sd_002","raw_text":"baked an 80% hydration batard with 500g flour and 400g water","expected":{"captures":[{"domain":"sourdough","object_type":"bake","operation":"create"}]},"tags":["sourdough","bake","metrics"]}
+{"id":"sd_003","raw_text":"the second bake had 2 hours less bulk fermentation","expected":{"captures":[{"domain":"sourdough","object_type":"bake","operation":"create"}]},"tags":["sourdough","bake","comparison"]}
+{"id":"sd_004","raw_text":"crumb photo attached to the bake","expected":{"captures":[{"domain":"sourdough","object_type":"bake","operation":"create"}]},"tags":["sourdough","media"]}
+{"id":"sd_005","raw_text":"correct the hydration figure to 78 percent","expected":{"captures":[{"domain":"sourdough","object_type":"bake","operation":"update"}]},"tags":["sourdough","correction"]}
+{"id":"sd_006","raw_text":"fed the rye starter this morning","expected":{"captures":[{"domain":"sourdough","object_type":"starter","operation":"update"}]},"tags":["sourdough","starter"]}
+{"id":"sd_007","raw_text":"dense crumb after a 6 hour bulk ferment","expected":{"captures":[{"domain":"sourdough","object_type":"bake","operation":"create"}]},"tags":["sourdough","bake"]}
+{"id":"sd_008","raw_text":"compare this bake with last Sunday's loaf","expected":{"captures":[{"domain":"sourdough","object_type":"bake","operation":"create"}]},"tags":["sourdough","comparison"]}

@@ -2,6 +2,13 @@ import { useState, type FormEvent } from "react";
 import { api, ApiError } from "../lib/api";
 import type { CaptureReceipt } from "../lib/types";
 
+const STATUS_LABELS: Record<string, string> = {
+  applied: "Filed",
+  review: "Waiting for your review",
+  ledger_only: "Saved — not filed anywhere yet (fix in Review)",
+  unfiled: "Saved — not filed anywhere yet (fix in Review)",
+};
+
 // Global capture box. Capture-first: the raw text is durably stored before any
 // interpretation, then routed. The receipt shows where it landed.
 export function CaptureBox({ onCaptured }: { onCaptured: (r: CaptureReceipt) => void }) {
@@ -48,7 +55,9 @@ export function CaptureBox({ onCaptured }: { onCaptured: (r: CaptureReceipt) => 
       {err && <p className="error">{err}</p>}
       {receipt && (
         <div className="capture-receipt" role="status">
-          <span className={`badge status-${receipt.status}`}>{receipt.status}</span>
+          <span className={`badge status-${receipt.status}`}>
+            {STATUS_LABELS[receipt.status] ?? receipt.status}
+          </span>
           {receipt.routed
             .filter((s) => s.domain)
             .map((s, i) => (
@@ -58,7 +67,8 @@ export function CaptureBox({ onCaptured }: { onCaptured: (r: CaptureReceipt) => 
             ))}
           {receipt.routed.every((s) => !s.domain) && (
             <span className="muted">
-              Stored to the ledger. Install a matching domain to route captures like this.
+              Saved safely. Install a matching domain and captures like this will be filed
+              automatically.
             </span>
           )}
         </div>

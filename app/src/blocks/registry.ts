@@ -1,4 +1,4 @@
-import type { ComponentType } from "react";
+import { createElement, lazy, Suspense, type ComponentType } from "react";
 import type { BlockProps } from "./kit";
 import { Timeline } from "./Timeline";
 import { ListBlock } from "./ListBlock";
@@ -6,8 +6,9 @@ import { Search } from "./Search";
 import { Stats } from "./Stats";
 import { History } from "./History";
 import { Planner } from "./Planner";
-import { MapBlock } from "./Map";
 import { QuizStats } from "./QuizStats";
+import { Gallery } from "./Gallery";
+import { Compare } from "./Compare";
 
 export type BlockId =
   | "capture_feed"
@@ -20,7 +21,9 @@ export type BlockId =
   | "planner"
   | "review_queue"
   | "map"
-  | "quiz_stats";
+  | "quiz_stats"
+  | "gallery"
+  | "compare";
 
 export type BlockMeta = {
   id: BlockId;
@@ -43,6 +46,8 @@ export const BUILTIN_BLOCKS: BlockMeta[] = [
   { id: "review_queue", title: "Review queue", dataContract: ["approvals"], global: true },
   { id: "map", title: "Map", dataContract: ["objects", "lat", "lng"] },
   { id: "quiz_stats", title: "Quiz stats", dataContract: ["domain?"] },
+  { id: "gallery", title: "Gallery", dataContract: ["object", "media"] },
+  { id: "compare", title: "Compare", dataContract: ["object", "metrics"] },
 ];
 
 // Per-domain data blocks: keyed by the `block` field the API returns.
@@ -53,12 +58,26 @@ const DATA_BLOCKS: Record<string, ComponentType<BlockProps>> = {
   stats: Stats,
   history: History,
   planner: Planner,
-  map: MapBlock,
+  map: MapBoundary,
   quiz_stats: QuizStats,
+  gallery: Gallery,
+  compare: Compare,
 };
 
 // Runtime-registered custom blocks (side-loaded, plan §9.3).
 const CUSTOM_BLOCKS: Record<string, ComponentType<BlockProps>> = {};
+
+// MapLibre is already an async dependency inside Map.tsx. Keeping the block
+// itself lazy means views that do not need a map never load its import trigger.
+const LazyMap = lazy(() => import("./Map").then((module) => ({ default: module.MapBlock })));
+
+function MapBoundary(props: BlockProps) {
+  return createElement(
+    Suspense,
+    { fallback: createElement("p", { className: "muted" }, "Loading map…") },
+    createElement(LazyMap, props),
+  );
+}
 
 export function registerBlock(id: string, component: ComponentType<BlockProps>): void {
   CUSTOM_BLOCKS[id] = component;

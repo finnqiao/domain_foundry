@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import type { BlockProps } from "./kit";
 import { EmptyState, ObjectCard } from "./kit";
 import { api, ApiError } from "../lib/api";
+import { fmtFieldName } from "../lib/format";
 import type { Row } from "../lib/types";
 
 // Future-dated items + a "plan next" affordance. Planning is still a capture
@@ -10,6 +11,9 @@ import type { Row } from "../lib/types";
 export function Planner({ data, onOpenDetail, onChanged }: BlockProps) {
   const upcoming = (data["upcoming"] as Row[]) || [];
   const past = (data["past"] as Row[]) || [];
+  const groupBy = data["group_by"] as string | undefined;
+  const groups = data["groups"] as Record<string, Row[]> | undefined;
+  const pastGroups = data["past_groups"] as Record<string, Row[]> | undefined;
   const objectType = data["object_type"] as string | undefined;
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -56,6 +60,8 @@ export function Planner({ data, onOpenDetail, onChanged }: BlockProps) {
       <h4 className="planner-heading">Upcoming</h4>
       {upcoming.length === 0 ? (
         <EmptyState title="Nothing planned ahead" hint="Use “Plan next” to add a future item." />
+      ) : groupBy && groups ? (
+        <PlannerGroups groups={groups} groupBy={groupBy} open={open} />
       ) : (
         <div className="card-grid">
           {upcoming.map((row) => (
@@ -67,13 +73,46 @@ export function Planner({ data, onOpenDetail, onChanged }: BlockProps) {
       {past.length > 0 && (
         <>
           <h4 className="planner-heading muted">Recent</h4>
+          {groupBy && pastGroups ? (
+            <PlannerGroups groups={pastGroups} groupBy={groupBy} open={open} limit={6} />
+          ) : (
+            <div className="card-grid">
+              {past.slice(0, 6).map((row) => (
+                <ObjectCard key={row["object_uid"] as string} row={row} onOpen={open(row)} />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function PlannerGroups({
+  groups,
+  groupBy,
+  open,
+  limit,
+}: {
+  groups: Record<string, Row[]>;
+  groupBy: string;
+  open: (row: Row) => (() => void) | undefined;
+  limit?: number;
+}) {
+  return (
+    <div className="planner-groups">
+      {Object.entries(groups).map(([key, rows]) => (
+        <section className="planner-day" key={key}>
+          <h5 className="planner-day-heading">
+            {key} <span className="muted">{fmtFieldName(groupBy)}</span><span className="count-pill">{rows.length}</span>
+          </h5>
           <div className="card-grid">
-            {past.slice(0, 6).map((row) => (
+            {rows.slice(0, limit).map((row) => (
               <ObjectCard key={row["object_uid"] as string} row={row} onOpen={open(row)} />
             ))}
           </div>
-        </>
-      )}
+        </section>
+      ))}
     </div>
   );
 }

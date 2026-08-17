@@ -75,9 +75,9 @@ export function register(registerBlock) {
       <section>
         <h3>Bespoke app (power users)</h3>
         <p>
-          Everything here consumes the same read-only HTTP API. Point any external app at{" "}
-          <code>/api/blocks/*</code>, <code>/api/query</code>, and <code>/api/objects/*</code>; mutate only
-          through <code>/api/capture</code> and <code>/api/correct</code>.
+          Everything here consumes the same HTTP contract. Point any external app at <code>/api/blocks/*</code>,{" "}
+          <code>/api/query</code>, and <code>/api/objects/*</code>; use write routes such as{" "}
+          <code>/api/capture</code>, <code>/api/correct</code>, pack activation, and review resolution.
         </p>
       </section>
     </div>

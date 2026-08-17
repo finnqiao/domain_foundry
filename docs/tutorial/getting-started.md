@@ -13,6 +13,9 @@ a **Wrong?** button — one tap to correct it.
 
 ![Domain Foundry capture feed — messages routed to a bouldering domain with confidence badges](snapshots/img/capture_feed.png)
 
+Walk the same loop as a story, then do it yourself (everyone *and* the terminal):
+**[Turn a hobby into an app](end-to-end.html#tutorial)**.
+
 Pick your track. Both reach the same local data.
 
 ---
@@ -41,12 +44,16 @@ inside an app you already use.
    ```
 3. Restart Claude Desktop. Now just talk:
 
-   > **You:** track my bouldering sessions
-   > **Claude:** Your *bouldering* domain is live.
-   > **You:** sent a tough V5 on the overhang today, crux was the heel hook
-   > **Claude:** Logged to **bouldering** ✓
-   > **You:** actually that felt more moderate than hard
-   > **Claude:** Corrected — and saved as a regression test.
+   > **You:** food
+   > **Claude:** You’re in Food. Refine: home cooking · nutrition · dining.
+   > Ideas: Recipe lab (like Paprika), Nutrition tracker (like MyFitnessPal), Dining map.
+   > **You:** recipe lab, and the map
+   > **Claude:** Recipes is ready. Log one real note and we’ll file it.
+   > **You:** cooked the shoyu ramen again, 40 minutes, keeper
+   > **Claude:** Logged to **recipes** ✓
+
+   Same loop for diving: bucket → scuba / freediving / underwater photography →
+   mix SAC + pokedex. Claude must relay the neighborhood; it does not pick for you.
 
 That's it. The same config block works in Cursor and other MCP clients. Full
 details: [Connect your agent → MCP](connect-your-agent.md#mcp).
@@ -65,9 +72,12 @@ details: [Connect your agent → MCP](connect-your-agent.md#mcp).
    ```
 4. Open your bot and text it like a friend who never forgets:
 
-   > **You:** /new track my coffee brews
-   > **You:** V60 with the Ethiopian, 15g in, tasted like blueberry
-   > **Bot:** ✅ Logged to *coffee*.
+   > **You:** /new food
+   > **Bot:** You’re in Food. Refine: home cooking · nutrition · dining. Ideas: Recipe lab…
+   > **You:** recipe lab
+   > **Bot:** Recipes is ready. Log one real note.
+   > **You:** cooked the shoyu ramen again, keeper
+   > **Bot:** ✅ Logged to *recipes*.
 
 Full details, including how to keep the bot private to you:
 [Connect your agent → Telegram](connect-your-agent.md#telegram).
@@ -80,23 +90,56 @@ Full details, including how to keep the bot private to you:
 pipx install domain-foundry-core        # or: pip install -e . from a checkout
 domain-foundry setup                    # bring your own key, then pick a starting point
 
-# describe a passion → get a working domain (no code)
-domain-foundry new-domain "track my bouldering climbing sessions" --reply skip
+# describe a passion → browse the atlas → pick an idea
+domain-foundry new-domain "food"
+domain-foundry new-domain "diving" --reply "dive log"
+
+# talk to it
+domain-foundry capture "cooked the shoyu ramen again, keeper"
+domain-foundry query --domain recipes
 
 # talk to it
 domain-foundry capture "good bouldering session at the gym, felt strong"
 domain-foundry query --domain bouldering
-domain-foundry correct "actually that felt more moderate than hard"
+domain-foundry correct "rating = moderate"
 
 # see it in a browser (the screenshot above)
 domain-foundry serve   # → http://127.0.0.1:8787
 ```
 
 `setup` runs `init` for you and ends by asking where you want to start. Already
-have opinions? `domain-foundry setup --provider anthropic -y` skips every
-question, and exported `DOMAIN_FOUNDRY_*` vars override it entirely — see
-[Bring your own key](../QUICKSTART.md#bring-your-own-key) for the tier split and
-the resolution order.
+have opinions? `domain-foundry setup --provider deepseek -y` (or `openrouter` /
+`anthropic`) skips every question. Exported `DOMAIN_FOUNDRY_*` vars override it
+entirely — see [Bring your own key](../QUICKSTART.md#bring-your-own-key).
+
+### Shape it with a model
+
+Without a key you still get a **simple log** you can talk to today. With a key,
+describing a passion asks a stronger model to pick the fields you actually use
+(dose, method, grade — not a generic journal).
+
+DeepSeek and OpenRouter are first-class:
+
+```bash
+export DEEPSEEK_API_KEY=...            # from https://platform.deepseek.com/api_keys
+domain-foundry setup --provider deepseek -y
+
+# or one key, many models
+export OPENROUTER_API_KEY=...
+domain-foundry setup --provider openrouter -y
+```
+
+Then:
+
+```bash
+domain-foundry new-domain "log my pour-over coffee brews"
+domain-foundry capture "V60, Ethiopia, 15g in, bergamot, rating 8"
+domain-foundry ask "what was my last brew and how did it taste?"
+domain-foundry correct "rating = 9"
+```
+
+If the model can't shape the interest, you still get the simple log — never an
+empty failed install. In the app, the same key lives under **Settings**.
 
 Author your own richer domains (schema, routing rules, projections) in the
 [Pack authoring guide](../PACK_AUTHORING.md); remix an example in an afternoon
@@ -116,8 +159,8 @@ with the [plant-care tutorial](../tutorial-plant-care.md).
 4. **Local first.** Everything lives in SQLite on your machine. No telemetry, no
    cloud, no vector soup — files you can open with any SQLite browser.
 
-Next: **[Connect your agent](connect-your-agent.md)** — the three tested harnesses
-(MCP, Telegram, hermes-agent), each with a copy-paste setup and a proof snapshot.
+Next: **[Connect your chat app](connect-your-agent.md)** — Claude Desktop / Cursor,
+Telegram, or hermes-agent, each with a copy-paste setup.
 
 Already have a setup? **[Bolt it on](adopt-in-place.md)** — install alongside,
 pull your existing notes and logs into foundries (read-only, idempotent), and add

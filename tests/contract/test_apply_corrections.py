@@ -159,6 +159,29 @@ def test_crash_between_approve_and_apply_recovers(workspace: Workspace):
     assert recovered2.replayed is True
 
 
+def test_correction_targets_the_record_with_the_old_value(workspace: Workspace):
+    """A hydration fix should land on the loaf that still has 75, not the newest bake."""
+    api = _ready(workspace)
+    api.capture(
+        "baked a 75% hydration country loaf, came out great",
+        channel="cli",
+        source_ref="corr-target-1",
+    )
+    api.capture(
+        "80% hydration batard, bulk 4 hours, dense crumb",
+        channel="cli",
+        source_ref="corr-target-2",
+    )
+    corr = api.correct(text="actually the hydration was 80 not 75", channel="cli")
+    assert corr["applied"] is True
+    dump = api.export_data(domain="sourdough")
+    hydrations = sorted(
+        float(bake["fields"].get("hydration") or 0)
+        for bake in dump["domains"]["sourdough"]["objects"]["bake"]
+    )
+    assert hydrations == [80.0, 80.0]
+
+
 def test_one_message_correction_round_trip(workspace: Workspace):
     api = _ready(workspace)
     cap = api.capture(
@@ -282,7 +305,10 @@ def test_merge_leaves_no_orphans(workspace: Workspace):
         merge_into_uid=uids[1],
         text="merge those two starters",
     )
-    assert merged["applied"] is True
+    if not merged["applied"]:
+        approval_id = merged["details"]["approval_id"]
+        resolved = api.review_resolve(approval_id, decision="approved")
+        assert resolved["applied"] is True
     assert merged["object_uid"] == uids[1]
 
     conn = connect_rw(workspace.ledger_db)

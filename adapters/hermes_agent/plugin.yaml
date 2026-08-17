@@ -32,6 +32,8 @@ tools:
     summary: "Capture the user's verbatim message into the harness ledger."
   - name: domain_foundry_query
     summary: "Read-only query over captured entries."
+  - name: domain_foundry_ask
+    summary: "Answer a question from captured records."
   - name: domain_foundry_correct
     summary: "Apply a one-message correction to an existing capture."
   - name: domain_foundry_review_list
@@ -39,9 +41,17 @@ tools:
   - name: domain_foundry_review_resolve
     summary: "Resolve one approval-queue item."
   - name: domain_foundry_new_domain
-    summary: "Start the guided domain-creation wizard."
+    summary: "Start the idea-atlas wizard (neighborhood, not an installed pack)."
   - name: domain_foundry_wizard_reply
     summary: "Send one reply to an active wizard session."
+  - name: domain_foundry_atlas_search
+    summary: "Browse the idea atlas without installing a pack."
+  - name: domain_foundry_inspect_pack
+    summary: "Read pack YAML without changing it."
+  - name: domain_foundry_suggest
+    summary: "Neighbor-idea or hardening suggestion from recent captures."
+  - name: domain_foundry_apply_pack_edit
+    summary: "Preview or apply a natural-language pack edit."
 
 # Behavioral guidance injected into the agent (see SKILL.md).
 guidance_file: SKILL.md

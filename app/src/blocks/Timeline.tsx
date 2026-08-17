@@ -1,6 +1,6 @@
 import type { BlockProps } from "./kit";
 import { EmptyState, rowsOf } from "./kit";
-import { fmtDate, fmtValue, rowTitle } from "../lib/format";
+import { fmtDate, fmtFieldName, fmtValue, rowTitle } from "../lib/format";
 import type { Row } from "../lib/types";
 
 export function Timeline({ data, onOpenDetail }: BlockProps) {
@@ -11,7 +11,7 @@ export function Timeline({ data, onOpenDetail }: BlockProps) {
     return (
       <EmptyState
         title="Nothing on the timeline yet"
-        hint="Capture something above and it will appear here, newest first."
+        hint="Log something in this passion and it will show up here, newest first."
       />
     );
   }
@@ -26,6 +26,8 @@ export function Timeline({ data, onOpenDetail }: BlockProps) {
             <button
               type="button"
               className="timeline-card"
+              data-object-uid={uid}
+              data-object-type={ot}
               onClick={uid && onOpenDetail ? () => onOpenDetail(ot, uid) : undefined}
               disabled={!uid || !onOpenDetail}
             >
@@ -34,12 +36,22 @@ export function Timeline({ data, onOpenDetail }: BlockProps) {
                 {Object.entries(row)
                   .filter(
                     ([k, v]) =>
-                      !["id", "object_uid", "entry_id", "tombstoned", "created_at", "updated_at", dateField].includes(
-                        k,
-                      ) && v !== null && v !== "",
+                      ![
+                        "id",
+                        "object_uid",
+                        "entry_id",
+                        "tombstoned",
+                        "created_at",
+                        "updated_at",
+                        "object_type",
+                        dateField,
+                      ].includes(k) &&
+                      v !== null &&
+                      v !== "" &&
+                      String(v) !== rowTitle(row),
                   )
                   .slice(0, 3)
-                  .map(([k, v]) => `${k}: ${fmtValue(v)}`)
+                  .map(([k, v]) => `${fmtFieldName(k)} ${fmtValue(v)}`)
                   .join("  ·  ")}
               </span>
             </button>

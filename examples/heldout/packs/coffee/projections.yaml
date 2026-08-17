@@ -1,0 +1,9 @@
+app:
+  icon: "C"
+  views:
+    - {id: brews, title: "Brews", block: timeline, object: brew, config: {date_field: brewed_at, derived_metrics: true}}
+    - {id: compare, title: "Compare", block: compare, object: brew, config: {comparison: brews}}
+    - {id: gallery, title: "Photos", block: gallery, object: brew, config: {gallery: brew_photos}}
+markdown:
+  folder: "Coffee"
+

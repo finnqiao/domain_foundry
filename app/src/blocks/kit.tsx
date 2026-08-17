@@ -12,11 +12,12 @@ export type BlockProps = {
   onChanged?: () => void;
 };
 
-export function EmptyState({ title, hint }: { title: string; hint?: string }) {
+export function EmptyState({ title, hint, children }: { title: string; hint?: string; children?: ReactNode }) {
   return (
     <div className="empty" role="status">
       <p className="empty-title">{title}</p>
       {hint && <p className="empty-hint">{hint}</p>}
+      {children}
     </div>
   );
 }

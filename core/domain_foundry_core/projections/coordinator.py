@@ -236,11 +236,17 @@ class ProjectionCoordinator:
             conn.close()
         return report
 
-    def drain_until_empty(self, *, max_batches: int = 100, limit: int = 50) -> DrainReport:
+    def drain_until_empty(
+        self,
+        *,
+        adapters: Iterable[str] | None = None,
+        max_batches: int = 100,
+        limit: int = 50,
+    ) -> DrainReport:
         """Drain repeatedly until nothing progresses (bounded)."""
         total = DrainReport()
         for _ in range(max_batches):
-            report = self.drain(limit=limit)
+            report = self.drain(adapters=adapters, limit=limit)
             total.drained.extend(report.drained)
             total.failed.extend(report.failed)
             if report.drained_count == 0:

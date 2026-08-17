@@ -3,8 +3,8 @@ import { api } from "../lib/api";
 import { fmtAge, fmtDate } from "../lib/format";
 import type { EvalReport, HealthReport } from "../lib/types";
 
-// Operational health panel (plan §9.1): store integrity, projection lag, LLM
-// spend, and a routing score you can run on demand.
+// Status page for Settings → Health. Speak like a product status screen,
+// not an operator console (ledger / FK / projection jargon stays off-screen).
 export function HealthPanel({ refreshKey }: { refreshKey: number }) {
   const [health, setHealth] = useState<HealthReport | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -28,71 +28,71 @@ export function HealthPanel({ refreshKey }: { refreshKey: number }) {
   }
 
   if (err) return <p className="error">{err}</p>;
-  if (!health) return <p className="muted">Loading…</p>;
+  if (!health) return <p className="muted">Checking your notes…</p>;
 
   const spend = health.llm_spend;
   const spendPct = spend ? Math.min(100, (spend.today_usd / spend.daily_cap_usd) * 100) : 0;
+  const notesOk = health.ledger.ok && health.domains.ok;
+  const viewsOk = health.projection_lag.failed === 0;
+  const filed = health.entry_counts.applied ?? 0;
+  const waiting =
+    (health.entry_counts.unfiled ?? 0) + (health.entry_counts.review ?? 0);
 
   return (
     <div className="health-panel">
       <div className="health-grid">
-        <HealthCard title="Ledger store" ok={health.ledger.ok}>
-          <p>Integrity: {health.ledger.integrity}</p>
-          <p>FK violations: {health.ledger.fk_violations.length}</p>
-          <p className="muted">schema v{health.ledger.schema_version}</p>
+        <HealthCard title="Your notes" ok={notesOk}>
+          <p>{notesOk ? "Everything looks intact on this computer." : "Something needs attention in storage."}</p>
+          <p className="muted">Local files only — nothing is uploaded.</p>
         </HealthCard>
 
-        <HealthCard title="Domains store" ok={health.domains.ok}>
-          <p>Integrity: {health.domains.integrity}</p>
-          <p>FK violations: {health.domains.fk_violations.length}</p>
-          <p className="muted">schema v{health.domains.schema_version}</p>
-        </HealthCard>
-
-        <HealthCard title="Projection lag" ok={health.projection_lag.failed === 0}>
-          <p>Pending: {health.projection_lag.pending}</p>
-          <p>Failed: {health.projection_lag.failed}</p>
-          <p className="muted">
-            oldest {fmtAge(health.projection_lag.oldest_pending_age_seconds)}
+        <HealthCard title="Your views" ok={viewsOk}>
+          <p>
+            {viewsOk
+              ? health.projection_lag.pending === 0
+                ? "Timelines and lists are up to date."
+                : `${health.projection_lag.pending} update(s) still catching up.`
+              : `${health.projection_lag.failed} view update(s) failed.`}
           </p>
+          {health.projection_lag.oldest_pending_age_seconds != null && (
+            <p className="muted">oldest wait {fmtAge(health.projection_lag.oldest_pending_age_seconds)}</p>
+          )}
         </HealthCard>
 
-        <HealthCard title="LLM spend (today)" ok={spendPct < 100}>
+        <HealthCard title="Model spend today" ok={spendPct < 100}>
           {spend ? (
             <>
               <p>
-                ${spend.today_usd.toFixed(4)} / ${spend.daily_cap_usd.toFixed(2)} cap
+                ${spend.today_usd.toFixed(4)} / ${spend.daily_cap_usd.toFixed(2)} daily limit
               </p>
               <span className="dist-bar-track">
                 <span className="dist-bar" style={{ width: `${spendPct}%` }} />
               </span>
             </>
           ) : (
-            <p className="muted">n/a</p>
+            <p className="muted">No model configured — keyword filing only.</p>
           )}
         </HealthCard>
 
-        <HealthCard title="Routing score" ok={!evalReport || evalReport.accuracy >= 0.9}>
+        <HealthCard title="Filing accuracy" ok={!evalReport || evalReport.accuracy >= 0.9}>
           {evalReport ? (
             <>
               <p className="score-big">{(evalReport.accuracy * 100).toFixed(0)}%</p>
               <p className="muted">
-                {evalReport.correct}/{evalReport.total} eval cases
+                {evalReport.correct}/{evalReport.total} sample notes filed correctly
               </p>
             </>
           ) : (
             <button className="btn-secondary" onClick={runEval} disabled={evalBusy}>
-              {evalBusy ? "Running…" : "Run eval"}
+              {evalBusy ? "Checking…" : "Check filing"}
             </button>
           )}
         </HealthCard>
 
-        <HealthCard title="Captures" ok>
-          {Object.entries(health.entry_counts).map(([k, v]) => (
-            <p key={k}>
-              {k}: {v}
-            </p>
-          ))}
-          <p className="muted">last {fmtDate(health.last_capture_at)}</p>
+        <HealthCard title="Activity" ok>
+          <p>Filed: {filed}</p>
+          <p>Waiting in Inbox: {waiting}</p>
+          <p className="muted">last note {fmtDate(health.last_capture_at)}</p>
         </HealthCard>
       </div>
     </div>

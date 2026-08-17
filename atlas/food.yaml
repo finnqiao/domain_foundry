@@ -1,0 +1,156 @@
+nodes:
+  - id: food
+    kind: bucket
+    title: Food
+    aliases: [cooking, kitchen, eat, eating, cuisine, recipes, meals, culinary, cocktail, cocktails, drinks]
+    pitch: Cooking, eating out, nutrition, fermentation, and what you learn in the kitchen.
+  - id: food.cooking
+    kind: practice
+    title: Home cooking
+    aliases: [recipes, recipe, cook, cooking, kitchen]
+    pitch: Recipes you keep, cooks you try, and what you change next time.
+  - id: food.cooking.recipe_lab
+    kind: idea
+    title: Recipe lab
+    aliases: [recipe tracker, recipe box, cookbook]
+    pitch: A living catalog of recipes plus each cook — keepers, flops, and tweaks.
+    jobs: [catalog, event_log, lab]
+    provenance: both
+    domain_slug: recipes
+    identity_hint: recipe_name
+    example: cooked the shoyu ramen again, 40 minutes, keeper
+    jargon: [mise, reduction, fond, al dente, rest]
+    world_analogs:
+      - {name: Paprika, one_liner: Recipe manager with grocery lists}
+      - {name: NYT Cooking, one_liner: Recipe box and ratings}
+  - id: food.cooking.cook_journal
+    kind: idea
+    title: Cook journal
+    aliases: [what I cooked, dinner log]
+    pitch: One card per cook — what you made, how it went, what you'd change.
+    jobs: [event_log]
+    provenance: foundry
+    domain_slug: cooks
+    identity_hint: dish_name
+    example: weeknight carbonara, too salty, next time less pecorino
+    jargon: [weeknight, leftover, batch cook]
+  - id: food.nutrition
+    kind: practice
+    title: Nutrition
+    aliases: [calories, macros, diet, protein, tracking food]
+    pitch: Daily intake, trends, and whether a change is actually working.
+  - id: food.nutrition.nutrition_tracker
+    kind: idea
+    title: Nutrition tracker
+    aliases: [calorie tracker, macro tracker, diet log]
+    pitch: Log meals and see protein, calories, or whatever you actually care about over time.
+    jobs: [event_log, improvement]
+    provenance: world
+    domain_slug: nutrition
+    identity_hint: meal_name
+    example: lunch was leftover chili, about 40g protein
+    jargon: [macros, kcal, protein, fiber]
+    world_analogs:
+      - {name: MyFitnessPal, one_liner: Calorie and macro diary}
+      - {name: Cronometer, one_liner: Micronutrient-heavy food log}
+  - id: food.nutrition.habit_trend
+    kind: idea
+    title: Eating-habit trend
+    aliases: [how I eat, meal pattern]
+    pitch: Not a calorie database — a trend of how you eat (late dinners, veg days, travel weeks).
+    jobs: [event_log, improvement]
+    provenance: foundry
+    domain_slug: eating
+    identity_hint: meal_name
+    example: ate out three nights this week, energy crashed Thursday
+    jargon: [late dinner, takeout, home cooked]
+  - id: food.dining
+    kind: practice
+    title: Dining out
+    aliases: [restaurants, eating out, cafes, been-to]
+    pitch: Places, dishes, and a map of where you've eaten.
+  - id: food.dining.dining_atlas
+    kind: idea
+    title: Dining map
+    aliases: [food map, restaurant map, been-to map]
+    pitch: A map of places you've eaten with the dish you'd order again.
+    jobs: [event_log, atlas]
+    provenance: both
+    domain_slug: dining
+    identity_hint: place
+    example: dinner at River Station Grill, the duck was great
+    jargon: [omakase, tasting menu, hole in the wall]
+    world_analogs:
+      - {name: Google Maps saved lists, one_liner: Pins and starred places}
+      - {name: Untappd, one_liner: "Check-ins with a map, for beer"}
+  - id: food.dining.site_graph
+    kind: idea
+    title: Site graph
+    aliases: [restaurant graph, venue graph, food graph]
+    pitch: Places linked to dishes, visits, and people — a graph of your food life, not a list.
+    jobs: [catalog, event_log, graph, atlas]
+    provenance: foundry
+    domain_slug: foodgraph
+    identity_hint: place
+    example: same counter at the soba shop, sat at the bar, had the duck tsukemen
+    jargon: [regular, counter, omakase]
+  - id: food.fermentation
+    kind: practice
+    title: Fermentation
+    aliases: [sourdough, koji, pickles, kombucha, ferment]
+    pitch: Starters, jars, and bakers' experiments.
+  - id: food.fermentation.bake_lab
+    kind: idea
+    title: Sourdough / bake lab
+    aliases: [sourdough, bread lab, hydration]
+    pitch: Hydration, bulk, crumb — compare bakes and keep the starter alive.
+    jobs: [lab, event_log, improvement, media_dex]
+    provenance: both
+    analog_pack: sourdough
+    domain_slug: sourdough
+    identity_hint: loaf_name
+    example: baked a 75% hydration country loaf, crumb was open
+    jargon: [levain, bulk, batard, oven spring]
+    world_analogs:
+      - {name: Breadboard / bakery notebooks, one_liner: Formula and bake notes}
+  - id: food.coffee
+    kind: practice
+    title: Coffee
+    aliases: [espresso, pour over, v60, brew]
+    pitch: Brews, beans, and whether the cup actually improved.
+  - id: food.coffee.brew_lab
+    kind: idea
+    title: Brew lab
+    aliases: [coffee log, v60 log]
+    pitch: Ratio, grind, and taste — compare brews the way a bake lab compares loaves.
+    jobs: [lab, event_log, improvement]
+    provenance: both
+    analog_pack: coffee
+    domain_slug: coffee
+    identity_hint: brew_name
+    example: V60 Ethiopian, 15g in 250g out, tasted like blueberry
+    jargon: [V60, bloom, pourover, ristretto]
+    world_analogs:
+      - {name: Beanconqueror, one_liner: Brew ratio and bean diary}
+
+edges:
+  - {from: food, to: food.cooking, rel: child}
+  - {from: food, to: food.nutrition, rel: child}
+  - {from: food, to: food.dining, rel: child}
+  - {from: food, to: food.fermentation, rel: child}
+  - {from: food, to: food.coffee, rel: child}
+  - {from: food.cooking, to: food.cooking.recipe_lab, rel: child}
+  - {from: food.cooking, to: food.cooking.cook_journal, rel: child}
+  - {from: food.nutrition, to: food.nutrition.nutrition_tracker, rel: child}
+  - {from: food.nutrition, to: food.nutrition.habit_trend, rel: child}
+  - {from: food.dining, to: food.dining.dining_atlas, rel: child}
+  - {from: food.dining, to: food.dining.site_graph, rel: child}
+  - {from: food.fermentation, to: food.fermentation.bake_lab, rel: child}
+  - {from: food.coffee, to: food.coffee.brew_lab, rel: child}
+  - {from: food.cooking, to: food.dining, rel: adjacent}
+  - {from: food.cooking, to: food.fermentation, rel: adjacent}
+  - {from: food.cooking.recipe_lab, to: food.dining.dining_atlas, rel: expands_to}
+  - {from: food.cooking.recipe_lab, to: food.cooking.cook_journal, rel: expands_to}
+  - {from: food.nutrition.nutrition_tracker, to: food.cooking.recipe_lab, rel: expands_to}
+  - {from: food.dining.dining_atlas, to: food.dining.site_graph, rel: expands_to}
+  - {from: food.fermentation.bake_lab, to: food.cooking.recipe_lab, rel: analog_of}

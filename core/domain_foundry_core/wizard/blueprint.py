@@ -300,6 +300,61 @@ def find_archetype(goal: str) -> dict[str, Any] | None:
     return best[1] if best else None
 
 
+# Short aliases that are too generic / ambiguous for starter matching.
+_STARTER_SKIP_KEYS = frozenset({"jp", "x", "notes", "dev", "food", "health"})
+
+
+def match_starter_pack(goal: str) -> dict[str, Any] | None:
+    """Match a goal against bundled pack names, titles, and aliases.
+
+    Returns ``{"name", "title", "description"}`` for the best hit, or None.
+    Keys shorter than 4 characters (and a few known-ambiguous short aliases)
+    are ignored so ``jp`` / ``x`` do not steal unrelated goals.
+    """
+    from domain_foundry_core.packs.loader import bundled_packs_root, discover_pack_dirs
+
+    low = (goal or "").lower()
+    if not low.strip():
+        return None
+
+    best: tuple[int, dict[str, Any]] | None = None
+    for root in discover_pack_dirs([bundled_packs_root()]):
+        if root.name.startswith("_"):
+            continue
+        manifest_path = root / "pack.yaml"
+        if not manifest_path.is_file():
+            continue
+        try:
+            manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8")) or {}
+        except Exception:
+            continue
+        name = str(manifest.get("name") or root.name)
+        title = str(manifest.get("title") or name)
+        aliases = [str(a) for a in (manifest.get("aliases") or [])]
+        keys: list[str] = [name]
+        keys.extend(aliases)
+        # Title tokens (e.g. "Plant Care" → plant, care; "Sourdough Journey" → sourdough)
+        keys.extend(re.findall(r"[a-zA-Z][a-zA-Z0-9']{2,}", title.lower()))
+        usable = [
+            k.lower()
+            for k in keys
+            if k and len(k) >= 4 and k.lower() not in _STARTER_SKIP_KEYS
+        ]
+        if not usable:
+            continue
+        score = sum(1 for k in dict.fromkeys(usable) if re.search(rf"\b{re.escape(k)}\b", low))
+        if score and (best is None or score > best[0]):
+            best = (
+                score,
+                {
+                    "name": name,
+                    "title": title,
+                    "description": str(manifest.get("description") or ""),
+                },
+            )
+    return best[1] if best else None
+
+
 def _generic_spec(goal: str) -> dict[str, Any]:
     kws = keywords(goal)
     subject = kws[0] if kws else "journal"
@@ -333,7 +388,7 @@ def _generic_spec(goal: str) -> dict[str, Any]:
         "keys": [],
         "domain": domain,
         "title": f"{title_kw} Log",
-        "description": f"Track your {subject} over time.",
+        "description": f"A place to log your {subject}.",
         "interpretation": "simple",
         "icon": "🗒️",
         "objects": {
@@ -420,13 +475,23 @@ def _default_views(spec: dict[str, Any]) -> list[dict[str, Any]]:
         if date_field:
             config["date_field"] = date_field
         views.append({
-            "id": obj_name + "s",
+            "id": _pluralize(obj_name),
             "title": obj_name.replace("_", " ").title(),
             "block": block,
             "object": obj_name,
             "config": config,
         })
     return views
+
+
+def _pluralize(name: str) -> str:
+    """Make stable, readable projection ids for generated object names."""
+
+    if name.endswith("y"):
+        return name[:-1] + "ies"
+    if name.endswith(("s", "x", "ch")):
+        return name + "es"
+    return name + "s"
 
 
 def build_agent_spec(blueprint: dict[str, Any]) -> dict[str, Any]:
@@ -559,6 +624,12 @@ _CORE_COMPAT = ">=0.1,<2"
 
 def render_files(blueprint: dict[str, Any], *, version: str = "0.1.0") -> dict[str, Any]:
     """Return pack YAML files (incl. ``agent.yaml``) as YAML-ready dicts."""
+    # Both heuristic and model-backed producers pass through the same strict
+    # contract immediately before rendering.  This is the last guard before a
+    # malformed blueprint can reach the on-disk pack files.
+    from domain_foundry_core.wizard.models import validate_blueprint
+
+    blueprint = validate_blueprint(blueprint)
     objects = blueprint["objects"]
     pack_yaml = {
         "name": blueprint["domain"],
@@ -571,15 +642,16 @@ def render_files(blueprint: dict[str, Any], *, version: str = "0.1.0") -> dict[s
         "interpretation": blueprint["interpretation"],
         "aliases": [],
     }
-    schema_yaml = {
-        "objects": {
-            name: {
-                "title_field": obj["title_field"],
-                "fields": obj["fields"],
-            }
-            for name, obj in objects.items()
+    schema_objects: dict[str, Any] = {}
+    for name, obj in objects.items():
+        entry: dict[str, Any] = {
+            "title_field": obj["title_field"],
+            "fields": obj["fields"],
         }
-    }
+        if obj.get("links"):
+            entry["links"] = obj["links"]
+        schema_objects[name] = entry
+    schema_yaml = {"objects": schema_objects}
     routing_yaml = {
         "rules": [
             {"match": r["match"], "object": r["object"], "confidence_boost": r["confidence_boost"]}
@@ -607,7 +679,7 @@ def render_files(blueprint: dict[str, Any], *, version: str = "0.1.0") -> dict[s
     agent = blueprint.get("agent") or build_agent_spec(blueprint)
     # Keep name aligned if the wizard renamed the domain for uniqueness.
     agent = {**agent, "name": blueprint["domain"]}
-    return {
+    files = {
         "pack.yaml": pack_yaml,
         "schema.yaml": schema_yaml,
         "routing.yaml": routing_yaml,
@@ -616,6 +688,9 @@ def render_files(blueprint: dict[str, Any], *, version: str = "0.1.0") -> dict[s
         "projections.yaml": projections_yaml,
         "agent.yaml": {"agent": agent},
     }
+    if blueprint.get("capabilities"):
+        files["capabilities.yaml"] = blueprint["capabilities"]
+    return files
 
 
 def _example_expect(ex: dict[str, Any]) -> dict[str, Any]:

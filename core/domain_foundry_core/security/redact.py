@@ -5,7 +5,9 @@ from __future__ import annotations
 import re
 
 _SECRET_PATTERNS = [
-    re.compile(r"\bsk-[A-Za-z0-9_\-]{16,}\b"),
+    # Keep the lower bound small enough to cover deliberately fake keys used
+    # in local export/conformance tests (real keys are considerably longer).
+    re.compile(r"\bsk-[A-Za-z0-9_\-]{8,}\b"),
     re.compile(r"\bsk-proj-[A-Za-z0-9_\-]{16,}\b"),
     re.compile(r"\bgh[pousr]_[A-Za-z0-9]{20,}\b"),
     re.compile(r"\bxox[baprs]-[A-Za-z0-9\-]{10,}\b"),

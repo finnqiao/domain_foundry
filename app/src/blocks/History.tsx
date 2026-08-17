@@ -12,7 +12,7 @@ export function History({ data, onOpenDetail }: BlockProps) {
     return (
       <EmptyState
         title="No history yet"
-        hint="Past activity is grouped here by period once you start capturing."
+        hint="Once you log a few things, they'll group here by month."
       />
     );
   }

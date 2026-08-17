@@ -65,6 +65,7 @@ class CaptureSpan:
     fields: dict[str, Any] = field(default_factory=dict)
     links: list[dict[str, Any]] = field(default_factory=list)
     disposition: str = "auto_apply"  # auto_apply | review | unfiled | ledger_only
+    residue: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -104,9 +105,15 @@ class Router:
         )
         self.heuristic = HeuristicProvider()
 
-    def route_text(self, text: str, *, channel: str = "cli") -> RouteResult:
+    def route_text(
+        self,
+        text: str,
+        *,
+        channel: str = "cli",
+        only_domains: list[str] | None = None,
+    ) -> RouteResult:
         """Route without persisting — used by eval runner."""
-        packs = self.registry.list()
+        packs = self._scoped_packs(only_domains)
         l1 = L1Matcher(packs).match(text)
         spans, interpreter, cost, clarification, model_tier, usage, llm_error = self._interpret(
             text, channel=channel, l1=l1, packs=packs, entry_id=None
@@ -126,8 +133,15 @@ class Router:
             llm_error=llm_error,
         )
 
-    def route_entry(self, entry_id: str, text: str, *, channel: str = "cli") -> RouteResult:
-        packs = self.registry.list()
+    def route_entry(
+        self,
+        entry_id: str,
+        text: str,
+        *,
+        channel: str = "cli",
+        only_domains: list[str] | None = None,
+    ) -> RouteResult:
+        packs = self._scoped_packs(only_domains)
         l1 = L1Matcher(packs, demotions=self._load_demotions()).match(text)
         spans, interpreter, cost, clarification, model_tier, usage, llm_error = self._interpret(
             text, channel=channel, l1=l1, packs=packs, entry_id=entry_id
@@ -168,6 +182,21 @@ class Router:
             llm_error=llm_error,
         )
 
+    def _scoped_packs(self, only_domains: list[str] | None) -> list[DomainPack]:
+        """Return candidate packs for one routing call.
+
+        A stale or empty hint must not make a capture less durable. Unknown
+        names are therefore ignored, and an empty effective scope falls back
+        to global routing. The returned list is also the complete allow-list
+        used by the L1/L2 interpretation path.
+        """
+        packs = self.registry.list()
+        if not only_domains:
+            return packs
+        allowed = {name for name in only_domains if name}
+        scoped = [pack for pack in packs if pack.name in allowed]
+        return scoped or packs
+
     def _interpret(
         self,
         text: str,
@@ -192,7 +221,7 @@ class Router:
             # Prefer highest-boost hit (e.g. plant acquisition over plant-name mention)
             hit = max(l1.hits, key=lambda h: (h.boost, h.rule_index))
             pack = next(p for p in packs if p.name == hit.pack)
-            fields = self._l1_fields(text, pack, hit.object_type)
+            fields, residue = self._l1_extract(text, pack, hit.object_type)
             if pack.name == "food":
                 from domain_foundry_core.geo.capture_hints import enrich_venue_fields
 
@@ -206,6 +235,7 @@ class Router:
                 span=text,
                 confidence=l1.confidence,
                 fields=fields,
+                residue=residue,
             )
             span.disposition = self._policy_action(pack, span, channel)
             return [span], "rules", 0.0, None, None, None, None
@@ -281,8 +311,17 @@ class Router:
             domain = c.get("domain") or c.get("pack")
             pack = next((p for p in packs if p.name == domain), None)
             if not pack:
-                # try alias
-                pack = self.registry.get_by_alias(str(domain or ""))
+                # Resolve aliases only within the scoped candidates. Calling
+                # the registry globally here would let an LLM response escape
+                # an in-domain capture's allow-list.
+                pack = next(
+                    (
+                        p
+                        for p in packs
+                        if str(domain or "") in p.manifest.aliases
+                    ),
+                    None,
+                )
             if not pack:
                 continue
             object_type = str(
@@ -440,14 +479,22 @@ class Router:
         }
 
     def _l1_fields(self, text: str, pack: DomainPack, object_type: str) -> dict[str, Any]:
-        # Reuse heuristic field extraction
-        from domain_foundry_core.llm.provider import _extract_fields
+        fields, _residue = self._l1_extract(text, pack, object_type)
+        return fields
+
+    def _l1_extract(
+        self, text: str, pack: DomainPack, object_type: str
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        from domain_foundry_core.extract import extract_fields
 
         objects = {
-            oname: {"fields": {k: v.model_dump(exclude_none=True) for k, v in obj.fields.items()}}
+            oname: {
+                "title_field": obj.title_field,
+                "fields": {k: v.model_dump(exclude_none=True) for k, v in obj.fields.items()},
+            }
             for oname, obj in pack.objects.items()
         }
-        return _extract_fields(text, {"objects": objects}, object_type)
+        return extract_fields(text, {"objects": objects}, object_type)
 
     def _load_demotions(self) -> dict[tuple[str, int], float]:
         if not self.ws.ledger_db.exists():
@@ -513,20 +560,29 @@ class Router:
                         "fields": s.fields,
                         "links": s.links,
                         "disposition": s.disposition,
+                        "residue": s.residue or {},
                     }
                     for s in spans
                 ],
                 "clarification": clarification,
             }
+            version = int(
+                conn.execute(
+                    "SELECT COALESCE(MAX(version), 0) + 1 AS next_version "
+                    "FROM interpretation WHERE entry_id = ?",
+                    (entry_id,),
+                ).fetchone()["next_version"]
+            )
             cur = conn.execute(
                 """
                 INSERT INTO interpretation (
                     entry_id, version, interpreter, payload_json, confidence,
                     status, created_at
-                ) VALUES (?, 1, ?, ?, ?, 'proposed', ?)
+                ) VALUES (?, ?, ?, ?, ?, 'proposed', ?)
                 """,
                 (
                     entry_id,
+                    version,
                     interpreter,
                     json.dumps(payload, separators=(",", ":")),
                     conf or 0.0,
@@ -558,6 +614,7 @@ class Router:
                                 "span": s.span,
                                 "disposition": s.disposition,
                                 "links": s.links,
+                                "residue": s.residue or {},
                             },
                             separators=(",", ":"),
                         ),

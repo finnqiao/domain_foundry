@@ -2,64 +2,65 @@
 
 **Describe your passion. Get an app. Talk to it.**
 
-**Domain Foundry** is a local-first personal agent harness that turns
-natural-language captures into structured, domain-specific data and a usable
-application — remixable to any domain you care about.
+**Domain Foundry** turns what you say into neat, correctable notes for the things
+you care about — and keeps them on your own computer.
 
-> The structured-life data layer for agent runtimes.
+> Say what happened. See it filed. Fix a mistake in one sentence. It stays local.
 
 !!! note "Name"
     Provisional public name: **Domain Foundry** (`domain-foundry-core` /
     CLI `domain-foundry`). PyPI / GitHub / trademark availability before publish
     is still a human gate — see [ADR-005](adr/ADR-005-name-decision.md).
 
-## The six promises
+## What you get
 
-1. **Capture first** — the raw message + provenance are stored *before* interpretation.
-2. **Never drop** — ambiguity becomes a review card, an unfiled entry, or ledger-only
-   state; nothing is silently discarded.
-3. **One-message corrections** — fix the canonical record in plain language; history is preserved.
-4. **Your app, your schema** — describe a domain, get a working pack and app view.
-5. **Local first** — canonical data lives in SQLite on your machine; no telemetry.
-6. **Provably improving** — every correction becomes a replayable evaluation case.
+1. **Write it down first** — your exact words are saved before anything is sorted.
+2. **Never lose a note** — if it isn't sure where something belongs, it waits in Inbox.
+3. **Fix it in one sentence** — say so in plain language; history is preserved.
+4. **Your passion, your app** — describe an interest; get a place to log and browse it.
+5. **Local first** — data lives on your machine; no telemetry.
+6. **Gets better when you correct it** — each fix teaches it for next time.
 
 ## Where to start
 
 <div class="grid cards" markdown>
 
-- :material-rocket-launch: **[Quickstart](QUICKSTART.md)**
+- :material-rocket-launch: **[Getting started](tutorial/getting-started.md)**
 
-    Clean machine to a captured-into domain in minutes.
+    Two tracks: talk to it in an app, or use the CLI.
 
-- :material-lightbulb-on: **[Concepts](concepts/index.md)**
+- :material-hand-heart: **[No terminal](tutorial/howto-non-technical.md)**
 
-    The ledger, packs, routing, corrections, and replay.
+    Install once, then use Claude, Telegram, or the browser.
 
-- :material-package-variant: **[Pack authoring](PACK_AUTHORING.md)**
+- :material-book-open-page-variant: **[Turn a hobby into an app](tutorial/end-to-end.html)**
 
-    The quality bar for a good Domain Pack.
+    Story plus a click-through tutorial — everyone and the terminal.
 
-- :material-flask: **[Remix in an afternoon](tutorial-plant-care.md)**
+- :material-console: **[Quickstart (CLI)](QUICKSTART.md)**
 
-    Build a plant-care pack from scratch.
+    Clean machine to a logged note in minutes.
 
-- :material-sitemap: **[Architecture](architecture.md)**
+- :material-connection: **[Connect your chat app](tutorial/connect-your-agent.md)**
 
-    End-to-end data flow, module by module.
+    Claude Desktop, Cursor, Telegram, and hermes-agent.
 
 - :material-shield-lock: **[Security](security.md)**
 
-    Local binding, token auth, path safety, SQL parameterization.
+    Local binding, token auth, path safety.
 
 </div>
 
-## Architecture at a glance
+## Under the hood (for builders)
 
-- **Python core** (`domain-foundry-core`) — ledger, packs, routing, apply, projections.
-- **FastAPI** — the `HarnessAPI` surface + SPA static assets (`domain-foundry serve`).
-- **React + Vite app shell** — remixable blocks driven by pack projections.
-- **SQLite × 2** — `ledger.sqlite` (substrate) + `domains.sqlite` (pack tables).
-- **Adapters** — a hermes-agent plugin first; MCP later.
+- **Python core** (`domain-foundry-core`) — storage, routing, corrections, views.
+- **Local server** — `domain-foundry serve` hosts the app and the shared API.
+- **React app shell** — remixable blocks driven by passion definitions.
+- **SQLite × 2** — append-only history + typed records on disk.
+- **Adapters** — Claude/Cursor (MCP), Telegram, hermes-agent (each proven in CI).
+
+Builder deep-dives: [Concepts](concepts/index.md) · [Architecture](architecture.md) ·
+[Pack authoring](PACK_AUTHORING.md).
 
 ## License
 

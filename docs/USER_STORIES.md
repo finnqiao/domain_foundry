@@ -9,7 +9,7 @@ Reproduce the whole table:
 ```bash
 scripts/quickstart_gate.sh     # onboarding + capture + import lifecycle
 scripts/release_audit.sh       # leakscan · clock · ruff · pyright · pytest · docs · eval replay
-pytest                         # 288 passed / 2 skipped
+pytest                         # full suite green (run it for the current count)
 ```
 
 ---
@@ -229,10 +229,10 @@ warning: model routing failed (…) — captured with keyword rules only.
 
 | Gate | Result |
 |---|---|
-| `pytest` | **288 passed / 2 skipped** (2 skips are opt-in live-LLM smokes) |
+| `pytest` | **full suite green** (the only skips are opt-in live-LLM smokes) |
 | `ruff check core tests scripts adapters` | clean |
 | `pyright` | **0 errors** |
-| `scripts/release_audit.sh` | **9/9 PASS** — leakscan · clock audit · no tracked DBs · history starts at P0 · ruff · pyright · pytest · mkdocs build · eval corpus replay |
+| `scripts/release_audit.sh` | **green** — leakscan · clock audit · no tracked DBs · history starts at P0 · ruff · pyright · pytest · mkdocs build · docs claims · eval corpus replay |
 | `scripts/quickstart_gate.sh` | PASS — onboarding write, env override, single- and cross-domain capture, import lifecycle |
 | GitHub Actions `ci` + `leakscan` | green |
 
@@ -248,8 +248,8 @@ the type errors themselves:
 - **The adapter E2E tests gated nothing.** `testpaths` was `["tests"]`, so the
   MCP / Telegram / hermes-agent proofs under `adapters/*/tests/` were never
   collected by a bare `pytest` or by CI — the same three proofs that had once
-  been green on a no-op. They are in `testpaths` now, which is where the jump
-  from 281 to 288 tests comes from.
+  been green on a no-op. They are in `testpaths` now, which is where the growth
+  of the suite comes from.
 
 Turning the gates green surfaced **three real bugs that no green local run could
 have shown**, each in a different blind spot:

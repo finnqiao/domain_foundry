@@ -17,12 +17,17 @@ from domain_foundry_core.clock import now_iso
 from domain_foundry_core.ids import new_ulid
 from domain_foundry_core.paths import Workspace
 
-# State machine (plan §6.1): goal → proposal → interview → generate → dry-run
-# → test-drive → hardening. Persisted states below collapse generate+dry-run
-# into the transition that produces `test_drive`.
+# State machine (plan §6.1): goal → model confirmation (when a live provider is
+# configured) → proposal/interview → generate → held-out acceptance →
+# test-drive or bounded repair → hardening. Generate and acceptance remain one
+# persisted transition from the caller's point of view.
 STATES = (
+    "fork",              # atlas neighborhood; pick/refine/expand/commit
+    "schema_preview",    # optional YAML/schema look before activate
+    "model_confirm",     # live keys present: confirm the design model first
     "interview",         # proposal made, questions pending
     "test_drive",        # pack generated + activated; awaiting sample captures
+    "repair",            # held-out acceptance failed; failures are visible
     "hardening_confirm", # NL edit parsed into a diff; awaiting confirm
     "done",
     "failed",
@@ -48,6 +53,18 @@ class WizardSession:
     captured_entries: list[str] = field(default_factory=list)
     pending_edit: dict[str, Any] = field(default_factory=dict)
     history: list[dict[str, str]] = field(default_factory=list)
+    design_mode: str = "scaffold"       # "llm" | "scaffold"
+    designer_model: str | None = None
+    # Set when an LLM design was attempted but a labeled scaffold was installed.
+    design_fallback_reason: str | None = None
+    acceptance: dict[str, Any] = field(default_factory=dict)
+    repair_rounds: int = 0              # completed repair rounds, capped at 3
+    real_captures: int = 0              # applied captures made in this wizard
+    atlas_cursor: str | None = None
+    selected_ideas: list[str] = field(default_factory=list)
+    selected_jobs: list[str] = field(default_factory=list)
+    neighborhood: dict[str, Any] = field(default_factory=dict)
+    schema_preview: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -74,7 +91,7 @@ class WizardSessionStore:
         ts = now_iso()
         session = WizardSession(
             session_id=f"wz_{new_ulid()}",
-            state="interview",
+            state="fork",
             goal=goal,
             created_at=ts,
             updated_at=ts,

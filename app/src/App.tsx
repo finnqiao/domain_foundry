@@ -2,32 +2,31 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 import { api } from "./lib/api";
 import type { PackCard } from "./lib/types";
 import { NavContext, type DetailTarget, type Route } from "./lib/nav";
+import { fromLocation, toLocation } from "./lib/router";
 import { loadCustomBlocks } from "./blocks/customBlocks";
-import { CaptureBox } from "./components/CaptureBox";
-import { Home } from "./components/Home";
 import { DomainView } from "./components/DomainView";
-import { HealthPanel } from "./components/HealthPanel";
-import { Sources } from "./components/Sources";
-import { Docs } from "./components/Docs";
-import { CaptureFeed } from "./blocks/CaptureFeed";
-import { ReviewQueue } from "./blocks/ReviewQueue";
 import { DetailModal } from "./components/DetailModal";
+import { Today } from "./components/Today";
+import { Passions } from "./components/Passions";
+import { Inbox } from "./components/Inbox";
+import { Settings } from "./components/Settings";
+import { CreateDomain } from "./components/CreateDomain";
 
 export function App() {
-  const [route, setRoute] = useState<Route>({ name: "home" });
-  const [detail, setDetail] = useState<DetailTarget | null>(null);
+  const [{ route, detail }, setLocation] = useState(() =>
+    fromLocation(window.location.pathname, window.location.search),
+  );
   const [packs, setPacks] = useState<PackCard[]>([]);
-  const [reviewPending, setReviewPending] = useState<number>(0);
+  const [reviewPending, setReviewPending] = useState(0);
+  const [unfiledCount, setUnfiledCount] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
+  const refresh = useCallback(() => setRefreshKey((key) => key + 1), []);
 
   const loadPacks = useCallback(() => {
     api.packs().then(setPacks).catch(() => setPacks([]));
-    api
-      .reviewStats()
-      .then((s) => setReviewPending(s.pending))
-      .catch(() => setReviewPending(0));
+    api.reviewStats().then((stats) => setReviewPending(stats.pending)).catch(() => setReviewPending(0));
+    api.query({ status: "unfiled", limit: 100 }).then((rows) => setUnfiledCount(rows.length)).catch(() => setUnfiledCount(0));
   }, []);
 
   useEffect(() => {
@@ -38,134 +37,120 @@ export function App() {
     loadCustomBlocks();
   }, []);
 
+  const navigate = useCallback((next: Route, options?: { replace?: boolean }) => {
+    setLocation(() => {
+      const location = toLocation(next, null);
+      const current = window.location.pathname + window.location.search;
+      if (location !== current) {
+        if (options?.replace) window.history.replaceState(null, "", location);
+        else window.history.pushState(null, "", location);
+      }
+      return { route: next, detail: null };
+    });
+  }, []);
+
+  const openDetail = useCallback((target: DetailTarget) => {
+    setLocation((current) => {
+      const location = toLocation(current.route, target);
+      window.history.pushState(null, "", location);
+      return { ...current, detail: target };
+    });
+  }, []);
+
+  const closeDetail = useCallback(() => {
+    setLocation((current) => {
+      const location = toLocation(current.route, null);
+      window.history.pushState(null, "", location);
+      return { ...current, detail: null };
+    });
+  }, []);
+
+  useEffect(() => {
+    const onPopState = () => setLocation(fromLocation(window.location.pathname, window.location.search));
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
   const nav = useMemo(
-    () => ({
-      route,
-      navigate: setRoute,
-      openDetail: (t: DetailTarget) => setDetail(t),
-      refreshKey,
-      refresh,
-    }),
-    [route, refreshKey, refresh],
+    () => ({ route, navigate, openDetail, closeDetail, refreshKey, refresh }),
+    [route, navigate, openDetail, closeDetail, refreshKey, refresh],
   );
 
-  const activePack = route.name === "domain" ? packs.find((p) => p.name === route.domain) : undefined;
+  const activePack = route.name === "domain" ? packs.find((pack) => pack.name === route.domain) : undefined;
+  const attentionCount = reviewPending + unfiledCount;
 
   return (
     <NavContext.Provider value={nav}>
+      <a className="skip-link" href="#main">Skip to content</a>
       <div className="layout">
         <aside className="sidebar">
           <div className="logo">
-            <span className="logo-mark">◆</span>
+            <span className="logo-mark" aria-hidden>◆</span>
             <span className="logo-text">Domain Foundry</span>
           </div>
           <nav className="side-nav" aria-label="Primary">
-            <NavItem active={route.name === "home"} onClick={() => setRoute({ name: "home" })}>
-              Home
+            <NavItem active={route.name === "today"} onClick={() => navigate({ name: "today" })}>
+              Today
             </NavItem>
-            <NavItem active={route.name === "feed"} onClick={() => setRoute({ name: "feed" })}>
-              Capture feed
+            <NavItem active={route.name === "passions"} onClick={() => navigate({ name: "passions" })}>
+              Your passions
             </NavItem>
-            <NavItem active={route.name === "review"} onClick={() => setRoute({ name: "review" })}>
-              Review
-              {reviewPending > 0 && <span className="nav-count">{reviewPending}</span>}
+            <NavItem active={route.name === "inbox"} onClick={() => navigate({ name: "inbox" })}>
+              Inbox
+              {attentionCount > 0 && <span className="nav-count">{attentionCount > 99 ? "99+" : attentionCount}</span>}
             </NavItem>
-            <NavItem active={route.name === "sources"} onClick={() => setRoute({ name: "sources" })}>
-              Add a source
-            </NavItem>
-            <NavItem active={route.name === "health"} onClick={() => setRoute({ name: "health" })}>
-              Health
-            </NavItem>
-            <NavItem active={route.name === "docs"} onClick={() => setRoute({ name: "docs" })}>
-              Docs
+            <NavItem active={route.name === "settings"} onClick={() => navigate({ name: "settings" })}>
+              Settings
             </NavItem>
           </nav>
 
           {packs.length > 0 && (
             <div className="side-domains">
-              <p className="side-label">Domains</p>
-              {packs.map((p) => (
+              <p className="side-label">Your passions</p>
+              {packs.map((pack) => (
                 <NavItem
-                  key={p.name}
-                  active={route.name === "domain" && route.domain === p.name}
-                  onClick={() => setRoute({ name: "domain", domain: p.name })}
+                  key={pack.name}
+                  active={route.name === "domain" && route.domain === pack.name}
+                  onClick={() => navigate({ name: "domain", domain: pack.name })}
                 >
-                  <span className="side-domain-icon" aria-hidden>
-                    {p.icon}
-                  </span>
-                  {p.title}
+                  <span className="side-domain-icon" aria-hidden>{pack.icon}</span>
+                  {pack.title}
                 </NavItem>
               ))}
             </div>
           )}
         </aside>
 
-        <main className="content">
-          {(route.name === "home" || route.name === "feed") && (
-            <div className="capture-region">
-              <CaptureBox onCaptured={() => refresh()} />
-            </div>
-          )}
-
-          {route.name === "home" && <Home packs={packs} onInstalled={refresh} />}
-          {route.name === "feed" && (
-            <section className="panel">
-              <h2>Capture feed</h2>
-              <CaptureFeed packs={packs} refreshKey={refreshKey} />
-            </section>
-          )}
-          {route.name === "review" && (
-            <section className="panel">
-              <h2>Review queue</h2>
-              <ReviewQueue packs={packs} refreshKey={refreshKey} onChanged={refresh} />
-            </section>
-          )}
-          {route.name === "health" && (
-            <section className="panel">
-              <h2>Health</h2>
-              <HealthPanel refreshKey={refreshKey} />
-            </section>
-          )}
-          {route.name === "sources" && <Sources />}
-          {route.name === "docs" && (
-            <section className="panel">
-              <Docs />
-            </section>
-          )}
+        <main className="content" id="main" tabIndex={-1}>
+          {route.name === "today" && <Today packs={packs} />}
+          {route.name === "passions" && <Passions packs={packs} onInstalled={refresh} />}
+          {route.name === "inbox" && <Inbox packs={packs} refreshKey={refreshKey} onChanged={refresh} />}
+          {route.name === "create" && <CreateDomain packs={packs} onDone={refresh} />}
+          {route.name === "settings" && <Settings tab={route.tab} packs={packs} refreshKey={refreshKey} />}
           {route.name === "domain" &&
             (activePack ? (
               <DomainView pack={activePack} />
             ) : (
-              <section className="panel">
-                <p className="muted">Loading domain…</p>
-              </section>
+              <section className="panel"><p className="muted">Loading passion…</p></section>
             ))}
         </main>
       </div>
 
       {detail && (
-        <DetailModal
-          target={detail}
-          packs={packs}
-          onClose={() => setDetail(null)}
-          onChanged={refresh}
-        />
+        <DetailModal target={detail} packs={packs} onClose={closeDetail} onChanged={refresh} onOpenDetail={openDetail} />
       )}
     </NavContext.Provider>
   );
 }
 
-function NavItem({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
+function NavItem({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
   return (
-    <button className={`nav-item${active ? " nav-active" : ""}`} onClick={onClick} aria-current={active}>
+    <button
+      type="button"
+      className={`nav-item${active ? " nav-active" : ""}`}
+      onClick={onClick}
+      aria-current={active ? "page" : undefined}
+    >
       {children}
     </button>
   );

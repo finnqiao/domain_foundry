@@ -1,11 +1,13 @@
 # Domain Foundry for developers
 
-A local-first harness that turns natural-language captures into typed, governed
-domain data. This guide gets you from clone to a running system you understand,
-and shows every seam you'd extend.
+A local-first app that turns natural-language notes into typed, correctable
+records for any passion you describe. This guide gets you from clone to a
+running system you understand, and shows every seam you'd extend.
 
 **You'll leave with:** a working install, the mental model, and the exact commands
-for each surface (CLI, MCP, Telegram, hermes-agent, HTTP, ingest).
+for each surface (CLI, MCP, Telegram, hermes-agent, HTTP, ingest). Click-through
+version of the same coffee loop: **[Turn a hobby into an app](end-to-end.html#dev)**
+(pick **If you like terminals**).
 
 ---
 
@@ -30,10 +32,11 @@ Four invariants worth internalizing:
    interpretation. Nothing is dropped; uncertainty becomes a review or unfiled card.
 2. **Domains are data, not code.** A pack is a folder of YAML (schema, routing
    rules, policy, projections). The wizard generates one from a plain-language goal.
-3. **Writes are in-process.** `HarnessAPI` writes straight to SQLite. The HTTP
-   server is **read-only for writes** — `POST /api/capture` is `410 Gone` on
-   purpose, so a dead server can't lose a capture. Every write surface (CLI, MCP,
-   Telegram, hermes-agent) embeds `HarnessAPI`.
+3. **Writes share one contract.** `HarnessAPI` writes straight to SQLite, and
+   the FastAPI daemon serves the same read/write contract for the SPA and
+   remote adapters. Every write surface (CLI, MCP, Telegram, hermes-agent)
+   can use the canonical HTTP seam or an in-process embedding that passes
+   conformance.
 4. **Corrections compound.** Each fix amends the canonical record *and* compiles
    into a replayable eval case, so the system provably improves.
 
@@ -57,11 +60,12 @@ Data lives at `~/.domain_foundry` (override with `--home` or `DOMAIN_FOUNDRY_HOM
 
 ```bash
 domain-foundry init
-domain-foundry new-domain "track my bouldering sessions" --reply skip   # wizard → pack
-domain-foundry capture "sent a tough V5 on the overhang"                # → routed
+domain-foundry new-domain "track my bouldering sessions"   # wizard → pack
+domain-foundry capture "sent a tough V5 on the overhang"   # → routed
 domain-foundry query --domain bouldering
-domain-foundry correct "actually that was a V6"                         # → amend + eval
-domain-foundry health                                                   # integrity + spend
+domain-foundry correct "rating = moderate"                   # → amend + eval
+domain-foundry ask "what was my last session?"
+domain-foundry health                                        # integrity + spend
 ```
 
 ## Routing & LLM backends
@@ -74,18 +78,32 @@ Settings resolve **env > config file > provider default**, so pick whichever
 layer suits you. Env only, as before:
 
 ```bash
+# DeepSeek (native API — cheapest per capture; design uses deepseek-reasoner)
+export DEEPSEEK_API_KEY=...
+export DOMAIN_FOUNDRY_LLM=live
+domain-foundry setup --provider deepseek -y
+
+# OpenRouter (one key, many models)
+export OPENROUTER_API_KEY=...
 export DOMAIN_FOUNDRY_LLM=live
 export DOMAIN_FOUNDRY_ROUTINE_BASE_URL=https://openrouter.ai/api/v1
-export DOMAIN_FOUNDRY_ROUTINE_API_KEY=<key>
-export DOMAIN_FOUNDRY_ROUTINE_MODEL=z-ai/glm-5.2   # or deepseek-chat, gpt-4o-mini, …
+export DOMAIN_FOUNDRY_ROUTINE_API_KEY=$OPENROUTER_API_KEY
+export DOMAIN_FOUNDRY_ROUTINE_MODEL=z-ai/glm-5.2
+export DOMAIN_FOUNDRY_SOTA_BASE_URL=https://openrouter.ai/api/v1
+export DOMAIN_FOUNDRY_SOTA_API_KEY=$OPENROUTER_API_KEY
+export DOMAIN_FOUNDRY_SOTA_MODEL=google/gemini-2.5-pro
 ```
 
 Or persist it once and stop exporting things:
 
 ```bash
-domain-foundry setup --provider openrouter -y   # writes ~/.domain_foundry/config.toml
+domain-foundry setup --provider deepseek -y     # or openrouter / anthropic
 domain-foundry setup --show                     # resolved values + their source
 ```
+
+`setup --provider deepseek` writes routine=`deepseek-chat` and
+sota=`deepseek-reasoner` against `https://api.deepseek.com/v1`. Mix tiers if you
+want a stronger designer than your everyday router — env vars win over the file.
 
 With no key it runs the heuristic router (deterministic, keyword-only) — great for
 tests, limited for free-text. A daily cost guard caps spend
@@ -132,7 +150,7 @@ domain-foundry ingest ~/Notes --only bouldering           # only notes that rout
 domain-foundry ingest ~/logs/journal.log --split lines    # one capture per line
 domain-foundry ingest ~/Notes/climbing --watch            # re-scan, pull in new notes
 
-# in the app: `domain-foundry serve` → "Add a source" in the sidebar (same engine)
+# in the app: `domain-foundry serve` → Settings → Sources (same engine)
 ```
 
 Read-only at the source, idempotent on `(channel, source_ref)`. For a **structured**
@@ -164,19 +182,19 @@ Copy-paste configs and proof transcripts: [Connect your agent](connect-your-agen
 Any MCP-capable runtime works through the MCP server; that's the recommended path
 for a new integration.
 
-## HTTP API (read-only for writes)
+## HTTP API
 
 ```bash
-domain-foundry serve                 # http://127.0.0.1:8787  (+ /sources page)
+domain-foundry serve                 # http://127.0.0.1:8787  (Settings → Sources)
 ```
 
 Reads are plain GETs: `/api/query`, `/api/review`, `/api/packs`,
-`/api/blocks/<domain>/…`, `/api/objects/…`. Writes over HTTP (`/api/capture`,
-`/api/correct`, `/api/wizard`) return `410 Gone` — drive them in-process. The one
-exception is **ingest**, a local server-side operation: `POST /api/ingest/preview`
-(read-only) and `POST /api/ingest` (commit) let the *local* server pull in *local*
-files, which powers the `/sources` page. Set `DOMAIN_FOUNDRY_API_TOKEN` to require
-a bearer token on non-local binds.
+`/api/blocks/<domain>/…`, `/api/objects/…`; the daemon also serves JSON writes
+such as `/api/capture`, `/api/correct`, and `/api/wizard`. The filesystem-scoped
+ingest operation remains local server-side: `POST /api/ingest/preview`
+(read-only) and `POST /api/ingest` (commit) let the *local* server pull in
+*local* files, which powers **Settings → Sources**. Set `DOMAIN_FOUNDRY_API_TOKEN`
+to require a bearer token on every endpoint.
 
 ## Author a domain pack
 
@@ -189,7 +207,7 @@ schema; remix a real one in an afternoon with the
 
 ```bash
 python -m pytest tests adapters/mcp/tests adapters/telegram/tests adapters/hermes_agent/tests
-# → 219 passed, 2 skipped   (the skips are live-LLM smokes; see the runbook §9)
+# → all passed, 2 skipped   (the skips are live-LLM smokes; see the runbook §9)
 ```
 
 Full verification — every surface, with expected output and troubleshooting — is
