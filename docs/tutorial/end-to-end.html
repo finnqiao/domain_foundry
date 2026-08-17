@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Domain Foundry — Turn a hobby into an app</title>
+  <title>Domain Foundry — Bring the log. Pick a look.</title>
   <style>
     :root {
       color-scheme: light;
@@ -109,7 +109,41 @@
     .message.user { justify-self: end; border-color: #a7d8c7; background: var(--teal-soft); }
     .message.system { justify-self: start; }
     .message .who { display: block; margin-bottom: 4px; color: var(--muted); font-size: .7rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-    .message p { margin-bottom: 0; }
+    .message p { margin-bottom: 0; white-space: pre-wrap; }
+    .message ul { margin: 8px 0 0; padding-left: 1.1em; }
+    .message li { margin: 4px 0; }
+
+    .mockup-grid { display: grid; gap: 10px; }
+    .mockup {
+      border: 1px solid var(--line); border-radius: 14px; padding: 10px 10px 12px;
+      background: #fff; cursor: pointer; text-align: left; width: 100%;
+      font: inherit; color: inherit;
+    }
+    .mockup:hover, .mockup:focus-visible { border-color: var(--teal); }
+    .mockup.picked { border-color: var(--teal); box-shadow: 0 0 0 2px var(--teal-soft); }
+    .mockup .mini-label { display: block; margin-bottom: 6px; }
+    .mockup strong { display: block; font-size: .88rem; margin-bottom: 8px; }
+    .scatter {
+      position: relative; height: 118px; border-radius: 10px;
+      background:
+        linear-gradient(transparent 24px, var(--line) 25px, transparent 26px),
+        linear-gradient(90deg, transparent 24px, var(--line) 25px, transparent 26px),
+        #f4f7f4;
+      background-size: 25px 25px;
+    }
+    .scatter i {
+      position: absolute; width: 8px; height: 8px; border-radius: 50%;
+      background: var(--teal); font-style: normal;
+    }
+    .scatter i.good { background: var(--orange); }
+    .ig-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+    .ig-grid span {
+      display: block; aspect-ratio: 1; border-radius: 6px;
+      background: linear-gradient(135deg, var(--orange-soft), var(--teal-soft));
+    }
+    .mix-list { margin: 0; padding: 0; list-style: none; font-size: .78rem; color: var(--muted); }
+    .mix-list li { display: flex; justify-content: space-between; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--line); }
+    .axis { display: flex; justify-content: space-between; margin-top: 4px; color: var(--muted); font-size: .68rem; }
     .message code { color: var(--teal-dark); }
     .conversation-button { justify-self: start; margin-top: 4px; padding: 9px 13px; border-radius: 10px; background: var(--ink); color: #fff; font-size: .82rem; }
     .conversation-button:hover, .conversation-button:focus-visible { background: var(--teal-dark); }
@@ -222,14 +256,14 @@
   <main class="page">
     <header class="hero">
       <div>
-        <div class="eyebrow">Domain Foundry · tutorial for everyone and for developers</div>
-        <h1>Name a passion. Talk to it. Keep it.</h1>
-        <p class="lede">Start in a map of the territory — food vs diving vs soccer — then pick an app idea (including things that already exist) and talk to it. Notes stay on your computer. You never fill in a form.</p>
+        <div class="eyebrow">Domain Foundry · a weekend with the notebook you already have</div>
+        <h1>Bring the log. Pick a look. Keep the app.</h1>
+        <p class="lede">You don’t start by naming a product. You say “I have a log of sourdough bakes.” Your agent reads it, shows what you could build, sketches a few looks, and you pick one. The records stay on your computer.</p>
         <div class="controls">
-          <a class="primary" href="#tutorial" style="text-decoration:none">Walk it yourself</a>
-          <button class="secondary" id="playFlow" type="button">Watch a loaf get saved</button>
+          <a class="primary" href="#conversation-title" style="text-decoration:none">See the chat</a>
+          <button class="secondary" id="playFlow" type="button">Play the weekend</button>
           <button class="secondary" id="resetFlow" type="button">Start over</button>
-          <span class="status" id="flowStatus" role="status">Same loop twice: everyone, then the terminal.</span>
+          <span class="status" id="flowStatus" role="status">A normal person, a bake log, an MVP.</span>
         </div>
       </div>
       <aside class="hero-note">
@@ -239,9 +273,9 @@
     </header>
 
     <div class="trio" aria-label="What you get">
-      <article class="trio-card"><span class="trio-icon" aria-hidden>📒</span><strong>A database that lasts</strong><p>Every note is saved first, then filed. Nothing is guessed away. You can walk away and the records are still there.</p></article>
-      <article class="trio-card"><span class="trio-icon" aria-hidden>🍞</span><strong>A little app for that hobby</strong><p>Timelines, galleries, plans, quizzes — the views that hobby actually needs, without a new download for each passion.</p></article>
-      <article class="trio-card"><span class="trio-icon" aria-hidden>✦</span><strong>The same place from any chat</strong><p>Claude, Cursor, Telegram, or the terminal all talk to one local kitchen. Log, ask, and fix — next week still knows last weekend.</p></article>
+      <article class="trio-card"><span class="trio-icon" aria-hidden>📒</span><strong>The log you already have</strong><p>A notebook, a folder of photos, a notes.txt. Your agent can OCR it. Nothing is retyped into a form.</p></article>
+      <article class="trio-card"><span class="trio-icon" aria-hidden>🍞</span><strong>Options, then a look</strong><p>Not “pick recipe lab.” Real choices: chart the inputs, invent the next mix, organize the Instagram. Then three HTML looks. You pick. That’s the MVP.</p></article>
+      <article class="trio-card"><span class="trio-icon" aria-hidden>✦</span><strong>Talk to it next week</strong><p>Claude, Cursor, Telegram, or the little app. Same bakes. Ask what worked. Drop the next loaf whenever.</p></article>
     </div>
 
     <section class="surface" id="tutorial" aria-labelledby="tutorial-title">
@@ -249,9 +283,9 @@
       <div class="section-head">
         <div>
           <div class="section-kicker">00 / walk it yourself</div>
-          <h2 id="tutorial-title">One loop. Two ways in.</h2>
+          <h2 id="tutorial-title">Same weekend. Two ways in.</h2>
         </div>
-        <p>Everyone talks in Claude, Telegram, or the little app. Developers can do the same loop in a terminal. Same coffee. Same records on your machine.</p>
+        <p>Talk in Claude, Telegram, or the little app. Or do it from a terminal. Same bake log. Same records on your machine.</p>
       </div>
       <div class="track-bar" role="tablist" aria-label="Choose a track">
         <button type="button" role="tab" id="trackEveryoneBtn" aria-controls="track-everyone" aria-pressed="true">Everyone</button>
@@ -289,30 +323,37 @@ domain-foundry serve</pre>
           <li>
             <div>
               <h3>Optional: add a key so it understands how you talk</h3>
-              <p>Without a key you still get a <strong>simple log</strong> you can talk to today. With a key, “track my coffee” picks fields like method, dose, and taste — not a blank journal.</p>
+              <p>Without a key you still get a <strong>simple log</strong> you can talk to today. With a key, “i want to data visualize all my bakes” can shape fields and a chart — not a blank journal.</p>
               <p>In the app: <strong>Settings</strong> → add a DeepSeek or OpenRouter key. A friend who uses Hermes often already has DeepSeek.</p>
             </div>
           </li>
           <li>
             <div>
-              <h3>Describe the passion, then log a real note</h3>
-              <p>Say what you actually do. Then say what happened. If it’s sure, it files. If it isn’t, the note waits in <strong>Inbox</strong> — nothing is thrown away.</p>
-              <pre>You: track my coffee
-Foundry: Coffee is ready. Log one real note and we'll file it.
+              <h3>Bring the log you already have</h3>
+              <p>Say it the way you’d text a friend. Your agent offers to pull the folder (and OCR photos). Then it shows what you could build — not a blank journal.</p>
+              <pre>You: i have a log of sourdough bakes
+Claude: drop the notebook or the photos and i'll ocr them.
 
-You: V60 this morning, Ethiopia, 15g in, bergamot and jasmine, rating 8
-Foundry: Saved as a brew.</pre>
+You: folder on my desktop, photos + notes.txt
+Claude: 47 bakes in. you could chart how inputs lead to crumb,
+        generate mixes from what worked, or organize instagram posts.
+
+You: i want to data visualize all my bakes
+Claude: three looks. pick one and i'll build the mvp.</pre>
             </div>
           </li>
           <li>
             <div>
-              <h3>Ask, then fix in one sentence</h3>
-              <p>Ask what you logged. To change a number, say it plainly — <code>rating = 9</code> works, and so does “actually it was a 9.”</p>
-              <pre>You: what was my last brew and how did it taste?
-Foundry: Ethiopia V60 — bergamot and jasmine. (from your records)
+              <h3>Pick a look, then talk to it</h3>
+              <p>You get HTML sketches of the MVP. Pick one. Next week, ask in plain language. To fix a number, just say it.</p>
+              <pre>You: the scatter one
+Claude: live. 47 bakes on hydration vs crumb.
 
-You: rating = 9
-Foundry: Updated. History kept.</pre>
+You: which hydrations actually sprang?
+Claude: the 76–80% keepers. (from your records)
+
+You: that sunday batard was 78 not 72
+Claude: updated. history kept.</pre>
             </div>
           </li>
           <li>
@@ -322,7 +363,7 @@ Foundry: Updated. History kept.</pre>
             </div>
           </li>
         </ol>
-        <p class="callout"><strong>That’s the whole loop.</strong> Name it → talk → file or Inbox → ask → fix. Same data if you later open the terminal. Longer no-terminal notes: <a href="howto-non-technical.md">Use Domain Foundry</a>.</p>
+        <p class="callout"><strong>That’s the whole loop.</strong> Bring the log → hear options → pick a look → talk to the MVP. Same data if you later open the terminal. Longer no-terminal notes: <a href="howto-non-technical.md">Use Domain Foundry</a>.</p>
       </div>
 
       <div id="track-dev" class="track-panel" role="tabpanel" aria-labelledby="trackDevBtn" hidden>
@@ -354,16 +395,16 @@ domain-foundry setup --provider openrouter -y</pre>
           </li>
           <li>
             <div>
-              <h3>Describe → log → ask → correct → export</h3>
-              <pre>domain-foundry new-domain "log my pour-over coffee brews"
-<span class="code-comment"># live design: fields like method / dose / taste. No key → honest simple log.</span>
-
-domain-foundry capture "V60, Ethiopia Yirgacheffe, 15g in, bergamot, rating 8"
-domain-foundry ask "what was my last brew and how did it taste?"
-domain-foundry correct "rating = 9"
-domain-foundry export --json -o /tmp/coffee.json
+              <h3>Bring the notebook → pick a look → talk to it</h3>
+              <pre>domain-foundry new-domain "i have a log of sourdough bakes"
+<span class="code-comment"># neighborhood of jobs, not an auto-install. then:</span>
+domain-foundry wizard reply &lt;session&gt; "visualize the bakes"
+domain-foundry ingest ~/Desktop/bakes
+domain-foundry ask "which hydrations actually sprang?"
+domain-foundry correct "that sunday batard was 78 not 72"
+domain-foundry export --json -o /tmp/bakes.json
 domain-foundry health</pre>
-              <p>An off-topic note (“changed the oil in the Civic”) should stay <strong>unfiled</strong>, not get guessed into coffee. Secrets in a note show as <code>[REDACTED]</code>.</p>
+              <p>An off-topic note (“changed the oil in the Civic”) should stay <strong>unfiled</strong>, not get guessed into sourdough. Secrets in a note show as <code>[REDACTED]</code>.</p>
             </div>
           </li>
           <li>
@@ -376,7 +417,7 @@ domain-foundry ingest ~/Notes --dry-run</pre>
             </div>
           </li>
         </ol>
-        <p class="callout"><strong>Proof we ran this.</strong> Isolated home, Hermes DeepSeek, coffee designed live (dry-run 10/10), capture applied, car-oil unfiled, Ask cited a brew, <code>rating = 9</code> applied, export had no key leaks.</p>
+        <p class="callout"><strong>Same CLI loop.</strong> <code>new-domain</code> → ingest the folder → ask → correct → export. Off-topic notes stay unfiled. Full seams: <a href="howto-technical.md">developer how-to</a>.</p>
       </div>
     </section>
 
@@ -384,9 +425,9 @@ domain-foundry ingest ~/Notes --dry-run</pre>
       <div class="section-head">
         <div>
           <div class="section-kicker">01 / talk from wherever you already are</div>
-          <h2 id="entry-title">The app, your agent, or your phone. Same kitchen.</h2>
+          <h2 id="entry-title">Claude, your phone, or a folder. Same kitchen.</h2>
         </div>
-        <p>Pick the surface that fits the day. Everything lands in one local place your agent can use later.</p>
+        <p>You already chat somewhere. Drop the log there. Everything lands in one local place.</p>
       </div>
       <div class="flow-layout">
         <nav class="entry-tabs" aria-label="How you talk" role="tablist">
@@ -403,19 +444,19 @@ domain-foundry ingest ~/Notes --dry-run</pre>
       <div class="section-head">
         <div>
           <div class="section-kicker">02 / one loaf, start to finish</div>
-          <h2 id="flow-title">Say what happened. Watch it become an app.</h2>
+          <h2 id="flow-title">A notebook in, an MVP out.</h2>
         </div>
-        <p>Click a step. The orange marks are the moments it refuses to pretend it knows more than it does.</p>
+        <p>Click a step. This is the weekend, not a form wizard.</p>
       </div>
       <div class="flow-map">
         <div class="progress-track" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
         <div class="stage-nodes" role="list" aria-label="Hobby loop">
-          <button class="stage-node" type="button" role="listitem" data-step="0" aria-current="step"><span class="node-number">1</span><span class="node-title">Name it</span><span class="node-subtitle">your passion</span></button>
-          <button class="stage-node" type="button" role="listitem" data-step="1"><span class="node-number">2</span><span class="node-title">Talk</span><span class="node-subtitle">what happened</span></button>
-          <button class="stage-node" type="button" role="listitem" data-step="2"><span class="node-number">3</span><span class="node-title">File it</span><span class="node-subtitle">or keep it</span></button>
-          <button class="stage-node" type="button" role="listitem" data-step="3"><span class="node-number">4</span><span class="node-title">See it</span><span class="node-subtitle">as a little app</span></button>
-          <button class="stage-node" type="button" role="listitem" data-step="4"><span class="node-number">5</span><span class="node-title">Fix it</span><span class="node-subtitle">one sentence</span></button>
-          <button class="stage-node" type="button" role="listitem" data-step="5"><span class="node-number">6</span><span class="node-title">Ask later</span><span class="node-subtitle">it's yours</span></button>
+          <button class="stage-node" type="button" role="listitem" data-step="0" aria-current="step"><span class="node-number">1</span><span class="node-title">The log</span><span class="node-subtitle">you already have</span></button>
+          <button class="stage-node" type="button" role="listitem" data-step="1"><span class="node-number">2</span><span class="node-title">Drop it</span><span class="node-subtitle">OCR / ingest</span></button>
+          <button class="stage-node" type="button" role="listitem" data-step="2"><span class="node-number">3</span><span class="node-title">Options</span><span class="node-subtitle">what to build</span></button>
+          <button class="stage-node" type="button" role="listitem" data-step="3"><span class="node-number">4</span><span class="node-title">Your words</span><span class="node-subtitle">visualize this</span></button>
+          <button class="stage-node" type="button" role="listitem" data-step="4"><span class="node-number">5</span><span class="node-title">Looks</span><span class="node-subtitle">pick an HTML</span></button>
+          <button class="stage-node" type="button" role="listitem" data-step="5"><span class="node-number">6</span><span class="node-title">MVP</span><span class="node-subtitle">talk to it</span></button>
         </div>
         <div class="stage-detail" id="stageDetail" aria-live="polite"></div>
       </div>
@@ -424,15 +465,15 @@ domain-foundry ingest ~/Notes --dry-run</pre>
     <section class="surface" aria-labelledby="conversation-title">
       <div class="section-head">
         <div>
-          <div class="section-kicker">03 / a weekend of baking</div>
-          <h2 id="conversation-title">A normal chat, with a loaf that stays.</h2>
+          <div class="section-kicker">03 / a weekend with the notebook</div>
+          <h2 id="conversation-title">How a normal person actually talks.</h2>
         </div>
-        <p>Advance the sample. On the right: the bake card your app keeps — not a sticky note that evaporates.</p>
+        <p>Advance the sample. On the right: processed bakes, then three looks, then the MVP you picked.</p>
       </div>
       <div class="split">
         <div class="conversation" id="conversation" aria-live="polite"></div>
         <div class="data-panel">
-          <header><h3 id="dataTitle">Your bake</h3><button class="toggle" id="toggleData" type="button">Peek at the structured record</button></header>
+          <header><h3 id="dataTitle">The notebook</h3><button class="toggle" id="toggleData" type="button">Peek at the structured records</button></header>
           <div id="recordView"></div>
           <p class="json-note" id="jsonNote">The loaf is a real record now: hydration, result, and a place on your timeline.</p>
         </div>
@@ -458,7 +499,7 @@ domain-foundry ingest ~/Notes --dry-run</pre>
       <div class="section-head">
         <div>
           <div class="section-kicker">05 / any hobby, same shape</div>
-          <h2 id="hobby-title">You describe it. Foundry shapes a place for it.</h2>
+          <h2 id="hobby-title">Whatever you already keep, same shape.</h2>
         </div>
         <p>No new app per passion. One home, many little worlds — and your chat app already knows the verbs.</p>
       </div>
@@ -476,28 +517,23 @@ domain-foundry ingest ~/Notes --dry-run</pre>
       <div class="section-head">
         <div>
           <div class="section-kicker">06 / why your agent loves this</div>
-          <h2 id="agent-title">Three verbs. That’s the whole loop.</h2>
+          <h2 id="agent-title">Your agent sketches. The bakes stay here.</h2>
         </div>
-        <p>Your agent is a courier for your words — not the source of truth. The records live here, so next week’s chat still knows last weekend’s loaf. With a model, Ask answers in a sentence; without one, you still get the closest records — never a guess from the internet.</p>
+        <p>Claude / Hermes reads the notebook and shows looks. Foundry files the records so next week’s chat still knows last weekend’s loaf. OCR is your agent. The database is local.</p>
       </div>
       <div class="agent-layout">
         <div class="agent-verbs">
-          <div class="verb"><b>01</b><p><strong>Log</strong> — pass what you said, exactly. Foundry files it as a bake, a climb, a brew.</p></div>
-          <div class="verb"><b>02</b><p><strong>Ask</strong> — “when did I last bake something great?” Answers come from your records, with a trail back to the loaf.</p></div>
-          <div class="verb"><b>03</b><p><strong>Fix</strong> — “actually it was 80%.” History stays. The same mistake can be caught next time.</p></div>
+          <div class="verb"><b>01</b><p><strong>Bring the log</strong> — “i have a log of sourdough bakes.” Drop the folder. Don’t retype 47 pages.</p></div>
+          <div class="verb"><b>02</b><p><strong>Pick a job</strong> — chart the inputs, invent mixes, organize Instagram. Then pick an HTML look for the MVP.</p></div>
+          <div class="verb"><b>03</b><p><strong>Talk to it</strong> — “which hydrations sprang?” Fix a number in one sentence. The chart is still there tomorrow.</p></div>
         </div>
-        <pre><span class="code-comment"># what your agent actually does</span>
-You: baked a country loaf, came out great
-Agent: <span class="code-key">log</span> that sentence verbatim
-Foundry: saved as a bake in Sourdough Journey
-
-You: when was my last great loaf?
-Agent: <span class="code-key">ask</span> your records
-Foundry: Saturday — country loaf, 80%
-
-You: actually the hydration was 80
-Agent: <span class="code-key">fix</span> in one sentence
-Foundry: updated, history kept</pre>
+        <pre><span class="code-comment"># what actually happens in the chat</span>
+You: i have a log of sourdough bakes
+Agent: drop it, i'll ocr the pages
+You: i want to data visualize all my bakes
+Agent: three looks — pick one
+You: the scatter one
+Agent: <span class="code-key">mvp is live</span> · 47 bakes on the chart</pre>
       </div>
     </section>
 
@@ -505,14 +541,14 @@ Foundry: updated, history kept</pre>
       <div class="section-head">
         <div>
           <div class="section-kicker">07 / start this weekend</div>
-          <h2 id="start-title">One install. Then talk about the thing you already do.</h2>
+          <h2 id="start-title">One install. Then bring the notebook you already have.</h2>
         </div>
         <p>No account. No cloud. Open the app, or keep talking in Claude.</p>
       </div>
       <div class="start-grid">
         <article class="start-card">
           <h3>Talk in Claude Desktop</h3>
-          <p>One install, one config paste, then: “track my sourdough.”</p>
+          <p>One install, one config paste, then: “i have a log of sourdough bakes.”</p>
           <pre style="margin-top:12px"><span class="code-comment">$</span> pipx install domain-foundry-core domain-foundry-mcp
 
 <span class="code-comment"># Settings → Developer → Edit Config</span>
@@ -547,82 +583,92 @@ Foundry: updated, history kept</pre>
     const entryData = {
       app: {
         title: "The little app",
-        note: "Open Today. Describe a passion. Log what happened. Your agent can use the same records.",
-        badge: "see it on a page",
-        code: `<span class="code-comment"># one-time: start the local app</span>\ndomain-foundry setup\ndomain-foundry serve\n\n<span class="code-comment"># then at http://127.0.0.1:8787</span>\nYou: food\nApp: Food → refine cooking / nutrition / dining. Recipe lab is like Paprika.\nYou: recipe lab\nApp: Recipes is ready.\nYou: cooked shoyu ramen, 40 minutes, keeper\nApp: Saved as a cook.`
+        note: "Settings → Sources. Point at the folder. Preview where notes would land, then pull in. Your original files stay put.",
+        badge: "drop a folder",
+        code: `<span class="code-comment"># then at http://127.0.0.1:8787</span>\nYou: i have a log of sourdough bakes\nApp: drop the folder — photos get read, notes get filed.\nYou: ~/Desktop/bakes\nApp: 47 bakes in. chart the inputs, invent mixes, or organize instagram?\nYou: i want to data visualize all my bakes\nApp: three looks. pick one.`
       },
       claude: {
-        title: "Claude, Cursor, or any agent",
-        note: "Your agent logs the exact sentence, asks your records later, and fixes a mistake in one line. Hermes and other runtimes use the same three verbs.",
-        badge: "your agent",
-        code: `<span class="code-comment"># one-time: Claude Desktop → Settings → Developer</span>\n{\n  <span class="code-key">"mcpServers"</span>: {\n    <span class="code-key">"domain-foundry"</span>: {\n      <span class="code-key">"command"</span>: <span class="code-key">"domain-foundry-mcp"</span>\n    }\n  }\n}\n\n<span class="code-comment"># then just talk — Claude relays the atlas, it does not pick</span>\nYou: diving\nYou: mix SAC and the pokedex\nYou: turtle at Blue Hole, 18m, started 200 bar`
+        title: "Claude, Cursor, Hermes",
+        note: "Talk like you already do. Your agent OCRs the notebook, Foundry keeps the bakes. It does not pick the app for you.",
+        badge: "the chat you have",
+        code: `You: i have a log of sourdough bakes\nClaude: can you upload it? i'll ocr the pages.\nYou: folder of photos + notes.txt\nClaude: processed 47 bakes. options:\n  1. tracker + viz of inputs → crumb\n  2. generate mixes from what worked\n  3. instagram post organizer\nYou: i want to data visualize all my bakes\nClaude: here's html of three looks. pick one and i'll build the mvp.`
       },
       phone: {
         title: "A bot you text",
-        note: "From the gym, the kitchen, the trail. Nothing leaves your machine except the message to Telegram itself.",
+        note: "From the kitchen: send the photos. Same records as Claude.",
         badge: "from your pocket",
-        code: `You: /new diving\nBot: Diving. Refine: scuba, freediving, underwater photo.\nYou: dive log\nBot: dives is ready.\nYou: 45 min at Blue Hole, 18m\nBot: Logged to dives.`
+        code: `You: i have a log of sourdough bakes\nBot: send the photos or a notes dump — i'll read them.\nYou: [12 photos of the notebook]\nBot: 47 bakes. chart them, invent the next mix, or line up instagram?\nYou: visualize the bakes\nBot: three looks. reply 1, 2, or 3.`
       },
       terminal: {
         title: "The terminal, if you like it",
-        note: "Same kitchen, no window. Useful for people who already live in a shell — not required for everyone else.",
+        note: "Same kitchen. Ingest the text; your agent still handles OCR on photos.",
         badge: "optional",
-        code: `domain-foundry new-domain <span class="code-key">"food"</span>\ndomain-foundry wizard reply &lt;session&gt; <span class="code-key">"recipe lab"</span>\ndomain-foundry capture <span class="code-key">"cooked shoyu ramen, keeper"</span>\ndomain-foundry atlas search <span class="code-key">"diving"</span>`
+        code: `domain-foundry new-domain <span class="code-key">"i have a log of sourdough bakes"</span>\ndomain-foundry wizard reply &lt;session&gt; <span class="code-key">"visualize the bakes"</span>\ndomain-foundry ingest ~/Desktop/bakes`
       }
     };
 
     const steps = [
       {
-        title: "Name the passion",
-        label: "Start",
-        body: "“Food.” That’s a bucket, not an app. Foundry shows recipes vs nutrition vs dining — and that a recipe lab is like Paprika — then compiles the idea you pick.",
-        trace: ["a sentence", "a passion", "a ready app"]
+        title: "Start with the thing you already have",
+        label: "The log",
+        body: "“i have a log of sourdough bakes.” Not “food.” Not “recipe lab.” A person with a notebook.",
+        trace: ["a notebook", "not a product name", "no form"]
       },
       {
-        title: "Talk about what happened",
-        label: "Capture",
-        body: "“Baked a country loaf, came out great.” Your exact words are saved first. Interpretation comes after, so a messy note can still be recovered.",
-        trace: ["your words", "saved first", "nothing lost"]
+        title: "Drop it. Don't retype it.",
+        label: "Ingest",
+        body: "Your agent OCRs photos and reads notes.txt. Foundry files the bakes. The originals never move.",
+        trace: ["photos / folder", "OCR if needed", "47 bakes in"]
       },
       {
-        title: "Filed — or kept for you",
-        label: "Honesty",
-        body: "If it’s clearly a bake, it becomes a bake. If it isn’t sure, the note waits in Inbox. Guessing a destination is the one thing it will not do.",
-        trace: ["in the app", "or Inbox", "never thrown away"]
+        title: "Hear what you could build",
+        label: "Options",
+        body: "A tracker of how hydration and bulk lead to crumb. New mixes from keepers. An Instagram organizer. Real apps, not a blank journal.",
+        trace: ["chart inputs", "invent mixes", "post organizer"]
       },
       {
-        title: "See it as a little app",
-        label: "Your hobby, on a page",
-        body: "The loaf shows up on a timeline, in a gallery, in a plan. Japanese gets reviews. Travel gets a map. The shell is shared; the passion supplies the nouns.",
-        trace: ["timeline", "gallery", "plan"]
+        title: "Say it in your own words",
+        label: "You pick",
+        body: "“i want to data visualize all my bakes.” You don't have to learn the catalog. You describe the job.",
+        trace: ["plain sentence", "not a chip", "the job you want"]
       },
       {
-        title: "Fix it in one sentence",
-        label: "Trust",
-        body: "“Actually the hydration was 80.” The loaf updates, the old number stays in history, and the fix becomes something the system can remember.",
-        trace: ["say what was wrong", "record updates", "history kept"]
+        title: "Pick a look",
+        label: "HTML",
+        body: "Three sketches of the MVP. Scatter, mix board, photo grid. Click one. That's the brief.",
+        trace: ["three HTMLs", "you pick", "that's the MVP"]
       },
       {
-        title: "Ask later. Take it with you.",
-        label: "Yours",
-        body: "Next week, ask “when did I last bake something great?” Your agent reads the records. You can export them. Restart the computer: the loaf is still there. No account required.",
-        trace: ["ask your records", "export", "still there tomorrow"]
+        title: "Talk to it next week",
+        label: "Live",
+        body: "The chart is yours. Ask which hydrations sprang. Fix a number in one sentence. Drop the next loaf whenever.",
+        trace: ["ask your bakes", "fix a number", "still there tomorrow"]
       }
     ];
 
     const conversationSteps = [
-      { who: "You", text: "food", kind: "user" },
-      { who: "Foundry", text: "You're in Food. Refine: cooking, nutrition, dining. Recipe lab is like Paprika — or pick the dining map.", kind: "system" },
-      { who: "You", text: "recipe lab", kind: "user" },
-      { who: "Foundry", text: "Recipes is ready. Log a cook whenever.", kind: "system" },
-      { who: "You", text: "cooked shoyu ramen, 40 minutes, keeper", kind: "user" },
-      { who: "Foundry", text: "Saved as a cook. It's on your timeline.", kind: "system" },
-      { who: "You", text: "when did I last make ramen?", kind: "user" },
-      { who: "Foundry", text: "Your shoyu ramen — the keeper. Still yours next week.", kind: "system" }
+      { who: "You", text: "i have a log of sourdough bakes", kind: "user" },
+      { who: "Claude", text: "drop the notebook or the photos and i'll ocr them. a folder, screenshots, notes.txt — whatever you've got.", kind: "system" },
+      { who: "You", text: "it's a folder on my desktop. photos of the notebook plus a notes.txt", kind: "user" },
+      { who: "Claude", text: "processed 47 bakes — hydration, flour mix, bulk, crumb notes. here's what you could build with this:\n\n• a tracker and chart of how inputs lead to bake outcomes\n• generate new recipes and mixes from what actually worked\n• a post organizer for your instagram of the bakes", kind: "system" },
+      { who: "You", text: "i want to data visualize all my bakes", kind: "user" },
+      { who: "Claude", text: "ok. i built three looks for an mvp. pick one and i'll ship it.", kind: "system" },
+      { who: "You", text: "the scatter one", kind: "user" },
+      { who: "Claude", text: "live. 47 bakes on hydration vs crumb. ask it from here, or drop the next loaf whenever.", kind: "system" }
+    ];
+
+    const nextLabels = [
+      "Ask to upload it →",
+      "Share the folder →",
+      "See what they could build →",
+      "Ask to visualize →",
+      "Show the looks →",
+      "Pick the scatter →",
+      "Ship the MVP →"
     ];
 
     let currentStep = 0;
-    let conversationIndex = 3;
+    let conversationIndex = 0;
     let showingCanonical = false;
     let timer = null;
 
@@ -658,7 +704,7 @@ Foundry: updated, history kept</pre>
         const next = document.createElement("button");
         next.className = "conversation-button";
         next.type = "button";
-        next.textContent = conversationIndex < 2 ? "Log the first bake →" : conversationIndex < 4 ? "Fix the hydration →" : "Ask about it later →";
+        next.textContent = nextLabels[conversationIndex] || "Continue →";
         next.addEventListener("click", () => {
           conversationIndex += 1;
           renderConversation();
@@ -668,42 +714,84 @@ Foundry: updated, history kept</pre>
       }
     }
 
-    function bakeCard() {
+    function scatterDots() {
+      const pts = [[18,72],[28,58],[34,64],[42,40],[48,36],[55,48],[62,30],[68,44],[74,22],[80,28],[86,18],[90,34]];
+      return pts.map(([x, y], i) => `<i class="${i % 3 === 0 ? "good" : ""}" style="left:${x}%; top:${y}%"></i>`).join("");
+    }
+
+    function mockupsHtml(picked) {
+      return `<div class="mockup-grid">
+        <button class="mockup${picked ? " picked" : ""}" type="button" data-pick="scatter">
+          <span class="mini-label">look 1 · mvp</span>
+          <strong>Inputs → crumb</strong>
+          <div class="scatter">${scatterDots()}</div>
+          <div class="axis"><span>hydration</span><span>crumb / spring</span></div>
+        </button>
+        <button class="mockup" type="button" data-pick="mixes">
+          <span class="mini-label">look 2</span>
+          <strong>Next mix from keepers</strong>
+          <ul class="mix-list"><li><span>76% country, 20% rye</span><span>keeper</span></li><li><span>80% batard</span><span>dense</span></li><li><span>suggested: 78% / 12% rye</span><span>try</span></li></ul>
+        </button>
+        <button class="mockup" type="button" data-pick="ig">
+          <span class="mini-label">look 3</span>
+          <strong>Instagram of the bakes</strong>
+          <div class="ig-grid"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+        </button>
+      </div>`;
+    }
+
+    function appCard() {
       if (conversationIndex < 2) {
-        return `<article class="bake-card"><div class="bake-kicker">Sourdough Journey</div><h3>Waiting for a bake</h3><p class="bake-empty">Name the passion, then tell it what happened. The first loaf becomes a real record.</p></article>`;
+        return `<article class="bake-card"><div class="bake-kicker">Waiting on the notebook</div><h3>Nothing filed yet</h3><p class="bake-empty">They said they have a log. Next: drop the folder. Photos get read. Notes get filed.</p></article>`;
       }
-      const hydration = conversationIndex >= 5 ? "80%" : "75%";
-      const pill = conversationIndex >= 5
-        ? `<span class="pill warm">corrected · history kept</span>`
-        : `<span class="pill">● saved as a bake</span>`;
-      const asked = conversationIndex >= 7 ? `<p class="bake-empty" style="margin-top:12px">Asked later: last great bake is this loaf.</p>` : "";
-      return `<article class="bake-card"><div class="bake-kicker">Sourdough Journey · bake</div><h3>Country loaf</h3><dl><div><dt>Hydration</dt><dd>${hydration}</dd></div><div><dt>Result</dt><dd>great</dd></div><div><dt>When</dt><dd>this weekend</dd></div></dl>${pill}${asked}</article>`;
+      if (conversationIndex < 5) {
+        return `<article class="bake-card"><div class="bake-kicker">47 bakes processed</div><h3>What you could build</h3><ul class="mix-list"><li><span>Tracker + viz</span><span>inputs → crumb</span></li><li><span>Mix generator</span><span>from keepers</span></li><li><span>Instagram organizer</span><span>the photos</span></li></ul></article>`;
+      }
+      if (conversationIndex === 5) {
+        return mockupsHtml(false);
+      }
+      return `<article class="bake-card"><div class="bake-kicker">MVP · scatter</div><h3>Hydration vs crumb</h3><div class="scatter" style="height:150px">${scatterDots()}</div><div class="axis"><span>72%</span><span>80%</span></div><span class="pill" style="margin-top:12px">● 47 bakes · yours</span></article>`;
     }
 
     function jsonCard() {
-      const hydration = conversationIndex >= 5 ? 80 : 75;
-      const revisions = conversationIndex >= 5 ? 1 : 0;
       if (conversationIndex < 2) {
-        return `<pre class="json-view"><span class="json-key">{</span>\n  <span class="json-key">"passion"</span>: <span class="json-string">"sourdough"</span>,\n  <span class="json-key">"status"</span>: <span class="json-string">"ready"</span>,\n  <span class="json-key">"bakes"</span>: <span class="json-number">0</span>\n<span class="json-key">}</span></pre>`;
+        return `<pre class="json-view"><span class="json-key">{</span>\n  <span class="json-key">"status"</span>: <span class="json-string">"waiting on the folder"</span>,\n  <span class="json-key">"bakes"</span>: <span class="json-number">0</span>\n<span class="json-key">}</span></pre>`;
       }
-      return `<pre class="json-view"><span class="json-key">{</span>\n  <span class="json-key">"passion"</span>: <span class="json-string">"sourdough"</span>,\n  <span class="json-key">"kind"</span>: <span class="json-string">"bake"</span>,\n  <span class="json-key">"name"</span>: <span class="json-string">"country loaf"</span>,\n  <span class="json-key">"hydration"</span>: <span class="json-number">${hydration}</span>,\n  <span class="json-key">"result"</span>: <span class="json-string">"great"</span>,\n  <span class="json-key">"fixes"</span>: <span class="json-number">${revisions}</span>\n<span class="json-key">}</span></pre>`;
+      return `<pre class="json-view"><span class="json-key">{</span>\n  <span class="json-key">"bakes"</span>: <span class="json-number">47</span>,\n  <span class="json-key">"fields"</span>: [<span class="json-string">"hydration"</span>, <span class="json-string">"flour_mix"</span>, <span class="json-string">"bulk_hours"</span>, <span class="json-string">"crumb"</span>],\n  <span class="json-key">"picked"</span>: <span class="json-string">${conversationIndex >= 6 ? "scatter mvp" : "not yet"}</span>\n<span class="json-key">}</span></pre>`;
     }
 
     function renderData() {
       if (!showingCanonical) {
-        jsonTitle.textContent = conversationIndex < 2 ? "Your sourdough app" : "Your bake";
+        jsonTitle.textContent = conversationIndex < 2
+          ? "The notebook"
+          : conversationIndex < 5
+            ? "Processed bakes"
+            : conversationIndex === 5
+              ? "Pick a look"
+              : "Your MVP";
         jsonNote.textContent = conversationIndex < 2
-          ? "Nothing filed yet — the passion is ready for its first note."
-          : conversationIndex >= 5
-            ? "The loaf updated. The old hydration is still in the history."
-            : "The loaf is a real record now: hydration, result, and a place on your timeline.";
-        recordView.innerHTML = bakeCard();
+          ? "They have a log. Nothing is filed until the folder lands."
+          : conversationIndex < 5
+            ? "47 bakes are records now. The options are jobs, not a blank journal."
+            : conversationIndex === 5
+              ? "Three HTML sketches. Click the scatter to ship that MVP."
+              : "The chart is live. Ask it. Fix a number. Drop the next loaf.";
+        recordView.innerHTML = appCard();
+        recordView.querySelectorAll("[data-pick]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            if (btn.dataset.pick === "scatter" && conversationIndex === 5) {
+              conversationIndex = conversationSteps.length - 1;
+              renderConversation();
+              renderData();
+            }
+          });
+        });
       } else {
-        jsonTitle.textContent = "The structured record";
-        jsonNote.textContent = "This is what your agent reads. No passwords, no prompts — just the loaf.";
+        jsonTitle.textContent = "The structured records";
+        jsonNote.textContent = "This is what your agent reads. No passwords — just the bakes.";
         recordView.innerHTML = jsonCard();
       }
-      toggleData.textContent = showingCanonical ? "Show the bake card" : "Peek at the structured record";
+      toggleData.textContent = showingCanonical ? "Show the app" : "Peek at the structured records";
     }
 
     document.querySelectorAll("[data-entry]").forEach((tab) => {
@@ -726,7 +814,7 @@ Foundry: updated, history kept</pre>
       clearInterval(timer);
       timer = null;
       renderStep(0);
-      conversationIndex = 3;
+      conversationIndex = 0;
       showingCanonical = false;
       renderConversation();
       renderData();

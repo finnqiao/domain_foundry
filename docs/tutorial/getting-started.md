@@ -44,16 +44,14 @@ inside an app you already use.
    ```
 3. Restart Claude Desktop. Now just talk:
 
-   > **You:** food
-   > **Claude:** You’re in Food. Refine: home cooking · nutrition · dining.
-   > Ideas: Recipe lab (like Paprika), Nutrition tracker (like MyFitnessPal), Dining map.
-   > **You:** recipe lab, and the map
-   > **Claude:** Recipes is ready. Log one real note and we’ll file it.
-   > **You:** cooked the shoyu ramen again, 40 minutes, keeper
-   > **Claude:** Logged to **recipes** ✓
+   > **You:** i have a log of sourdough bakes
+   > **Claude:** drop the notebook or the photos and i’ll ocr them.
+   > **You:** folder on my desktop, photos + notes.txt
+   > **Claude:** 47 bakes in. you could chart how inputs lead to crumb, generate mixes from what worked, or organize instagram.
+   > **You:** i want to data visualize all my bakes
+   > **Claude:** three looks for an mvp — pick one and i’ll build it.
 
-   Same loop for diving: bucket → scuba / freediving / underwater photography →
-   mix SAC + pokedex. Claude must relay the neighborhood; it does not pick for you.
+   Same shape for anything else you already keep: a dive notebook, a climbing ticklist, a coffee log. Claude shows options; you pick in your own words.
 
 That's it. The same config block works in Cursor and other MCP clients. Full
 details: [Connect your agent → MCP](connect-your-agent.md#mcp).
@@ -72,12 +70,10 @@ details: [Connect your agent → MCP](connect-your-agent.md#mcp).
    ```
 4. Open your bot and text it like a friend who never forgets:
 
-   > **You:** /new food
-   > **Bot:** You’re in Food. Refine: home cooking · nutrition · dining. Ideas: Recipe lab…
-   > **You:** recipe lab
-   > **Bot:** Recipes is ready. Log one real note.
-   > **You:** cooked the shoyu ramen again, keeper
-   > **Bot:** ✅ Logged to *recipes*.
+   > **You:** i have a log of sourdough bakes
+   > **Bot:** send the photos or a notes dump — i’ll read them.
+   > **You:** i want to data visualize all my bakes
+   > **Bot:** three looks. reply 1, 2, or 3.
 
 Full details, including how to keep the bot private to you:
 [Connect your agent → Telegram](connect-your-agent.md#telegram).
