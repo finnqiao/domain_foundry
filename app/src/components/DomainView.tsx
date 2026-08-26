@@ -36,15 +36,22 @@ export function DomainView({ pack }: { pack: PackCard }) {
   const activeId = route.name === "domain" ? route.viewId : undefined;
 
   useEffect(() => {
+    let active = true;
     api
       .blockViews(pack.name)
       .then((vs) => {
+        if (!active) return;
         setViews(vs);
         if (!activeId && vs.length > 0) {
           navigate({ name: "domain", domain: pack.name, viewId: vs[0].id }, { replace: true });
         }
       })
-      .catch((e) => setErr(String(e)));
+      .catch((e) => {
+        if (active) setErr(String(e));
+      });
+    return () => {
+      active = false;
+    };
   }, [activeId, navigate, pack.name]);
 
   const activeView = useMemo(() => views.find((v) => v.id === activeId) ?? views[0], [views, activeId]);
@@ -52,15 +59,24 @@ export function DomainView({ pack }: { pack: PackCard }) {
 
   useEffect(() => {
     if (!activeViewId) return;
+    let active = true;
     setLoading(true);
     api
       .blockData(pack.name, activeViewId)
       .then((d) => {
+        if (!active) return;
         setData(d);
         setErr(null);
       })
-      .catch((e) => setErr(String(e)))
-      .finally(() => setLoading(false));
+      .catch((e) => {
+        if (active) setErr(String(e));
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [activeViewId, pack.name, refreshKey]);
 
   const BlockComponent = activeView ? resolveBlock(activeView.block) : null;
