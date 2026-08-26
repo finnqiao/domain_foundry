@@ -62,6 +62,109 @@ export type PackCard = {
   compatibility?: { core?: string | null; capabilities?: Record<string, string> };
 };
 
+export type FoundryEvidence = {
+  id: string;
+  source_id: string;
+  claim: string;
+  use: "fact" | "pattern" | "constraint" | "inspiration";
+  locator?: string | null;
+};
+
+export type FoundryConcept = {
+  id: string;
+  title: string;
+  thesis: string;
+  primary_loop: string;
+  primary_affordance: string;
+  differentiator: string;
+  feature_boundary: string[];
+  tradeoffs: string[];
+  workflow_ids: string[];
+  evidence_ids: string[];
+};
+
+export type FoundrySource = {
+  id: string;
+  title: string;
+  publisher: string;
+  url: string;
+  tier: string;
+  license: string;
+  topics: string[];
+};
+
+export type FoundryProposal = {
+  id: string;
+  title: string;
+  goal: string;
+  artifacts: string[];
+  constraints: string[];
+  research: {
+    interest: string;
+    desired_outcome: string;
+    practice: string[];
+    existing_artifacts: string[];
+    constraints: string[];
+    first_value: string;
+  };
+  source_ids: string[];
+  source_snapshots: FoundrySource[];
+  principle_ids: string[];
+  evidence: FoundryEvidence[];
+  concepts: FoundryConcept[];
+};
+
+export type FoundryGoldenSummary = {
+  id: string;
+  title: string;
+  interest: string;
+  desired_outcome: string;
+  concepts: Pick<FoundryConcept, "id" | "title" | "thesis" | "primary_loop">[];
+  selected_concept: string;
+  visual_world: {
+    id: string;
+    name: string;
+    mood: string;
+    tokens: Record<string, string | number>;
+  };
+  topology: string;
+  entities: number;
+  views: number;
+  source_count: number;
+};
+
+export type FoundrySpec = FoundryProposal & {
+  domain: {
+    entities: Array<{ id: string; title: string; kind: string; description: string; identity: string[] }>;
+    relationships: Array<{ id: string; from_entity: string; to_entity: string; cardinality: string; description: string }>;
+    workloads: Array<{ id: string; question: string; acceptance: string }>;
+  };
+  experience: {
+    visual_world: FoundryGoldenSummary["visual_world"];
+    navigation: { topology: string; primary_view: string };
+    views: Array<{ id: string; title: string; purpose: string; layout: string }>;
+  };
+  evaluation: {
+    cases: Array<{ id: string; kind: string; input: string; expected: string; authored_by: string }>;
+  };
+  owned_app_html?: string;
+};
+
+export type FoundryProposalResponse = {
+  proposal_id: string;
+  candidate_sources: number;
+  proposal: FoundryProposal;
+  sources: FoundrySource[];
+};
+
+export type FoundryCompletionResponse = {
+  proposal_id: string;
+  spec: FoundrySpec;
+  owned_app_html: string;
+  app_url: string;
+  artifacts: Record<string, string>;
+};
+
 export type CatalogEntry = {
   name: string;
   title: string;
@@ -410,6 +513,32 @@ export type WizardTurn = {
     est_cost_usd?: number;
     routine_model?: string;
   } | null;
+  user_message?: string;
+  based_on?: string;
+  phase?: string;
+  release_mode?: boolean;
+  progress?: Array<{
+    id: string;
+    label: string;
+    status: "done" | "active" | "pending" | string;
+  }>;
+  technical_details?: { message?: string; state?: string };
+  real_captures?: number;
+  first_use_blocked?: boolean;
+  second_note?: { index: number; of: number; is_second: boolean };
+  capture?: {
+    entry_id?: string;
+    status?: string;
+    routed?: Array<{
+      domain?: string | null;
+      object_type?: string | null;
+      operation?: string | null;
+      disposition?: string | null;
+      confidence?: number;
+    }>;
+    test_drive_remaining?: number;
+    correct_hint?: string;
+  } | null;
   proposal?: {
     domain?: string;
     title?: string;
@@ -432,6 +561,33 @@ export type WizardTurn = {
   neighborhood?: WizardNeighborhood | null;
   schema_preview?: Record<string, unknown> | null;
   simple_log?: boolean;
+  looks?: WizardLook[] | null;
+  selected_look_id?: string | null;
+  ingest?: { path?: string; files?: number } | null;
+  // Elicitation (ADR-010): two sentences in the user's own words. The second is
+  // held out of the design and replayed through the real router after activate.
+  elicit?: {
+    index: number;
+    of: number;
+    held_out: boolean;
+    samples?: string[];
+  } | null;
+  held_out?: {
+    text: string;
+    filed: boolean;
+    object_type?: string | null;
+    disposition?: string | null;
+  } | null;
+};
+
+export type WizardLook = {
+  idea_id: string;
+  title: string;
+  html: string;
+  round?: number;
+  jobs?: string[];
+  hero_job?: string;
+  model?: string;
 };
 
 export type WizardNeighborhoodCard = {

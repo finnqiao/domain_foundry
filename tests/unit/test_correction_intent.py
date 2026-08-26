@@ -18,3 +18,17 @@ def test_hydration_was_not():
     parsed = parse_correction_text("hydration was 80 not 75")
     assert parsed.fields["hydration"] == 80
     assert parsed.fields["_wrong"] == 75
+
+
+def test_proper_noun_is_identity_not_a_new_field():
+    parsed = parse_correction_text("that Charizard was LP not NM")
+    assert parsed.action == "amend"
+    assert "charizard" not in {k.lower() for k in parsed.fields}
+    assert parsed.fields.get("_identity") == "Charizard"
+    assert str(parsed.fields.get("_value")).upper() == "LP"
+    assert str(parsed.fields.get("_wrong")).upper() == "NM"
+
+
+def test_notes_equals_still_targets_notes():
+    parsed = parse_correction_text("notes = LP")
+    assert parsed.fields["notes"] == "LP"

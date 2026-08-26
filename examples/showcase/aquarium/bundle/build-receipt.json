@@ -1,0 +1,46 @@
+{
+  "spec_id": "aquarium-tank",
+  "spec_version": "1.0",
+  "generated_at": "2026-08-23T21:17:04.613468Z",
+  "compiler": "domain-foundry-core/foundry-spec-1.1",
+  "artifacts": {
+    "foundry-spec.json": "4149443e27050a899932c9dd7268d02c5d9c4729c7c5635670b2ec8fb2c34172",
+    "schema.sql": "e6c41caba43ac1c099914e07d3ebc6254e0362f510bb4fae0493e9edcb023bd5",
+    "app.html": "0cc732399b2c60eac0109e1c3aa411ab246afb2569e9210551854dbe09681186",
+    "evidence.json": "6c508740656733c15aaafae62c19e906bb56103e029a1c9f72de25752ebc01e6",
+    "README.md": "0edd4b707b1209915ca0e484dac03cd36268439536133cdd21bfc714058f25d1"
+  },
+  "sources": [
+    "seriouslyfish",
+    "postgresql_constraints",
+    "sqlite_foreign_keys",
+    "sqlite_query_planner",
+    "w3c_prov",
+    "govuk_design_principles",
+    "wcag_22",
+    "aria_apg",
+    "ui_remix_paper"
+  ],
+  "principles": [
+    "DE-01",
+    "DE-02",
+    "DE-03",
+    "DE-04",
+    "DE-05",
+    "DE-06",
+    "DE-08",
+    "UX-01",
+    "UX-02",
+    "UX-04",
+    "UX-05",
+    "UX-06",
+    "UX-07",
+    "UX-10",
+    "SE-01",
+    "SE-03",
+    "SE-04",
+    "SE-10",
+    "SE-11"
+  ],
+  "generation": null
+}

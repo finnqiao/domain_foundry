@@ -1,0 +1,389 @@
+# TARGET ARTIFACT — hand-authored showcase bar (Phase 0 of the create-path plan).
+# This spec defines what the live Foundry pipeline SHOULD produce for the goal
+# "log my gym lifting program". The spec is hand-authored; the bundle beside it
+# is compiled from this spec by the real deterministic FoundryCompiler. The live
+# pipeline's acceptance test is producing a spec of this caliber unaided.
+spec_version: "1.0"
+id: lifting-log
+title: Barbell Logbook
+source_ids:
+  - wger_workout
+  - postgresql_constraints
+  - sqlite_foreign_keys
+  - sqlite_query_planner
+  - w3c_prov
+  - govuk_design_principles
+  - wcag_22
+  - aria_apg
+  - ui_remix_paper
+principle_ids: [DE-01, DE-02, DE-03, DE-04, DE-05, DE-06, DE-08, UX-01, UX-02, UX-04, UX-05, UX-06, UX-07, UX-10, SE-01, SE-03, SE-04, SE-10, SE-11]
+research:
+  interest: Logging a barbell program so the next session's load is decided by what I actually lifted
+  desired_outcome: Walk into the gym knowing exactly what goes on the bar and walk out with the evidence that sets next week
+  practice:
+    - Run a written block like 5x5 LP and add load session by session until a lift stalls
+    - Log every working set between sets with chalk on both hands and the phone on the rack
+    - Deload a stalled lift on purpose and pick the progression back up from a lighter load
+    - Watch estimated one-rep max per main lift to see whether the block is still working
+  existing_artifacts: [a notes app full of lines like squat 5x5 100kg, a printed program sheet in the gym bag, screenshots of a spreadsheet, an export from an old tracker]
+  constraints: [capture must survive chalky hands and take under ten seconds, loads stay in the unit they were lifted in, effort words stay exactly as written, works offline in a basement gym]
+  open_questions: [whether accessory work needs the same detail as main lifts, whether bodyweight belongs in the same log, whether the bar weight varies between gyms]
+  usage_context: [phone propped on the rack between sets, laptop on Sunday when the next block gets written]
+  first_value: File one set the way you would say it out loud and watch it land under today's prescribed day
+evidence:
+  - id: ev_lift_catalog
+    source_id: wger_workout
+    claim: A serious training tracker keeps exercises as a canonical catalog with category and equipment rather than free text retyped into every session.
+    use: pattern
+    locator: exercise database and category models
+  - id: ev_lift_program
+    source_id: wger_workout
+    claim: Plans days and sets are separated structures — a plan prescribes days, a day prescribes sets of an exercise, and a separate log records what was actually lifted.
+    use: pattern
+    locator: workout plan, day, set, and workout log structures
+  - id: ev_lift_identity
+    source_id: postgresql_constraints
+    claim: Stable identities and relationships should be explicit and enforceable rather than repeated as text fields.
+    use: constraint
+    locator: primary keys and foreign keys
+  - id: ev_lift_lineage
+    source_id: w3c_prov
+    claim: A filed set is an observation made by one agent at one time; a correction records the change without erasing what was first written.
+    use: pattern
+    locator: PROV starting point terms
+  - id: ev_lift_derived
+    source_id: w3c_prov
+    claim: A derived value is generated from observations and stays traceable to them rather than being stored as an independent fact.
+    use: pattern
+    locator: PROV derivation
+  - id: ev_lift_workloads
+    source_id: sqlite_query_planner
+    claim: Indexes should follow concrete filtering, joining, and ordering workloads.
+    use: constraint
+  - id: ev_lift_concepts
+    source_id: ui_remix_paper
+    claim: Global and local example-driven alternatives support meaningful concept exploration and remix.
+    use: pattern
+  - id: ev_lift_service
+    source_id: govuk_design_principles
+    claim: Begin with user needs and real context, then do the hard work required to make the service simple.
+    use: pattern
+  - id: ev_lift_access
+    source_id: wcag_22
+    claim: Keyboard access, focus, reflow, labels, status, and error recovery are release requirements.
+    use: constraint
+concepts:
+  - id: session_logbook
+    title: Session Logbook
+    thesis: Capture the set while the plates are still on the bar and let the block assemble itself from filed work.
+    primary_loop: Open to today's day, file the set you just did, and put the phone back on the rack.
+    primary_affordance: A thumb-height set row prefilled with the prescribed scheme and load
+    differentiator: The only concept that files a real set between sets without a menu
+    feature_boundary: [set capture with scheme and load, effort and RPE on the set that earned it, today's prescribed day, correction of a filed set]
+    tradeoffs: [block-level planning stays shallow, trends arrive only after sets accumulate]
+    workflow_ids: [log_set, finish_session]
+    evidence_ids: [ev_lift_program, ev_lift_service]
+  - id: program_board
+    title: Program Board
+    thesis: Make the written block the interface and treat the log as adherence against it.
+    primary_loop: Lay out the block by day, tick prescribed work as it lands, and let a stall trigger the deload.
+    primary_affordance: A week-by-day board of prescribed lifts with adherence marks
+    differentiator: Best answer to whether the block is being run as written
+    feature_boundary: [block authoring by day, prescribed load progression, adherence and stall detection, deload scheduling]
+    tradeoffs: [in-gym capture is slower, one-off sessions outside the block feel foreign]
+    workflow_ids: [plan_block, track_adherence]
+    evidence_ids: [ev_lift_program, ev_lift_concepts]
+  - id: strength_curve
+    title: Strength Curve
+    thesis: Treat every working set as a point on a strength curve and let the estimated one-rep max drive the next target.
+    primary_loop: Pick a main lift, read its e1RM line across the block, and set the next load from the curve.
+    primary_affordance: An e1RM line per main lift with the filed sets plotted beneath it
+    differentiator: Turns scattered numbers into whether the training is actually working
+    feature_boundary: [e1RM estimation from load and reps, PR board per rep range, trend comparison across blocks]
+    tradeoffs: [needs months of filed sets before it pays off, says nothing about today's session]
+    workflow_ids: [read_curve, set_target]
+    evidence_ids: [ev_lift_derived, ev_lift_workloads]
+remix:
+  selected_concept: session_logbook
+  fragments:
+    - kind: workflow
+      from_concept: program_board
+      fragment: prescribed-day strip above the set row
+      reason: Capture is fastest when today's prescription is already on screen to accept or overwrite.
+      evidence_ids: [ev_lift_program]
+    - kind: visual_system
+      from_concept: strength_curve
+      fragment: e1RM trend rail beside the filed set
+      reason: One glance tells the lifter whether the block is still progressing without leaving capture.
+      evidence_ids: [ev_lift_derived]
+  user_decisions: ["Loads are in kg and the bar is 20 kg", "Capture between sets has to take under ten seconds with one thumb", "A grind is data — effort words stay verbatim on the set that earned them", "A deload is a planned state of the block, not a missed week"]
+domain:
+  entities:
+    - id: exercise
+      title: Exercise
+      kind: canonical
+      description: One movement in the lifter's catalog, named once and pointed at by every set that used it.
+      identity: [exercise_id]
+      lifecycle: [active, retired]
+      evidence_ids: [ev_lift_catalog, ev_lift_identity]
+      fields:
+        - {name: exercise_id, type: text, description: Stable catalog identity, required: true, evidence_ids: [ev_lift_identity]}
+        - {name: name, type: text, description: "Lift name as the lifter says it, like back squat or bench press", required: true, evidence_ids: [ev_lift_catalog]}
+        - {name: category, type: enum, description: Movement pattern this lift trains, required: true, values: [squat, hinge, press, pull, carry, accessory], evidence_ids: [ev_lift_catalog]}
+        - {name: unit, type: enum, description: Unit every load for this lift is written in, required: true, values: [kg, lb]}
+        - {name: is_main_lift, type: boolean, description: Whether this lift carries the block's progression and earns an e1RM curve}
+        - {name: bar_weight_kg, type: number, description: Weight of the empty bar or implement used for plate math, unit: kg}
+        - {name: cues, type: text, description: The lifter's own setup cues for this movement}
+    - id: program
+      title: Training Block
+      kind: state
+      description: A named block of training with its own progression rule and its own deload.
+      identity: [program_id]
+      lifecycle: [planned, running, deloading, completed, abandoned]
+      evidence_ids: [ev_lift_program, ev_lift_identity]
+      fields:
+        - {name: program_id, type: text, description: Stable block identity, required: true, evidence_ids: [ev_lift_identity]}
+        - {name: name, type: text, description: "Block name the lifter uses, like 5x5 LP", required: true}
+        - {name: status, type: enum, description: Where the block currently stands, required: true, values: [planned, running, deloading, completed, abandoned], evidence_ids: [ev_lift_program]}
+        - {name: days_per_week, type: integer, description: Training days the block asks for each week}
+        - {name: started_on, type: date, description: First day of the block}
+        - {name: progression_rule, type: text, description: "How load moves between sessions, like add 2.5 kg to every main lift until a stall"}
+        - {name: deload_rule, type: text, description: "What a deload means in this block, like drop to 90 percent for one week after two stalls"}
+    - id: prescription
+      title: Prescribed Work
+      kind: reference
+      description: What the block asks for on a given day, written before anything is lifted.
+      identity: [prescription_id]
+      lifecycle: [active, superseded]
+      evidence_ids: [ev_lift_program, ev_lift_identity]
+      fields:
+        - {name: prescription_id, type: text, description: Stable prescription identity, required: true}
+        - {name: program_id, type: text, description: Block that prescribes this work, required: true, evidence_ids: [ev_lift_identity]}
+        - {name: exercise_id, type: text, description: Lift being prescribed, required: true, evidence_ids: [ev_lift_identity]}
+        - {name: day_label, type: text, description: "Day of the block this belongs to, like Day A", required: true, evidence_ids: [ev_lift_program]}
+        - {name: scheme, type: text, description: "Prescribed scheme, like 5x5 or 3x8", required: true, evidence_ids: [ev_lift_program]}
+        - {name: target_load_kg, type: number, description: Load the block asks for on this day, unit: kg}
+        - {name: load_step_kg, type: number, description: How much load is added once the prescription is met, unit: kg}
+        - {name: order_index, type: integer, description: Order of this work within the day}
+    - id: session
+      title: Session
+      kind: event
+      description: One training session on the platform, in the lifter's own words.
+      identity: [session_id]
+      lifecycle: [recorded, corrected, superseded]
+      evidence_ids: [ev_lift_program, ev_lift_lineage]
+      fields:
+        - {name: session_id, type: text, description: Stable event identity, required: true, evidence_ids: [ev_lift_identity]}
+        - {name: program_id, type: text, description: Block this session belongs to, required: true, evidence_ids: [ev_lift_identity]}
+        - {name: trained_at, type: datetime, description: When the session actually happened, required: true, evidence_ids: [ev_lift_lineage]}
+        - {name: day_label, type: text, description: "Which prescribed day this was, like Day A"}
+        - {name: bodyweight_kg, type: number, description: Bodyweight on the day, unit: kg, sensitive: true}
+        - {name: notes, type: text, description: "Session notes in the lifter's own words, like the room was hot and the last set was a grind"}
+        - {name: duration_min, type: number, description: Time from first warm-up to last set, unit: min}
+    - id: set_entry
+      title: Set
+      kind: observation
+      description: One block of work as it was actually lifted — the atom of the log.
+      identity: [set_id]
+      lifecycle: [observed, corrected, retracted]
+      evidence_ids: [ev_lift_program, ev_lift_lineage]
+      fields:
+        - {name: set_id, type: text, description: Stable observation identity, required: true}
+        - {name: session_id, type: text, description: Session this work was filed in, required: true, evidence_ids: [ev_lift_identity]}
+        - {name: exercise_id, type: text, description: Lift that was performed, required: true, evidence_ids: [ev_lift_identity]}
+        - {name: scheme, type: text, description: "The lifter's own shorthand kept verbatim, like 5x5 or 3x8 or 1xAMRAP", required: true, evidence_ids: [ev_lift_program]}
+        - {name: sets, type: integer, description: Sets in the scheme, required: true}
+        - {name: reps, type: integer, description: "Reps per set as lifted — for an AMRAP this is what was actually hit", required: true}
+        - {name: load_kg, type: number, description: Load on the bar for this work, required: true, unit: kg}
+        - {name: rpe, type: number, description: RPE for the hardest set from 1 to 10}
+        - {name: is_top_set, type: boolean, description: Whether this was the heaviest working set of that movement on the day}
+        - {name: is_pr, type: boolean, description: Whether this beat the lifter's best load at this rep range}
+        - {name: effort_note, type: text, description: "What the lifter said about the effort, like last set was a grind", evidence_ids: [ev_lift_lineage]}
+        - {name: order_index, type: integer, description: Position of this work within the session}
+  relationships:
+    - {id: block_sessions, from_entity: session, to_entity: program, cardinality: many_to_one, required: true, on_delete: restrict, description: Every session is trained inside one block., evidence_ids: [ev_lift_identity]}
+    - {id: session_sets, from_entity: set_entry, to_entity: session, cardinality: many_to_one, required: true, on_delete: cascade, description: Every filed set belongs to the session it was lifted in., evidence_ids: [ev_lift_lineage]}
+    - {id: set_movement, from_entity: set_entry, to_entity: exercise, cardinality: many_to_one, required: true, on_delete: restrict, description: Every filed set names one catalog movement., evidence_ids: [ev_lift_catalog, ev_lift_identity]}
+    - {id: block_prescriptions, from_entity: prescription, to_entity: program, cardinality: many_to_one, required: true, on_delete: cascade, description: Prescribed work belongs to the block that wrote it., evidence_ids: [ev_lift_program]}
+    - {id: prescribed_movement, from_entity: prescription, to_entity: exercise, cardinality: many_to_one, required: true, on_delete: restrict, description: Prescribed work points at the same catalog movement the log will use., evidence_ids: [ev_lift_catalog, ev_lift_identity]}
+  constraints:
+    - {id: unique_movement_name, entity: exercise, kind: unique, fields: [name], reason: The catalog holds one squat rather than five spellings of it., evidence_ids: [ev_lift_catalog, ev_lift_identity]}
+    - {id: sane_load, entity: set_entry, kind: check, fields: [load_kg], expression: "load_kg > 0 AND load_kg < 500", reason: A filed load stays inside what a barbell can physically hold., evidence_ids: [ev_lift_identity]}
+    - {id: rpe_scale, entity: set_entry, kind: check, fields: [rpe], expression: "rpe >= 1 AND rpe <= 10", reason: RPE is a 1 to 10 effort scale and anything outside it is a typo., evidence_ids: [ev_lift_program]}
+    - {id: real_scheme, entity: set_entry, kind: check, fields: [sets, reps], expression: "sets > 0 AND reps > 0", reason: A scheme like 5x5 always resolves to positive sets and reps., evidence_ids: [ev_lift_program]}
+    - {id: sane_bodyweight, entity: session, kind: check, fields: [bodyweight_kg], expression: "bodyweight_kg > 20 AND bodyweight_kg < 300", reason: An optional bodyweight is either plausible or rejected before storage., evidence_ids: [ev_lift_identity]}
+    - {id: block_lifecycle_rule, entity: program, kind: state_transition, fields: [status], reason: A block cannot be completed before it has run and a deload is a state it passes through., evidence_ids: [ev_lift_program]}
+  indexes:
+    - {id: session_day, entity: session, fields: [program_id, trained_at], unique: false, reason: Today's session is looked up by block and date on every capture., workload_ids: [w_today_vs_plan, w_weekly_volume]}
+    - {id: program_day_plan, entity: prescription, fields: [program_id, day_label, order_index], unique: false, reason: The prescribed day is read in written order before the first set., workload_ids: [w_today_vs_plan]}
+    - {id: lift_history, entity: set_entry, fields: [exercise_id, session_id], unique: false, reason: Every trend for one lift reads its sets in session order., workload_ids: [w_e1rm_trend, w_weekly_volume]}
+    - {id: pr_board, entity: set_entry, fields: [exercise_id, reps, load_kg], unique: false, reason: A PR is the heaviest load at one rep range for one lift., workload_ids: [w_pr_board]}
+  workloads:
+    - {id: w_today_vs_plan, question: "What does today's day prescribe and what have I actually filed against it?", kind: read, entities: [program, prescription, session, set_entry], filters: [block status is running or deloading, day_label], sort: [order_index ascending], expected_scale: fewer than ten prescribed items per day, acceptance: "Every prescribed lift shows its target beside what was filed, and unfiled work is obvious at arm's length.", evidence_ids: [ev_lift_program, ev_lift_service]}
+    - {id: w_e1rm_trend, question: "Is my e1RM on this main lift still going up across the block?", kind: analysis, entities: [exercise, set_entry, session], filters: [is_main_lift is true, exercise_id], sort: [trained_at ascending], expected_scale: hundreds of working sets per lift per year, acceptance: "e1RM is computed from load and reps with Epley at read time and never stored, and every point links back to the set that produced it.", evidence_ids: [ev_lift_derived, ev_lift_workloads]}
+    - {id: w_weekly_volume, question: "How many working sets did each movement category get this week?", kind: analysis, entities: [exercise, set_entry, session], filters: [trained_at inside the week, category], sort: [working sets descending], expected_scale: tens of working sets per week, acceptance: "Squat hinge press pull and carry volume add up per week with accessory work counted apart from main lifts.", evidence_ids: [ev_lift_catalog, ev_lift_workloads]}
+    - {id: w_pr_board, question: "What is my best load at each rep range for this lift?", kind: analysis, entities: [exercise, set_entry], filters: [exercise_id, reps], sort: [load_kg descending], expected_scale: thousands of filed sets across the catalog, acceptance: "A PR is reported per lift per rep range and never as one unqualified number.", evidence_ids: [ev_lift_catalog, ev_lift_workloads]}
+  state_machines:
+    - id: block_lifecycle
+      entity: program
+      field: status
+      states: [planned, running, deloading, completed, abandoned]
+      transitions:
+        - {from_state: planned, action: start, to_state: running}
+        - {from_state: running, action: deload, to_state: deloading}
+        - {from_state: deloading, action: resume, to_state: running}
+        - {from_state: running, action: complete, to_state: completed}
+        - {from_state: deloading, action: complete, to_state: completed}
+        - {from_state: running, action: abandon, to_state: abandoned}
+      evidence_ids: [ev_lift_program]
+  sample_records:
+    exercise:
+      - {exercise_id: ex-back-squat, name: back squat, category: squat, unit: kg, is_main_lift: true, bar_weight_kg: 20, cues: "brace before the walkout, knees out on the way up"}
+      - {exercise_id: ex-bench-press, name: bench press, category: press, unit: kg, is_main_lift: true, bar_weight_kg: 20, cues: "shoulder blades pinned, touch below the sternum"}
+      - {exercise_id: ex-deadlift, name: deadlift, category: hinge, unit: kg, is_main_lift: true, bar_weight_kg: 20, cues: take the slack out before the pull}
+      - {exercise_id: ex-overhead-press, name: overhead press, category: press, unit: kg, is_main_lift: true, bar_weight_kg: 20, cues: squeeze the glutes and finish with the bar over the ears}
+      - {exercise_id: ex-barbell-row, name: barbell row, category: pull, unit: kg, is_main_lift: false, bar_weight_kg: 20, cues: same hip angle every rep}
+    program:
+      - {program_id: block-5x5-lp, name: 5x5 LP, status: running, days_per_week: 3, started_on: "2026-07-06", progression_rule: "add 2.5 kg to every main lift each session, 5 kg on the deadlift", deload_rule: after two stalls at the same load drop to 90 percent for one week}
+    prescription:
+      - {prescription_id: presc-a-squat, program_id: block-5x5-lp, exercise_id: ex-back-squat, day_label: Day A, scheme: 5x5, target_load_kg: 100, load_step_kg: 2.5, order_index: 1}
+      - {prescription_id: presc-a-bench, program_id: block-5x5-lp, exercise_id: ex-bench-press, day_label: Day A, scheme: 3x8, target_load_kg: 70, load_step_kg: 1.25, order_index: 2}
+      - {prescription_id: presc-a-row, program_id: block-5x5-lp, exercise_id: ex-barbell-row, day_label: Day A, scheme: 3x8, target_load_kg: 60, load_step_kg: 1.25, order_index: 3}
+      - {prescription_id: presc-b-deadlift, program_id: block-5x5-lp, exercise_id: ex-deadlift, day_label: Day B, scheme: 1xAMRAP, target_load_kg: 140, load_step_kg: 5, order_index: 1}
+    session:
+      - {session_id: sess-20260821, program_id: block-5x5-lp, trained_at: "2026-08-21T18:40:00+01:00", day_label: Day A, bodyweight_kg: 82.4, notes: "hot room and a short night — the bar still moved", duration_min: 58}
+      - {session_id: sess-20260819, program_id: block-5x5-lp, trained_at: "2026-08-19T18:25:00+01:00", day_label: Day B, bodyweight_kg: 82.1, notes: pulled fresh for once, duration_min: 44}
+    set_entry:
+      - {set_id: set-20260821-squat, session_id: sess-20260821, exercise_id: ex-back-squat, scheme: 5x5, sets: 5, reps: 5, load_kg: 100, rpe: 8.5, is_top_set: true, is_pr: false, effort_note: last set was a grind, order_index: 1}
+      - {set_id: set-20260821-bench, session_id: sess-20260821, exercise_id: ex-bench-press, scheme: 3x8, sets: 3, reps: 8, load_kg: 70, rpe: 8, is_top_set: false, is_pr: false, effort_note: deload next week, order_index: 2}
+      - {set_id: set-20260821-row, session_id: sess-20260821, exercise_id: ex-barbell-row, scheme: 3x8, sets: 3, reps: 8, load_kg: 60, rpe: 7, is_top_set: false, is_pr: false, effort_note: easy, order_index: 3}
+      - {set_id: set-20260819-deadlift, session_id: sess-20260819, exercise_id: ex-deadlift, scheme: 1xAMRAP, sets: 1, reps: 6, load_kg: 140, rpe: 9, is_top_set: true, is_pr: true, effort_note: "six at 140 — best top set of the block", order_index: 1}
+  temporal_policy: [trained_at is the effective training time and a filed set inherits its session's clock, captured_at is provenance time, a correction never overwrites the load or the words that were first filed]
+  privacy_policy: [bodyweight is sensitive and stays on the device unless the lifter explicitly exports it, effort notes and session notes are local by default, no gym location or coach account is collected]
+experience:
+  mode: operate
+  visual_world:
+    id: chalk-platform
+    name: Chalk and Platform
+    mood: Chalked hands on a rubber platform — plain, unhurried, and legible at arm's length
+    typography: A condensed grotesque for lift names with tabular monospaced numerals for load, reps, and RPE so columns line up between sets
+    color_strategy: Platform black and chalk white with competition-plate colour carrying meaning — blue for the working load and red for a top set or a PR — and nothing else coloured
+    layout_principle: The set row sits under the thumb at the bottom of the viewport; the prescribed day and the trend unfold behind it rather than as a dashboard grid
+    density: Loose and thumb-sized between sets, tight and aligned when reading a whole block
+    signature_elements: [loaded-barbell plate diagram that draws the actual plates per side for the top set, e1RM trend rail with the working-set band behind it, program-day checklist strip showing prescribed work against what was filed]
+    avoid: [neon fitness-app gradients, motivational-poster styling, generic KPI cards, flame and streak badges]
+    tokens: {background: "#141618", surface: "#1F2225", text: "#EDEEEA", muted: "#929794", accent: "#2E6E9C", accent_alt: "#C1452F", border: "#33383B", focus: "#E8C24A", danger: "#E4695A", radius_px: 6}
+  navigation:
+    topology: hub
+    primary_view: platform
+    persistent_regions: [today's day strip, file-a-set affordance, block status and provenance]
+  views:
+    - id: platform
+      title: The Platform
+      purpose: File the set you just did in under ten seconds and see it land under today's prescribed day.
+      layout: The set row dominates the lower half within thumb reach; the prescribed day strip sits above it and the plate diagram to its side.
+      entities: [session, set_entry, prescription, exercise]
+      workload_ids: [w_today_vs_plan]
+      states: [first_use, populated, loading, empty, error, offline, correction]
+      regions:
+        - {id: set_row, kind: form, title: This set, entity: set_entry, workload_id: w_today_vs_plan, emphasis: primary, span: 6}
+        - {id: day_strip, kind: session, title: Today's day, entity: prescription, workload_id: w_today_vs_plan, emphasis: support, span: 3}
+        - {id: plate_math, kind: canvas, title: What goes on the bar, entity: exercise, workload_id: w_today_vs_plan, emphasis: secondary, span: 3}
+      actions:
+        - {id: start_session, label: Start the session, operation: create, entity: session, consequence: Opens today's session against the running block and loads the prescribed day.}
+        - {id: file_set, label: File this set, operation: create, entity: set_entry, consequence: "Files the scheme and load against today's session and keeps the effort words verbatim on the set that earned them."}
+        - {id: correct_set, label: Correct the set, operation: correct, entity: set_entry, consequence: Keeps the original filed load and wording and records the correction beside it.}
+      evidence_ids: [ev_lift_program, ev_lift_lineage, ev_lift_access]
+    - id: block
+      title: The Block
+      purpose: Run the written block, see adherence day by day, and call the deload on purpose.
+      layout: The day board leads at full reading width; the week's working-set split sits beside it as evidence rather than decoration.
+      entities: [program, prescription, session, set_entry, exercise]
+      workload_ids: [w_today_vs_plan, w_weekly_volume]
+      states: [first_use, populated, empty, error, conflict]
+      regions:
+        - {id: day_board, kind: catalog, title: The block by day, entity: prescription, workload_id: w_today_vs_plan, emphasis: primary, span: 7}
+        - {id: volume_split, kind: chart, title: Working sets by category, entity: set_entry, workload_id: w_weekly_volume, emphasis: secondary, span: 5}
+      actions:
+        - {id: start_block, label: Start a block, operation: create, entity: program, consequence: Writes the block's days and progression rule and moves it from planned to running.}
+        - {id: call_deload, label: Call the deload, operation: update, entity: program, consequence: "Moves the running block into deloading and drops every prescribed load by the block's deload rule without rewriting past sessions."}
+      evidence_ids: [ev_lift_program, ev_lift_service]
+    - id: curve
+      title: Strength Curve
+      purpose: Read whether a main lift is still progressing and set the next target from the curve.
+      layout: The e1RM line fills the stage with filed sets plotted beneath it; the PR board aligns per rep range in a comparison rail.
+      entities: [exercise, set_entry, session]
+      workload_ids: [w_e1rm_trend, w_pr_board]
+      states: [first_use, populated, empty, partial, error]
+      regions:
+        - {id: e1rm_line, kind: chart, title: e1RM across the block, entity: set_entry, workload_id: w_e1rm_trend, emphasis: primary, span: 8}
+        - {id: rep_range_prs, kind: comparison, title: Best by rep range, entity: set_entry, workload_id: w_pr_board, emphasis: support, span: 4}
+      actions:
+        - {id: reveal_sets, label: Show the sets behind this, operation: reveal, entity: set_entry, consequence: Opens the exact sets and sessions that produced the selected point on the curve.}
+      evidence_ids: [ev_lift_derived, ev_lift_access]
+    - id: rack
+      title: The Rack
+      purpose: Keep one canonical movement per lift so every set files against the same thing.
+      layout: The movement catalog leads grouped by pattern; the selected lift's facts and bests sit in an inspector margin.
+      entities: [exercise, set_entry]
+      workload_ids: [w_weekly_volume, w_pr_board]
+      states: [first_use, populated, empty, error]
+      regions:
+        - {id: lift_catalog, kind: catalog, title: Movements, entity: exercise, workload_id: w_weekly_volume, emphasis: primary, span: 7}
+        - {id: lift_detail, kind: inspector, title: This lift, entity: exercise, workload_id: w_pr_board, emphasis: support, span: 5}
+      actions:
+        - {id: add_lift, label: Add a movement, operation: create, entity: exercise, consequence: "Puts one canonical lift in the catalog with its pattern, unit, and bar weight."}
+        - {id: retire_lift, label: Retire it, operation: update, entity: exercise, consequence: Removes the lift from capture without touching the sets already filed against it.}
+      evidence_ids: [ev_lift_catalog, ev_lift_access]
+  flows:
+    - id: first_set
+      title: File the first real set
+      trigger: User approves the Session Logbook concept.
+      steps:
+        - {view: platform, action: "Say or type squat 5x5 at 100kg and whatever you would say about the last set.", result: "A set receipt appears with the scheme, the load, and the lifter's own words kept verbatim."}
+        - {view: platform, action: Confirm or correct the interpreted movement and load., result: The filed set sits under today's prescribed day with its provenance visible.}
+      success: The lifter can point at the set they just did and every number and word in it is theirs.
+    - id: call_the_deload
+      title: Call the deload
+      trigger: A main lift stalls twice at the same load.
+      steps:
+        - {view: curve, action: Read the e1RM line flattening across the block., result: The stall is visible against the block's written progression rule.}
+        - {view: block, action: Move the block into deloading., result: Prescribed loads drop by the deload rule and the block records the state change.}
+        - {view: platform, action: File the first lighter session., result: The deload week reads as intended training rather than as missing data.}
+      success: A deload is a recorded state of the block instead of a gap in the log.
+  responsive_strategy: ["Phone in the rack first — the set row and its number pad occupy the lower half of the screen, the prescribed day collapses to a single line above it, and the plate diagram becomes a tappable summary.", "On a laptop the block board and the e1RM curve sit side by side with a full data table behind every chart."]
+  accessibility:
+    target: WCAG-2.2-AA
+    patterns: [native dialog for set capture, data table with caption and row headers behind the e1RM chart, text alternative naming every plate on the bar diagram]
+    keyboard_model: [logical order runs prescribed day then set row then filed sets, chart points are reachable through the adjacent data table, correction returns focus to the corrected set]
+    manual_checks: [VoiceOver first-set journey with one hand, 200 percent zoom and reflow on the set row, focus and error identification against the dark platform theme]
+implementation:
+  targets: [foundry_runtime, standalone_react]
+  capabilities: [event_capture, derived_metrics, comparison, planning, provenance, correction]
+  imports: [CSV set history, wger workout log export, plain-text program sheet]
+  exports: [complete JSON with receipts, CSV per entity, standalone source repository]
+  migrations: [versioned schema migrations, filed sets are append-only with corrections as revisions, block revisions never rewrite past sessions]
+  permissions: [local file import]
+  adapter_seams: [capture adapter, program import adapter, e1RM estimator adapter, export adapter]
+evaluation:
+  cases:
+    - {id: lifting_routing_squat, kind: routing, input: "squat 5x5 at 100kg, last set was a grind", expected: "A set_entry files against today's session for the back squat with scheme 5x5 resolved to five sets of five at 100 kg, and last set was a grind is kept verbatim as the effort note.", authored_by: user}
+    - {id: lifting_routing_bench, kind: routing, input: "bench 3x8 at 70kg, RPE 8, deload next week", expected: "A set_entry files for the bench press with scheme 3x8 at 70 kg and RPE 8, and deload next week is offered as a block state change rather than buried in free text.", authored_by: user}
+    - {id: lifting_schema_identity, kind: schema, input: The same movement is written as squat one week and back squat the next., expected: Both file against one canonical exercise so the PR board and the e1RM curve stay unbroken., authored_by: domain_expert}
+    - {id: lifting_invalid_rpe, kind: schema, input: A set arrives with RPE 14., expected: The write is rejected before canonical storage., authored_by: independent_reviewer}
+    - {id: lifting_e1rm_workload, kind: workload, input: Three thousand filed sets across two years and four main lifts., expected: "The e1RM trend and the week's volume split load within the local 200 ms budget with e1RM computed at read time.", authored_by: independent_reviewer}
+    - {id: lifting_keyboard, kind: accessibility, input: Complete the file-a-set and correction journey without a pointer., expected: All controls and status changes are operable and announced., authored_by: standard}
+    - {id: lifting_import_injection, kind: security, input: An imported tracker CSV row carries prompt-like fields and a path., expected: Unknown fields are rejected and no tool or filesystem action occurs., authored_by: independent_reviewer}
+  release_thresholds:
+    schema: all identity, relationship, constraint, and state-transition cases pass
+    experience: the first-set and call-the-deload flows pass on phone and desktop
+    evidence: every entity and critical view has an approved derivation
+derivations:
+  - {output_path: domain.entities, decision: "Separate the movement, the block, the prescription, the session, and the set so the catalog, the plan, the event, and the observation each keep their own lifecycle.", evidence_ids: [ev_lift_catalog, ev_lift_program, ev_lift_identity]}
+  - {output_path: domain.entities.set_entry.fields.scheme, decision: "Keep the lifter's shorthand verbatim in scheme and resolve it into sets and reps beside it, because 5x5 is how the work is said and five sets of five is how it must be queried.", evidence_ids: [ev_lift_program], user_decision: "Capture between sets has to take under ten seconds with one thumb"}
+  - {output_path: domain.entities.set_entry.fields.effort_note, decision: Hold the effort words on the set that earned them rather than flattening them into a session note., evidence_ids: [ev_lift_lineage], user_decision: "A grind is data — effort words stay verbatim on the set that earned them"}
+  - {output_path: domain.state_machines.block_lifecycle, decision: "Model deloading as a real state of the block with transitions in and out, so a lighter week is intentional training rather than a hole in the data.", evidence_ids: [ev_lift_program], user_decision: "A deload is a planned state of the block, not a missed week"}
+  - {output_path: domain.workloads.w_e1rm_trend, decision: "Compute e1RM from load and reps with the Epley estimate at read time and never store it, so the estimate stays traceable to the sets behind it and changes when a set is corrected.", evidence_ids: [ev_lift_derived, ev_lift_workloads]}
+  - {output_path: domain.entities.session.fields.bodyweight_kg, decision: Mark bodyweight sensitive and keep it out of exports by default because it is the one number a lifter does not want leaving the device., evidence_ids: [ev_lift_lineage]}
+  - {output_path: experience.views.platform, decision: Anchor the app on the set row rather than a summary dashboard because capture happens standing at the rack between sets., evidence_ids: [ev_lift_service], user_decision: "Capture between sets has to take under ten seconds with one thumb"}
+  - {output_path: experience.visual_world, decision: "Use a platform-black chalk world with competition-plate colour carrying meaning instead of neon fitness gradients, so colour marks a top set rather than decorating the screen.", evidence_ids: [ev_lift_concepts], user_decision: "Loads are in kg and the bar is 20 kg"}

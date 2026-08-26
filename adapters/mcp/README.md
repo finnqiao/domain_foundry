@@ -22,7 +22,7 @@ no telemetry.
 | `domain_foundry_ask` | Answer a question using only captured records |
 | `domain_foundry_correct` | One-message correction → amends the record, becomes an eval case |
 | `domain_foundry_review_list` / `_resolve` | See and clear the approval queue |
-| `domain_foundry_new_domain` / `domain_foundry_wizard_reply` | Idea atlas: neighborhood first; pick an idea, then compile |
+| `domain_foundry_new_domain` / `domain_foundry_wizard_reply` | Idea options, then HTML looks; wait until the user accepts a look |
 | `domain_foundry_atlas_search` | Browse buckets → practices → ideas without installing |
 | `domain_foundry_inspect_pack` | Read pack YAML |
 | `domain_foundry_suggest` | Neighbor-idea / hardening suggestion from captures |
@@ -34,8 +34,8 @@ no telemetry.
 ## Install
 
 ```bash
-pipx install domain-foundry-mcp        # or: pip install domain-foundry-mcp
-# from a checkout:  pip install -e ./adapters/mcp
+pip install -e ./adapters/mcp          # from a checkout
+# published:  pipx install domain-foundry-mcp
 ```
 
 This puts a `domain-foundry-mcp` command on your PATH — the stdio server that MCP
@@ -58,11 +58,15 @@ Open **Settings → Developer → Edit Config** and add:
 
 Restart Claude Desktop. You'll see the Domain Foundry tools appear. Now just talk:
 
-> **You:** track my bouldering sessions
-> **Claude:** *(calls `domain_foundry_new_domain` → `domain_foundry_wizard_reply`)* Your bouldering domain is scaffolded and ready for a test-drive.
-> **You:** sent a tough V5 on the overhang today, crux was the heel hook
-> **Claude:** *(calls `domain_foundry_capture`)* Logged to **bouldering** ✓
-> **You:** actually the rating was moderate not hard
+> **You:** i collect pokemon cards
+> **Claude:** *(calls `domain_foundry_new_domain`)* Card dex is one of the ideas. Nothing is live yet.
+> **You:** a dex of the cards i own with photos
+> **Claude:** *(calls `domain_foundry_wizard_reply`)* Here's a look. Say `build it` when you like it.
+> **You:** build it
+> **Claude:** *(calls `domain_foundry_wizard_reply`)* **pokemon** is ready.
+> **You:** pulled a holographic Charizard from a 151 booster, NM
+> **Claude:** *(calls `domain_foundry_capture`)* Logged to **pokemon** ✓
+> **You:** that Charizard was LP not NM
 > **Claude:** *(calls `domain_foundry_correct`)* Corrected — and saved as a regression test.
 
 (A full copy-paste config is in [`claude_desktop_config.example.json`](./claude_desktop_config.example.json).
@@ -77,7 +81,7 @@ The same `command`/`args` block works in Cursor and other MCP clients.)
 ## Proven end-to-end
 
 `tests/test_mcp_e2e.py` launches this server over stdio exactly as a client does,
-then drives the core loop — **wizard → capture → query → correct → review →
-health** — and asserts the Gate 1 tools are advertised. The full Gate 1
-conformance journey additionally exercises pack activation, export, and restart
-through the real stdio subprocess in `tests/conformance`.
+then drives the core loop — **looks → build it → capture → query → correct →
+review → health** — and asserts the Gate 1 tools are advertised. The full Gate 1
+conformance journey additionally exercises export and restart through the real
+stdio subprocess in `tests/conformance`.

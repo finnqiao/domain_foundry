@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Before — what "whisky tasting notes" gets today</title>
+<style>
+  :root {
+    --night: #12120f;
+    --night-2: #1b1b17;
+    --paper: #f1eee4;
+    --paper-2: #e5decf;
+    --ink: #1c1c18;
+    --line: #383832;
+    --muted: #aaa79c;
+    --cool: #9bb8bc;
+    --amber: #efa853;
+    --danger: #c4553e;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --serif: Georgia, "Times New Roman", serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--night);
+    color: var(--paper);
+    font: 16px/1.65 -apple-system, "Segoe UI", system-ui, sans-serif;
+  }
+  .mock-banner {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    gap: 1rem;
+    align-items: baseline;
+    flex-wrap: wrap;
+    padding: 0.65rem clamp(1.2rem, 4vw, 4rem);
+    background: var(--amber);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .mock-banner strong { letter-spacing: 0.08em; }
+  .mock-banner a { color: inherit; }
+  header.mast {
+    padding: clamp(2rem, 5vw, 5rem);
+    border-bottom: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
+    gap: 3rem;
+    align-items: end;
+  }
+  .kicker {
+    margin: 0 0 0.6rem;
+    color: var(--cool);
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  h1 {
+    margin: 0;
+    max-width: 14ch;
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(2.6rem, 6.5vw, 6rem);
+    letter-spacing: -0.04em;
+    line-height: 0.96;
+  }
+  .lede { margin: 0; max-width: 46ch; color: var(--muted); }
+  .lede strong { color: var(--paper); font-weight: 650; }
+  main { padding: clamp(1.3rem, 4vw, 4rem); max-width: 1200px; }
+  .scene {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(240px, 0.85fr);
+    gap: clamp(1rem, 3vw, 3rem);
+    padding: clamp(1.6rem, 3.5vw, 3rem) 0;
+    border-top: 1px solid var(--line);
+    opacity: 1;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .scene { opacity: 0; transform: translateY(14px); transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+    .scene.on { opacity: 1; transform: none; }
+  }
+  .scene:first-of-type { border-top: 0; }
+  .said {
+    margin: 0 0 1.1rem;
+    font-family: var(--mono);
+    font-size: 1.05rem;
+    color: var(--paper);
+  }
+  .said::before { content: "you › "; color: var(--cool); }
+  .turn {
+    padding: clamp(1.1rem, 2.5vw, 1.8rem);
+    background: var(--paper);
+    color: var(--ink);
+    box-shadow: 0 18px 56px rgba(0, 0, 0, 0.35);
+  }
+  .turn p { margin: 0 0 0.8rem; }
+  .turn p:last-child { margin-bottom: 0; }
+  .turn ol { margin: 0.6rem 0 0; padding-left: 1.3rem; }
+  .turn ol li { margin-bottom: 0.45rem; }
+  .turn .fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.9rem;
+  }
+  .turn .fields span {
+    padding: 0.2rem 0.55rem;
+    border: 1px solid #b9b2a4;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: #5c5a53;
+  }
+  .margin { align-self: start; position: sticky; top: 4.2rem; }
+  .margin h2 {
+    margin: 0 0 0.5rem;
+    font-family: var(--mono);
+    font-weight: 400;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--cool);
+  }
+  .margin p { margin: 0 0 0.8rem; color: var(--muted); font-size: 0.88rem; }
+  .margin code {
+    font-family: var(--mono);
+    font-size: 0.8em;
+    color: var(--paper-2);
+    background: var(--night-2);
+    padding: 0.1rem 0.3rem;
+  }
+  .margin .score {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.6rem;
+    align-items: baseline;
+    padding: 0.45rem 0;
+    border-top: 1px solid var(--line);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+  }
+  .margin .score em { font-style: normal; color: var(--muted); }
+  .wrong { color: var(--danger); }
+  .turn .wrong { color: #a33a32; }
+  .verdict {
+    margin-top: 3rem;
+    padding: clamp(1.4rem, 3vw, 2.4rem);
+    border: 1px solid var(--danger);
+  }
+  .verdict h2 {
+    margin: 0 0 0.8rem;
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(1.7rem, 3.5vw, 2.6rem);
+    letter-spacing: -0.03em;
+  }
+  .verdict p { margin: 0 0 0.6rem; max-width: 70ch; color: var(--muted); }
+  .verdict p strong { color: var(--paper); }
+  .compare { margin-top: 2.2rem; display: flex; gap: 1.5rem; flex-wrap: wrap; }
+  .compare a {
+    color: var(--ink);
+    background: var(--amber);
+    padding: 0.75rem 1.1rem;
+    font-weight: 700;
+    text-decoration: none;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .compare a.quiet { background: transparent; color: var(--paper); border: 1px solid var(--line); }
+  a:focus-visible, button:focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; }
+  footer { padding: 2rem clamp(1.3rem, 4vw, 4rem) 4rem; color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--line); }
+  @media (max-width: 760px) {
+    header.mast, .scene { grid-template-columns: 1fr; gap: 1.2rem; }
+    .margin { position: static; }
+  }
+</style>
+</head>
+<body>
+<!--
+THESIS: the create flow's failure is legible only as a replayed conversation; this page refuses the bug-report table and shows the actual turns a whisky drinker got, with the scoring receipts in the margin.
+OWN-WORLD: Domain Foundry's documentary edit bench — near-black night ground, warm paper reply surfaces with deep soft shadows, Georgia serif display at negative tracking, mono kickers in cool cyan, amber commitment marks, literal red only where it truly failed.
+STORY: the visitor reads one real audit row as a film strip, sees exactly where weak-token scoring and generic compilation betrayed the user, and leaves able to name both defects.
+FIRST VIEWPORT: banner naming the artifact honestly, serif headline "Whisky, filed under Dev Notes.", lede naming the audit row, first conversation scene visible below the fold line.
+FORM: annotated contact sheet of a session transcript — the incumbent studio grammar applied to a conversation replay; direction inherited from DESIGN.md, no concept roll (established world).
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+-->
+<p class="mock-banner"><strong>Hand-authored mockup</strong><span>reconstruction of audit row 32 · 2026-08-23 · not product output</span><a href="../../gallery.md">gallery</a></p>
+<header class="mast">
+  <div>
+    <p class="kicker">Create flow · before</p>
+    <h1>Whisky, filed under Dev&nbsp;Notes.</h1>
+  </div>
+  <p class="lede">Every turn below is <strong>verbatim from the 50-interest audit</strong> (row 32, heuristic provider, isolated workspace). This is what the create path does today when the atlas doesn't know your interest but a stray token scores anyway.</p>
+</header>
+<main>
+  <section class="scene on">
+    <div>
+      <p class="said">whisky tasting notes</p>
+      <div class="turn">
+        <p>You said “whisky tasting notes”. You could:</p>
+        <ol>
+          <li><strong class="wrong">Dev scratch:</strong> Short notes with a date — local, not Slack archaeology.</li>
+        </ol>
+      </div>
+    </div>
+    <aside class="margin" aria-label="what the backend did">
+      <h2>What actually happened</h2>
+      <p>The fork matcher scored every atlas node against the goal. “Whisky” is unindexed, but <code>notes</code> is 4+ characters and sits inside a Dev Notes alias, and any score above zero beats honesty.</p>
+      <div class="score"><span class="wrong">making.dev</span><em>weak token “notes”</em><span class="wrong">5</span></div>
+      <div class="score"><span>unindexed</span><em>the true answer</em><span>—</span></div>
+      <p><code>score_node</code>: +1 per weak substring, +2 practice bonus. No evidence floor.</p>
+    </aside>
+  </section>
+
+  <section class="scene">
+    <div>
+      <p class="said">1</p>
+      <div class="turn">
+        <p>Installed <strong class="wrong">Dev Notes</strong>. Talk about it and we'll file it —</p>
+        <div class="fields">
+          <span>title</span><span>decision</span><span>project</span><span>alternatives</span><span>status</span><span>repo ref</span>
+        </div>
+      </div>
+    </div>
+    <aside class="margin" aria-label="what the backend did">
+      <h2>What actually happened</h2>
+      <p>The user accepted the first idea, so the wizard compiled a pack for <em>software decisions</em>. A whisky drinker now owns a tracker whose every field is about pull requests.</p>
+      <p>No research ran. No question was asked. The pack's routing rule was built from the words <code>dev</code>, <code>decision</code>, <code>repo</code>.</p>
+    </aside>
+  </section>
+
+  <section class="scene">
+    <div>
+      <p class="said">peated dram, iodine and orchard fruit, 12 year, neat</p>
+      <div class="turn">
+        <p class="wrong">Captured (status: unfiled). I couldn't confidently route that into your new domain — it's safely stored. Try phrasing closer to your examples.</p>
+      </div>
+    </div>
+    <aside class="margin" aria-label="what the backend did">
+      <h2>What actually happened</h2>
+      <p>The first real thing the user said, a perfect tasting note, hit a rule that knows <code>repo ref</code> but not <code>peated</code>. The router fell through to its floor:</p>
+      <div class="score"><span class="wrong">_unfiled</span><em>object “card”</em><span class="wrong">0.2</span></div>
+      <p>Fixed confidence. Not a judgment, but the absence of one.</p>
+    </aside>
+  </section>
+
+  <div class="verdict">
+    <h2>Two defects, one turn apart.</h2>
+    <p><strong>The snap:</strong> one generic 4-character token outweighs “I have never heard of this hobby.” Whisky→Dev Notes, vinyl→soccer, model trains→freediving. Six of fifty goals in the audit misfiled this way.</p>
+    <p><strong>The dead first capture:</strong> even correctly-forked goals compiled packs with no domain vocabulary, so sixteen of fifty first captures went unfiled at a flat 0.2. The pack that should know <em>squat 5x5</em> knows <code>session name · noted at · value</code>.</p>
+    <p class="compare">
+      <a href="ideal-create.html">What this should be →</a>
+      <a class="quiet" href="fallback-create.html">The honest no-key mode →</a>
+    </p>
+  </div>
+</main>
+<footer>
+  <p>Hand-authored mockup, the “before” exhibit for the create-path plan. Conversation text reproduced verbatim from <code>/tmp/foundry-50-audit/results.jsonl</code> row 32; margin annotations describe <code>atlas/query.py</code> and <code>routing/router.py</code> behavior as verified 2026-08-23. Not generated output.</p>
+</footer>
+<script>
+  const scenes = document.querySelectorAll(".scene");
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) if (e.isIntersecting) { e.target.classList.add("on"); io.unobserve(e.target); }
+    }, { threshold: 0.18 });
+    scenes.forEach((s) => io.observe(s));
+  } else {
+    scenes.forEach((s) => s.classList.add("on"));
+  }
+</script>
+</body>
+</html>

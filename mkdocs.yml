@@ -1,7 +1,7 @@
 site_name: Domain Foundry
 site_description: >-
-  Describe your passion. Get an app. Talk to it. Local-first notes that stay
-  on your machine.
+  Turn an interest into an evidence-backed schema, experience, and local app
+  you own.
 site_author: Domain Foundry contributors
 repo_url: https://github.com/finnqiao/domain_foundry
 repo_name: domain-foundry/domain_foundry
@@ -58,13 +58,18 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Start:
+      - "Bring the log. Pick a look.": tutorial/end-to-end.html
       - Getting started: tutorial/getting-started.md
-      - "Tutorial: hobby → app": tutorial/end-to-end.html
       - Quickstart (CLI): QUICKSTART.md
       - "How-to: no terminal": tutorial/howto-non-technical.md
       - "How-to: developers": tutorial/howto-technical.md
   - Concepts:
       - Overview: concepts/index.md
+      - Foundry redesign: FOUNDRY_REDESIGN.md
+      - The create-path bar: create-path-bar.md
+      - AI remix landscape: remix-landscape.md
+      - Replacement-name slate: name-replacement-slate.md
+      - Foundry threat model: concepts/foundry-threat-model.md
       - The ledger: concepts/ledger.md
       - Domain packs: concepts/packs.md
       - Idea atlas: concepts/idea-atlas.md
@@ -84,6 +89,7 @@ nav:
   - Operate & recover:
       - Security: security.md
       - Testing runbook: tutorial/testing-runbook.md
+      - Independent release review: release-review-guide.md
       - Vault search: vault-search.md
   - Decisions:
       - "ADR-001: HTTP adapter contract": adr/ADR-001-http-adapter-contract.md
@@ -92,6 +98,10 @@ nav:
       - "ADR-004: Packs are data": adr/ADR-004-packs-are-data.md
       - "ADR-005: Name decision": adr/ADR-005-name-decision.md
       - "ADR-006: Restore the HTTP write seam": adr/ADR-006-restore-http-write-seam.md
+      - "ADR-007: Declarative capabilities": adr/007-declarative-capabilities.md
+      - "ADR-008: FoundrySpec compiler": adr/ADR-008-foundry-spec-compiler.md
+      - "ADR-009: Contract-interpreting runtime": adr/ADR-009-contract-interpreting-owned-runtime.md
+      - "ADR-010: Wizard-Foundry bridge": adr/ADR-010-wizard-foundry-bridge.md
   - Contribute:
       - User stories & evidence: USER_STORIES.md
 

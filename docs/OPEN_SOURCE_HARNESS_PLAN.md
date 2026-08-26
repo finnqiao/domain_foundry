@@ -677,7 +677,9 @@ Assumes a 2-engineer team. Total ≈ **28 eng-weeks (~3.5 calendar months)** wit
 
 **Goal:** a fresh public-ready repo where it is *structurally difficult* to leak personal data, plus the ported substrate DDL.
 
-- [ ] Decide the name (§13.1); register GitHub org, PyPI names (`<name>-core`, `<name>-pack-*` prefix), domain for docs.
+- [ ] Decide the name (§13.1); choose verified GitHub/repository coordinates,
+  claim permitted PyPI names (`<name>-core`, `<name>-pack-*` prefix), and choose
+  the docs domain. Do not infer claimability from a 404 or empty organization.
 - [ ] Fresh repo (NO history from private repos; private repos never added as remotes — enforce with a pre-push hook + CI check on remote URLs).
 - [ ] MIT LICENSE, CODE_OF_CONDUCT, CONTRIBUTING (with the pack authoring style guide seed), SECURITY.md.
 - [ ] CI skeleton: ruff + pyright + pytest on 3.11–3.13; Node build for `app/`.
@@ -867,7 +869,11 @@ Packs are data (YAML/SQL-generated/JSONL) — installing one cannot execute code
 
 ## 13.1 Name (decide in P0)
 
-Requirements: not "Hermes" (Nous collision), pronounceable, pypi/gh/domain available, evokes structure-for-passions. Candidates to check: **Trellis** (structure your passions grow on — front-runner), Loam, Almanac, Fieldbook, Waypost, Lorebook, Tally. Run trademark + package-name checks before P0 exit.
+Requirements: not "Hermes" (Nous collision), pronounceable, usable verified
+package/repository/domain coordinates, evokes structure-for-passions. Candidates
+to check: **Trellis** (structure your passions grow on — front-runner), Loam,
+Almanac, Fieldbook, Waypost, Lorebook, Tally. Run trademark + package-name checks
+before P0 exit; a registry 404 is not a reservation.
 
 ## 13.2 Engineering risks
 

@@ -5,6 +5,7 @@ Read them in order the first time; they build on each other.
 
 | Concept | One line |
 |---|---|
+| [Foundry redesign](../FOUNDRY_REDESIGN.md) | Evidence, product cuts, schema, experience, app, and proof compile from one typed contract. |
 | [The ledger](ledger.md) | An append-only substrate that stores raw captures + provenance before any interpretation. |
 | [Domain packs](packs.md) | Data-only bundles (YAML) that describe a domain's schema, routing, policy, and app views. |
 | [Hybrid routing](routing.md) | A two-layer router: zero-token regex rules first, an LLM interpreter only when needed. |
@@ -36,3 +37,8 @@ Two invariants hold everywhere:
 Everything else — packs, routing tiers, policy gates, projections, evals — is in
 service of those two invariants while staying local-first and honest about
 uncertainty.
+
+The creation path adds a third invariant: **preview equals export**. The exact
+self-contained HTML inspected in Foundry Studio is the owned application
+artifact written beside its schema, evidence snapshot, and content-hashed
+receipt.

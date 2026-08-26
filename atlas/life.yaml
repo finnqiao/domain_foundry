@@ -130,7 +130,7 @@ nodes:
   - id: music
     kind: bucket
     title: Music
-    aliases: [guitar, piano, practice, instrument]
+    aliases: [guitar, piano, instrument, instruments]
     pitch: Practice, repertoire, and whether the hard bit moved.
   - id: music.practice
     kind: practice
@@ -150,7 +150,40 @@ nodes:
     jargon: [metronome, barre, arpeggio]
     world_analogs:
       - {name: Tonara / practice diaries, one_liner: Timed practice}
-
+  # Records are a mainstream music vertical, sitting alongside the guitar and
+  # piano nodes this bucket already carries — coverage the atlas should have on
+  # the merits, not a node shaped to fit an eval case.
+  - id: music.records
+    kind: practice
+    title: Records
+    aliases: [vinyl, turntable, pressing, record collection, lp]
+    pitch: The shelf, the pressing, and what you actually put on.
+  - id: music.records.spin_log
+    kind: idea
+    title: Spin log
+    aliases: [vinyl log, listening log, record shelf]
+    pitch: Records you own and the nights you played them — sleeve condition included.
+    jobs: [catalog, event_log, media_dex]
+    provenance: foundry
+    domain_slug: vinyl
+    identity_hint: album_name
+    example: spun the original pressing, inner sleeve is torn
+    jargon: [pressing, reissue, gatefold, inner sleeve]
+    vocabulary:
+      [vinyl, pressing, reissue, gatefold, sleeve, spun, needle, stylus,
+       mono, stereo, crate, label, matrix, warped, runout]
+    routing_examples:
+      - {text: "spun the original pressing, inner sleeve is torn", object: event}
+      - {text: "side B skips near the runout, the needle needs replacing", object: event}
+      - {text: "the mono reissue sounds better than the stereo", object: event}
+      - {text: "added a gatefold from the crate dig, label is clean", object: catalog}
+      - {text: "that pressing is warped but it still tracks", object: catalog}
+    negative_examples:
+      - keep a record of the meeting notes
+      - the sleeve on my jacket is torn
+    llm_hints: >
+      A record is the pressing you own; a spin is one time you played it.
+      Sleeve and vinyl condition belong to the record, not to the night.
   - id: reading
     kind: bucket
     title: Reading
@@ -169,11 +202,36 @@ nodes:
     jobs: [catalog, event_log]
     provenance: world
     domain_slug: reading
-    identity_hint: title
+    identity_hint: book_name
     example: finished The Dispossessed last night, five stars
     jargon: [reread, DNF]
+    vocabulary:
+      [finished, reread, DNF, chapter, audiobook, paperback, hardback,
+       backlist, series, translation, abandoned, started, shelf]
+    routing_examples:
+      - {text: "finished The Dispossessed last night, five stars", object: catalog}
+      - {text: "started the second book in the series, slow chapter", object: event}
+      - {text: "DNF at page 80, might reread it later", object: event}
+      - {text: "the audiobook translation is better than the paperback", object: event}
+    negative_examples:
+      - booked a table for two at eight
+      - finished the last of the milk
+    llm_hints: >
+      A title is the work, not the session. "Finished", "DNF" and "reread"
+      describe what happened to a book — never treat them as a sign-off.
     world_analogs:
       - {name: Goodreads, one_liner: Social reading shelf}
+  - id: reading.books.passages
+    kind: idea
+    title: Passages I keep
+    aliases: [quotes, excerpts]
+    pitch: Lines worth keeping, tied to the book — not a social shelf.
+    jobs: [catalog, event_log]
+    provenance: foundry
+    domain_slug: passages
+    identity_hint: title
+    example: copied the anarchist speech from The Dispossessed
+    jargon: [passage, dogear]
 
   - id: craft
     kind: bucket
@@ -191,11 +249,28 @@ nodes:
     aliases: [origami log]
     pitch: What you made and what you'd change in the next fold or seam.
     jobs: [catalog, event_log, media_dex]
-    provenance: foundry
+    provenance: both
     domain_slug: origami
     identity_hint: piece_name
     example: folded a new crane from the leftover kami, crease was soft
-    jargon: [crease, wet fold, blocking]
+    jargon: [crease, wet fold, blocking, cast on, bind off]
+    vocabulary:
+      [blocking, merino, skein, sleeve, gauge, purl, stitch, seam, ribbing,
+       swatch, crease, kami, koi, warp, weft, hem, frogged]
+    routing_examples:
+      - {text: "finished the sleeve, blocking it tonight", object: event}
+      - {text: "cast on the yoke in merino DK, gauge was tight", object: event}
+      - {text: "frogged the ribbing and started the swatch again", object: event}
+      - {text: "wet folded a koi, the crease pattern was messy", object: event}
+      - {text: "added the raglan cardigan to the project list", object: catalog}
+    negative_examples:
+      - blocking the calendar for Thursday
+      - the seam on my jacket came apart at the shop
+    llm_hints: >
+      A piece is the thing being made; a session is one sitting of work on it.
+      Blocking, frogging and casting on are all session events.
+    world_analogs:
+      - {name: paper notebooks / Ravelry, one_liner: Project notes}
 
   - id: photography
     kind: bucket
@@ -263,46 +338,113 @@ nodes:
     jobs: [catalog, event_log]
     provenance: foundry
     domain_slug: home
-    identity_hint: item
+    identity_hint: fixture_name
     example: replaced the HVAC filter, last one was six months ago
-    jargon: [filter, gasket]
+    jargon: [filter, gasket, water heater, smoke detector]
+    vocabulary:
+      [filter, gasket, leak, caulk, valve, breaker, faucet, drain, furnace,
+       hvac, thermostat, grout, fuse, seal, flush, replaced, serviced]
+    routing_examples:
+      - {text: "replaced the HVAC filter, six months since the last one", object: event}
+      - {text: "the kitchen faucet gasket was leaking, swapped it", object: event}
+      - {text: "reset the breaker in the hall closet", object: event}
+      - {text: "recaulked the tub, the grout is next weekend", object: event}
+      - {text: "flushed the water heater, drain valve was stiff", object: event}
+      - {text: "added the furnace to the list, installed in 2019", object: catalog}
+      - {text: "smoke detector in the hallway, battery every October", object: catalog}
+    negative_examples:
+      - filtered the search results by date
+      - booked a table at the new place downtown
+    llm_hints: >
+      A fixture is the thing (furnace, faucet, breaker panel); the event is
+      what you did to it and when. "Six months ago" dates the previous
+      service, not this one.
 
   - id: collecting
     kind: bucket
     title: Collecting
-    aliases: [collection, catalog, inventory]
+    aliases: [collection, catalog, inventory, cards]
     pitch: Things you keep on purpose.
   - id: collecting.catalog
     kind: practice
     title: Catalogs
-    aliases: [inventory]
+    aliases: [inventory, binder, tcg]
     pitch: A catalog with photos, not a spreadsheet graveyard.
   - id: collecting.catalog.dex
     kind: idea
     title: Collection dex
-    aliases: [inventory app]
+    aliases: [inventory app, stamps, coins]
     pitch: Identity, acquired-on, and a photo — a pokedex for objects.
     jobs: [catalog, media_dex]
     provenance: foundry
     domain_slug: collection
-    identity_hint: item_name
+    identity_hint: piece_name
     example: added the 1982 field guide, spine is sun-faded
-    jargon: [lot, provenance]
+    jargon: [lot, provenance, first day cover, souvenir sheet]
+    vocabulary:
+      [airmail, mint, hinge, hinged, perforation, franking, philately, cancel,
+       watermark, overprint, gutter, imperf, spine, lot, grade, "1948"]
+    routing_examples:
+      - {text: "added a 1948 airmail to the inventory, mint, hinge remnant", object: catalog}
+      - {text: "the overprint has a clean perforation on three sides", object: catalog}
+      - {text: "franking is faint but the cancel is readable", object: event}
+      - {text: "won lot 42 at auction, watermark checks out", object: event}
+    negative_examples:
+      - the mint in the garden has taken over
+      - cancelled the subscription this morning
+    llm_hints: >
+      Condition words (mint, hinged, imperf) belong to the item; a cancel, a
+      lot, or an auction win is an event about it.
+  - id: collecting.catalog.card_dex
+    kind: idea
+    title: Card dex
+    aliases: [trading cards, tcg, pokemon, cards, card pokedex, pokedex]
+    pitch: Each card you own, with a photo — binder pages you can search.
+    jobs: [catalog, media_dex]
+    provenance: foundry
+    domain_slug: cards
+    identity_hint: card_name
+    example: added a Japanese Pikachu promo to the binder; pulled a holographic Charizard from a booster, NM
+    jargon: [holographic, booster, promo, binder, tcg]
+  - id: collecting.catalog.set_tracker
+    kind: idea
+    title: Set completion
+    aliases: [set tracker, missing list, commons]
+    pitch: How close a set is, and which rares are still missing.
+    jobs: [catalog, event_log, improvement]
+    provenance: world
+    domain_slug: sets
+    identity_hint: set_name
+    example: Paldea Evolved commons done, still missing 4 rares
+    jargon: [commons, rares, missing, binder]
+    world_analogs:
+      - {name: Collectr / TCGPlayer, one_liner: Set completion and a price on each card}
+  - id: collecting.catalog.pull_log
+    kind: idea
+    title: Pull log
+    aliases: [booster pulls, trade log]
+    pitch: What came out of a pack, what you traded, and the condition.
+    jobs: [event_log, lab]
+    provenance: foundry
+    domain_slug: pulls
+    identity_hint: card_name
+    example: pulled a holographic Charizard from a 151 booster, NM
+    jargon: [booster, pull, trade, holographic]
 
   - id: animals
     kind: bucket
     title: Animals
-    aliases: [pets, wildlife, birding]
+    aliases: [pets, wildlife, birding, birdwatching]
     pitch: Pets at home, or wildlife you keep noticing.
   - id: animals.wildlife
     kind: practice
     title: Wildlife
-    aliases: [birding, species]
+    aliases: [birding, species, birdwatching, bird watching, bird]
     pitch: Sightings with a place — a pokedex for the living world.
   - id: animals.wildlife.dex
     kind: idea
     title: Wildlife dex
-    aliases: [bird log, species log]
+    aliases: [bird log, species log, birdwatching, birding, bird]
     pitch: What you saw, where, and a photo if you got one.
     jobs: [catalog, event_log, media_dex, atlas]
     provenance: both
@@ -334,12 +476,26 @@ nodes:
     domain_slug: dev
     identity_hint: title
     example: tried the new router, still dropping the trailing slash
-    jargon: [repro, flake]
+    jargon: [repro, flake, race condition, stack trace]
+    vocabulary:
+      [flake, flaky, repro, patch, patched, race, regression, revert, rebase,
+       branch, deploy, rollback, gotcha, spike, refactor]
+    routing_examples:
+      - {text: "flake in the auth suite, repro only on a cold cache", object: event}
+      - {text: "patched the race in the writer, regression test added", object: event}
+      - {text: "reverted the rebase, the branch was a mess", object: event}
+      - {text: "spike on the new router, still dropping the trailing slash", object: event}
+    negative_examples:
+      - the coffee machine is flaky in the mornings
+      - ran a 5k race on Saturday
+    llm_hints: >
+      A flake, a repro and a regression describe a bug you hit; the fix and
+      the trigger matter more than the ticket number.
 
   - id: wellness
     kind: bucket
     title: Wellness
-    aliases: [meditation, mood, journal]
+    aliases: [meditation, mood, journal, yoga]
     pitch: Inner weather, without a streak-shame app.
   - id: wellness.mind
     kind: practice
@@ -368,6 +524,38 @@ nodes:
     identity_hint: summary
     example: dreamed I was walking through an endless library
     jargon: [lucid, fragment]
+  - id: wellness.yoga
+    kind: practice
+    title: Yoga
+    aliases: [vinyasa, hatha, ashtanga, asana]
+    pitch: Practices, styles, and which pose fought back today.
+  - id: wellness.yoga.practice_log
+    kind: idea
+    title: Yoga log
+    aliases: [yoga log]
+    pitch: Style, length, and how the body actually was — not a streak counter.
+    jobs: [event_log, improvement]
+    provenance: foundry
+    domain_slug: yoga
+    identity_hint: practice_name
+    example: 45 minutes of vinyasa, hips were tight
+    jargon: [vinyasa, savasana, chaturanga, sun salutation]
+    vocabulary:
+      [vinyasa, savasana, asana, chaturanga, pigeon, hips, shoulders, hamstrings,
+       flow, hatha, yin, ashtanga, breath, mat, bind, inversion]
+    measure: {name: minutes, unit: minutes}
+    routing_examples:
+      - {text: "45 minutes of vinyasa, hips were tight", object: event}
+      - {text: "savasana ran long, shoulders finally let go", object: event}
+      - {text: "yin class tonight, pigeon was brutal", object: event}
+      - {text: "held the inversion for a full breath cycle", object: event}
+      - {text: "hatha at home on the mat, hamstrings still short", object: event}
+    negative_examples:
+      - the traffic flow downtown was terrible
+      - stretched the deadline by a week
+    llm_hints: >
+      The style (vinyasa, yin, hatha) names the practice; poses like savasana
+      or pigeon are what happened inside it. Minutes are the length.
 
 edges:
   - {from: plants, to: plants.houseplants, rel: child}
@@ -384,9 +572,12 @@ edges:
   - {from: health, to: health.logs, rel: child}
   - {from: health.logs, to: health.logs.symptom, rel: child}
   - {from: music, to: music.practice, rel: child}
+  - {from: music, to: music.records, rel: child}
   - {from: music.practice, to: music.practice.session, rel: child}
+  - {from: music.records, to: music.records.spin_log, rel: child}
   - {from: reading, to: reading.books, rel: child}
   - {from: reading.books, to: reading.books.log, rel: child}
+  - {from: reading.books, to: reading.books.passages, rel: child}
   - {from: craft, to: craft.making, rel: child}
   - {from: craft.making, to: craft.making.log, rel: child}
   - {from: photography, to: photography.catalog, rel: child}
@@ -398,11 +589,17 @@ edges:
   - {from: home.maintenance, to: home.maintenance.log, rel: child}
   - {from: collecting, to: collecting.catalog, rel: child}
   - {from: collecting.catalog, to: collecting.catalog.dex, rel: child}
+  - {from: collecting.catalog, to: collecting.catalog.card_dex, rel: child}
+  - {from: collecting.catalog, to: collecting.catalog.set_tracker, rel: child}
+  - {from: collecting.catalog, to: collecting.catalog.pull_log, rel: child}
   - {from: animals, to: animals.wildlife, rel: child}
   - {from: animals.wildlife, to: animals.wildlife.dex, rel: child}
   - {from: animals.wildlife, to: diving.marine_naturalism, rel: adjacent}
   - {from: making, to: making.dev, rel: child}
   - {from: making.dev, to: making.dev.log, rel: child}
   - {from: wellness, to: wellness.mind, rel: child}
+  - {from: wellness, to: wellness.yoga, rel: child}
   - {from: wellness.mind, to: wellness.mind.sit, rel: child}
   - {from: wellness.mind, to: wellness.mind.dreams, rel: child}
+  - {from: wellness.yoga, to: wellness.yoga.practice_log, rel: child}
+  - {from: wellness.yoga, to: wellness.mind, rel: adjacent}

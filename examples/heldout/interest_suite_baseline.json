@@ -1,0 +1,75 @@
+{
+  "n": 50,
+  "pass": 50,
+  "overall": {
+    "pass": 50
+  },
+  "fork": {
+    "hit": 39,
+    "honest_miss": 11
+  },
+  "buckets": {
+    "indexed": {
+      "pass": 30
+    },
+    "collision": {
+      "pass": 10
+    },
+    "unindexed": {
+      "pass": 10
+    }
+  },
+  "cases": {
+    "01_sourdough": "pass",
+    "02_pokemon": "pass",
+    "03_underwater": "pass",
+    "04_birdwatching": "pass",
+    "05_houseplants": "pass",
+    "06_coffee": "pass",
+    "07_soccer": "pass",
+    "08_climbing": "pass",
+    "09_running": "pass",
+    "10_cycling": "pass",
+    "11_lifting": "pass",
+    "12_recipes": "pass",
+    "13_nutrition": "pass",
+    "14_dining": "pass",
+    "15_japanese": "pass",
+    "16_guitar": "pass",
+    "17_hiking": "pass",
+    "18_film_photo": "pass",
+    "19_scuba": "pass",
+    "20_freediving": "pass",
+    "21_knitting": "pass",
+    "22_books": "pass",
+    "23_meditation": "pass",
+    "24_travel": "pass",
+    "25_home": "pass",
+    "26_origami": "pass",
+    "27_sideproject": "pass",
+    "28_symptoms": "pass",
+    "29_uw_photo": "pass",
+    "30_spearfishing": "pass",
+    "31_pokedex_cards": "pass",
+    "32_whisky": "pass",
+    "33_discard": "pass",
+    "34_vinyl": "pass",
+    "35_piano": "pass",
+    "36_tasting_menu": "pass",
+    "37_stamps": "pass",
+    "38_aquarium": "pass",
+    "39_yoga": "pass",
+    "40_cocktails": "pass",
+    "41_lego": "pass",
+    "42_warhammer": "pass",
+    "43_fountainpens": "pass",
+    "44_chess": "pass",
+    "45_hamradio": "pass",
+    "46_bees": "pass",
+    "47_pottery": "pass",
+    "48_trains": "pass",
+    "49_astronomy": "pass",
+    "50_nonsense": "pass"
+  },
+  "_note": "Pinned 2026-08-23 after conversational elicitation landed (offline, DOMAIN_FOUNDRY_LLM=heuristic). 50/50 against the jargon probe, but read it with the held_out figure beside it: the wizard replays a second user sentence it never saw and 0/10 of those file. One elicited sentence buys coverage of sentences sharing its words, not domain understanding. Per-case ratchet: no case may end worse than pinned."
+}

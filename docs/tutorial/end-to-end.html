@@ -17,13 +17,9 @@
       --teal-dark: #07584f;
       --teal-soft: #d9f1e9;
       --orange: #b65b21;
-      --orange-soft: #f9e4d2;
-      --violet: #6d58a7;
-      --violet-soft: #ebe5fa;
       --shadow: 0 18px 48px rgba(35, 56, 48, .09);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
-
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -37,810 +33,261 @@
     button { font: inherit; }
     a { color: var(--teal-dark); }
     code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
-    .page { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 42px 0 72px; }
-
-    .hero { display: grid; grid-template-columns: 1.25fr .75fr; gap: 36px; align-items: end; padding: 20px 0 28px; }
-    .eyebrow, .section-kicker, .mini-label { color: var(--teal); font-size: .74rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+    .page { width: min(920px, calc(100% - 32px)); margin: 0 auto; padding: 42px 0 72px; }
+    .eyebrow { color: var(--teal); font-size: .74rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
     h1, h2, h3, p { margin-top: 0; }
-    h1 { max-width: 760px; margin-bottom: 18px; font-size: clamp(2.5rem, 6.4vw, 5.2rem); line-height: .96; letter-spacing: -.07em; font-weight: 800; }
-    h2 { margin-bottom: 10px; font-size: clamp(1.7rem, 3vw, 2.55rem); line-height: 1.03; letter-spacing: -.045em; }
-    h3 { margin-bottom: 6px; font-size: 1rem; }
+    h1 { max-width: 760px; margin-bottom: 18px; font-size: clamp(2.4rem, 6vw, 4.6rem); line-height: .96; letter-spacing: -.07em; font-weight: 800; }
+    h2 { margin-bottom: 10px; font-size: clamp(1.5rem, 2.6vw, 2.2rem); line-height: 1.08; letter-spacing: -.04em; }
     .lede { max-width: 680px; color: var(--muted); font-size: 1.08rem; }
-    .hero-note { border-left: 3px solid var(--orange); padding: 6px 0 6px 18px; color: var(--muted); }
-    .hero-note strong { display: block; color: var(--ink); font-size: 1.08rem; margin-bottom: 6px; }
-    .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 24px; }
-    .primary, .secondary, .tab, .stage-node, .conversation-button {
-      border: 1px solid var(--line-strong); border-radius: 999px; cursor: pointer; transition: .18s ease;
+    .hero-note { border-left: 3px solid var(--orange); padding: 6px 0 6px 18px; color: var(--muted); margin: 22px 0 0; }
+    .hero-note strong { display: block; color: var(--ink); margin-bottom: 4px; }
+    .surface { background: rgba(255, 254, 250, .82); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow); padding: clamp(20px, 4vw, 34px); margin-top: 28px; }
+    .section-kicker { color: var(--teal); font-size: .74rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; margin-bottom: 10px; }
+    .muted { color: var(--muted); }
+    .switcher { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 20px; }
+    .switcher button, .conversation-button, .primary, .secondary {
+      border: 1px solid var(--line-strong); border-radius: 999px; cursor: pointer; padding: 8px 14px; background: transparent;
     }
-    .primary { background: var(--teal); color: #fff; border-color: var(--teal); padding: 10px 17px; font-weight: 750; }
-    .primary:hover, .primary:focus-visible { background: var(--teal-dark); transform: translateY(-1px); }
-    .secondary { background: transparent; color: var(--ink); padding: 10px 17px; }
-    .secondary:hover, .secondary:focus-visible { border-color: var(--teal); color: var(--teal-dark); }
-    .status { color: var(--muted); font-size: .86rem; }
-
-    .trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; margin-top: 8px; }
-    .trio-card { border: 1px solid var(--line); border-radius: 18px; padding: 18px; background: var(--panel); box-shadow: var(--shadow); }
-    .trio-icon { display: inline-grid; place-items: center; width: 34px; height: 34px; margin-bottom: 12px; border-radius: 10px; background: var(--teal-soft); font-size: 1.1rem; }
-    .trio-card:nth-child(2) .trio-icon { background: var(--orange-soft); }
-    .trio-card:nth-child(3) .trio-icon { background: var(--violet-soft); }
-    .trio-card strong { display: block; margin-bottom: 6px; }
-    .trio-card p { margin: 0; color: var(--muted); font-size: .9rem; }
-
-    .surface { background: rgba(255, 254, 250, .82); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow); padding: clamp(20px, 4vw, 38px); margin-top: 24px; }
-    .section-head { display: flex; justify-content: space-between; gap: 18px; align-items: end; margin-bottom: 24px; }
-    .section-head p { max-width: 540px; margin-bottom: 0; color: var(--muted); }
-    .section-kicker { margin-bottom: 10px; }
-    .flow-layout { display: grid; grid-template-columns: 210px 1fr; gap: 25px; }
-    .entry-tabs { display: grid; gap: 8px; align-content: start; }
-    .tab { border-radius: 12px; padding: 11px 13px; background: transparent; color: var(--muted); text-align: left; }
-    .tab:hover, .tab:focus-visible { border-color: var(--teal); color: var(--teal-dark); }
-    .tab[aria-selected="true"] { background: var(--teal-soft); border-color: #8dcbbc; color: var(--teal-dark); font-weight: 750; }
-    .entry-copy { margin: 5px 0 0; color: var(--muted); font-size: .8rem; }
-    .entry-panel { min-width: 0; }
-    .entry-panel-header { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
-    .entry-panel-header p { color: var(--muted); margin-bottom: 15px; }
-    .pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 5px 9px; background: var(--teal-soft); color: var(--teal-dark); font-size: .74rem; font-weight: 750; white-space: nowrap; }
-    .pill.warm { background: var(--orange-soft); color: var(--orange); }
-    pre { overflow: auto; margin: 0; border: 1px solid #263735; border-radius: 14px; background: #162522; color: #dff5e9; padding: 18px; font-size: .82rem; line-height: 1.65; }
-    .code-comment { color: #86aaa0; }
-    .code-key { color: #f8c476; }
-
-    .flow-map { position: relative; padding: 10px 0 0; }
-    .progress-track { height: 3px; background: var(--line); position: absolute; left: 9%; right: 9%; top: 42px; }
-    .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--teal), var(--orange)); transition: width .35s ease; }
-    .stage-nodes { position: relative; display: grid; grid-template-columns: repeat(6, 1fr); gap: 9px; }
-    .stage-node { min-width: 0; border-radius: 15px; padding: 12px 8px; background: var(--panel); color: var(--muted); text-align: center; }
-    .stage-node:hover, .stage-node:focus-visible { border-color: var(--teal); color: var(--teal-dark); }
-    .stage-node[aria-current="step"] { background: var(--teal-soft); border-color: #74bca9; color: var(--teal-dark); box-shadow: 0 8px 18px rgba(8,127,114,.12); }
-    .node-number { display: grid; place-items: center; width: 26px; height: 26px; margin: 0 auto 8px; border-radius: 50%; background: var(--ink); color: #fff; font-size: .73rem; font-weight: 800; }
-    .stage-node[aria-current="step"] .node-number { background: var(--teal); }
-    .node-title { display: block; font-size: .8rem; font-weight: 800; }
-    .node-subtitle { display: block; margin-top: 3px; font-size: .68rem; line-height: 1.2; }
-    .stage-detail { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 24px; padding: 20px; border: 1px solid var(--line); border-radius: 17px; background: var(--panel); }
-    .stage-detail p { margin-bottom: 0; color: var(--muted); }
-    .detail-label { display: block; margin-bottom: 8px; color: var(--orange); font-size: .72rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
-    .trace { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; margin-top: 15px; }
-    .trace span { border: 1px solid var(--line); border-radius: 8px; padding: 5px 8px; background: var(--paper); color: var(--muted); font-size: .74rem; line-height: 1.2; }
-    .trace i { color: var(--orange); font-style: normal; }
-
-    .split { display: grid; grid-template-columns: 1.05fr .95fr; gap: 24px; }
-    .conversation { display: grid; gap: 9px; }
-    .message { max-width: 88%; padding: 12px 14px; border-radius: 15px; border: 1px solid var(--line); background: var(--panel); }
-    .message.user { justify-self: end; border-color: #a7d8c7; background: var(--teal-soft); }
-    .message.system { justify-self: start; }
-    .message .who { display: block; margin-bottom: 4px; color: var(--muted); font-size: .7rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-    .message p { margin-bottom: 0; white-space: pre-wrap; }
-    .message ul { margin: 8px 0 0; padding-left: 1.1em; }
-    .message li { margin: 4px 0; }
-
-    .mockup-grid { display: grid; gap: 10px; }
-    .mockup {
-      border: 1px solid var(--line); border-radius: 14px; padding: 10px 10px 12px;
-      background: #fff; cursor: pointer; text-align: left; width: 100%;
-      font: inherit; color: inherit;
-    }
-    .mockup:hover, .mockup:focus-visible { border-color: var(--teal); }
-    .mockup.picked { border-color: var(--teal); box-shadow: 0 0 0 2px var(--teal-soft); }
-    .mockup .mini-label { display: block; margin-bottom: 6px; }
-    .mockup strong { display: block; font-size: .88rem; margin-bottom: 8px; }
-    .scatter {
-      position: relative; height: 118px; border-radius: 10px;
-      background:
-        linear-gradient(transparent 24px, var(--line) 25px, transparent 26px),
-        linear-gradient(90deg, transparent 24px, var(--line) 25px, transparent 26px),
-        #f4f7f4;
-      background-size: 25px 25px;
-    }
-    .scatter i {
-      position: absolute; width: 8px; height: 8px; border-radius: 50%;
-      background: var(--teal); font-style: normal;
-    }
-    .scatter i.good { background: var(--orange); }
-    .ig-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
-    .ig-grid span {
-      display: block; aspect-ratio: 1; border-radius: 6px;
-      background: linear-gradient(135deg, var(--orange-soft), var(--teal-soft));
-    }
-    .mix-list { margin: 0; padding: 0; list-style: none; font-size: .78rem; color: var(--muted); }
-    .mix-list li { display: flex; justify-content: space-between; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--line); }
-    .axis { display: flex; justify-content: space-between; margin-top: 4px; color: var(--muted); font-size: .68rem; }
-    .message code { color: var(--teal-dark); }
-    .conversation-button { justify-self: start; margin-top: 4px; padding: 9px 13px; border-radius: 10px; background: var(--ink); color: #fff; font-size: .82rem; }
-    .conversation-button:hover, .conversation-button:focus-visible { background: var(--teal-dark); }
-    .data-panel { min-width: 0; }
-    .data-panel header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px; }
-    .data-panel header h3 { margin: 0; }
-    .toggle { border: 0; background: transparent; color: var(--teal-dark); cursor: pointer; font-size: .78rem; font-weight: 750; text-decoration: underline; }
-    .json-view { min-height: 220px; }
-    .json-view code { color: #dff5e9; }
-    .json-key { color: #f8c476; }
-    .json-string { color: #a6d9f4; }
-    .json-number { color: #d7b1ff; }
-    .json-note { margin-top: 10px; color: var(--muted); font-size: .78rem; }
-
-    .bake-card { min-height: 220px; border: 1px solid var(--line); border-radius: 16px; padding: 18px; background:
-      linear-gradient(180deg, #fffefa, #f3faf6); }
-    .bake-kicker { color: var(--muted); font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-    .bake-card h3 { margin: 8px 0 14px; font-size: 1.35rem; letter-spacing: -.03em; }
-    .bake-card dl { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 0 0 14px; }
-    .bake-card dt { color: var(--muted); font-size: .72rem; }
-    .bake-card dd { margin: 2px 0 0; font-weight: 750; }
-    .bake-empty { color: var(--muted); }
-
-    .branch-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; }
-    .branch { border: 1px solid var(--line); border-radius: 15px; padding: 17px; background: var(--panel); }
-    .branch .branch-icon { display: inline-grid; place-items: center; width: 31px; height: 31px; margin-bottom: 11px; border-radius: 9px; background: var(--teal-soft); color: var(--teal-dark); font-weight: 850; }
-    .branch:nth-child(2) .branch-icon { background: var(--orange-soft); color: var(--orange); }
-    .branch:nth-child(3) .branch-icon { background: var(--violet-soft); color: var(--violet); }
-    .branch p { margin-bottom: 0; color: var(--muted); font-size: .86rem; }
-    .branch strong { display: block; margin-bottom: 5px; }
-
-    .hobby-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; }
-    .hobby { border: 1px solid var(--line); border-radius: 15px; padding: 16px; background: var(--panel); }
-    .hobby .mark { font-size: 1.35rem; display: block; margin-bottom: 8px; }
-    .hobby p { margin: 0; color: var(--muted); font-size: .86rem; }
-    .hobby strong { display: block; margin-bottom: 4px; color: var(--ink); }
-
-    .agent-layout { display: grid; grid-template-columns: 1.1fr .9fr; gap: 24px; align-items: start; }
-    .agent-verbs { display: grid; gap: 11px; }
-    .verb { display: grid; grid-template-columns: 30px 1fr; gap: 10px; align-items: start; }
-    .verb b { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: var(--violet-soft); color: var(--violet); font-size: .75rem; }
-    .verb p { margin: 0; color: var(--muted); font-size: .87rem; }
-    .verb strong { color: var(--ink); }
-
-    .start-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-    .start-card { border: 1px solid var(--line); border-radius: 16px; padding: 18px; background: var(--panel); }
-    .start-card h3 { margin-bottom: 8px; }
-    .start-card p { color: var(--muted); font-size: .9rem; }
-
-    .sources { display: flex; flex-wrap: wrap; gap: 9px; }
-    .source-link { display: inline-flex; padding: 8px 11px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--teal-dark); font-size: .82rem; text-decoration: none; }
-    .source-link:hover, .source-link:focus-visible { border-color: var(--teal); background: var(--teal-soft); }
-    footer { display: flex; justify-content: space-between; gap: 20px; padding: 27px 4px 0; color: var(--muted); font-size: .78rem; }
-
-    .track-bar { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 22px; }
-    .track-bar button[aria-pressed] {
-      border: 1px solid var(--line-strong); border-radius: 999px; padding: 10px 16px;
-      background: transparent; color: var(--ink); cursor: pointer; font-weight: 750;
-    }
-    .track-bar button[aria-pressed="true"] { background: var(--teal); border-color: var(--teal); color: #fff; }
-    .track-bar button[aria-pressed="false"]:hover { border-color: var(--teal); color: var(--teal-dark); }
-    .track-panel[hidden] { display: none; }
-    .steps { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; counter-reset: step; }
-    .steps li {
-      display: grid; grid-template-columns: 36px 1fr; gap: 14px; align-items: start;
-      border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; background: var(--panel);
-    }
-    .steps li::before {
-      counter-increment: step; content: counter(step);
-      display: grid; place-items: center; width: 36px; height: 36px; border-radius: 11px;
-      background: var(--teal-soft); color: var(--teal-dark); font-weight: 850; font-size: .9rem;
-    }
-    .steps h3 { margin: 2px 0 6px; font-size: 1.02rem; }
-    .steps p { margin: 0 0 8px; color: var(--muted); font-size: .92rem; }
-    .steps p:last-child { margin-bottom: 0; }
-    .steps pre { margin-top: 8px; }
-    .callout {
-      border-left: 3px solid var(--orange); padding: 10px 0 10px 14px; margin: 16px 0 0;
-      color: var(--muted); font-size: .9rem;
-    }
-    .callout strong { color: var(--ink); }
-
-    @media (max-width: 820px) {
-      .hero, .split, .agent-layout, .start-grid, .trio, .hobby-grid { grid-template-columns: 1fr; }
-      .hero { gap: 22px; padding-top: 10px; }
-      .flow-layout { grid-template-columns: 1fr; }
-      .entry-tabs { grid-template-columns: repeat(4, 1fr); }
-      .entry-copy { display: none; }
-      .stage-nodes { grid-template-columns: repeat(3, 1fr); gap: 10px; }
-      .progress-track { display: none; }
-    }
-    @media (max-width: 560px) {
-      .page { width: min(100% - 20px, 1120px); padding-top: 25px; }
-      .surface { padding: 18px; border-radius: 17px; }
-      h1 { font-size: clamp(2.35rem, 14vw, 3.6rem); }
-      .section-head { display: block; }
-      .section-head p { margin-top: 10px; }
-      .entry-tabs { grid-template-columns: repeat(2, 1fr); }
-      .stage-detail { grid-template-columns: 1fr; }
-      .branch-grid { grid-template-columns: 1fr; }
-      .stage-node { padding: 10px 5px; }
-      .node-subtitle { display: none; }
-      .bake-card dl { grid-template-columns: 1fr; }
-      footer { display: block; }
-      footer span { display: block; margin-top: 5px; }
-    }
+    .switcher button[aria-pressed="true"], .primary { background: var(--teal); color: #fff; border-color: var(--teal); font-weight: 750; }
+    .split { display: grid; grid-template-columns: 1.1fr .9fr; gap: 22px; }
+    .conversation { display: grid; gap: 10px; }
+    .message { border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; background: var(--panel); }
+    .message.user { background: var(--teal-soft); }
+    .who { display: block; font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+    .message p { margin: 0; white-space: pre-wrap; }
+    .side { border: 1px solid var(--line); border-radius: 16px; padding: 14px; background: var(--panel); min-height: 220px; }
+    .side h3 { margin: 0 0 8px; font-size: 1rem; }
+    .scatter { position: relative; height: 140px; border-radius: 12px; background: linear-gradient(to top, rgba(8,127,114,.1), transparent); }
+    .scatter i { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: var(--teal); }
+    .gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .gallery.dense { grid-template-columns: repeat(4, 1fr); gap: 4px; }
+    .gallery span { aspect-ratio: 1; border-radius: 10px; background: var(--teal-soft); display: grid; place-items: end start; padding: 6px; font-size: .68rem; color: var(--teal-dark); }
+    .proof-grid { display: grid; gap: 10px; margin-top: 14px; }
+    .proof-row { display: grid; grid-template-columns: 7.5rem 1fr; gap: 12px; border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; background: var(--panel); }
+    .proof-row dt { font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+    .proof-row dd { margin: 0; }
+    .ok { color: var(--teal-dark); font-weight: 700; }
+    .wait { color: var(--orange); font-weight: 700; }
+    .map { height: 120px; border-radius: 12px; background: radial-gradient(circle at 32% 42%, #8dcbbc, #d9f1e9 46%, #eef3ef); position: relative; }
+    .map i { position: absolute; width: 10px; height: 10px; background: var(--orange); border-radius: 50%; }
+    pre { background: #10201b; color: #d7e4de; padding: 14px 16px; border-radius: 14px; overflow: auto; font-size: .82rem; }
+    .code-comment { color: #7f9b91; }
+    .callout { margin: 16px 0 0; color: var(--muted); }
+    .footer-links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
+    .footer-links a { text-decoration: none; border-bottom: 1px solid var(--line-strong); padding-bottom: 2px; }
+    footer { margin-top: 36px; color: var(--muted); font-size: .9rem; }
+    @media (max-width: 760px) { .split { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
   <main class="page">
-    <header class="hero">
-      <div>
-        <div class="eyebrow">Domain Foundry · a weekend with the notebook you already have</div>
-        <h1>Bring the log. Pick a look. Keep the app.</h1>
-        <p class="lede">You don’t start by naming a product. You say “I have a log of sourdough bakes.” Your agent reads it, shows what you could build, sketches a few looks, and you pick one. The records stay on your computer.</p>
-        <div class="controls">
-          <a class="primary" href="#conversation-title" style="text-decoration:none">See the chat</a>
-          <button class="secondary" id="playFlow" type="button">Play the weekend</button>
-          <button class="secondary" id="resetFlow" type="button">Start over</button>
-          <span class="status" id="flowStatus" role="status">A normal person, a bake log, an MVP.</span>
-        </div>
-      </div>
+    <header>
+      <div class="eyebrow">Domain Foundry</div>
+      <h1>Bring the log. Pick a look. Keep the app.</h1>
+      <p class="lede">You say what you already keep. Foundry shows what you could build, sketches a look, and compiles it on your computer. Your agent can read photos. Foundry files text.</p>
       <aside class="hero-note">
-        <strong>Yours, on your computer</strong>
-        Your words stay on your machine. Your agent gets tools — log, ask, fix — not a pile of notes it will forget next week.
+        <strong>One conversation. Then you talk to it.</strong>
+        No account. No telemetry. If it isn’t sure where a note belongs, it waits in Inbox. To fix a number, say so.
       </aside>
     </header>
 
-    <div class="trio" aria-label="What you get">
-      <article class="trio-card"><span class="trio-icon" aria-hidden>📒</span><strong>The log you already have</strong><p>A notebook, a folder of photos, a notes.txt. Your agent can OCR it. Nothing is retyped into a form.</p></article>
-      <article class="trio-card"><span class="trio-icon" aria-hidden>🍞</span><strong>Options, then a look</strong><p>Not “pick recipe lab.” Real choices: chart the inputs, invent the next mix, organize the Instagram. Then three HTML looks. You pick. That’s the MVP.</p></article>
-      <article class="trio-card"><span class="trio-icon" aria-hidden>✦</span><strong>Talk to it next week</strong><p>Claude, Cursor, Telegram, or the little app. Same bakes. Ask what worked. Drop the next loaf whenever.</p></article>
-    </div>
-
-    <section class="surface" id="tutorial" aria-labelledby="tutorial-title">
-      <span id="dev"></span>
-      <div class="section-head">
-        <div>
-          <div class="section-kicker">00 / walk it yourself</div>
-          <h2 id="tutorial-title">Same weekend. Two ways in.</h2>
-        </div>
-        <p>Talk in Claude, Telegram, or the little app. Or do it from a terminal. Same bake log. Same records on your machine.</p>
-      </div>
-      <div class="track-bar" role="tablist" aria-label="Choose a track">
-        <button type="button" role="tab" id="trackEveryoneBtn" aria-controls="track-everyone" aria-pressed="true">Everyone</button>
-        <button type="button" role="tab" id="trackDevBtn" aria-controls="track-dev" aria-pressed="false">If you like terminals</button>
-      </div>
-
-      <div id="track-everyone" class="track-panel" role="tabpanel" aria-labelledby="trackEveryoneBtn">
-        <ol class="steps">
-          <li>
-            <div>
-              <h3>Install once</h3>
-              <p>Ask a techy friend, or paste this yourself. After that you never need the terminal again.</p>
-              <pre><span class="code-comment"># macOS / Linux — one line</span>
-pipx install domain-foundry-core domain-foundry-mcp
-domain-foundry setup
-domain-foundry serve</pre>
-              <p>Then open <strong>http://127.0.0.1:8787</strong> — Today, Your passions, Inbox.</p>
-            </div>
-          </li>
-          <li>
-            <div>
-              <h3>Talk where you already chat</h3>
-              <p>In <strong>Claude Desktop</strong> → Settings → Developer → Edit Config, paste this and restart:</p>
-              <pre>{
-  <span class="code-key">"mcpServers"</span>: {
-    <span class="code-key">"domain-foundry"</span>: {
-      <span class="code-key">"command"</span>: <span class="code-key">"domain-foundry-mcp"</span>,
-      <span class="code-key">"args"</span>: [<span class="code-key">"--home"</span>, <span class="code-key">"~/.domain_foundry"</span>]
-    }
-  }
-}</pre>
-              <p>Or text a Telegram bot you created with @BotFather. You only need <em>one</em> of: the app, Claude, or Telegram.</p>
-            </div>
-          </li>
-          <li>
-            <div>
-              <h3>Optional: add a key so it understands how you talk</h3>
-              <p>Without a key you still get a <strong>simple log</strong> you can talk to today. With a key, “i want to data visualize all my bakes” can shape fields and a chart — not a blank journal.</p>
-              <p>In the app: <strong>Settings</strong> → add a DeepSeek or OpenRouter key. A friend who uses Hermes often already has DeepSeek.</p>
-            </div>
-          </li>
-          <li>
-            <div>
-              <h3>Bring the log you already have</h3>
-              <p>Say it the way you’d text a friend. Your agent offers to pull the folder (and OCR photos). Then it shows what you could build — not a blank journal.</p>
-              <pre>You: i have a log of sourdough bakes
-Claude: drop the notebook or the photos and i'll ocr them.
-
-You: folder on my desktop, photos + notes.txt
-Claude: 47 bakes in. you could chart how inputs lead to crumb,
-        generate mixes from what worked, or organize instagram posts.
-
-You: i want to data visualize all my bakes
-Claude: three looks. pick one and i'll build the mvp.</pre>
-            </div>
-          </li>
-          <li>
-            <div>
-              <h3>Pick a look, then talk to it</h3>
-              <p>You get HTML sketches of the MVP. Pick one. Next week, ask in plain language. To fix a number, just say it.</p>
-              <pre>You: the scatter one
-Claude: live. 47 bakes on hydration vs crumb.
-
-You: which hydrations actually sprang?
-Claude: the 76–80% keepers. (from your records)
-
-You: that sunday batard was 78 not 72
-Claude: updated. history kept.</pre>
-            </div>
-          </li>
-          <li>
-            <div>
-              <h3>Old notes, if you already have some</h3>
-              <p>In the app: <strong>Settings → Sources</strong>. Paste a folder, preview where notes would land (changes nothing), then Pull in. Your original files are never moved.</p>
-            </div>
-          </li>
-        </ol>
-        <p class="callout"><strong>That’s the whole loop.</strong> Bring the log → hear options → pick a look → talk to the MVP. Same data if you later open the terminal. Longer no-terminal notes: <a href="howto-non-technical.md">Use Domain Foundry</a>.</p>
-      </div>
-
-      <div id="track-dev" class="track-panel" role="tabpanel" aria-labelledby="trackDevBtn" hidden>
-        <ol class="steps">
-          <li>
-            <div>
-              <h3>Install from the checkout</h3>
-              <pre>git clone https://github.com/finnqiao/domain_foundry &amp;&amp; cd domain_foundry
-python3.11 -m venv .venv &amp;&amp; source .venv/bin/activate
-pip install -e ".[dev]"
-pip install -e ./adapters/mcp -e ./adapters/telegram -e ./adapters/hermes_agent</pre>
-              <p>Data lives in <code>~/.domain_foundry</code> (or <code>DOMAIN_FOUNDRY_HOME</code>): <code>ledger.sqlite</code> + <code>domains.sqlite</code>.</p>
-            </div>
-          </li>
-          <li>
-            <div>
-              <h3>Bring a key (DeepSeek is first-class)</h3>
-              <p>Hermes users often already have <code>DEEPSEEK_API_KEY</code> in <code>~/.hermes/.env</code>. Native Google Gemini keys on this machine were rejected; OpenRouter still works as a mix-and-match option.</p>
-              <pre>export DEEPSEEK_API_KEY=...
-export DOMAIN_FOUNDRY_LLM=live
-domain-foundry setup --provider deepseek -y
-domain-foundry setup --show   <span class="code-comment"># keys redacted</span>
-
-<span class="code-comment"># or one OpenRouter key for many models</span>
-export OPENROUTER_API_KEY=...
-domain-foundry setup --provider openrouter -y</pre>
-              <p><code>setup --provider deepseek</code> writes routine=<code>deepseek-chat</code>, sota=<code>deepseek-reasoner</code>. Env vars beat the config file.</p>
-            </div>
-          </li>
-          <li>
-            <div>
-              <h3>Bring the notebook → pick a look → talk to it</h3>
-              <pre>domain-foundry new-domain "i have a log of sourdough bakes"
-<span class="code-comment"># neighborhood of jobs, not an auto-install. then:</span>
-domain-foundry wizard reply &lt;session&gt; "visualize the bakes"
-domain-foundry ingest ~/Desktop/bakes
-domain-foundry ask "which hydrations actually sprang?"
-domain-foundry correct "that sunday batard was 78 not 72"
-domain-foundry export --json -o /tmp/bakes.json
-domain-foundry health</pre>
-              <p>An off-topic note (“changed the oil in the Civic”) should stay <strong>unfiled</strong>, not get guessed into sourdough. Secrets in a note show as <code>[REDACTED]</code>.</p>
-            </div>
-          </li>
-          <li>
-            <div>
-              <h3>Same loop from the app, MCP, or ingest</h3>
-              <pre>domain-foundry serve                 <span class="code-comment"># http://127.0.0.1:8787</span>
-domain-foundry-mcp                   <span class="code-comment"># Claude / Cursor stdio</span>
-domain-foundry ingest ~/Notes --dry-run</pre>
-              <p>Writes share one local API. Pack YAML is data, not code — the wizard’s output under <code>~/.domain_foundry/packs/&lt;name&gt;/</code> is a fine thing to hand-edit. Full seams: <a href="howto-technical.md">developer how-to</a>.</p>
-            </div>
-          </li>
-        </ol>
-        <p class="callout"><strong>Same CLI loop.</strong> <code>new-domain</code> → ingest the folder → ask → correct → export. Off-topic notes stay unfiled. Full seams: <a href="howto-technical.md">developer how-to</a>.</p>
-      </div>
-    </section>
-
-    <section class="surface" aria-labelledby="entry-title">
-      <div class="section-head">
-        <div>
-          <div class="section-kicker">01 / talk from wherever you already are</div>
-          <h2 id="entry-title">Claude, your phone, or a folder. Same kitchen.</h2>
-        </div>
-        <p>You already chat somewhere. Drop the log there. Everything lands in one local place.</p>
-      </div>
-      <div class="flow-layout">
-        <nav class="entry-tabs" aria-label="How you talk" role="tablist">
-          <button class="tab" type="button" role="tab" aria-selected="true" data-entry="app">The app<div class="entry-copy">See it on a page</div></button>
-          <button class="tab" type="button" role="tab" aria-selected="false" data-entry="claude">Claude<div class="entry-copy">Your agent</div></button>
-          <button class="tab" type="button" role="tab" aria-selected="false" data-entry="phone">Your phone<div class="entry-copy">Text a bot</div></button>
-          <button class="tab" type="button" role="tab" aria-selected="false" data-entry="terminal">Terminal<div class="entry-copy">If you like it</div></button>
-        </nav>
-        <div class="entry-panel" id="entryPanel" role="tabpanel" tabindex="0"></div>
-      </div>
-    </section>
-
-    <section class="surface" aria-labelledby="flow-title">
-      <div class="section-head">
-        <div>
-          <div class="section-kicker">02 / one loaf, start to finish</div>
-          <h2 id="flow-title">A notebook in, an MVP out.</h2>
-        </div>
-        <p>Click a step. This is the weekend, not a form wizard.</p>
-      </div>
-      <div class="flow-map">
-        <div class="progress-track" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
-        <div class="stage-nodes" role="list" aria-label="Hobby loop">
-          <button class="stage-node" type="button" role="listitem" data-step="0" aria-current="step"><span class="node-number">1</span><span class="node-title">The log</span><span class="node-subtitle">you already have</span></button>
-          <button class="stage-node" type="button" role="listitem" data-step="1"><span class="node-number">2</span><span class="node-title">Drop it</span><span class="node-subtitle">OCR / ingest</span></button>
-          <button class="stage-node" type="button" role="listitem" data-step="2"><span class="node-number">3</span><span class="node-title">Options</span><span class="node-subtitle">what to build</span></button>
-          <button class="stage-node" type="button" role="listitem" data-step="3"><span class="node-number">4</span><span class="node-title">Your words</span><span class="node-subtitle">visualize this</span></button>
-          <button class="stage-node" type="button" role="listitem" data-step="4"><span class="node-number">5</span><span class="node-title">Looks</span><span class="node-subtitle">pick an HTML</span></button>
-          <button class="stage-node" type="button" role="listitem" data-step="5"><span class="node-number">6</span><span class="node-title">MVP</span><span class="node-subtitle">talk to it</span></button>
-        </div>
-        <div class="stage-detail" id="stageDetail" aria-live="polite"></div>
-      </div>
-    </section>
-
-    <section class="surface" aria-labelledby="conversation-title">
-      <div class="section-head">
-        <div>
-          <div class="section-kicker">03 / a weekend with the notebook</div>
-          <h2 id="conversation-title">How a normal person actually talks.</h2>
-        </div>
-        <p>Advance the sample. On the right: processed bakes, then three looks, then the MVP you picked.</p>
+    <section class="surface" id="story" aria-labelledby="story-title">
+      <div class="section-kicker">The whole loop</div>
+      <h2 id="story-title">Same loop. Different weekends.</h2>
+      <p class="muted">A bake log you already have, a dive notebook you want to start, and a binder of cards. Advance the chat. The panel on the right is what you’d see.</p>
+      <div class="switcher" role="tablist" aria-label="Case study">
+        <button type="button" role="tab" id="caseA" aria-pressed="true">Bake log</button>
+        <button type="button" role="tab" id="caseB" aria-pressed="false">Dive notebook</button>
+        <button type="button" role="tab" id="caseC" aria-pressed="false">Card binder</button>
       </div>
       <div class="split">
         <div class="conversation" id="conversation" aria-live="polite"></div>
-        <div class="data-panel">
-          <header><h3 id="dataTitle">The notebook</h3><button class="toggle" id="toggleData" type="button">Peek at the structured records</button></header>
-          <div id="recordView"></div>
-          <p class="json-note" id="jsonNote">The loaf is a real record now: hydration, result, and a place on your timeline.</p>
-        </div>
+        <aside class="side">
+          <h3 id="sideTitle">Waiting</h3>
+          <div id="sideView"></div>
+          <p class="muted" id="sideNote" style="margin:12px 0 0; font-size:.88rem;"></p>
+        </aside>
       </div>
     </section>
 
-    <section class="surface" aria-labelledby="ambiguity-title">
-      <div class="section-head">
-        <div>
-          <div class="section-kicker">04 / it never pretends</div>
-          <h2 id="ambiguity-title">Sure, unsure, and oops are different.</h2>
-        </div>
-        <p>Nothing silently disappears. You can look, file, correct, or take the data with you.</p>
-      </div>
-      <div class="branch-grid">
-        <article class="branch"><span class="branch-icon">✓</span><strong>Sure → in your app</strong><p>It recognizes a bake, a climb, a brew. The note becomes a record and shows up on the timeline.</p></article>
-        <article class="branch"><span class="branch-icon">?</span><strong>Unsure → kept for you</strong><p>If it isn’t sure where a note belongs, it saves the words and waits in Inbox. It never throws them away.</p></article>
-        <article class="branch"><span class="branch-icon">↺</span><strong>Oops → say so</strong><p>“Actually the hydration was 80.” The loaf updates, the old number stays in history, and it remembers next time.</p></article>
-      </div>
+    <section class="surface" id="proof" aria-labelledby="proof-title">
+      <div class="section-kicker">Proof</div>
+      <h2 id="proof-title">The card binder, as it actually ran.</h2>
+      <p class="muted">Same conversation as the Card binder tab, with the receipts. No key. Template looks. Card-shaped notes file; a set-completion sentence waits until you build that app instead.</p>
+      <dl class="proof-grid">
+        <div class="proof-row"><dt>Goal</dt><dd>i collect pokemon cards</dd></div>
+        <div class="proof-row"><dt>Neighborhood</dt><dd>Catalogs — not diving, not a species pokedex.</dd></div>
+        <div class="proof-row"><dt>Apps offered</dt><dd>Set completion (like Collectr / TCGPlayer) · Collection dex · <strong>Card dex (suggested)</strong> · Pull log</dd></div>
+        <div class="proof-row"><dt>You picked</dt><dd>a dex of the cards i own with photos → Card dex gallery look</dd></div>
+        <div class="proof-row"><dt>Critique</dt><dd>make the gallery denser → round 2, four tiles across</dd></div>
+        <div class="proof-row"><dt>Build</dt><dd>The card app, with photos. Gallery plus a timeline. Built on your computer.</dd></div>
+        <div class="proof-row"><dt>Charizard pull</dt><dd><span class="ok">Filed as a card.</span></dd></div>
+        <div class="proof-row"><dt>Pikachu promo</dt><dd><span class="ok">Filed as a card.</span></dd></div>
+        <div class="proof-row"><dt>Paldea set note</dt><dd><span class="wait">Inbox</span> on Card dex. Same sentence <span class="ok">applied</span> when Set completion is the app.</dd></div>
+        <div class="proof-row"><dt>Ask</dt><dd>which cards did I log? → both filed cards, from your records</dd></div>
+        <div class="proof-row"><dt>Fix</dt><dd><code>notes = LP</code> amends the Charizard row. “that Charizard was LP not NM” still guesses a field named charizard — say the field, or build Set completion / Pull log if you wanted condition.</dd></div>
+        <div class="proof-row"><dt>Locked</dt><dd>The create → look → denser → build → Charizard files as a card path is in the wizard tests. Ask and a one-sentence fix are this run.</dd></div>
+      </dl>
     </section>
 
-    <section class="surface" aria-labelledby="hobby-title">
-      <div class="section-head">
-        <div>
-          <div class="section-kicker">05 / any hobby, same shape</div>
-          <h2 id="hobby-title">Whatever you already keep, same shape.</h2>
-        </div>
-        <p>No new app per passion. One home, many little worlds — and your chat app already knows the verbs.</p>
-      </div>
-      <div class="hobby-grid">
-        <article class="hobby"><span class="mark" aria-hidden>🍞</span><strong>Sourdough</strong><p>Bakes, starters, crumb photos, what you learned.</p></article>
-        <article class="hobby"><span class="mark" aria-hidden>🧗</span><strong>Climbing</strong><p>Sessions, grades, the crux, how it felt.</p></article>
-        <article class="hobby"><span class="mark" aria-hidden>☕</span><strong>Coffee</strong><p>Brews, beans, ratios, tasting notes.</p></article>
-        <article class="hobby"><span class="mark" aria-hidden>🗾</span><strong>Japanese</strong><p>Vocab, reviews, streaks, the next session.</p></article>
-        <article class="hobby"><span class="mark" aria-hidden>✈️</span><strong>Travel</strong><p>Trips, places, plans, the notes you meant to keep.</p></article>
-        <article class="hobby"><span class="mark" aria-hidden>🌿</span><strong>Plants</strong><p>Watering, new leaves, the one you keep forgetting.</p></article>
-      </div>
-    </section>
+    <section class="surface" id="try" aria-labelledby="try-title">
+      <div class="section-kicker">Do it</div>
+      <h2 id="try-title">Install once. Then say the first line.</h2>
+      <p class="muted">Default path: Claude Desktop. Same data if you later open the little app or the terminal. A key is optional — without one you still get a template look you can accept.</p>
+      <pre><span class="code-comment"># from a checkout of this repo (packages are not on PyPI yet)</span>
+pip install -e .
+pip install -e ./adapters/mcp
+domain-foundry setup
+domain-foundry serve
 
-    <section class="surface" aria-labelledby="agent-title">
-      <div class="section-head">
-        <div>
-          <div class="section-kicker">06 / why your agent loves this</div>
-          <h2 id="agent-title">Your agent sketches. The bakes stay here.</h2>
-        </div>
-        <p>Claude / Hermes reads the notebook and shows looks. Foundry files the records so next week’s chat still knows last weekend’s loaf. OCR is your agent. The database is local.</p>
-      </div>
-      <div class="agent-layout">
-        <div class="agent-verbs">
-          <div class="verb"><b>01</b><p><strong>Bring the log</strong> — “i have a log of sourdough bakes.” Drop the folder. Don’t retype 47 pages.</p></div>
-          <div class="verb"><b>02</b><p><strong>Pick a job</strong> — chart the inputs, invent mixes, organize Instagram. Then pick an HTML look for the MVP.</p></div>
-          <div class="verb"><b>03</b><p><strong>Talk to it</strong> — “which hydrations sprang?” Fix a number in one sentence. The chart is still there tomorrow.</p></div>
-        </div>
-        <pre><span class="code-comment"># what actually happens in the chat</span>
-You: i have a log of sourdough bakes
-Agent: drop it, i'll ocr the pages
-You: i want to data visualize all my bakes
-Agent: three looks — pick one
-You: the scatter one
-Agent: <span class="code-key">mvp is live</span> · 47 bakes on the chart</pre>
-      </div>
-    </section>
+<span class="code-comment"># Claude Desktop → Settings → Developer → Edit Config</span>
+{
+  "mcpServers": {
+    "domain-foundry": {
+      "command": "domain-foundry-mcp",
+      "args": ["--home", "~/.domain_foundry"]
+    }
+  }
+}</pre>
+      <p class="callout">Then: <strong>i have a log of sourdough bakes</strong> — or <strong>i collect pokemon cards</strong>. Claude relays options and looks. It should not pick for you. If you have photos, Claude reads them; paste a notes folder path for text.</p>
+      <details style="margin-top:16px;">
+        <summary>Or the terminal</summary>
+        <pre style="margin-top:12px"><span class="code-comment"># bake log</span>
+domain-foundry new-domain "i have a log of sourdough bakes"
+domain-foundry wizard reply &lt;session&gt; "i want to data visualize all my bakes"
+domain-foundry wizard reply &lt;session&gt; "the scatter one"
 
-    <section class="surface" aria-labelledby="start-title">
-      <div class="section-head">
-        <div>
-          <div class="section-kicker">07 / start this weekend</div>
-          <h2 id="start-title">One install. Then bring the notebook you already have.</h2>
-        </div>
-        <p>No account. No cloud. Open the app, or keep talking in Claude.</p>
-      </div>
-      <div class="start-grid">
-        <article class="start-card">
-          <h3>Talk in Claude Desktop</h3>
-          <p>One install, one config paste, then: “i have a log of sourdough bakes.”</p>
-          <pre style="margin-top:12px"><span class="code-comment">$</span> pipx install domain-foundry-core domain-foundry-mcp
-
-<span class="code-comment"># Settings → Developer → Edit Config</span>
-{ "mcpServers": { "domain-foundry": {
-    "command": "domain-foundry-mcp" } } }</pre>
-        </article>
-        <article class="start-card">
-          <h3>Open the little app</h3>
-          <p>Same data, on a page: Today, Your passions, Inbox. Add a key in Settings if you want the model to shape a new passion.</p>
-          <pre style="margin-top:12px"><span class="code-comment">$</span> pipx install domain-foundry-core
-<span class="code-comment">$</span> domain-foundry setup --provider deepseek -y
-<span class="code-comment">$</span> domain-foundry serve
-
-<span class="code-comment"># then open http://127.0.0.1:8787</span></pre>
-        </article>
-      </div>
-      <div class="sources" style="margin-top: 16px;">
-        <a class="source-link" href="getting-started.md">Getting started</a>
-        <a class="source-link" href="howto-non-technical.md">No-terminal guide</a>
-        <a class="source-link" href="connect-your-agent.md">Connect your agent</a>
-        <a class="source-link" href="howto-technical.md">If you like terminals</a>
+<span class="code-comment"># card binder</span>
+domain-foundry new-domain "i collect pokemon cards"
+domain-foundry wizard reply &lt;session&gt; "a dex of the cards i own with photos"
+domain-foundry wizard reply &lt;session&gt; "make the gallery denser"
+domain-foundry wizard reply &lt;session&gt; "build it"
+domain-foundry wizard reply &lt;session&gt; "pulled a holographic Charizard from a 151 booster, NM"
+domain-foundry ask "which cards did I log?"</pre>
+      </details>
+      <div class="footer-links">
+        <a href="connect-your-agent.md">Telegram / Hermes / Cursor</a>
+        <a href="../QUICKSTART.md">CLI quickstart</a>
+        <a href="howto-non-technical.md">No-terminal notes</a>
+        <a href="howto-technical.md">Developer how-to</a>
+        <a href="../PACK_AUTHORING.md">Authoring guide</a>
       </div>
     </section>
 
     <footer>
-      <span>On your computer · no telemetry · a sentence is enough to fix a mistake</span>
-      <span>Try it with one hobby you already have.</span>
+      <span>On your computer · no telemetry · a sentence is enough to fix a mistake.</span>
     </footer>
   </main>
-
   <script>
-    const entryData = {
-      app: {
-        title: "The little app",
-        note: "Settings → Sources. Point at the folder. Preview where notes would land, then pull in. Your original files stay put.",
-        badge: "drop a folder",
-        code: `<span class="code-comment"># then at http://127.0.0.1:8787</span>\nYou: i have a log of sourdough bakes\nApp: drop the folder — photos get read, notes get filed.\nYou: ~/Desktop/bakes\nApp: 47 bakes in. chart the inputs, invent mixes, or organize instagram?\nYou: i want to data visualize all my bakes\nApp: three looks. pick one.`
+    const cases = {
+      bake: {
+        next: ["See the options →", "Ask to visualize →", "Darker, please →", "Pick the scatter →", "Ask what worked →", "Fix a number →"],
+        steps: [
+          { who: "You", kind: "user", text: "i have a log of sourdough bakes" },
+          { who: "Claude", kind: "system", text: "You said “i have a log of sourdough bakes”. You could:\n\n1. Sourdough / bake lab (suggested): hydration, bulk, crumb — compare bakes.\n   chart how inputs lead to outcomes · a mix board of what worked · a gallery of the photos\n2. Starter journal: feedings and whether the culture is lively.\n\nPaste a notes folder path to ingest text. Photos: I can OCR them and send the text." },
+          { who: "You", kind: "user", text: "i want to data visualize all my bakes" },
+          { who: "Claude", kind: "system", text: "A look for Sourdough / bake lab — hydration vs crumb (chart). Pick it, tell me how to change it, or say build it." },
+          { who: "You", kind: "user", text: "make it darker and denser" },
+          { who: "Claude", kind: "system", text: "Updated that look (round 2). Still the scatter. Say build it when you’re happy." },
+          { who: "You", kind: "user", text: "the scatter one" },
+          { who: "Claude", kind: "system", text: "Installed Sourdough / bake lab. Talk about it and we’ll file it — loaf, hydration, crumb." },
+          { who: "You", kind: "user", text: "which hydrations actually sprang?" },
+          { who: "Claude", kind: "system", text: "The 76–80% keepers, from your records." },
+          { who: "You", kind: "user", text: "that sunday batard was 78 not 72" },
+          { who: "Claude", kind: "system", text: "Updated. History kept." }
+        ],
+        side(i) {
+          if (i < 2) return { title: "The notebook", note: "Nothing is installed yet. Options come from what you said.", html: "<p class='muted'>A bake log you already have.</p>" };
+          if (i < 6) return { title: "A chart look", note: "Template look if you have no key; a stronger model if you do. Critique it until it feels right.", html: `<div class="scatter">${dots()}</div><div class="muted" style="display:flex;justify-content:space-between;margin-top:6px;font-size:.75rem"><span>hydration</span><span>crumb</span></div>` };
+          if (i < 8) return { title: "Live bake lab", note: "Nothing is built until you accept the look.", html: `<div class="scatter">${dots()}</div><p class="muted" style="margin-top:8px">Ask it. Fix a number. Drop the next loaf.</p>` };
+          return { title: "Your records", note: "Sure notes file. Unsure notes wait in Inbox. Oops is one sentence.", html: "<p>Sunday batard · hydration 78 · history kept.</p>" };
+        }
       },
-      claude: {
-        title: "Claude, Cursor, Hermes",
-        note: "Talk like you already do. Your agent OCRs the notebook, Foundry keeps the bakes. It does not pick the app for you.",
-        badge: "the chat you have",
-        code: `You: i have a log of sourdough bakes\nClaude: can you upload it? i'll ocr the pages.\nYou: folder of photos + notes.txt\nClaude: processed 47 bakes. options:\n  1. tracker + viz of inputs → crumb\n  2. generate mixes from what worked\n  3. instagram post organizer\nYou: i want to data visualize all my bakes\nClaude: here's html of three looks. pick one and i'll build the mvp.`
+      dive: {
+        next: ["See the field guide →", "Build it →", "Log a sighting →"],
+        steps: [
+          { who: "You", kind: "user", text: "I want to remember the animals I see underwater" },
+          { who: "Claude", kind: "system", text: "You said “I want to remember the animals I see underwater”. You could:\n\n1. Species pokedex (suggested): a catalog of animals you’ve seen, with photos, where, and how many times.\n   a catalog you can page through · a gallery of the photos · a map of where it happened\n2. Site ↔ species graph: what you’ve actually seen where.\n\nNo ready-made app here — if you pick this, Foundry builds it." },
+          { who: "You", kind: "user", text: "the field-guide look" },
+          { who: "Claude", kind: "system", text: "A look for Species pokedex — gallery plus map. Say build it, or tell me how to change it." },
+          { who: "You", kind: "user", text: "build it" },
+          { who: "Claude", kind: "system", text: "Species is ready to try — we’ll file species, sighting, photos, location. Log one real note and we’ll file it." },
+          { who: "You", kind: "user", text: "spotted a turtle at Blue Hole, 18m, got a photo" },
+          { who: "Claude", kind: "system", text: "Filed as a sighting. The pokedex has a turtle now." }
+        ],
+        side(i) {
+          if (i < 2) return { title: "What you could build", note: "Same loop as the bake log. Different jobs: remember, not chart.", html: "<p class='muted'>A field guide, not a dive timer.</p>" };
+          if (i < 4) return { title: "Field-guide look", note: "Gallery + map from the pokedex jobs. Still not installed.", html: `<div class="gallery"><span></span><span></span><span></span></div><div class="map" style="margin-top:10px"><i style="left:30%;top:40%"></i><i style="left:58%;top:52%"></i></div>` };
+          return { title: "Your field guide", note: "Foundry built this on your computer: catalog, sightings, gallery, map.", html: "<p>Turtle · Blue Hole · 18m · photo attached.</p>" };
+        }
       },
-      phone: {
-        title: "A bot you text",
-        note: "From the kitchen: send the photos. Same records as Claude.",
-        badge: "from your pocket",
-        code: `You: i have a log of sourdough bakes\nBot: send the photos or a notes dump — i'll read them.\nYou: [12 photos of the notebook]\nBot: 47 bakes. chart them, invent the next mix, or line up instagram?\nYou: visualize the bakes\nBot: three looks. reply 1, 2, or 3.`
-      },
-      terminal: {
-        title: "The terminal, if you like it",
-        note: "Same kitchen. Ingest the text; your agent still handles OCR on photos.",
-        badge: "optional",
-        code: `domain-foundry new-domain <span class="code-key">"i have a log of sourdough bakes"</span>\ndomain-foundry wizard reply &lt;session&gt; <span class="code-key">"visualize the bakes"</span>\ndomain-foundry ingest ~/Desktop/bakes`
+      cards: {
+        next: ["See the options →", "Ask for a dex →", "Denser, please →", "Build it →", "Log a pull →", "Log a promo →", "Ask what you own →"],
+        steps: [
+          { who: "You", kind: "user", text: "i collect pokemon cards" },
+          { who: "Claude", kind: "system", text: "You said “i collect pokemon cards”. You could:\n\n1. Set completion: How close a set is, and which rares are still missing.\n2. Collection dex: Identity, acquired-on, and a photo — a pokedex for objects.\n3. Card dex (suggested): Each card you own, with a photo — binder pages you can search.\n   a catalog you can page through · a gallery of the photos\n4. Pull log: What came out of a pack, what you traded, and the condition.\n\nWhich of these, or say what you want it to do — a chart, photos, a mix board." },
+          { who: "You", kind: "user", text: "a dex of the cards i own with photos" },
+          { who: "Claude", kind: "system", text: "Here is a look. 1. Card dex (selected) — gallery look (round 1). Pick one, tell me how to change it (darker, denser, more chart), or say build it." },
+          { who: "You", kind: "user", text: "make the gallery denser" },
+          { who: "Claude", kind: "system", text: "Updated that look (round 2). Still the gallery, now four across. Say build it when you’re happy." },
+          { who: "You", kind: "user", text: "build it" },
+          { who: "Claude", kind: "system", text: "Card dex is ready to try — we’ll file cards and photos. Log one real note and we’ll file it." },
+          { who: "You", kind: "user", text: "pulled a holographic Charizard from a 151 booster, NM" },
+          { who: "Claude", kind: "system", text: "Filed as a card." },
+          { who: "You", kind: "user", text: "added a Japanese Pikachu promo, light edge wear" },
+          { who: "Claude", kind: "system", text: "Filed as a card." },
+          { who: "You", kind: "user", text: "which cards did I log?" },
+          { who: "Claude", kind: "system", text: "Closest from your records (2): Japanese Pikachu promo · holographic Charizard from a 151." }
+        ],
+        side(i) {
+          const tiles = (dense) => `<div class="gallery${dense ? " dense" : ""}"><span>Pikachu promo</span><span>Charizard</span><span>151 booster</span>${dense ? "<span>slot 4</span>" : ""}</div>`;
+          if (i < 2) return { title: "Four apps, one binder", note: "Nothing is installed yet. Card dex is suggested because you said cards.", html: "<p class='muted'>Set completion · Collection dex · Card dex · Pull log.</p>" };
+          if (i < 4) return { title: "Card dex look", note: "Gallery from the photos job. Still not installed.", html: tiles(false) };
+          if (i < 6) return { title: "Denser gallery", note: "Critique changed the look: four tiles across, not three.", html: tiles(true) };
+          if (i < 8) return { title: "Live card dex", note: "Built on your computer. A binder of cards, not a fish guide.", html: tiles(true) + "<p class='muted' style='margin-top:8px'>The card app, with photos.</p>" };
+          return { title: "Your records", note: "Card-shaped notes file. A set-completion sentence waits in Inbox until you build that app instead.", html: "<p>Charizard · 151 booster · NM.<br>Japanese Pikachu promo · light edge wear.</p>" };
+        }
       }
     };
 
-    const steps = [
-      {
-        title: "Start with the thing you already have",
-        label: "The log",
-        body: "“i have a log of sourdough bakes.” Not “food.” Not “recipe lab.” A person with a notebook.",
-        trace: ["a notebook", "not a product name", "no form"]
-      },
-      {
-        title: "Drop it. Don't retype it.",
-        label: "Ingest",
-        body: "Your agent OCRs photos and reads notes.txt. Foundry files the bakes. The originals never move.",
-        trace: ["photos / folder", "OCR if needed", "47 bakes in"]
-      },
-      {
-        title: "Hear what you could build",
-        label: "Options",
-        body: "A tracker of how hydration and bulk lead to crumb. New mixes from keepers. An Instagram organizer. Real apps, not a blank journal.",
-        trace: ["chart inputs", "invent mixes", "post organizer"]
-      },
-      {
-        title: "Say it in your own words",
-        label: "You pick",
-        body: "“i want to data visualize all my bakes.” You don't have to learn the catalog. You describe the job.",
-        trace: ["plain sentence", "not a chip", "the job you want"]
-      },
-      {
-        title: "Pick a look",
-        label: "HTML",
-        body: "Three sketches of the MVP. Scatter, mix board, photo grid. Click one. That's the brief.",
-        trace: ["three HTMLs", "you pick", "that's the MVP"]
-      },
-      {
-        title: "Talk to it next week",
-        label: "Live",
-        body: "The chart is yours. Ask which hydrations sprang. Fix a number in one sentence. Drop the next loaf whenever.",
-        trace: ["ask your bakes", "fix a number", "still there tomorrow"]
+    function dots() {
+      return [[18,72],[28,58],[42,40],[55,48],[68,44],[80,28],[90,34]].map(([x,y]) => `<i style="left:${x}%;top:${y}%"></i>`).join("");
+    }
+
+    let current = "bake";
+    let index = 0;
+
+    function render() {
+      const study = cases[current];
+      const steps = study.steps;
+      const conv = document.getElementById("conversation");
+      conv.innerHTML = steps.slice(0, index + 1).map((m) => `<div class="message ${m.kind}"><span class="who">${m.who}</span><p>${m.text}</p></div>`).join("");
+      if (index < steps.length - 1) {
+        const btn = document.createElement("button");
+        btn.className = "conversation-button";
+        btn.type = "button";
+        btn.textContent = study.next[Math.floor(index / 2)] || "Continue →";
+        btn.addEventListener("click", () => { index += 1; render(); });
+        conv.appendChild(btn);
       }
-    ];
-
-    const conversationSteps = [
-      { who: "You", text: "i have a log of sourdough bakes", kind: "user" },
-      { who: "Claude", text: "drop the notebook or the photos and i'll ocr them. a folder, screenshots, notes.txt — whatever you've got.", kind: "system" },
-      { who: "You", text: "it's a folder on my desktop. photos of the notebook plus a notes.txt", kind: "user" },
-      { who: "Claude", text: "processed 47 bakes — hydration, flour mix, bulk, crumb notes. here's what you could build with this:\n\n• a tracker and chart of how inputs lead to bake outcomes\n• generate new recipes and mixes from what actually worked\n• a post organizer for your instagram of the bakes", kind: "system" },
-      { who: "You", text: "i want to data visualize all my bakes", kind: "user" },
-      { who: "Claude", text: "ok. i built three looks for an mvp. pick one and i'll ship it.", kind: "system" },
-      { who: "You", text: "the scatter one", kind: "user" },
-      { who: "Claude", text: "live. 47 bakes on hydration vs crumb. ask it from here, or drop the next loaf whenever.", kind: "system" }
-    ];
-
-    const nextLabels = [
-      "Ask to upload it →",
-      "Share the folder →",
-      "See what they could build →",
-      "Ask to visualize →",
-      "Show the looks →",
-      "Pick the scatter →",
-      "Ship the MVP →"
-    ];
-
-    let currentStep = 0;
-    let conversationIndex = 0;
-    let showingCanonical = false;
-    let timer = null;
-
-    const entryPanel = document.getElementById("entryPanel");
-    const stageDetail = document.getElementById("stageDetail");
-    const progressFill = document.getElementById("progressFill");
-    const flowStatus = document.getElementById("flowStatus");
-    const conversation = document.getElementById("conversation");
-    const recordView = document.getElementById("recordView");
-    const jsonTitle = document.getElementById("dataTitle");
-    const jsonNote = document.getElementById("jsonNote");
-    const toggleData = document.getElementById("toggleData");
-
-    function renderEntry(key) {
-      const entry = entryData[key];
-      entryPanel.innerHTML = `<div class="entry-panel-header"><div><h3>${entry.title}</h3><p>${entry.note}</p></div><span class="pill">● ${entry.badge}</span></div><pre>${entry.code}</pre>`;
+      const side = study.side(index);
+      document.getElementById("sideTitle").textContent = side.title;
+      document.getElementById("sideView").innerHTML = side.html;
+      document.getElementById("sideNote").textContent = side.note;
     }
 
-    function renderStep(index) {
-      currentStep = index;
-      const step = steps[index];
-      document.querySelectorAll(".stage-node").forEach((node) => {
-        node.setAttribute("aria-current", Number(node.dataset.step) === index ? "step" : "false");
-      });
-      progressFill.style.width = `${(index / (steps.length - 1)) * 82}%`;
-      stageDetail.innerHTML = `<div><span class="detail-label">${step.label}</span><h3>${step.title}</h3><p>${step.body}</p></div><div><span class="detail-label">Along the way</span><div class="trace">${step.trace.map((item, i) => `<span>${item}</span>${i < step.trace.length - 1 ? "<i>→</i>" : ""}`).join("")}</div></div>`;
-      flowStatus.textContent = `${step.title}`;
+    function setCase(name) {
+      current = name;
+      index = 0;
+      document.getElementById("caseA").setAttribute("aria-pressed", name === "bake" ? "true" : "false");
+      document.getElementById("caseB").setAttribute("aria-pressed", name === "dive" ? "true" : "false");
+      document.getElementById("caseC").setAttribute("aria-pressed", name === "cards" ? "true" : "false");
+      render();
     }
-
-    function renderConversation() {
-      conversation.innerHTML = conversationSteps.slice(0, conversationIndex + 1).map((message) => `<div class="message ${message.kind}"><span class="who">${message.who}</span><p>${message.text}</p></div>`).join("");
-      if (conversationIndex < conversationSteps.length - 1) {
-        const next = document.createElement("button");
-        next.className = "conversation-button";
-        next.type = "button";
-        next.textContent = nextLabels[conversationIndex] || "Continue →";
-        next.addEventListener("click", () => {
-          conversationIndex += 1;
-          renderConversation();
-          renderData();
-        });
-        conversation.appendChild(next);
-      }
-    }
-
-    function scatterDots() {
-      const pts = [[18,72],[28,58],[34,64],[42,40],[48,36],[55,48],[62,30],[68,44],[74,22],[80,28],[86,18],[90,34]];
-      return pts.map(([x, y], i) => `<i class="${i % 3 === 0 ? "good" : ""}" style="left:${x}%; top:${y}%"></i>`).join("");
-    }
-
-    function mockupsHtml(picked) {
-      return `<div class="mockup-grid">
-        <button class="mockup${picked ? " picked" : ""}" type="button" data-pick="scatter">
-          <span class="mini-label">look 1 · mvp</span>
-          <strong>Inputs → crumb</strong>
-          <div class="scatter">${scatterDots()}</div>
-          <div class="axis"><span>hydration</span><span>crumb / spring</span></div>
-        </button>
-        <button class="mockup" type="button" data-pick="mixes">
-          <span class="mini-label">look 2</span>
-          <strong>Next mix from keepers</strong>
-          <ul class="mix-list"><li><span>76% country, 20% rye</span><span>keeper</span></li><li><span>80% batard</span><span>dense</span></li><li><span>suggested: 78% / 12% rye</span><span>try</span></li></ul>
-        </button>
-        <button class="mockup" type="button" data-pick="ig">
-          <span class="mini-label">look 3</span>
-          <strong>Instagram of the bakes</strong>
-          <div class="ig-grid"><span></span><span></span><span></span><span></span><span></span><span></span></div>
-        </button>
-      </div>`;
-    }
-
-    function appCard() {
-      if (conversationIndex < 2) {
-        return `<article class="bake-card"><div class="bake-kicker">Waiting on the notebook</div><h3>Nothing filed yet</h3><p class="bake-empty">They said they have a log. Next: drop the folder. Photos get read. Notes get filed.</p></article>`;
-      }
-      if (conversationIndex < 5) {
-        return `<article class="bake-card"><div class="bake-kicker">47 bakes processed</div><h3>What you could build</h3><ul class="mix-list"><li><span>Tracker + viz</span><span>inputs → crumb</span></li><li><span>Mix generator</span><span>from keepers</span></li><li><span>Instagram organizer</span><span>the photos</span></li></ul></article>`;
-      }
-      if (conversationIndex === 5) {
-        return mockupsHtml(false);
-      }
-      return `<article class="bake-card"><div class="bake-kicker">MVP · scatter</div><h3>Hydration vs crumb</h3><div class="scatter" style="height:150px">${scatterDots()}</div><div class="axis"><span>72%</span><span>80%</span></div><span class="pill" style="margin-top:12px">● 47 bakes · yours</span></article>`;
-    }
-
-    function jsonCard() {
-      if (conversationIndex < 2) {
-        return `<pre class="json-view"><span class="json-key">{</span>\n  <span class="json-key">"status"</span>: <span class="json-string">"waiting on the folder"</span>,\n  <span class="json-key">"bakes"</span>: <span class="json-number">0</span>\n<span class="json-key">}</span></pre>`;
-      }
-      return `<pre class="json-view"><span class="json-key">{</span>\n  <span class="json-key">"bakes"</span>: <span class="json-number">47</span>,\n  <span class="json-key">"fields"</span>: [<span class="json-string">"hydration"</span>, <span class="json-string">"flour_mix"</span>, <span class="json-string">"bulk_hours"</span>, <span class="json-string">"crumb"</span>],\n  <span class="json-key">"picked"</span>: <span class="json-string">${conversationIndex >= 6 ? "scatter mvp" : "not yet"}</span>\n<span class="json-key">}</span></pre>`;
-    }
-
-    function renderData() {
-      if (!showingCanonical) {
-        jsonTitle.textContent = conversationIndex < 2
-          ? "The notebook"
-          : conversationIndex < 5
-            ? "Processed bakes"
-            : conversationIndex === 5
-              ? "Pick a look"
-              : "Your MVP";
-        jsonNote.textContent = conversationIndex < 2
-          ? "They have a log. Nothing is filed until the folder lands."
-          : conversationIndex < 5
-            ? "47 bakes are records now. The options are jobs, not a blank journal."
-            : conversationIndex === 5
-              ? "Three HTML sketches. Click the scatter to ship that MVP."
-              : "The chart is live. Ask it. Fix a number. Drop the next loaf.";
-        recordView.innerHTML = appCard();
-        recordView.querySelectorAll("[data-pick]").forEach((btn) => {
-          btn.addEventListener("click", () => {
-            if (btn.dataset.pick === "scatter" && conversationIndex === 5) {
-              conversationIndex = conversationSteps.length - 1;
-              renderConversation();
-              renderData();
-            }
-          });
-        });
-      } else {
-        jsonTitle.textContent = "The structured records";
-        jsonNote.textContent = "This is what your agent reads. No passwords — just the bakes.";
-        recordView.innerHTML = jsonCard();
-      }
-      toggleData.textContent = showingCanonical ? "Show the app" : "Peek at the structured records";
-    }
-
-    document.querySelectorAll("[data-entry]").forEach((tab) => {
-      tab.addEventListener("click", () => {
-        document.querySelectorAll("[data-entry]").forEach((item) => item.setAttribute("aria-selected", item === tab ? "true" : "false"));
-        renderEntry(tab.dataset.entry);
-      });
-    });
-    document.querySelectorAll("[data-step]").forEach((node) => node.addEventListener("click", () => renderStep(Number(node.dataset.step))));
-    toggleData.addEventListener("click", () => { showingCanonical = !showingCanonical; renderData(); });
-    document.getElementById("playFlow").addEventListener("click", () => {
-      clearInterval(timer);
-      renderStep(0);
-      timer = setInterval(() => {
-        if (currentStep >= steps.length - 1) { clearInterval(timer); timer = null; return; }
-        renderStep(currentStep + 1);
-      }, 1200);
-    });
-    document.getElementById("resetFlow").addEventListener("click", () => {
-      clearInterval(timer);
-      timer = null;
-      renderStep(0);
-      conversationIndex = 0;
-      showingCanonical = false;
-      renderConversation();
-      renderData();
-    });
-
-    renderEntry("app");
-    renderStep(0);
-    renderConversation();
-    renderData();
-
-    const everyoneBtn = document.getElementById("trackEveryoneBtn");
-    const devBtn = document.getElementById("trackDevBtn");
-    const everyonePanel = document.getElementById("track-everyone");
-    const devPanel = document.getElementById("track-dev");
-    function showTrack(which) {
-      const everyone = which === "everyone";
-      everyoneBtn.setAttribute("aria-pressed", everyone ? "true" : "false");
-      devBtn.setAttribute("aria-pressed", everyone ? "false" : "true");
-      everyonePanel.hidden = !everyone;
-      devPanel.hidden = everyone;
-    }
-    everyoneBtn.addEventListener("click", () => showTrack("everyone"));
-    devBtn.addEventListener("click", () => showTrack("dev"));
-    if (window.location.hash === "#dev" || window.location.hash === "#track-dev") {
-      showTrack("dev");
-    }
+    document.getElementById("caseA").addEventListener("click", () => setCase("bake"));
+    document.getElementById("caseB").addEventListener("click", () => setCase("dive"));
+    document.getElementById("caseC").addEventListener("click", () => setCase("cards"));
+    render();
   </script>
 </body>
 </html>

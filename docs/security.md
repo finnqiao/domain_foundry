@@ -11,7 +11,10 @@ Canonical data lives in local SQLite on your machine. The only network listener
 is the `domain-foundry serve` daemon, which binds `127.0.0.1` by default. The
 attack surface is (a) the local HTTP API, (b) prompt-injection via captured
 text, (c) path writes into the markdown vault, and (d) third-party extensions
-(pip handlers / custom blocks) you explicitly install.
+(pip handlers / custom blocks) you explicitly install. The evidence-backed
+creation path additionally crosses a configured reasoning-model boundary and,
+when enabled, a Brave search boundary; its detailed model is the
+[Foundry threat model](concepts/foundry-threat-model.md).
 
 ## Network & authentication
 
@@ -60,6 +63,13 @@ Verified by `tests/security/test_path_and_sql.py::test_safe_join_rejects_travers
 Common secret shapes (API keys, tokens, `key=value` secrets) are redacted before
 anything is persisted into notes, receipts, or logs.
 
+Foundry briefs are bounded and checked before provider use. If the goal,
+artifact descriptions, constraints, or user-authored tasks contain a
+credential-shaped value, proposal creation rejects the entire request before a
+model or search call. The UI identifies what is sent to each configured
+provider. Do not put confidential non-credential data in a provider-bound
+brief.
+
 Verified by `tests/security/test_path_and_sql.py::test_redact_secrets_common_patterns`.
 
 ## Prompt-injection containment
@@ -87,6 +97,19 @@ Only load pip handlers and custom blocks you wrote or audited.
 The Slice 4 automated review record is in
 [`docs/SECURITY_REVIEW_2026-08.md`](SECURITY_REVIEW_2026-08.md). It records the
 remaining independent-review and external-user gates explicitly.
+
+## Generated application boundary
+
+The generated app is the same self-contained HTML used for preview and owned
+export. It escapes spec and record content, runs inside a sandboxed preview,
+and ships with a Content Security Policy that denies network connections,
+objects, base changes, and form submission. Records stay in origin-scoped
+browser local storage until a user exports JSON. Local storage is not encrypted;
+protect shared browser profiles and exported files.
+
+Typed pipeline stages treat search snippets and provider output as untrusted.
+Source, evidence, principle, concept, fragment, entity, workload, and view
+references must close against supplied identifiers before compilation.
 
 ## Release-blocking leak audit
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Regenerate the tutorial proof snapshots for every tested harness.
 
-One story — a *bouldering* log — captured four ways: the CLI, the MCP server
+One story — a *card binder* — captured four ways: the CLI, the MCP server
 (Claude Desktop / Cursor), the Telegram bot, and the hermes-agent adapter. Each
 run is live against a throwaway home and writes a markdown transcript under
 ``docs/tutorial/snapshots/`` plus a machine-readable ``proof.json``. Deterministic
@@ -25,9 +25,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "docs" / "tutorial" / "snapshots"
 DF = str(ROOT / ".venv" / "bin" / "domain-foundry")
-GOAL = "track my bouldering climbing sessions"
-CAP = "good bouldering session at the gym, felt strong"
-CORR = "actually the rating was moderate not hard"
+GOAL = "i collect pokemon cards"
+PICK = "a dex of the cards i own with photos"
+BUILD = "build it"
+CAP = "pulled a holographic Charizard from a 151 booster, NM"
+CORR = "that Charizard was LP not NM"
 ENV = {**os.environ, "DOMAIN_FOUNDRY_LLM": "heuristic"}
 
 
@@ -35,32 +37,82 @@ def _fence(cmd: str, out: str) -> str:
     return f"```console\n$ {cmd}\n{out.rstrip()}\n```\n"
 
 
+def _is_cards_domain(name: str | None) -> bool:
+    token = (name or "").lower()
+    return "pokemon" in token or "card" in token
+
+
+def _scrub(text: str, home: str) -> str:
+    resolved = str(Path(home).resolve())
+    candidates = {home, resolved, "/private" + home, "/private" + resolved}
+    for candidate in sorted(candidates, key=len, reverse=True):
+        text = text.replace(candidate, "~/.domain_foundry")
+    return text
+
+
+def _trim(out: str, *, lines: int = 8) -> str:
+    parts = out.splitlines()
+    if len(parts) <= lines:
+        return out
+    return "\n".join(parts[:lines]) + "\n…"
+
+
 def snapshot_cli() -> tuple[str, dict]:
     home = tempfile.mkdtemp(prefix="df_snap_cli_")
-    steps: list[tuple[str, list[str]]] = [
-        ("domain-foundry init", [DF, "--home", home, "init"]),
-        (f'domain-foundry new-domain "{GOAL}" --reply skip',
-         [DF, "--home", home, "new-domain", GOAL, "--reply", "skip"]),
-        (f'domain-foundry capture "{CAP}"', [DF, "--home", home, "capture", CAP]),
-        ("domain-foundry query --domain bouldering",
-         [DF, "--home", home, "query", "--domain", "bouldering"]),
-        (f'domain-foundry correct "{CORR}"', [DF, "--home", home, "correct", CORR]),
-    ]
     md = ["# CLI — snapshot\n", "_The developer track: one command per step._\n"]
     ok = True
-    for pretty, argv in steps:
+
+    def run(pretty: str, argv: list[str], *, trim: bool = False, pretty_json: bool = False) -> str:
+        nonlocal ok
         p = subprocess.run(argv, capture_output=True, text=True, env=ENV)
-        out = p.stdout.strip().replace(home, "~/.domain_foundry")
-        if pretty.startswith("domain-foundry new-domain"):
-            out = "\n".join(out.splitlines()[:6]) + "\n… (pack generated + activated)"
-        if pretty.startswith("domain-foundry capture") or pretty.startswith("domain-foundry query"):
+        out = _scrub(p.stdout.strip(), home)
+        if pretty_json:
             try:
                 out = json.dumps(json.loads(out), indent=2)
             except Exception:
                 pass
+        if trim:
+            out = _trim(out)
         md.append(_fence(pretty, out))
         ok = ok and p.returncode == 0
-    return "\n".join(md), {"harness": "cli", "ok": ok}
+        return p.stdout.strip()
+
+    run("domain-foundry init", [DF, "--home", home, "init"])
+    fork_raw = run(
+        f'domain-foundry new-domain "{GOAL}"',
+        [DF, "--home", home, "new-domain", GOAL],
+        trim=True,
+    )
+    fork = json.loads(fork_raw)
+    sid = fork["session_id"]
+    run(
+        f'domain-foundry wizard reply {sid} "{PICK}"',
+        [DF, "--home", home, "wizard", "reply", sid, PICK],
+        trim=True,
+    )
+    build_raw = run(
+        f'domain-foundry wizard reply {sid} "{BUILD}"',
+        [DF, "--home", home, "wizard", "reply", sid, BUILD],
+        trim=True,
+    )
+    built = json.loads(build_raw)
+    domain = built.get("domain") or ((built.get("pack") or {}).get("name")) or "pokemon"
+    run(
+        f'domain-foundry capture "{CAP}"',
+        [DF, "--home", home, "capture", CAP],
+        pretty_json=True,
+    )
+    run(
+        f"domain-foundry query --domain {domain}",
+        [DF, "--home", home, "query", "--domain", domain],
+        pretty_json=True,
+    )
+    run(
+        f'domain-foundry correct "{CORR}"',
+        [DF, "--home", home, "correct", CORR],
+    )
+    ok = ok and _is_cards_domain(domain)
+    return "\n".join(md), {"harness": "cli", "ok": ok, "domain": domain}
 
 
 def snapshot_mcp() -> tuple[str, dict]:
@@ -75,7 +127,7 @@ def snapshot_mcp() -> tuple[str, dict]:
           "_Driven over real stdio MCP `tools/call`, exactly as an MCP client does._\n",
           "```json\n" + buf.getvalue().strip() + "\n```\n"]
     steps = dict(transcript)
-    ok = steps.get("capture", {}).get("domain") == "bouldering"
+    ok = _is_cards_domain(steps.get("capture", {}).get("domain"))
     return "\n".join(md), {"harness": "mcp", "ok": ok, "steps": [k for k, _ in transcript]}
 
 
@@ -104,7 +156,7 @@ def snapshot_hermes() -> tuple[str, dict]:
           "_The adapter's real tool surface (`build_tools` over the in-process client)._\n",
           "```json\n" + buf.getvalue().strip() + "\n```\n"]
     routed = (r["capture"].get("routed") or [{}])[0]
-    return "\n".join(md), {"harness": "hermes", "ok": routed.get("domain") == "bouldering"}
+    return "\n".join(md), {"harness": "hermes", "ok": _is_cards_domain(routed.get("domain"))}
 
 
 def main() -> None:

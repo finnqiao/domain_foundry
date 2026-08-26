@@ -1,18 +1,20 @@
 # Domain Foundry
 
-**Describe your passion. Get an app. Talk to it.**
+**Turn an interest into an evidence-backed app you own.**
 
-**Domain Foundry** turns what you say into neat, correctable notes for the things
-you care about — baking, plants, travel, or anything you describe — and keeps
-them on your own computer.
+**Domain Foundry** researches the real practice, compares three materially
+different product concepts, derives a schema from the questions it must answer,
+and compiles the chosen experience into a local application with its evidence,
+data model, and build receipt.
 
-> Say what happened. See it filed. Fix a mistake in one sentence. It stays local.
+> Evidence to concepts to schema to experience to owned app—one inspectable
+> specification, not a staff-title prompt or generic dashboard.
 
 <!--
   DEMO GIF PLACEHOLDER — do not commit a fabricated binary.
   The 90-second walkthrough (capture → routing badge → app timeline → correction)
   is a human recording gate; see LAUNCH_CHECKLIST.md. When recorded, drop it at
-  docs/assets/demo.gif (captured from synthetic packs only) and replace this line:
+  docs/assets/demo.gif (captured from synthetic data only) and replace this line:
   ![Domain Foundry 90-second demo](docs/assets/demo.gif)
 -->
 
@@ -20,50 +22,63 @@ _A 90-second demo GIF will live here once recorded (synthetic data only) — see
 
 ## What you get
 
-1. **Write it down first** — your exact words are saved before anything is sorted.
-2. **Never lose a note** — if it isn't sure where something belongs, it waits in Inbox.
-3. **Fix it in one sentence** — say “actually it was Tuesday” and the record updates.
-4. **Your passion, your app** — describe an interest; get a place to log and browse it.
-5. **Local first** — data lives in plain files on your machine; no telemetry.
-6. **Gets better when you correct it** — each fix teaches it for next time.
+1. **Research before generation** — reviewed sources and bounded live discovery
+   ground domain vocabulary, workflows, and constraints.
+2. **Compare real alternatives** — exactly three concepts must differ in loop,
+   hierarchy, affordance, and workflow structure; remixing keeps lineage.
+3. **Questions justify storage** — identities, events, relationships, time,
+   constraints, and indexes trace back to named workloads and evidence.
+4. **One spec, one product** — preview, SQLite DDL, owned app, provenance, and
+   evaluation compile from the same strict `FoundrySpec`.
+5. **Local ownership** — generated apps work offline, preserve correction
+   versions, export and restore spec-bound JSON, and ship beside their evidence
+   and content-hashed receipt. No telemetry.
+6. **Independent proof** — user-authored tasks join fixed schema, accessibility,
+   security, licensing, and reproducibility gates.
 
 ## Quickstart (5 minutes)
 
+Packages are not on PyPI yet. From this checkout:
+
 ```bash
-# From this checkout (PyPI publish is still a human launch gate):
 pip install -e .
-# After publish: pipx install domain-foundry-core
+# optional adapters: pip install -e ./adapters/mcp
 domain-foundry setup               # bring your own key; pick where to start
 domain-foundry serve
 ```
 
-`setup` asks which provider you have a key for, suggests models, checks the key
-works, then asks what you want to do first — start from a ready-made log, describe
-your own, or pull in notes you already have.
+Open <http://127.0.0.1:8787>. Then say the first line of a weekend:
 
-Already know what you want? Skip every question:
+> i have a log of sourdough bakes
+
+Open `/foundry` to inspect the three reviewed applications—Sourdough Lab, Card
+Collector, and Japanese Study Coach—or enter a brief and two observable release
+tasks to run the evidence-backed creation flow. The two interactive engineering
+deliverables are the [end-to-end flow](docs/prototypes/foundry-flow.html) and
+[knowledge fabric](docs/prototypes/knowledge-fabric.html).
+
+`setup` asks which provider you have a key for, suggests models, and checks the
+key. The reviewed goldens and local capture runtime need no model. Creating a
+new Foundry proposal requires a configured reasoning model; an interest outside
+the reviewed corpus also requires the optional Brave research adapter or a
+reviewed source packet. It fails closed instead of claiming a keyword scaffold
+was researched.
+
+Already know the provider? Skip the questions:
 
 ```bash
 domain-foundry setup --provider anthropic -y     # or openai / deepseek / openrouter / local / none
-domain-foundry init && domain-foundry pack add food
+domain-foundry new-domain "i have a log of sourdough bakes"
 ```
 
-Environment variables (`DOMAIN_FOUNDRY_SOTA_MODEL`, `…_API_KEY`, `…_BASE_URL`)
-override anything `setup` writes. `domain-foundry setup --show` prints what
-resolved, with keys redacted.
-
-Then open <http://127.0.0.1:8787> and log from the app or CLI:
-
-```bash
-domain-foundry capture "cooked a batch of shoyu ramen, came out great"
-domain-foundry query --domain food
-domain-foundry health
-```
-
-New here? Start with **[Getting started](docs/tutorial/getting-started.md)** —
-no terminal after install, or the CLI track. Story version:
-**[Turn a hobby into an app](docs/tutorial/end-to-end.html)**. Full CLI walkthrough in
+Then pick a look and say **build it** (or **the scatter one** on the bake log).
+`skip` is not install — it only shows a look. Terminal walkthrough:
 [`docs/QUICKSTART.md`](docs/QUICKSTART.md).
+
+Once the packages are on PyPI, an isolated pipx install of the core package will
+work. Until then, the checkout is the install.
+
+Install notes: **[Getting started](docs/tutorial/getting-started.md)**.
 
 ## Already have data? Bolt it on
 
@@ -88,18 +103,19 @@ accounted for, so a partial migration can't pass quietly.
 ## Connect your chat app
 
 Talk to Domain Foundry from wherever you already are. Each of these is driven
-through the full loop (describe a passion → log → ask → correct) by an
+through the full loop (describe a passion → log → ask → fix) by an
 automated end-to-end test in CI, and has a reproducible proof snapshot
 (`python scripts/tutorial_snapshots.py`):
 
-| Front door | Talk to it from | Setup |
+| Front door | Talk to it from | Setup (from this checkout) |
 |---|---|---|
-| **[MCP](adapters/mcp#readme)** | Claude Desktop, Cursor, any MCP client | `pipx install domain-foundry-mcp` + one config block |
-| **[Telegram](adapters/telegram#readme)** | A bot you text from your phone | `pipx install domain-foundry-telegram` + @BotFather |
+| **[MCP](adapters/mcp#readme)** | Claude Desktop, Cursor, any MCP client | `pip install -e ./adapters/mcp` + one config block |
+| **[Telegram](adapters/telegram#readme)** | A bot you text from your phone | `pip install -e ./adapters/telegram` + @BotFather |
 | **[hermes-agent](adapters/hermes_agent#readme)** | The hermes-agent runtime | plugin install into the Hermes env |
 
 See **[Connect your chat app](docs/tutorial/connect-your-agent.md)** for copy-paste
 configs and the proof snapshots.
+
 ## Documentation
 
 A full MkDocs Material site lives under [`docs/`](docs/) (`mkdocs serve` to read
@@ -107,47 +123,56 @@ locally, or `pip install -e ".[docs]" && mkdocs build`):
 
 - **[User stories & evidence](docs/USER_STORIES.md)** — what each audience gets,
   and the reproducible proof behind every claim (including what is *not* proven)
-- **Concepts** — [ledger](docs/concepts/ledger.md) · [packs](docs/concepts/packs.md) ·
-  [routing](docs/concepts/routing.md) · [corrections](docs/concepts/corrections.md) ·
-  [evaluation replay](docs/concepts/replay.md)
-- **Authoring** — [pack authoring guide](docs/PACK_AUTHORING.md) ·
+- **Foundry** — [redesign and gap-remediation record](docs/FOUNDRY_REDESIGN.md) ·
+  [AI remix landscape](docs/remix-landscape.md) ·
+  [replacement-name slate](docs/name-replacement-slate.md) ·
+  [threat model](docs/concepts/foundry-threat-model.md) ·
+  [knowledge contribution rules](knowledge/CONTRIBUTING.md)
+- **Concepts** — [how notes are stored](docs/concepts/ledger.md) ·
+  [how an interest is defined](docs/concepts/packs.md) ·
+  [how filing works](docs/concepts/routing.md) ·
+  [how a fix is kept](docs/concepts/corrections.md) ·
+  [replay](docs/concepts/replay.md)
+- **Authoring** — [guide](docs/PACK_AUTHORING.md) ·
   [remix in an afternoon](docs/tutorial-plant-care.md) ·
   [custom blocks](docs/CUSTOM_BLOCKS.md)
-- **[Architecture](docs/architecture.md)** · **[Pack gallery](docs/gallery.md)** ·
+- **[Architecture](docs/architecture.md)** · **[Gallery](docs/gallery.md)** ·
   **[Adapter guide](docs/adapter-guide.md)** · **[Security](docs/security.md)**
 
 ## Architecture (sketch)
 
-- **Python core** (`domain-foundry-core`) — storage, routing, corrections, views
+- **Python core** (`domain-foundry-core`) — storage, filing, corrections, views
+- **FoundrySpec compiler** — research, concepts, schema, experience, exact app,
+  evidence, and build receipt from one typed contract
 - **Local server** — `domain-foundry serve` hosts the app and the shared API
-- **React + Vite app shell** — remixable blocks driven by passion definitions
+- **React + Vite app shell** — remixable blocks driven by the interest you built
 - **SQLite × 2** — append-only history + typed records on disk
 - **Front doors** — Claude/Cursor (MCP), Telegram, hermes-agent (all CI-driven)
-- **Bring your own key** — provider registry + `~/.domain_foundry/config.toml`,
-  resolving env > config > default; two model tiers with automatic escalation
+- **Bring your own key** — required for new evidence-backed proposals; never
+  persisted in a Foundry brief
 
 ## Status
 
-The core is complete through the plan's P0–P8 phases: capture substrate, hybrid
-routing, apply + corrections, projections + review API, the universal app shell,
-the domain-creation wizard, the evaluation-replay framework, and reference packs
-+ the hermes-agent adapter. P9 (docs, audit, launch prep) is in this release,
-along with bring-your-own-key onboarding (`setup`) and the structured-source
-importer (`import`). See [`docs/PHASE_STATUS.md`](docs/PHASE_STATUS.md),
-[`docs/USER_STORIES.md`](docs/USER_STORIES.md) and
-[`CHANGELOG.md`](CHANGELOG.md).
-
-**Gates:** full pytest suite green (2 opt-in live-LLM skips) · ruff clean · pyright 0 errors ·
-`release_audit.sh` green · `quickstart_gate.sh` green · GitHub Actions `ci` and
-`leakscan` green on Python 3.11/3.12/3.13. Remaining work is human gates — the
-demo GIF, an external security pass, a lived production week, one live
-`setup --probe` per documented provider, and claiming the (verified available)
-PyPI names. Per-claim evidence, and what is deliberately *not* proven, is in
-[`docs/USER_STORIES.md`](docs/USER_STORIES.md).
+This checkout is a release candidate, not a published release. Automated
+quality evidence is enforced by `scripts/release_audit.sh`; live provider
+probes, an independent knowledge-corpus review, a manual screen-reader pass, an
+independent dependency/source-license review, an external security review,
+independent user validation, the demo recording, and package/name publication
+remain human gates. See the
+[redesign record](docs/FOUNDRY_REDESIGN.md) and
+the [independent release-review protocol](docs/release-review-guide.md). The
+public tag gate, `scripts/public_release_audit.py`, fails closed until those
+reviews are bound to the exact clean source tree and artifacts. See also
+[`docs/USER_STORIES.md`](docs/USER_STORIES.md) for deliberately unclaimed
+evidence.
 
 > **Name:** provisional public name is **Domain Foundry** (`domain-foundry-core` /
-> CLI `domain-foundry`). Availability + trademark checks before publish remain a
-> human gate — see [ADR-005](docs/adr/ADR-005-name-decision.md).
+> CLI `domain-foundry`). A live US application for the exact mark covers directly
+> overlapping software services, so publication under this name is blocked
+> pending rename, a rights agreement, or qualified clearance — see
+> [ADR-005](docs/adr/ADR-005-name-decision.md). The screened replacement slate
+> recommends **Patternstead**, subject to maintainer choice and a fresh
+> professional clearance search.
 
 ## Development
 
@@ -159,13 +184,17 @@ ruff check core tests scripts adapters
 python scripts/clock_audit.py
 python scripts/leakscan.py
 scripts/release_audit.sh          # aggregate release-blocking gate
+scripts/candidate_gate.sh         # rebuild + clean-install + hashed evidence
+python scripts/review_packet.py prepare  # clean-candidate reviewer handoff
+python scripts/review_packet.py seal     # bind final reports into receipts
+python scripts/public_release_audit.py  # human receipts + publication authority
 ```
 
 ## Contributing
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) and the
-[pack gallery](docs/gallery.md#community-candidate-list) for good first packs.
-Bug / pack-submission / routing-miss issue templates are under
+[gallery](docs/gallery.md#community-candidate-list) for good first interests.
+Bug / submission / filing-miss issue templates are under
 [`.github/ISSUE_TEMPLATE/`](.github/ISSUE_TEMPLATE/).
 
 ## License

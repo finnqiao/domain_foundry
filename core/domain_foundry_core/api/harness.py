@@ -1178,9 +1178,31 @@ class HarnessAPI:
             self._wizard = wiz
         return wiz
 
-    def new_domain(self, goal_text: str, *, test_drive: int = 5) -> dict[str, Any]:
+    def new_domain(
+        self,
+        goal_text: str,
+        *,
+        test_drive: int = 5,
+        release_mode: bool = False,
+    ) -> dict[str, Any]:
         """Start the guided domain-creation wizard from a plain-language goal."""
-        return self.wizard.new_domain(goal_text, test_drive=test_drive)
+        return self.wizard.new_domain(
+            goal_text,
+            test_drive=test_drive,
+            release_mode=release_mode,
+        )
+
+    def create_domain(self, goal_text: str, *, test_drive: int = 5) -> dict[str, Any]:
+        """Start the release creation journey."""
+        return self.new_domain(goal_text, test_drive=test_drive, release_mode=True)
+
+    def create_resume(self, session_id: str) -> dict[str, Any]:
+        """Resume a release creation journey without changing its state."""
+        return self.wizard.resume(session_id)
+
+    def create_cancel(self, session_id: str) -> dict[str, Any]:
+        """Cancel future creation work while keeping the saved session."""
+        return self.wizard.cancel(session_id)
 
     def wizard_reply(self, session_id: str, text: str) -> dict[str, Any]:
         """Continue a wizard session (interview answer, capture, or edit)."""
@@ -1252,7 +1274,7 @@ class HarnessAPI:
         return self.hardening_apply(domain, edit_text)
 
     def atlas_validate(self) -> dict[str, Any]:
-        from domain_foundry_core.atlas.loader import load_atlas, validate_atlas, graph_stats
+        from domain_foundry_core.atlas.loader import graph_stats, load_atlas, validate_atlas
 
         overlay = self.workspace.home / "atlas"
         graph = load_atlas(overlay if overlay.is_dir() else None)

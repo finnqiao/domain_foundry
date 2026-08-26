@@ -163,7 +163,7 @@ def test_pricing_glm_openrouter_alias():
 
 
 def test_pricing_deepseek_and_claude():
-    ds = lookup_price("deepseek-chat")
+    ds = lookup_price("deepseek-v4-flash")
     assert ds is not None
     cl = lookup_price("claude-sonnet-4-6")
     assert cl is not None
@@ -171,7 +171,7 @@ def test_pricing_deepseek_and_claude():
     assert cl.input_per_million > ds.input_per_million
 
     cost = estimate_cost_usd(
-        model="deepseek-chat", input_tokens=1_000_000, output_tokens=0
+        model="deepseek-v4-flash", input_tokens=1_000_000, output_tokens=0
     )
     assert abs(cost - 0.14) < 1e-9
 
@@ -180,8 +180,20 @@ def test_pricing_deepseek_and_claude():
     )
     assert abs(cost_sota - 3.0) < 1e-9
 
-    assert tier_for_model("deepseek-chat") == "routine"
+    assert tier_for_model("deepseek-v4-flash") == "routine"
     assert tier_for_model("claude-sonnet-4-6") == "sota"
+
+
+def test_pricing_current_openai_defaults():
+    luna = lookup_price("gpt-5.6-luna")
+    sol = lookup_price("gpt-5.6-sol")
+    assert luna is not None
+    assert sol is not None
+    assert luna.input_per_million == 0.20
+    assert luna.output_per_million == 1.20
+    assert sol.input_per_million == 5.00
+    assert sol.output_per_million == 30.00
+    assert tier_for_model("gpt-5.6-luna") == "routine"
 
 
 def test_token_derived_cost_gt_zero_when_usage_present(workspace: Workspace):
@@ -315,7 +327,7 @@ def test_heuristic_still_default_offline(workspace: Workspace):
 def test_openai_compat_honours_env_model(monkeypatch):
     """Regression: get_default_provider() must not shadow DOMAIN_FOUNDRY_LLM_MODEL
     with the constructor's default. Legacy compat path previously always sent
-    'gpt-4o-mini' regardless of config."""
+    its built-in OpenAI model regardless of config."""
     from pathlib import Path
 
     from domain_foundry_core.llm.provider import get_default_provider

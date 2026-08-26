@@ -1,0 +1,32 @@
+schema_version: 1
+gate: name_and_publish_authorization
+candidate_id: sha256:REPLACE_FROM_CANDIDATE_JSON
+reviewed_commit: REPLACE_WITH_40_CHARACTER_GIT_SHA
+reviewed_at: "YYYY-MM-DDTHH:MM:SS+00:00"
+outcome: pending
+reviewer:
+  identifier: REPLACE_WITH_MAINTAINER_NAME_OR_HANDLE
+  relationship: maintainer
+  expertise: project ownership and release authority
+scope:
+  - public product and distribution names
+  - repository owner, documentation domain, and package coordinates
+  - irreversible TestPyPI, PyPI, tag, and GitHub release actions
+evidence:
+  - path: release/evidence/reports/name-and-publication-authorization.md
+    sha256: REPLACE_WITH_64_CHARACTER_SHA256_AFTER_REPORT_IS_FINAL
+artifacts:
+  wheel: REPLACE_WITH_64_CHARACTER_SHA256
+  sdist: REPLACE_WITH_64_CHARACTER_SHA256
+  sbom: REPLACE_WITH_64_CHARACTER_SHA256
+details:
+  approved_public_name: REPLACE_WITH_APPROVED_NAME
+  availability_registry_reviewed: false
+  pypi_names_checked: false
+  trademark_checked: false
+  collision_disposition: unresolved
+  legal_reviewer: REPLACE_WITH_QUALIFIED_REVIEWER_OR_RIGHTS_AGREEMENT_REFERENCE
+  repository_coordinates_checked: false
+  approved_repository: REPLACE_WITH_APPROVED_OWNER_AND_REPOSITORY
+  publish_authorized: false
+attestation: REPLACE_WITH_A_SUBSTANTIVE_HUMAN_AUTHORIZATION_FOR_THE_EXACT_CANDIDATE

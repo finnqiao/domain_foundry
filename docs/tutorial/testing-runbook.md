@@ -12,6 +12,9 @@ output matches, that surface works.
     temp workspace, and the router runs in **heuristic** mode (no API key, fully
     deterministic) unless you opt into a live model.
 
+The same weekend as the public story: bake log → look → **build it** → ask → fix.
+Click-through: **[Bring the log. Pick a look.](end-to-end.html)**.
+
 ---
 
 ## 0. Prerequisites
@@ -51,23 +54,37 @@ here; the sections below are for verifying a specific surface by hand.
 
 ## 2. Core loop (CLI)
 
+`skip` only accepts the suggested idea and shows a look. **build it** (or “the
+scatter one” on the bake log) is what installs:
+
 ```console
 $ H=$(mktemp -d)
 $ domain-foundry --home $H init
 Initialized …  ledger.sqlite schema_version=9  domains.sqlite schema_version=1
-$ domain-foundry --home $H new-domain "track my bouldering sessions" --reply skip
-… "domain": "bouldering" … "state": "test_drive"
-$ domain-foundry --home $H capture "good bouldering session, felt strong"
-… "status": "applied", "routed": [ { "domain": "bouldering", "confidence": 0.95 } ]
-$ domain-foundry --home $H query --domain bouldering
+$ domain-foundry --home $H new-domain "i have a log of sourdough bakes" --reply skip --reply "build it"
+… "domain": "sourdough" … "state": "test_drive"
+$ domain-foundry --home $H capture "baked a 75% hydration country loaf, came out great"
+… "status": "applied", "routed": [ { "domain": "sourdough", "confidence": 0.95 } ]
+$ domain-foundry --home $H query --domain sourdough
 … 1 row
-$ domain-foundry --home $H correct "actually the rating was moderate not hard"
+$ domain-foundry --home $H correct "that sunday batard was 78 not 72"
 … "action": "amend", "applied": true, "eval_case_id": "ec_…"
 $ domain-foundry --home $H health
 … "ok": true
 ```
 
-**Verify:** capture routes to `bouldering` and is `applied`; the correction returns
+To walk the looks step instead of `--reply skip --reply "build it"`:
+
+```console
+$ domain-foundry --home $H new-domain "i have a log of sourdough bakes"
+… "state": "fork"
+$ domain-foundry --home $H wizard reply <session> "i want to data visualize all my bakes"
+… "state": "looks"
+$ domain-foundry --home $H wizard reply <session> "the scatter one"
+… "state": "test_drive"
+```
+
+**Verify:** capture routes to `sourdough` and is `applied`; the correction returns
 an `eval_case_id` (the fix became a regression test); health is `ok`.
 
 ---
@@ -77,12 +94,12 @@ an `eval_case_id` (the fix became a regression test); health is `ok`.
 Prove the "pull in existing notes" path is non-destructive and idempotent:
 
 ```console
-$ NOTES=$(mktemp -d); mkdir -p $NOTES/climbing
-$ echo "good bouldering session, felt strong" > $NOTES/climbing/a.md
+$ NOTES=$(mktemp -d); mkdir -p $NOTES/baking
+$ echo "baked a 75% hydration country loaf, came out great" > $NOTES/baking/a.md
 $ echo "milk, eggs, coffee"                   > $NOTES/shopping.md
 
 $ domain-foundry --home $H ingest $NOTES --dry-run     # preview, writes nothing
-… "scanned": 2, "captured": 0, "by_domain": { "bouldering": 1 }, "unfiled": 1
+… "scanned": 2, "captured": 0, "by_domain": { "sourdough": 1 }, "unfiled": 1
 
 $ domain-foundry --home $H ingest $NOTES               # pull in
 … "scanned": 2, "captured": 2
@@ -90,7 +107,7 @@ $ domain-foundry --home $H ingest $NOTES               # pull in
 $ domain-foundry --home $H ingest $NOTES               # re-run → idempotent
 … "captured": 0, "skipped_existing": 2
 
-$ domain-foundry --home $H ingest $NOTES --only bouldering   # one foundry only
+$ domain-foundry --home $H ingest $NOTES --only sourdough   # one foundry only
 … "captured": 0, "filtered_out": 1     # (0 new; shopping.md left untouched)
 ```
 
@@ -106,13 +123,12 @@ Automated — drives the server over real stdio MCP `tools/call`:
 
 ```console
 $ python adapters/mcp/tests/test_mcp_e2e.py
-… ### capture { "status": "applied", "domain": "bouldering" }
-… MCP E2E OK — 8 steps
+… MCP E2E OK
 ```
 
 Live check in Claude Desktop: add the config from
 [Connect your agent → MCP](connect-your-agent.md#mcp), restart, and say
-*"track my bouldering sessions."* You should see the `domain_foundry_*` tools fire.
+*"i have a log of sourdough bakes."* You should see the `domain_foundry_*` tools fire.
 
 ---
 
@@ -122,16 +138,13 @@ Automated — runs the whole conversation against a mock Telegram API, no token:
 
 ```console
 $ python adapters/telegram/tests/test_telegram_bridge.py
-👤 /new track my bouldering climbing sessions
-🤖 🎉 *bouldering* is scaffolded. …
-👤 good bouldering session at the gym, felt strong
-🤖 ✅ Logged to *bouldering* (entry).
 Telegram E2E OK
 ```
 
-Live check: create a bot with @BotFather, then
-`TELEGRAM_BOT_TOKEN=… domain-foundry-telegram` and text it (full steps in the
-[Telegram adapter README](https://github.com/finnqiao/domain_foundry/tree/main/adapters/telegram#readme)).
+Live check: create a bot with @BotFather, then from this checkout
+`pip install -e ./adapters/telegram` and
+`TELEGRAM_BOT_TOKEN=… domain-foundry-telegram` and text it the bake-log line
+(full steps in [Connect your chat app](connect-your-agent.md#telegram)).
 
 ---
 
@@ -197,7 +210,7 @@ python -m pytest tests/contract/test_llm_live_smoke.py -q
 ```
 
 With a live model, `ingest --dry-run` on a mixed notes folder routes off-keyword
-notes correctly (e.g. "sent a V5 on the overhang" → `bouldering`), not just the
+notes correctly (e.g. "that sunday batard was 78 not 72" → `sourdough`), not just the
 ones containing the domain word.
 
 ---
@@ -206,11 +219,12 @@ ones containing the domain word.
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| Off-keyword captures land in `unfiled` | No API key → heuristic router only matches literal keywords | Set a live model (§9); heuristic is keyword-only by design |
+| Off-keyword captures land in Inbox (`unfiled`) | No API key → heuristic router only matches literal keywords | Set a live model (§9); heuristic is keyword-only by design |
 | `Address already in use` on `serve` | A previous server is still bound | `lsof -ti:8787 \| xargs kill`, or `serve --port 8788` |
 | `pack add` fails after switching homes | A stale `DOMAIN_FOUNDRY_HOME` from a prior run | `unset DOMAIN_FOUNDRY_HOME` or always pass `--home` |
-| MCP test can't find the server | `domain-foundry-mcp` not on PATH | The test launches via `python -m`; for Claude Desktop, `pipx install domain-foundry-mcp` |
+| MCP test can't find the server | `domain-foundry-mcp` not on PATH | The test launches via `python -m`; for Claude Desktop, `pip install -e ./adapters/mcp` from the checkout |
 | `POST /api/capture` fails | Check that `domain-foundry serve` is running and, for token-protected binds, send the bearer token | The daemon serves the canonical read/write contract |
+| `new-domain … --reply skip` stays in `looks` | `skip` is not install anymore | `wizard reply <session> "build it"` (or `--reply skip --reply "build it"`) |
 
 ## What "all green" is
 

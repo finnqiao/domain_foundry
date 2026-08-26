@@ -24,14 +24,17 @@ atlas. Product name: **idea atlas**.
 ## How create works
 
 1. You name an interest (`food`, `diving`, `I want to remember the animals`).
-2. Foundry matches a **neighborhood**: breadcrumb, refine (children), expand
-   (adjacent / `expands_to`), and 3–6 idea cards mixing `world` and `foundry`.
-3. You pick, mix, go deeper, or say “just a simple log”. Bundled packs are
-   **analogs** — they install only after a 1:1 idea pick, never on the first
-   sentence.
-4. `compile_jobs` turns the chosen idea’s jobs into objects, views, and
-   capabilities. Then you talk / file / fix as usual.
-5. Residue and corrections can walk a neighbor idea (“you’ve mentioned eight
+2. Foundry matches a **neighborhood** and speaks in **pitches** (what you could
+   build), not taxonomy. Structured breadcrumb / refine / expand stay on the
+   turn for the app and MCP.
+3. You pick an idea, or describe the job (chart, photos, field guide). Foundry
+   stays in that neighborhood instead of rematching the whole atlas.
+4. Each idea gets an **HTML look** (job template always; a stronger model when
+   you have a key). Critique it until you’re happy, then accept.
+5. Bundled packs are **analogs** — they install only after a 1:1 idea pick
+   **and** an accepted look. Otherwise `compile_jobs` turns the idea’s jobs into
+   objects, views, and capabilities. Then you talk / file / fix as usual.
+6. Residue and corrections can walk a neighbor idea (“you’ve mentioned eight
    animals — add a species pokedex?”).
 
 No-key mode still returns the shipped neighborhood. Experts can add a local
@@ -41,7 +44,7 @@ inspect YAML before activate.
 ```bash
 domain-foundry atlas search "diving"
 domain-foundry atlas validate
-domain-foundry new-domain "food"   # first turn is the neighborhood
+domain-foundry new-domain "i have a log of sourdough bakes"   # pitches, then looks
 ```
 
 MCP tools: `domain_foundry_atlas_search`, `domain_foundry_inspect_pack`,

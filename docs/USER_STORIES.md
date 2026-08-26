@@ -276,9 +276,11 @@ production week, and one live `setup --probe` per documented provider.
 
 ### PyPI
 
-All five names are **available and unclaimed** as of 2026-07-29:
+All five official JSON endpoints returned **404 (no public project)** on
+2026-08-19:
 `domain-foundry`, `domain-foundry-core`, `domain-foundry-mcp`,
 `domain-foundry-telegram`, `domain-foundry-hermes-agent`. Distributions build
 clean and `twine check` passes on both; the wheel is verified to contain the SPA
-and all nine reference packs. Publishing needs a PyPI token, which is a human
-step.
+and all eight reference packs. A 404 neither reserves a name nor proves PyPI
+will accept it. Publishing needs a PyPI token and explicit maintainer authority.
+See `release/name-availability.yaml` for the expiring evidence and limitations.

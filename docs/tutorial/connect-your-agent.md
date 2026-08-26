@@ -4,13 +4,13 @@ You already log notes in Domain Foundry. These optional front doors let you do
 the same from an app you already use. Three are **proven in CI** with a
 reproducible snapshot:
 
-| Front door | Best for | Install | Proof (CI test) |
+| Front door | Best for | Install (from this checkout) | Proof (CI test) |
 |---|---|---|---|
-| **[Claude / Cursor (MCP)](#mcp)** | Chat apps that speak MCP | `pipx install domain-foundry-mcp` | `adapters/mcp/tests/test_mcp_e2e.py` |
-| **[Telegram](#telegram)** | Texting a bot from your phone | `pipx install domain-foundry-telegram` | `adapters/telegram/tests/test_telegram_bridge.py` |
+| **[Claude / Cursor (MCP)](#mcp)** | Chat apps that speak MCP | `pip install -e ./adapters/mcp` | `adapters/mcp/tests/test_mcp_e2e.py` |
+| **[Telegram](#telegram)** | Texting a bot from your phone | `pip install -e ./adapters/telegram` | `adapters/telegram/tests/test_telegram_bridge.py` |
 | **[hermes-agent](#hermes-agent)** | The hermes-agent runtime | `uv pip install -e ./adapters/hermes_agent` | `adapters/hermes_agent/tests/test_hermes_e2e.py` |
 
-> **Proven means driven end to end** — create a passion → log → ask → correct —
+> **Proven means driven end to end** — describe an interest → log → ask → fix —
 > over the real protocol a client speaks. Regenerate snapshots with
 > `python scripts/tutorial_snapshots.py`.
 
@@ -22,6 +22,10 @@ To have the model **shape** a new passion (not just a simple log), add a key
 once — `domain-foundry setup --provider deepseek -y` or **Settings** in the app.
 Same key is used for Ask.
 
+Packages are not on PyPI yet. Install the core from the checkout first
+(`pip install -e .`), then the adapter line above. Once the packages are on
+PyPI, an isolated pipx install of each adapter will work.
+
 ---
 
 ## MCP
@@ -29,12 +33,13 @@ Same key is used for Ask.
 The [Model Context Protocol](https://modelcontextprotocol.io) server exposes the
 tools (`domain_foundry_capture`, `_query`, `_ask`, `_correct`,
 `_review_list`, `_review_resolve`, `_new_domain`, `_wizard_reply`, `_health`,
-plus pack install and export). One server → every MCP client.
+plus install and export). One server → every MCP client.
 
-**Install & connect Claude Desktop:**
+**Install & connect Claude Desktop** (from this checkout):
 
 ```bash
-pipx install domain-foundry-core domain-foundry-mcp
+pip install -e .
+pip install -e ./adapters/mcp
 ```
 
 ```json
@@ -48,18 +53,15 @@ pipx install domain-foundry-core domain-foundry-mcp
 }
 ```
 
-Restart Claude Desktop; the tools appear and the model uses them with
-capture-first discipline. The same block works in Cursor and other MCP clients.
+Restart Claude Desktop; the tools appear and the model uses them: it saves your
+words first, then files them. The same block works in Cursor and other MCP clients.
+
+Then say the bake-log line: **i have a log of sourdough bakes**. Claude relays
+options and looks. It should not pick for you.
 
 **Proof** — the CI test drives the server over real stdio `tools/call`, exactly as
-a client does ([full snapshot](snapshots/mcp.md)):
-
-```json
-### capture
-{ "status": "applied", "domain": "bouldering", "object_type": "entry", "confidence": 0.95 }
-### correct
-{ "action": "amend", "applied": true, "eval_case": true }
-```
+a client does ([full snapshot](snapshots/mcp.md)): it describes an interest, logs
+a note, asks, and fixes a sentence. The record updates; history is kept.
 
 More: [MCP adapter README](https://github.com/finnqiao/domain_foundry/tree/main/adapters/mcp#readme).
 
@@ -67,13 +69,14 @@ More: [MCP adapter README](https://github.com/finnqiao/domain_foundry/tree/main/
 
 ## Telegram
 
-Text a bot; the message is captured-first and routed. Corrections work by just
-saying so ("actually that was a V6"). Nothing leaves your machine except the
+Text a bot; the message is saved first, then filed. Corrections work by just
+saying so ("that sunday batard was 78 not 72"). Nothing leaves your machine except the
 message to Telegram itself.
 
-**Install:**
+**Install** (from this checkout):
 ```bash
-pipx install domain-foundry-core domain-foundry-telegram
+pip install -e .
+pip install -e ./adapters/telegram
 ```
 
 **Create the bot (2 minutes, all in Telegram):** message **@BotFather** → `/newbot`
@@ -91,14 +94,12 @@ domain-foundry-telegram
 against a mock Telegram API ([full snapshot](snapshots/telegram.md)):
 
 ```text
-👤 /new track my bouldering climbing sessions
-🤖 Sports → climbing. Ideas: session log, ticklist…
-👤 skip
-🤖 *bouldering* is ready. Send a real note and we’ll file it.
-👤 good bouldering session at the gym, felt strong
-🤖 ✅ Logged to *bouldering* (entry).
-👤 actually the rating was moderate not hard
-🤖 ✏️ Corrected — and saved as a regression test.
+You: /new i have a log of sourdough bakes
+Bot: You said “i have a log of sourdough bakes”. You could: 1. Sourdough / bake lab…
+You: i want to data visualize all my bakes
+Bot: A look for the bake lab. Reply with a number or say build it.
+You: the scatter one
+Bot: sourdough is ready. Send a real note and we’ll file it.
 ```
 
 > **Privacy:** this is personal data. Set `TELEGRAM_ALLOWED_CHAT_IDS` so only you
@@ -110,8 +111,8 @@ More: [Telegram adapter README](https://github.com/finnqiao/domain_foundry/tree/
 
 ## hermes-agent
 
-A hermes-agent plugin that registers the harness tools with capture-first
-guidance, driving the in-process client (no HTTP hop).
+A hermes-agent plugin that registers capture, ask, and fix tools, with guidance
+to save your words first. It talks to Foundry in-process (no extra server hop).
 
 **Install into the hermes environment** (prefer an isolated profile so your
 default gateway is untouched):
@@ -149,4 +150,4 @@ python scripts/tutorial_snapshots.py
 # → docs/tutorial/snapshots/{cli,mcp,telegram,hermes}.md + proof.json
 ```
 
-Deterministic and offline (heuristic router), so anyone gets identical snapshots.
+Deterministic and offline (no API key), so anyone gets identical snapshots.

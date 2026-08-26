@@ -25,4 +25,4 @@ python ~/HermesWorkspace/scripts/triage_backlog.py --approve-all && python …/t
 ```
 
 See also: [`MESH_AS_BUILT.md`](MESH_AS_BUILT.md), [`RETIREMENT_RUNBOOK.md`](RETIREMENT_RUNBOOK.md),
-[`PRIVATE_OVERLAY.md`](PRIVATE_OVERLAY.md), [`LAUNCH_CHECKLIST.md`](../LAUNCH_CHECKLIST.md).
+[`PRIVATE_OVERLAY.md`](PRIVATE_OVERLAY.md), [`LAUNCH_CHECKLIST.md`](https://github.com/finnqiao/domain_foundry/blob/main/LAUNCH_CHECKLIST.md).

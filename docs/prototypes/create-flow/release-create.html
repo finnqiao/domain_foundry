@@ -1,0 +1,1620 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Universal create flow — release prototype</title>
+  <!--
+    THROWAWAY PROTOTYPE — not production output.
+    Question: how should a non-technical hobbyist move from any interest to a
+    useful, well-checked personal app while the technical work stays out of the way?
+    Variants: ?variant=A guided canvas, B conversation + artifact, C preview first.
+  -->
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0e0f0d;
+      --bg-raised: #171814;
+      --bg-soft: #20211c;
+      --paper: #f2ede0;
+      --paper-soft: #e5ddca;
+      --ink: #171813;
+      --text: #f2ede0;
+      --text-muted: #a7aa9f;
+      --line: #3c3e36;
+      --line-paper: #c9c0ad;
+      --accent: #f0ad4e;
+      --accent-ink: #241706;
+      --cool: #a4c3c7;
+      --success: #a7ca8c;
+      --danger: #ed8177;
+      --focus: #ffd27a;
+      --radius: 6px;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.34), 0 2px 10px rgba(0, 0, 0, 0.2);
+      --sans: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --serif: Iowan Old Style, Palatino Linotype, Book Antiqua, Georgia, serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html { overflow-anchor: none; background: var(--bg); scroll-behavior: auto; }
+    body {
+      margin: 0;
+      min-width: 280px;
+      min-height: 100vh;
+      padding-bottom: 92px;
+      background:
+        radial-gradient(circle at 70% -20%, rgba(240, 173, 78, 0.08), transparent 36rem),
+        var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button, input, textarea { font: inherit; }
+    button { min-height: 44px; cursor: pointer; }
+    button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 3px;
+    }
+    button:disabled { cursor: default; opacity: 0.45; }
+
+    .skip-link {
+      position: fixed;
+      inset-block-start: -6rem;
+      inset-inline-start: 1rem;
+      z-index: 100;
+      padding: 0.8rem 1rem;
+      background: var(--accent);
+      color: var(--accent-ink);
+      font-weight: 700;
+    }
+    .skip-link:focus { inset-block-start: 1rem; }
+
+    .prototype-bar {
+      display: flex;
+      min-height: 28px;
+      align-items: center;
+      justify-content: center;
+      padding: 0.35rem 1rem;
+      background: var(--accent);
+      color: var(--accent-ink);
+      font: 700 0.68rem/1.2 var(--mono);
+      letter-spacing: 0.08em;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .mast {
+      position: sticky;
+      inset-block-start: 0;
+      z-index: 40;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 1.25rem;
+      min-height: 68px;
+      align-items: center;
+      padding: 0.8rem 1.25rem;
+      border-bottom: 1px solid var(--line);
+      background: rgba(14, 15, 13, 0.94);
+      backdrop-filter: blur(18px);
+    }
+    .wordmark {
+      color: var(--text);
+      font: 400 1.2rem/1 var(--serif);
+      white-space: nowrap;
+    }
+    .scenario-tabs {
+      display: flex;
+      gap: 0.4rem;
+      min-width: 0;
+      overflow-x: auto;
+      scrollbar-width: thin;
+    }
+    .scenario-tab {
+      flex: 0 0 auto;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .scenario-tab[aria-selected="true"] {
+      border-color: var(--paper);
+      background: var(--paper);
+      color: var(--ink);
+    }
+    .contract-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      color: var(--success);
+      font: 700 0.68rem/1 var(--mono);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .contract-label::before {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      content: "";
+    }
+
+    #variant-root { min-height: calc(100vh - 96px); }
+
+    .eyebrow {
+      margin: 0 0 0.6rem;
+      color: #596f73;
+      font: 700 0.7rem/1.2 var(--mono);
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+    .eyebrow.on-dark { color: var(--cool); }
+    h1, h2, h3, p { overflow-wrap: break-word; }
+    h1 {
+      max-width: 14ch;
+      margin: 0;
+      color: var(--ink);
+      font: 400 clamp(2.25rem, 5.2vw, 4.8rem)/0.96 var(--serif);
+      letter-spacing: -0.045em;
+      text-wrap: balance;
+    }
+    h2 {
+      margin: 0;
+      font: 400 clamp(1.8rem, 3.5vw, 3.2rem)/1 var(--serif);
+      letter-spacing: -0.035em;
+      text-wrap: balance;
+    }
+    h3 {
+      margin: 0;
+      font: 600 1rem/1.25 var(--sans);
+    }
+    p { line-height: 1.55; }
+    .lede {
+      max-width: 64ch;
+      margin: 1rem 0 0;
+      color: #4e5049;
+      font-size: 1.02rem;
+      text-wrap: pretty;
+    }
+    .muted { color: var(--text-muted); }
+    .paper-muted { color: #5a5b54; }
+    .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+    .paper {
+      border-radius: var(--radius);
+      background: var(--paper);
+      color: var(--ink);
+      box-shadow: var(--shadow);
+    }
+    .stage-content { padding: clamp(1rem, 2.8vw, 2.4rem); }
+    .stage-copy { max-width: 72rem; }
+    .stage-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: space-between;
+      margin-top: 1.5rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--line-paper);
+    }
+    .stage-actions .push { margin-inline-start: auto; }
+    .primary, .secondary, .quiet-action, .choice-card, .concept-card {
+      border-radius: 4px;
+    }
+    .primary {
+      padding: 0.7rem 1rem;
+      border: 1px solid var(--ink);
+      background: var(--ink);
+      color: var(--paper);
+      font-weight: 700;
+    }
+    .primary:active { scale: 0.96; }
+    .secondary {
+      padding: 0.7rem 1rem;
+      border: 1px solid #7b776d;
+      background: transparent;
+      color: var(--ink);
+      font-weight: 650;
+    }
+    .quiet-action {
+      padding: 0.65rem 0.8rem;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--text);
+    }
+    .text-link {
+      color: #2f626a;
+      text-decoration-thickness: from-font;
+      text-underline-offset: 0.2em;
+    }
+
+    .composer {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.7rem;
+      margin-top: 1.5rem;
+      padding: 0.7rem;
+      border: 1px solid #aaa18e;
+      border-radius: 6px;
+      background: #fbf7ed;
+    }
+    .composer textarea, .composer input {
+      min-width: 0;
+      min-height: 52px;
+      padding: 0.65rem;
+      border: 0;
+      background: transparent;
+      color: var(--ink);
+      font-size: 1rem;
+      resize: vertical;
+    }
+    .composer textarea::placeholder, .composer input::placeholder { color: #74746e; }
+
+    .choice-grid, .concept-grid, .model-grid, .proof-grid, .ownership-grid {
+      display: grid;
+      gap: 0.8rem;
+      margin-top: 1.4rem;
+    }
+    .choice-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .concept-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .model-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .proof-grid { grid-template-columns: 1.3fr 0.7fr; }
+    .ownership-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+    .choice-card, .concept-card {
+      position: relative;
+      min-height: 132px;
+      padding: 1rem;
+      border: 1px solid #aaa18e;
+      background: #faf6ec;
+      color: var(--ink);
+      text-align: start;
+    }
+    .choice-card strong, .concept-card strong { display: block; margin-bottom: 0.35rem; }
+    .choice-card span, .concept-card span { display: block; color: #5a5b54; line-height: 1.45; }
+    .choice-card[aria-pressed="true"], .concept-card[aria-pressed="true"] {
+      border: 3px solid #8f550d;
+      padding: calc(1rem - 2px);
+      background: #fff8e8;
+    }
+    .choice-card[aria-pressed="true"]::after, .concept-card[aria-pressed="true"]::after {
+      position: absolute;
+      inset-block-start: 0.7rem;
+      inset-inline-end: 0.7rem;
+      color: #754300;
+      font: 700 0.65rem/1 var(--mono);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      content: "selected";
+    }
+    .concept-card { min-height: 230px; }
+    .concept-card small {
+      display: block;
+      margin-bottom: 0.8rem;
+      padding-inline-end: 4.5rem;
+      color: #8a540d;
+      font: 700 0.68rem/1.2 var(--mono);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .concept-card[aria-pressed="true"]::after { content: "chosen"; }
+    .concept-card ul {
+      margin: 0.8rem 0 0;
+      padding-inline-start: 1.1rem;
+      color: #50514b;
+      line-height: 1.5;
+    }
+
+    .example-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.8rem;
+      margin-top: 1.4rem;
+    }
+    .example {
+      padding: 1rem;
+      border: 1px solid var(--line-paper);
+      background: #faf6ec;
+    }
+    .example .index {
+      display: inline-grid;
+      width: 28px;
+      height: 28px;
+      place-items: center;
+      margin-bottom: 0.8rem;
+      border-radius: 50%;
+      background: var(--ink);
+      color: var(--paper);
+      font: 700 0.7rem/1 var(--mono);
+    }
+    .example.sealed .index { background: #57777b; }
+    .example blockquote {
+      margin: 0.8rem 0;
+      color: #343630;
+      font: 400 1.25rem/1.35 var(--serif);
+    }
+    .example h2, .model-card h2, .ownership-card h2 {
+      margin: 0;
+      font: 600 1rem/1.25 var(--sans);
+      letter-spacing: 0;
+    }
+
+    .progress-list {
+      display: grid;
+      gap: 0;
+      margin: 1.5rem 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    .progress-list li {
+      display: grid;
+      grid-template-columns: 1.6rem minmax(0, 1fr) auto;
+      gap: 0.75rem;
+      align-items: start;
+      padding: 0.85rem 0;
+      border-top: 1px solid var(--line-paper);
+    }
+    .progress-list li::before {
+      display: grid;
+      width: 22px;
+      height: 22px;
+      place-items: center;
+      border: 1px solid #77786f;
+      border-radius: 50%;
+      color: #6b6c64;
+      font-size: 0.72rem;
+      content: "·";
+    }
+    .progress-list li.done::before {
+      border-color: #4f753d;
+      background: #dfead7;
+      color: #355528;
+      content: "✓";
+    }
+    .progress-list li.active::before {
+      border-color: #995c10;
+      background: #f7d79f;
+      color: #6f3e00;
+      content: "→";
+    }
+    .progress-list small { color: #686a62; font-family: var(--mono); }
+
+    .source-receipt, .boundary-note, .proof-note, .capture-receipt {
+      margin-top: 1rem;
+      padding: 1rem;
+      border: 1px solid #718b8e;
+      background: #e7ece8;
+      color: #263437;
+    }
+    .boundary-note {
+      border-color: #a97630;
+      background: #fff2d8;
+      color: #4a3212;
+    }
+    .proof-note {
+      border-color: #6d8d59;
+      background: #e5eedf;
+      color: #304326;
+    }
+    .capture-receipt {
+      border-color: #6d8d59;
+      background: #f3f7ee;
+    }
+    .source-receipt strong, .boundary-note strong, .proof-note strong, .capture-receipt strong {
+      display: block;
+      margin-bottom: 0.35rem;
+    }
+
+    .model-card, .ownership-card {
+      padding: 1rem;
+      border-top: 4px solid #25261f;
+      background: #faf6ec;
+    }
+    .model-card span, .ownership-card span {
+      display: block;
+      margin-top: 0.4rem;
+      color: #5b5c54;
+      line-height: 1.45;
+    }
+    .question-list {
+      margin: 1.4rem 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    .question-list li {
+      padding: 0.8rem 0;
+      border-top: 1px solid var(--line-paper);
+      color: #44463f;
+    }
+    details {
+      margin-top: 1.2rem;
+      padding: 0.8rem 0;
+      border-top: 1px solid var(--line-paper);
+    }
+    summary {
+      width: fit-content;
+      cursor: pointer;
+      color: #2f626a;
+      font-weight: 700;
+    }
+    pre {
+      max-width: 100%;
+      overflow: auto;
+      padding: 1rem;
+      border-radius: 4px;
+      background: #24251f;
+      color: #f2ede0;
+      font: 400 0.78rem/1.55 var(--mono);
+      white-space: pre-wrap;
+    }
+
+    .app-preview {
+      overflow: hidden;
+      border: 1px solid #7f7768;
+      border-radius: 5px;
+      background: #201b16;
+      color: #efe5d2;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.22);
+    }
+    .app-preview-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 0.9rem;
+      border-bottom: 1px solid #554735;
+      color: #dfc49a;
+      font: 700 0.68rem/1 var(--mono);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .dram-card { padding: 1rem; }
+    .dram-title {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 0.8rem;
+      font: 400 1.5rem/1 var(--serif);
+    }
+    .taste-row {
+      display: grid;
+      grid-template-columns: 0.6fr 1fr 1.2fr;
+      gap: 0.55rem;
+    }
+    .taste-cell {
+      padding-top: 0.55rem;
+      border-top: 2px solid #b56f26;
+      color: #d8cbb8;
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
+    .flavor-ramp {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      height: 22px;
+      margin-top: 1rem;
+    }
+    .flavor-ramp span:nth-child(1) { background: #31231c; }
+    .flavor-ramp span:nth-child(2) { background: #5b4030; }
+    .flavor-ramp span:nth-child(3) { background: #8e5b31; }
+    .flavor-ramp span:nth-child(4) { background: #bd762e; }
+    .flavor-ramp span:nth-child(5) { background: #daa760; }
+    .flavor-ramp span:nth-child(6) { background: #60796f; }
+    .flavor-ramp span:nth-child(7) { background: #e8dfcd; }
+
+    .proof-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.6rem;
+    }
+    .proof-table th, .proof-table td {
+      padding: 0.7rem 0.4rem;
+      border-top: 1px solid var(--line-paper);
+      text-align: start;
+      vertical-align: top;
+    }
+    .proof-table th {
+      color: #6b6c64;
+      font: 700 0.65rem/1.2 var(--mono);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .pass { color: #3f692e; font-weight: 750; }
+
+    /* Variant A: a guided decision canvas. */
+    .layout-a {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr) 300px;
+      min-height: calc(100vh - 96px);
+    }
+    .build-rail {
+      padding: 1.5rem 0.9rem;
+      border-inline-end: 1px solid var(--line);
+      background: var(--bg-raised);
+    }
+    .build-rail h2 {
+      margin: 0 0 1rem;
+      color: var(--text);
+      font: 600 0.82rem/1.3 var(--sans);
+    }
+    .stage-list { display: grid; gap: 0.15rem; }
+    .stage-button {
+      position: relative;
+      display: grid;
+      width: 100%;
+      grid-template-columns: 1.8rem minmax(0, 1fr);
+      gap: 0.6rem;
+      align-items: start;
+      padding: 0.7rem 0.35rem;
+      border: 0;
+      background: transparent;
+      color: #81847a;
+      text-align: start;
+    }
+    .stage-button::after {
+      position: absolute;
+      inset-block-start: 2.55rem;
+      inset-block-end: -0.4rem;
+      inset-inline-start: 1.2rem;
+      width: 1px;
+      background: var(--line);
+      content: "";
+    }
+    .stage-button:last-child::after { display: none; }
+    .stage-index {
+      display: grid;
+      width: 28px;
+      height: 28px;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      font: 700 0.66rem/1 var(--mono);
+    }
+    .stage-label { padding-top: 0.3rem; line-height: 1.3; }
+    .stage-button[aria-current="step"] { color: var(--text); }
+    .stage-button[aria-current="step"] .stage-index {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: var(--accent-ink);
+    }
+    .stage-button.is-past { color: #bac0b2; }
+    .stage-button.is-past .stage-index {
+      border-color: #58784a;
+      background: #243220;
+      color: var(--success);
+    }
+    .decision-stage {
+      min-width: 0;
+      padding: clamp(1rem, 3.2vw, 3rem);
+    }
+    .decision-stage > .paper { max-width: 74rem; margin: 0 auto; }
+    .proof-rail {
+      padding: 1.5rem 1rem;
+      border-inline-start: 1px solid var(--line);
+      background: #131411;
+    }
+    .proof-rail h2 {
+      color: var(--text);
+      font: 400 1.5rem/1.1 var(--serif);
+    }
+    .proof-rail-card {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--line);
+    }
+    .proof-rail-card strong { display: block; margin-bottom: 0.35rem; }
+    .proof-rail-card p {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.84rem;
+      line-height: 1.5;
+    }
+    .proof-status {
+      display: inline-flex;
+      gap: 0.4rem;
+      align-items: center;
+      color: var(--success);
+      font: 700 0.68rem/1.2 var(--mono);
+      text-transform: uppercase;
+    }
+
+    /* Variant B: conversation beside the artifact taking shape. */
+    .layout-b { padding: clamp(1rem, 3vw, 2.5rem); }
+    .journey-strip {
+      display: flex;
+      gap: 0.45rem;
+      max-width: 94rem;
+      margin: 0 auto 1rem;
+      overflow-x: auto;
+    }
+    .journey-strip .stage-button {
+      width: auto;
+      min-width: 130px;
+      grid-template-columns: 1.6rem 1fr;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: var(--bg-raised);
+    }
+    .journey-strip .stage-button::after { display: none; }
+    .chat-layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 0.82fr) minmax(420px, 1.18fr);
+      gap: 1rem;
+      max-width: 94rem;
+      margin: 0 auto;
+    }
+    .transcript {
+      min-height: 680px;
+      padding: 1.2rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg-raised);
+    }
+    .transcript .display-title {
+      display: block;
+      margin: 0;
+      max-width: 10ch;
+      color: var(--text);
+      font: 400 clamp(2.2rem, 4vw, 3.8rem)/0.96 var(--serif);
+      letter-spacing: -0.045em;
+      text-wrap: balance;
+    }
+    .message {
+      max-width: 34rem;
+      margin-top: 1rem;
+      padding: 0.9rem 1rem;
+      border-radius: 12px 12px 12px 3px;
+      background: var(--paper);
+      color: var(--ink);
+      line-height: 1.5;
+    }
+    .message.user {
+      margin-inline-start: auto;
+      border-radius: 12px 12px 3px 12px;
+      background: #2a322e;
+      color: var(--text);
+    }
+    .message small {
+      display: block;
+      margin-bottom: 0.35rem;
+      color: #6a6c64;
+      font: 700 0.63rem/1 var(--mono);
+      text-transform: uppercase;
+    }
+    .message.user small { color: #aebeb3; }
+    .artifact-pane { min-width: 0; }
+    .artifact-pane .paper { min-height: 680px; }
+
+    /* Variant C: the product preview leads, decisions live in a dock. */
+    .layout-c {
+      max-width: 96rem;
+      margin: 0 auto;
+      padding: clamp(1rem, 3vw, 2.5rem);
+    }
+    .preview-first-head {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: end;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    .preview-first-head .display-title {
+      display: block;
+      margin: 0;
+      max-width: 15ch;
+      color: var(--text);
+      font: 400 clamp(2.6rem, 5vw, 5.2rem)/0.96 var(--serif);
+      letter-spacing: -0.045em;
+      text-wrap: balance;
+    }
+    .preview-first-head p { max-width: 42rem; color: var(--text-muted); }
+    .preview-stage {
+      min-height: 540px;
+      padding: clamp(1rem, 4vw, 4rem);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background:
+        linear-gradient(135deg, rgba(240, 173, 78, 0.12), transparent 42%),
+        #1a1814;
+    }
+    .preview-stage .app-preview {
+      max-width: 62rem;
+      min-height: 360px;
+      margin: 0 auto;
+      transform: perspective(1200px) rotateX(1deg);
+    }
+    .preview-stage .dram-card { padding: clamp(1.2rem, 3vw, 2.5rem); }
+    .preview-stage .dram-title { font-size: clamp(1.8rem, 4vw, 3.3rem); }
+    .decision-dock {
+      position: relative;
+      z-index: 2;
+      max-width: 76rem;
+      margin: -72px auto 0;
+    }
+    .decision-dock .stage-content { padding: clamp(1rem, 2.5vw, 2rem); }
+    .mini-proof {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.7rem;
+      max-width: 76rem;
+      margin: 1rem auto 0;
+    }
+    .mini-proof span {
+      padding: 0.55rem 0.7rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--text-muted);
+      font: 600 0.72rem/1.2 var(--mono);
+    }
+
+    .variant-switcher {
+      position: fixed;
+      z-index: 80;
+      inset-block-end: max(16px, env(safe-area-inset-bottom));
+      inset-inline-start: 50%;
+      display: grid;
+      grid-template-columns: 44px minmax(190px, auto) 44px;
+      align-items: center;
+      transform: translateX(-50%);
+      overflow: hidden;
+      border: 1px solid #6d6f64;
+      border-radius: 999px;
+      background: #f6f1e5;
+      color: #171813;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
+    }
+    .variant-switcher button {
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font-size: 1.1rem;
+    }
+    .variant-switcher button:active { background: #e2d9c6; }
+    .variant-label {
+      padding: 0.72rem 0.8rem;
+      border-inline: 1px solid #d0c6b2;
+      text-align: center;
+    }
+    .variant-label strong, .variant-label span { display: block; }
+    .variant-label span {
+      margin-top: 0.15rem;
+      color: #5f615a;
+      font-size: 0.68rem;
+    }
+
+    @media (max-width: 1060px) {
+      .layout-a { grid-template-columns: 190px minmax(0, 1fr); }
+      .proof-rail { grid-column: 1 / -1; border-block-start: 1px solid var(--line); border-inline-start: 0; }
+      .proof-rail-inner { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+      .chat-layout { grid-template-columns: 1fr; }
+      .transcript, .artifact-pane .paper { min-height: auto; }
+    }
+
+    @media (max-width: 760px) {
+      .mast {
+        grid-template-columns: 1fr auto;
+        gap: 0.7rem;
+        padding: 0.7rem 0.8rem;
+      }
+      .scenario-tabs { grid-column: 1 / -1; grid-row: 2; }
+      .contract-label { font-size: 0.6rem; }
+      .layout-a { display: block; }
+      .build-rail {
+        position: sticky;
+        inset-block-start: 114px;
+        z-index: 30;
+        overflow-x: auto;
+        padding: 0.45rem;
+        border-block-end: 1px solid var(--line);
+        border-inline-end: 0;
+      }
+      .build-rail h2 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+      .stage-list { display: flex; min-width: max-content; }
+      .stage-button { width: auto; min-width: 104px; grid-template-columns: 1.6rem 1fr; }
+      .stage-button::after { display: none; }
+      .stage-label { font-size: 0.72rem; }
+      .decision-stage { padding: 0.8rem; }
+      .proof-rail-inner { grid-template-columns: 1fr; }
+      .choice-grid, .concept-grid, .model-grid, .proof-grid, .ownership-grid, .example-pair {
+        grid-template-columns: 1fr;
+      }
+      .composer { grid-template-columns: 1fr; }
+      .composer .primary { width: 100%; }
+      .stage-actions .push { margin-inline-start: 0; }
+      .stage-actions button { flex: 1 1 auto; }
+      .layout-b, .layout-c { padding: 0.8rem; }
+      .journey-strip .stage-button { min-width: 110px; }
+      .preview-stage { min-height: 390px; padding: 0.8rem; }
+      .decision-dock { margin-top: -30px; }
+      .taste-row { grid-template-columns: 1fr; }
+      .variant-switcher { width: calc(100% - 32px); max-width: 360px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+    }
+
+    @media print {
+      .prototype-bar, .variant-switcher, .mast { display: none; }
+      body { padding: 0; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to current decision</a>
+  <header>
+    <div class="prototype-bar">Prototype · explore three ways to create an app</div>
+    <div class="mast">
+      <div class="wordmark">Domain Foundry</div>
+      <div class="scenario-tabs" role="tablist" aria-label="Creation scenarios">
+        <button class="scenario-tab" type="button" role="tab" data-scenario="broad">Broad · whisky</button>
+        <button class="scenario-tab" type="button" role="tab" data-scenario="specific">Specific · sourdough</button>
+        <button class="scenario-tab" type="button" role="tab" data-scenario="keyless">Research unavailable · aquarium</button>
+      </div>
+      <div class="contract-label">draft experience</div>
+    </div>
+  </header>
+
+  <div id="variant-root"></div>
+
+  <nav class="variant-switcher" aria-label="Prototype layout variants">
+    <button type="button" data-variant-prev aria-label="Previous layout variant">←</button>
+    <div class="variant-label" aria-live="polite">
+      <strong id="variant-name"></strong>
+      <span>Use ← and → when no field is active</span>
+    </div>
+    <button type="button" data-variant-next aria-label="Next layout variant">→</button>
+  </nav>
+
+  <template id="layout-a">
+    <div class="layout-a">
+      <aside class="build-rail">
+        <h2>Your app</h2>
+        <nav class="stage-list" aria-label="Creation stages"></nav>
+      </aside>
+      <main class="decision-stage" id="main-content" tabindex="-1"></main>
+      <aside class="proof-rail" aria-labelledby="proof-rail-title">
+        <div class="proof-rail-inner">
+          <div>
+            <p class="eyebrow on-dark">app notes</p>
+            <h2 id="proof-rail-title">Your app so far</h2>
+          </div>
+          <div class="proof-rail-card">
+            <strong>Starting with</strong>
+            <p data-proof-input></p>
+          </div>
+          <div class="proof-rail-card">
+            <strong>Based on</strong>
+            <p data-proof-evidence></p>
+          </div>
+          <div class="proof-rail-card">
+            <span class="proof-status">● next</span>
+            <p data-proof-status></p>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </template>
+
+  <template id="layout-b">
+    <main class="layout-b" id="main-content" tabindex="-1">
+      <nav class="journey-strip" aria-label="Creation stages"></nav>
+      <div class="chat-layout">
+        <section class="transcript" aria-labelledby="conversation-title">
+          <p class="eyebrow on-dark">conversation</p>
+          <p class="display-title" id="conversation-title">Talk it through.</p>
+          <div data-transcript></div>
+        </section>
+        <section class="artifact-pane" aria-label="App taking shape"></section>
+      </div>
+    </main>
+  </template>
+
+  <template id="layout-c">
+    <main class="layout-c" id="main-content" tabindex="-1">
+      <header class="preview-first-head">
+        <div>
+          <p class="eyebrow on-dark">app first</p>
+          <p class="display-title">Your app, taking shape.</p>
+        </div>
+        <p>Keep the app in view while you make each choice. Checks stay close by without taking over the page.</p>
+      </header>
+      <section class="preview-stage" aria-label="Emerging app preview"></section>
+      <section class="decision-dock paper" aria-label="Current decision"></section>
+      <div class="mini-proof" aria-label="Current app summary"></div>
+    </main>
+  </template>
+
+  <template id="app-preview-template">
+    <div class="app-preview" role="img" aria-label="Tasting Bench preview showing a Lagavulin tasting note with score, serving, nose, finish, and flavor profile">
+      <div class="app-preview-head"><span>Tasting Bench</span><span>Tonight</span></div>
+      <div class="dram-card">
+        <div class="dram-title"><span>Lagavulin 16</span><small>8.5 / 10</small></div>
+        <div class="taste-row">
+          <div class="taste-cell"><strong>Serve</strong><br>neat</div>
+          <div class="taste-cell"><strong>Nose</strong><br>smoke · dried fruit</div>
+          <div class="taste-cell"><strong>Finish</strong><br>long · warm · maritime</div>
+        </div>
+        <div class="flavor-ramp" role="img" aria-label="Flavor profile: smoke and fruit lead, with maritime and oak notes">
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template id="broad-start">
+    <article class="stage-content stage-copy">
+      <p class="eyebrow">01 · start</p>
+      <h1>What would you like an app for?</h1>
+      <p class="lede">A topic is enough. If it could lead to different apps, you can choose what fits before anything is built.</p>
+      <label class="composer">
+        <span class="eyebrow" style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)">Interest</span>
+        <textarea rows="2" aria-label="Describe your interest" placeholder="whisky">whisky</textarea>
+        <button class="primary" type="button" data-next>Continue</button>
+      </label>
+      <div class="stage-actions">
+        <span class="paper-muted">Start with what you know. You will not need to choose technical settings.</span>
+      </div>
+    </article>
+  </template>
+
+  <template id="broad-narrow">
+    <article class="stage-content stage-copy">
+      <p class="eyebrow">02 · find the right focus</p>
+      <h1>What would you like to do with whisky?</h1>
+      <p class="lede">Select whatever fits. You can choose more than one or add your own words.</p>
+      <div class="choice-grid">
+        <button class="choice-card" type="button" aria-pressed="true">
+          <strong>Taste and compare whisky</strong>
+          <span>Keep tasting notes and notice how a bottle changes.</span>
+        </button>
+        <button class="choice-card" type="button" aria-pressed="true">
+          <strong>Keep track of bottles</strong>
+          <span>Remember what you bought, opened, and still have.</span>
+        </button>
+        <button class="choice-card" type="button" aria-pressed="false">
+          <strong>Learn regions and styles</strong>
+          <span>Build a guided tasting and study practice.</span>
+        </button>
+        <button class="choice-card" type="button" aria-pressed="false">
+          <strong>Make and improve drinks</strong>
+          <span>Track recipes, substitutions, and results.</span>
+        </button>
+      </div>
+      <label class="composer">
+        <input aria-label="Add another way you enjoy whisky" value="Tasting matters most, but connect each note to a bottle">
+        <button class="primary" type="button" data-next>Continue</button>
+      </label>
+      <div class="stage-actions">
+        <button class="secondary" type="button" data-prev>Back</button>
+        <span class="paper-muted">No app has been chosen yet. You can change this later.</span>
+      </div>
+    </article>
+  </template>
+
+  <template id="broad-examples">
+    <article class="stage-content stage-copy">
+      <p class="eyebrow">03 · use your own words</p>
+      <h1>Add two notes you might write.</h1>
+      <p class="lede">The first helps shape the app. The second checks the result after it is built.</p>
+      <div class="example-pair">
+        <section class="example">
+          <span class="index">1</span>
+          <h2>First note</h2>
+          <blockquote>“peated dram, iodine and orchard fruit, 12 year, neat”</blockquote>
+          <p class="paper-muted">Used to shape the app.</p>
+        </section>
+        <section class="example sealed">
+          <span class="index">2</span>
+          <h2>Second note</h2>
+          <blockquote>“opened the Ardbeg 10 tonight, about two-thirds left”</blockquote>
+          <p class="paper-muted">Saved for a final check.</p>
+        </section>
+      </div>
+      <div class="source-receipt">
+        <strong>Your focus</strong>
+        You taste and compare whisky. Each dram should connect to the bottle behind it, so you can see how the bottle and your palate change.
+      </div>
+      <div class="stage-actions">
+        <button class="secondary" type="button" data-prev>Change practice</button>
+        <button class="primary push" type="button" data-next>Find app ideas</button>
+      </div>
+    </article>
+  </template>
+
+  <template id="broad-research">
+    <article class="stage-content stage-copy">
+      <p class="eyebrow">04 · finding useful patterns</p>
+      <h1>Looking at how people taste and compare whisky.</h1>
+      <p class="lede">This can take a minute or two. You can see what is finished while the next step runs.</p>
+      <ol class="progress-list">
+        <li class="done"><span><strong>Your focus</strong><br><span class="paper-muted">Tasting comes first, with bottles close by.</span></span><small>done</small></li>
+        <li class="done"><span><strong>Useful whisky terms and patterns</strong><br><span class="paper-muted">Four reviewed sources about tasting, bottle history, and accessible apps.</span></span><small>done</small></li>
+        <li class="active"><span><strong>Different ways the app could work</strong><br><span class="paper-muted">Comparing useful daily routines.</span></span><small>18 s</small></li>
+        <li><span><strong>Three app ideas</strong></span><small>next</small></li>
+      </ol>
+      <details>
+        <summary>How this search works</summary>
+        <p class="paper-muted">Uses four reviewed sources and your configured OpenAI model. Estimated cost for this run: $0.18. No local files are shared.</p>
+      </details>
+      <div class="stage-actions">
+        <button class="secondary" type="button" data-prev>Review examples</button>
+        <button class="primary push" type="button" data-next>See app ideas</button>
+      </div>
+    </article>
+  </template>
+
+  <template id="broad-concepts">
+    <article class="stage-content stage-copy">
+      <p class="eyebrow">05 · choose a direction</p>
+      <h1>Which one feels closest?</h1>
+      <p class="lede">Each idea gives you a different place to start. You can choose one or mix parts from several.</p>
+      <div class="concept-grid">
+        <button class="concept-card" type="button" aria-pressed="false">
+          <small>Starts with your collection</small>
+          <strong>Bottle shelf</strong>
+          <span>Start with what you own. Open a bottle to see every pour and change.</span>
+          <ul><li>Easy to see what you own</li><li>A tasting takes an extra step</li></ul>
+        </button>
+        <button class="concept-card" type="button" aria-pressed="true">
+          <small>Starts with a tasting · recommended</small>
+          <strong>Tasting Bench</strong>
+          <span>Start with a dram. Compare nose, palate, finish, serving, and bottle context.</span>
+          <ul><li>Quick to add a tasting</li><li>Bottle details stay close by</li></ul>
+        </button>
+        <button class="concept-card" type="button" aria-pressed="false">
+          <small>Starts with learning</small>
+          <strong>Palate atlas</strong>
+          <span>Start with flavor language and discover patterns across bottles.</span>
+          <ul><li>Helps you notice your taste</li><li>Gets more useful as you add notes</li></ul>
+        </button>
+      </div>
+      <div class="source-receipt">
+        <strong>Your choice</strong>
+        Start with Tasting Bench and add Bottle Shelf’s view of opening dates and remaining levels.
+      </div>
+      <div class="stage-actions">
+        <button class="secondary" type="button" data-prev>Change the focus</button>
+        <button class="primary push" type="button" data-next>Use this idea</button>
+      </div>
+    </article>
+  </template>
+
+  <template id="broad-model">
+    <article class="stage-content stage-copy">
+      <p class="eyebrow">06 · check what you will keep</p>
+      <h1>Here is what Tasting Bench will keep track of.</h1>
+      <p class="lede">Check that these details and questions fit how you think about whisky. You can change any part.</p>
+      <div class="model-grid">
+        <section class="model-card"><h2>Bottle</h2><span>Distillery, expression, age statement, cask, opened date, remaining level.</span></section>
+        <section class="model-card"><h2>Dram</h2><span>Time, bottle, serving, nose, palate, finish, descriptors, score.</span></section>
+        <section class="model-card"><h2>Edit history</h2><span>Every correction, with the earlier value and reason saved.</span></section>
+      </div>
+      <ul class="question-list">
+        <li>Which bottles produce the notes I enjoy most?</li>
+        <li>How did one bottle change after opening?</li>
+        <li>What have I tasted from one region, cask, or distillery?</li>
+      </ul>
+      <details>
+        <summary>See technical details</summary>
+        <pre>Bottle 1 ── has many ── Dram
+Dram   1 ── has many ── Revision
+Index: bottle + tasted_at
+Constraint: score is between 0 and 10</pre>
+      </details>
+      <div class="stage-actions">
+        <button class="secondary" type="button" data-prev>Choose another idea</button>
+        <button class="primary push" type="button" data-next>Build Tasting Bench</button>
+      </div>
+    </article>
+  </template>
+
+  <template id="broad-build">
+    <article class="stage-content stage-copy">
+      <p class="eyebrow">07 · building Tasting Bench</p>
+      <h1>Putting your app together.</h1>
+      <p class="lede">Your choices are saved as each part finishes. You can stop and come back without losing them.</p>
+      <ol class="progress-list">
+        <li class="done"><span><strong>Organized bottles and tastings</strong><br><span class="paper-muted">Dates, links, edits, and common questions.</span></span><small>done</small></li>
+        <li class="done"><span><strong>Made the app</strong><br><span class="paper-muted">The version shown here is the version you can export.</span></span><small>done</small></li>
+        <li class="done"><span><strong>Checked that pasted text stays text</strong></span><small>done</small></li>
+        <li class="active"><span><strong>Checking keyboard and small screens</strong></span><small>34 s</small></li>
+        <li><span><strong>Trying your second note</strong></span><small>next</small></li>
+      </ol>
+      <div class="stage-actions">
+        <button class="secondary" type="button">Stop for now</button>
+        <button class="primary push" type="button" data-next>See the app</button>
+      </div>
+    </article>
+  </template>
+
+  <template id="broad-proof">
+    <article class="stage-content stage-copy">
+      <p class="eyebrow">08 · try it</p>
+      <h1>Tasting Bench is ready to try.</h1>
+      <p class="lede">This is the same app you will use in Domain Foundry or export for yourself.</p>
+      <div class="proof-grid">
+        <section data-app-preview></section>
+        <section>
+          <div class="proof-note">
+            <strong>Your second note went to the right place</strong>
+            “opened the Ardbeg 10 tonight, about two-thirds left”<br>
+            → Bottle · opened tonight · level about 67%
+          </div>
+          <table class="proof-table">
+            <thead><tr><th>Check</th><th>Result</th></tr></thead>
+            <tbody>
+              <tr><td>Your two notes</td><td class="pass">2 of 2</td></tr>
+              <tr><td>Records and questions</td><td class="pass">Passed</td></tr>
+              <tr><td>Pasted text stays text</td><td class="pass">Passed</td></tr>
+              <tr><td>Keyboard and small screens</td><td class="pass">Passed</td></tr>
+              <tr><td>Preview and export match</td><td class="pass">Matched</td></tr>
+            </tbody>
+          </table>
+        </section>
+      </div>
+      <div class="stage-actions">
+        <button class="secondary" type="button" data-prev>Change what it tracks</button>
+        <button class="primary push" type="button" data-next>Try Tasting Bench</button>
+      </div>
+    </article>
+  </template>
+
+  <template id="broad-ready">
+    <article class="stage-content stage-copy">
+      <p class="eyebrow">09 · your first tasting</p>
+      <h1>Your first tasting is saved.</h1>
+      <p class="lede">Tasting Bench is ready because it handled a real note and kept your correction.</p>
+      <div class="capture-receipt">
+        <strong>Saved to Tasting Bench → Dram</strong>
+        Lagavulin 16 · neat · smoke, dried fruit, long finish · score 8.5
+      </div>
+      <details>
+        <summary>See filing details</summary>
+        <p class="paper-muted">Filed as a tasting · confidence 92% · receipt 01K…</p>
+      </details>
+      <div class="source-receipt">
+        <strong>Correction saved</strong>
+        “8/10” became “8.5/10.” The earlier value and your reason stay in the edit history.
+      </div>
+      <div class="ownership-grid">
+        <section class="ownership-card"><h2>Use it</h2><span>The app is installed on this computer.</span></section>
+        <section class="ownership-card"><h2>See how it was made</h2><span>Review the sources, choices, and checks behind it.</span></section>
+        <section class="ownership-card"><h2>Export it</h2><span>Take the app, data, sources, and edit history with you.</span></section>
+      </div>
+      <div class="stage-actions">
+        <button class="secondary" type="button" data-prev>See checks</button>
+        <button class="primary push" type="button">Open Tasting Bench</button>
+      </div>
+    </article>
+  </template>
+
+  <template id="specific-start">
+    <article class="stage-content stage-copy">
+      <p class="eyebrow">01 · check the focus</p>
+      <h1>Compare my sourdough fermentation and crumb.</h1>
+      <p class="lede">This already gives enough detail to find useful app ideas. Change anything that feels off before you continue.</p>
+      <div class="source-receipt">
+        <strong>Your focus</strong>
+        You record recipes, fermentation conditions, and outcomes so you can compare what produced a better loaf.
+      </div>
+      <div class="stage-actions">
+        <button class="secondary" type="button">Change summary</button>
+        <button class="primary push" type="button" data-next>Continue</button>
+      </div>
+    </article>
+  </template>
+
+  <template id="specific-examples">
+    <article class="stage-content stage-copy">
+      <p class="eyebrow">02 · use your own words</p>
+      <h1>Add two notes you might write.</h1>
+      <div class="example-pair">
+        <section class="example"><span class="index">1</span><h2>First note</h2><blockquote>“78% hydration, bulk 5 hours at 24C, open crumb”</blockquote><p class="paper-muted">Used to shape the app.</p></section>
+        <section class="example sealed"><span class="index">2</span><h2>Second note</h2><blockquote>“fed starter 1:2:2, doubled in 4 hours”</blockquote><p class="paper-muted">Saved for a final check.</p></section>
+      </div>
+      <div class="stage-actions"><button class="secondary" type="button" data-prev>Back</button><button class="primary push" type="button" data-next>Find app ideas</button></div>
+    </article>
+  </template>
+
+  <template id="specific-research">
+    <article class="stage-content stage-copy">
+      <p class="eyebrow">03 · finding useful patterns</p>
+      <h1>Looking at sourdough practice.</h1>
+      <p class="lede">Reviewed sourdough material is already available, so this step should be quicker.</p>
+      <ol class="progress-list">
+        <li class="done"><span><strong>Useful fermentation terms and patterns</strong></span><small>done</small></li>
+        <li class="done"><span><strong>Your comparison goal</strong></span><small>done</small></li>
+        <li class="active"><span><strong>Three ways the app could work</strong></span><small>12 s</small></li>
+      </ol>
+      <div class="stage-actions"><button class="secondary" type="button" data-prev>Review examples</button><button class="primary push" type="button" data-next>Compare apps</button></div>
+    </article>
+  </template>
+
+  <template id="specific-concepts">
+    <article class="stage-content stage-copy">
+      <p class="eyebrow">04 · choose a direction</p>
+      <h1>Three ways to improve a bake.</h1>
+      <div class="concept-grid">
+        <button class="concept-card" type="button" aria-pressed="true"><small>Starts with comparison</small><strong>Bake Lab</strong><span>Compare recipes, fermentation, and outcomes side by side.</span></button>
+        <button class="concept-card" type="button" aria-pressed="false"><small>Starts with the bake</small><strong>Fermentation Clock</strong><span>Follow one bake through feed, mix, fold, proof, and bake.</span></button>
+        <button class="concept-card" type="button" aria-pressed="false"><small>Starts with an experiment</small><strong>Loaf Trials</strong><span>Change one variable, record a hunch, and compare results.</span></button>
+      </div>
+      <div class="stage-actions"><button class="secondary" type="button" data-prev>Revise goal</button><button class="primary push" type="button" data-next>Build Bake Lab</button></div>
+    </article>
+  </template>
+
+  <template id="specific-ready">
+    <article class="stage-content stage-copy">
+      <p class="eyebrow">05 · ready to use</p>
+      <h1>Bake Lab is ready to use.</h1>
+      <div class="proof-note"><strong>Your second note went to the right place</strong>Starter feed → 1:2:2 ratio · doubled in 4 hours.</div>
+      <div class="capture-receipt"><strong>First real bake saved</strong>78% hydration · five-hour bulk · 24C · open crumb.</div>
+      <div class="stage-actions"><button class="secondary" type="button" data-prev>Review build</button><button class="primary push" type="button">Open Bake Lab</button></div>
+    </article>
+  </template>
+
+  <template id="keyless-start">
+    <article class="stage-content stage-copy">
+      <p class="eyebrow">01 · start with your notes</p>
+      <h1>You can still start a tank journal.</h1>
+      <p class="lede">It will use only the examples you give. You can add researched aquarium guidance later.</p>
+      <div class="boundary-note">
+        <strong>Built from your notes</strong>
+        Research is not available right now. The journal can record what you show it, but it will not add care advice on its own.
+      </div>
+      <div class="stage-actions"><button class="secondary" type="button">Set up research</button><button class="primary push" type="button" data-next>Continue with my notes</button></div>
+    </article>
+  </template>
+
+  <template id="keyless-examples">
+    <article class="stage-content stage-copy">
+      <p class="eyebrow">02 · use your own words</p>
+      <h1>Add two aquarium notes you might write.</h1>
+      <div class="example-pair">
+        <section class="example"><span class="index">1</span><h2>First note</h2><blockquote>“added six neon tetras, 78F, pH 6.8”</blockquote></section>
+        <section class="example sealed"><span class="index">2</span><h2>Second note</h2><blockquote>“ammonia 0, nitrite 0, nitrate 15 ppm after water change”</blockquote></section>
+      </div>
+      <div class="stage-actions"><button class="secondary" type="button" data-prev>Back</button><button class="primary push" type="button" data-next>Shape the journal</button></div>
+    </article>
+  </template>
+
+  <template id="keyless-draft">
+    <article class="stage-content stage-copy">
+      <p class="eyebrow">03 · check what you will keep</p>
+      <h1>Here is what the first version can keep track of.</h1>
+      <p class="lede">It follows your examples and does not add care advice or species needs.</p>
+      <div class="model-grid">
+        <section class="model-card"><h2>Livestock note</h2><span>Species words, count, date, temperature, and notes.</span></section>
+        <section class="model-card"><h2>Water reading</h2><span>pH, ammonia, nitrite, nitrate, temperature, and time.</span></section>
+        <section class="model-card"><h2>Maintenance</h2><span>Water change and a plain note. No inferred advice.</span></section>
+      </div>
+      <div class="boundary-note"><strong>What research could add</strong>More aquarium terms, tank cycles, care limits, and different app ideas.</div>
+      <div class="stage-actions"><button class="secondary" type="button" data-prev>Change examples</button><button class="primary push" type="button" data-next>Try my second note</button></div>
+    </article>
+  </template>
+
+  <template id="keyless-proof">
+    <article class="stage-content stage-copy">
+      <p class="eyebrow">04 · try it</p>
+      <h1>Your second water reading went to the right place.</h1>
+      <div class="proof-note"><strong>Saved as a water reading</strong>Ammonia 0 · nitrite 0 · nitrate 15 ppm · after water change.</div>
+      <p class="lede">New entries will ask for your review because this version is based only on your notes.</p>
+      <div class="stage-actions"><button class="secondary" type="button" data-prev>Change draft</button><button class="primary push" type="button" data-next>Save one real reading</button></div>
+    </article>
+  </template>
+
+  <template id="keyless-ready">
+    <article class="stage-content stage-copy">
+      <p class="eyebrow">05 · ready to use</p>
+      <h1>Tank Journal is ready to use.</h1>
+      <div class="capture-receipt"><strong>First real reading saved</strong>pH 6.9 · 78F · nitrate 10 ppm.</div>
+      <div class="ownership-grid">
+        <section class="ownership-card"><h2>Use it offline</h2><span>Add notes, make corrections, see history, and export your data.</span></section>
+        <section class="ownership-card"><h2>Add research later</h2><span>Keep these entries if you add researched aquarium guidance.</span></section>
+        <section class="ownership-card"><h2>Clear limits</h2><span>The journal records your notes without presenting care advice.</span></section>
+      </div>
+      <div class="stage-actions"><button class="secondary" type="button" data-prev>See checks</button><button class="primary push" type="button">Open Tank Journal</button></div>
+    </article>
+  </template>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var variants = [
+        { id: "A", name: "A — Guided" },
+        { id: "B", name: "B — Conversation" },
+        { id: "C", name: "C — App first" }
+      ];
+
+      var flows = {
+        broad: {
+          input: "whisky",
+          evidence: "4 reviewed sources and your notes",
+          templates: [
+            ["Start", "broad-start"],
+            ["Focus", "broad-narrow"],
+            ["Examples", "broad-examples"],
+            ["Explore", "broad-research"],
+            ["Choose", "broad-concepts"],
+            ["Shape", "broad-model"],
+            ["Build", "broad-build"],
+            ["Try", "broad-proof"],
+            ["Ready", "broad-ready"]
+          ],
+          userMessages: [
+            "whisky",
+            "Tasting matters most, but connect each note to a bottle.",
+            "peated dram, iodine and orchard fruit, 12 year, neat",
+            "Find a few app ideas.",
+            "Use Tasting Bench with the bottle shelf.",
+            "That looks right.",
+            "Build it.",
+            "My second note went to the right place.",
+            "Score was 8.5, not 8."
+          ]
+        },
+        specific: {
+          input: "compare my sourdough fermentation and crumb",
+          evidence: "Reviewed sourdough sources and your notes",
+          templates: [
+            ["Focus", "specific-start"],
+            ["Examples", "specific-examples"],
+            ["Explore", "specific-research"],
+            ["Choose", "specific-concepts"],
+            ["Ready", "specific-ready"]
+          ],
+          userMessages: [
+            "Compare my sourdough fermentation and crumb.",
+            "78% hydration, bulk 5 hours at 24C, open crumb.",
+            "Find a few app ideas.",
+            "Build Bake Lab.",
+            "The starter feed and real bake filed."
+          ]
+        },
+        keyless: {
+          input: "aquarium",
+          evidence: "Your notes for now",
+          templates: [
+            ["Start", "keyless-start"],
+            ["Examples", "keyless-examples"],
+            ["Shape", "keyless-draft"],
+            ["Try", "keyless-proof"],
+            ["Ready", "keyless-ready"]
+          ],
+          userMessages: [
+            "aquarium",
+            "added six neon tetras, 78F, pH 6.8",
+            "Keep it to what my notes show.",
+            "My water reading went to the right place.",
+            "Keep using my notes for now."
+          ]
+        }
+      };
+
+      var params = new URLSearchParams(window.location.search);
+      var initialVariant = String(params.get("variant") || "A").toUpperCase();
+      var variantIndex = Math.max(0, variants.findIndex(function (item) { return item.id === initialVariant; }));
+      var scenario = params.get("scenario") || "broad";
+      if (!flows[scenario]) scenario = "broad";
+      var step = 0;
+
+      function cloneTemplate(id) {
+        return document.getElementById(id).content.cloneNode(true);
+      }
+
+      function flow() {
+        return flows[scenario];
+      }
+
+      function currentTemplateId() {
+        return flow().templates[step][1];
+      }
+
+      function stageStatus() {
+        var name = flow().templates[step][0];
+        if (name === "Start") return "Describe what you would like to do.";
+        if (name === "Focus") return "Choose what fits.";
+        if (name === "Examples") return "Add two notes you might write.";
+        if (name === "Explore") return "See what is finished while this runs.";
+        if (name === "Choose") return "Choose one idea or mix them.";
+        if (name === "Shape") return "Check what the app will keep track of.";
+        if (name === "Ready") return "Open the app or export it.";
+        if (name === "Try") return "Check the app with a real note.";
+        if (name === "Build") return "Your choices are saved as each part finishes.";
+        return "Continue when this feels right.";
+      }
+
+      function buildStageButtons(container) {
+        flow().templates.forEach(function (item, index) {
+          var button = document.createElement("button");
+          button.type = "button";
+          button.className = "stage-button" + (index < step ? " is-past" : "");
+          if (index === step) button.setAttribute("aria-current", "step");
+          button.innerHTML =
+            '<span class="stage-index">' +
+            String(index + 1).padStart(2, "0") +
+            '</span><span class="stage-label">' +
+            item[0] +
+            "</span>";
+          button.addEventListener("click", function () {
+            step = index;
+            render();
+          });
+          container.appendChild(button);
+        });
+      }
+
+      function mountStage(container) {
+        container.appendChild(cloneTemplate(currentTemplateId()));
+        var previewSlot = container.querySelector("[data-app-preview]");
+        if (previewSlot) previewSlot.appendChild(cloneTemplate("app-preview-template"));
+        container.querySelectorAll("[data-next]").forEach(function (button) {
+          button.addEventListener("click", function () {
+            step = Math.min(flow().templates.length - 1, step + 1);
+            render();
+          });
+        });
+        container.querySelectorAll("[data-prev]").forEach(function (button) {
+          button.addEventListener("click", function () {
+            step = Math.max(0, step - 1);
+            render();
+          });
+        });
+        container.querySelectorAll(".choice-card").forEach(function (button) {
+          button.addEventListener("click", function () {
+            button.setAttribute("aria-pressed", String(button.getAttribute("aria-pressed") !== "true"));
+          });
+        });
+        container.querySelectorAll(".concept-card").forEach(function (button) {
+          button.addEventListener("click", function () {
+            container.querySelectorAll(".concept-card").forEach(function (peer) {
+              peer.setAttribute("aria-pressed", String(peer === button));
+            });
+          });
+        });
+      }
+
+      function renderA(root) {
+        root.appendChild(cloneTemplate("layout-a"));
+        buildStageButtons(root.querySelector(".stage-list"));
+        var paper = document.createElement("section");
+        paper.className = "paper";
+        root.querySelector(".decision-stage").appendChild(paper);
+        mountStage(paper);
+        root.querySelector("[data-proof-input]").textContent = flow().input;
+        root.querySelector("[data-proof-evidence]").textContent = flow().evidence;
+        root.querySelector("[data-proof-status]").textContent = stageStatus();
+      }
+
+      function renderTranscript(container) {
+        var stageResponses = {
+          Start: "Your starting point is saved.",
+          Focus: "Your focus is saved.",
+          Examples: "Your examples are saved.",
+          Explore: "The app ideas are ready.",
+          Choose: "Your app idea is saved.",
+          Shape: "What the app will track is saved.",
+          Build: "The app is built and ready to try.",
+          Try: "Your check is saved.",
+          Ready: "Your app is ready."
+        };
+        var assistant = document.createElement("div");
+        assistant.className = "message";
+        assistant.innerHTML =
+          "<small>Domain Foundry</small>" +
+          "Start with what you want to do. The app ideas come next.";
+        container.appendChild(assistant);
+
+        for (var index = 0; index <= step; index += 1) {
+          var user = document.createElement("div");
+          user.className = "message user";
+          user.innerHTML = "<small>You</small>" + flow().userMessages[index];
+          container.appendChild(user);
+
+          if (index < step) {
+            var response = document.createElement("div");
+            response.className = "message";
+            response.innerHTML =
+              "<small>Domain Foundry</small>" +
+              stageResponses[flow().templates[index][0]] +
+              " You can go back and make changes.";
+            container.appendChild(response);
+          }
+        }
+      }
+
+      function renderB(root) {
+        root.appendChild(cloneTemplate("layout-b"));
+        buildStageButtons(root.querySelector(".journey-strip"));
+        renderTranscript(root.querySelector("[data-transcript]"));
+        var paper = document.createElement("section");
+        paper.className = "paper";
+        root.querySelector(".artifact-pane").appendChild(paper);
+        mountStage(paper);
+      }
+
+      function renderC(root) {
+        root.appendChild(cloneTemplate("layout-c"));
+        root.querySelector(".preview-stage").appendChild(cloneTemplate("app-preview-template"));
+        mountStage(root.querySelector(".decision-dock"));
+        [
+          flow().templates[step][0] + " · step " + (step + 1) + " of " + flow().templates.length,
+          flow().evidence,
+          stageStatus()
+        ].forEach(function (text) {
+          var chip = document.createElement("span");
+          chip.textContent = text;
+          root.querySelector(".mini-proof").appendChild(chip);
+        });
+      }
+
+      function updateScenarioTabs() {
+        document.querySelectorAll("[data-scenario]").forEach(function (button) {
+          var active = button.getAttribute("data-scenario") === scenario;
+          button.setAttribute("aria-selected", String(active));
+          button.tabIndex = active ? 0 : -1;
+          button.onclick = function () {
+            scenario = button.getAttribute("data-scenario");
+            step = 0;
+            updateUrl();
+            render();
+          };
+        });
+      }
+
+      function updateUrl() {
+        var next = new URL(window.location.href);
+        next.searchParams.set("variant", variants[variantIndex].id);
+        next.searchParams.set("scenario", scenario);
+        window.history.replaceState(null, "", next);
+      }
+
+      function cycleVariant(direction) {
+        variantIndex = (variantIndex + direction + variants.length) % variants.length;
+        updateUrl();
+        render();
+      }
+
+      function render() {
+        var root = document.getElementById("variant-root");
+        root.replaceChildren();
+        var variant = variants[variantIndex].id;
+        if (variant === "A") renderA(root);
+        if (variant === "B") renderB(root);
+        if (variant === "C") renderC(root);
+        document.getElementById("variant-name").textContent = variants[variantIndex].name;
+        updateScenarioTabs();
+        var main = document.getElementById("main-content");
+        if (main) {
+          main.setAttribute("aria-label", flow().templates[step][0] + " stage");
+          main.focus({ preventScroll: true });
+          window.scrollTo(0, 0);
+          window.setTimeout(function () {
+            main.focus({ preventScroll: true });
+            window.scrollTo(0, 0);
+          }, 0);
+        }
+      }
+
+      document.querySelector("[data-variant-prev]").addEventListener("click", function () { cycleVariant(-1); });
+      document.querySelector("[data-variant-next]").addEventListener("click", function () { cycleVariant(1); });
+      document.addEventListener("keydown", function (event) {
+        var target = event.target;
+        if (target instanceof HTMLElement && target.closest("input, textarea, [contenteditable='true']")) return;
+        if (event.key === "ArrowLeft") cycleVariant(-1);
+        if (event.key === "ArrowRight") cycleVariant(1);
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>

@@ -114,4 +114,4 @@ domain-foundry roamboard sync --shadow --feed path/to/feed.json \
 
 Shadow reports land under `{DF_HOME}/shadow/roamboard/`. Private
 `travel.sqlite` is read-only; launchd cutover remains manual. See
-[`adapters/roamboard/README.md`](../adapters/roamboard/README.md).
+[`adapters/roamboard/README.md`](https://github.com/finnqiao/domain_foundry/blob/main/adapters/roamboard/README.md).

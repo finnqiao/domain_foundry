@@ -62,6 +62,9 @@ TELEGRAM_ID_RE = re.compile(
 
 # Paths that intentionally document or exercise these patterns.
 CONTENT_ALLOWLIST_PREFIXES = (
+    # Generated dependency notices may include upstream maintainer contact
+    # addresses; they are not project or user data.
+    "app/public/THIRD_PARTY_NOTICES.txt",
     "scripts/leakscan.py",
     "scripts/check_remotes.sh",
     "docs/LEAK_AUDIT.md",

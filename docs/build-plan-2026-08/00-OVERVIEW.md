@@ -74,7 +74,7 @@ updating this file first.
    Gate 0 (clean-machine wheel install, TestPyPI dry-run scripted, demo storyboard
    from the release artifact). The actual PyPI publish, git tag, GitHub release,
    demo recording, and launch posts remain human gates per
-   [`../../LAUNCH_CHECKLIST.md`](../../LAUNCH_CHECKLIST.md).
+   [`LAUNCH_CHECKLIST.md`](https://github.com/finnqiao/domain_foundry/blob/main/LAUNCH_CHECKLIST.md).
 5. **Wizard — always atlas-browse first; jobs compile ideas; starters are analogs.**
    `new_domain` lands on an idea-atlas neighborhood (buckets → practices → app
    ideas, world + foundry). The user picks or mixes an idea; `compile_jobs` turns
@@ -135,7 +135,7 @@ survives a runtime restart.
 - [`../VISION_GAP_REVIEW_2026-08-08.md`](../VISION_GAP_REVIEW_2026-08-08.md) — the governing review (blockers, scorecard, gates 0–6, 90-day sequence)
 - `.impeccable/critique/2026-08-09T02-04-00Z__app-src-app-tsx.md` — app-shell UI critique (20/40 Nielsen; P0 = flagship creation impossible in shell)
 - [`../adr/ADR-001-http-adapter-contract.md`](../adr/ADR-001-http-adapter-contract.md) — the contract being restored
-- [`../../LAUNCH_CHECKLIST.md`](../../LAUNCH_CHECKLIST.md) — human launch gates
+- [`LAUNCH_CHECKLIST.md`](https://github.com/finnqiao/domain_foundry/blob/main/LAUNCH_CHECKLIST.md) — human launch gates
 - [`../OPEN_GATES.md`](../OPEN_GATES.md) — calendar/human gates 4–6 (mesh QA, cutover, shadow streak)
 
 ## Ground rules for every PR in this plan

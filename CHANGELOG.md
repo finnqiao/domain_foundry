@@ -6,6 +6,45 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added (evidence-backed product foundry)
+
+- A six-stage typed research → evidence → three concepts → domain model →
+  experience → delivery pipeline that fails closed when credible vertical
+  evidence is unavailable.
+- Versioned `FoundrySpec`, three structurally distinct reviewed goldens, explicit
+  remix lineage, workload-derived SQLite DDL, and a deterministic compiler whose
+  preview is the exact self-contained owned application.
+- A contract-interpreting owned runtime with typed chart, timeline, comparison,
+  canvas, session, shelf, inspector, and workbench renderers; closed action
+  semantics; immutable correction history; and validated spec-bound
+  backup/restore with hostile-import browser coverage.
+- Reviewed data-engineering, product/UX, and software-engineering knowledge
+  corpus with source authority, license, allowed-use, freshness, principle, and
+  derivation audits.
+- First-party `/foundry` workbench, exact-app accessibility/reflow browser tests,
+  real create-and-download export proofs for all three goldens, credential/input
+  boundaries, generated-app CSP, atomic bundles, SPDX SBOM, vulnerability
+  audits, held-out interests, and a Foundry threat model.
+- Exact-candidate release evidence, seven fail-closed independent-review receipt
+  contracts, a clean-candidate review-packet/sealing workflow, and a final
+  public-release audit that binds reviews and their report hashes to a clean Git
+  commit plus wheel/sdist/SBOM hashes.
+- A cross-platform Python runtime license registry, production-only npm license
+  policy, deterministic full-text third-party notices shipped in the web app,
+  and a runtime-scoped SPDX SBOM with no unresolved license expressions.
+- A dated official-source compatibility registry for every network provider;
+  the release gate now fails when model defaults drift or the research is more
+  than 30 days old.
+- Time-bounded public-name evidence that records PyPI 404s without calling them
+  reservations, detects repository-coordinate drift, and records that the
+  `Domain-Foundry` GitHub organization is already occupied. It also records a
+  live exact-mark US application with directly overlapping software services
+  and prevents routine maintainer approval from silently clearing that risk.
+- A primary-source remix landscape covering paid, community-first, and
+  open-source AI builders, with explicit product implications for structural
+  lineage, schema reasoning, ownership, and the scope Domain Foundry should not
+  chase before its wedge is independently validated.
+
 ### Added (bring-your-own-key onboarding)
 
 - **`domain-foundry setup`** — guided first-run flow: pick a provider, pick a
@@ -26,6 +65,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   reconciliation, and a non-zero exit unless every source row is accounted for.
 
 ### Fixed
+
+- Retired DeepSeek `deepseek-chat`/`deepseek-reasoner` defaults were replaced by
+  the current `deepseek-v4-flash`/`deepseek-v4-pro` aliases. First-party OpenAI
+  defaults now use GPT-5.6 Luna/Sol, and OpenAI-compatible request bodies are
+  specialized for OpenAI and DeepSeek instead of assuming one shared parameter
+  contract.
 
 - **Anthropic requests sent `temperature`, which current models reject with HTTP
   400.** Because the router catches LLM failures into the keyword heuristic, this

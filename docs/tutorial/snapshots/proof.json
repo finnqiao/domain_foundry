@@ -1,7 +1,8 @@
 [
   {
     "harness": "cli",
-    "ok": true
+    "ok": true,
+    "domain": "pokemon"
   },
   {
     "harness": "mcp",
@@ -9,7 +10,8 @@
     "steps": [
       "tools/list",
       "new_domain",
-      "wizard_reply(skip)",
+      "wizard_reply(looks)",
+      "wizard_reply(build it)",
       "capture",
       "query",
       "ask",
@@ -21,7 +23,7 @@
   {
     "harness": "telegram",
     "ok": true,
-    "replies": 5
+    "replies": 7
   },
   {
     "harness": "hermes",

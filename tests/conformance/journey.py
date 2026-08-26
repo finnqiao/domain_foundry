@@ -43,39 +43,59 @@ class JourneyDriver(Protocol):
     def restart(self) -> None: ...
 
 
-CAPTURE_TEXT = "baked a 75% hydration country loaf, came out great"
-CORRECTION_TEXT = "actually the hydration was 80 not 75"
+GOAL = "i collect pokemon cards"
+PICK = "a dex of the cards i own with photos"
+BUILD = "build it"
+CAPTURE_TEXT = "pulled a holographic Charizard from a 151 booster, NM"
+CORRECTION_TEXT = "that Charizard was LP not NM"
+
+
+def _is_cards_domain(name: str | None) -> bool:
+    token = (name or "").lower()
+    return "pokemon" in token or "card" in token
+
+
+def _domain_name(turn: dict[str, Any]) -> str | None:
+    return turn.get("domain") or ((turn.get("pack") or {}).get("name"))
 
 
 def run_journey(driver: JourneyDriver) -> None:
-    """Run the concrete create → activate → capture → export journey."""
+    """Run create (looks + build it) → capture → correct → export."""
 
-    # 1. CREATE — atlas browse, then skip to compile a working pack.
-    turn = driver.new_domain("track my bouldering climbing sessions")
+    # 1. CREATE — pick Card dex, wait in looks, then build it. Skip is not install.
+    turn = driver.new_domain(GOAL)
     assert turn["state"] == "fork", turn
-    done = driver.wizard_reply(turn["session_id"], "skip")
+    ideas = " ".join(
+        i.get("title") or ""
+        for i in ((turn.get("neighborhood") or {}).get("ideas") or [])
+    ).lower()
+    if ideas:
+        assert "card" in ideas, turn
+    looks = driver.wizard_reply(turn["session_id"], PICK)
+    assert looks["state"] == "looks", looks
+    done = driver.wizard_reply(turn["session_id"], BUILD)
     assert done["state"] in {"test_drive", "repair"}, done
-    assert done["domain"] or done.get("pack", {}).get("name"), done
+    domain = _domain_name(done)
+    assert domain, done
+    assert _is_cards_domain(domain), done
 
-    # 2. ACTIVATE — use a curated bundled pack for deterministic routing.
-    activated = driver.activate_pack("sourdough")
-    assert activated["name"] == "sourdough", activated
-
-    # 3. CAPTURE
+    # 2. CAPTURE — file a real card pull on the domain just built.
     receipt = driver.capture(CAPTURE_TEXT)
     assert receipt["status"] == "applied", receipt
-    assert any(span["domain"] == "sourdough" for span in receipt["routed"]), receipt
+    routed = [span for span in receipt["routed"] if _is_cards_domain(span.get("domain"))]
+    assert routed, receipt
+    routed_domain = routed[0]["domain"]
 
-    # 4. QUERY
-    rows = driver.query(domain="sourdough")
+    # 3. QUERY
+    rows = driver.query(domain=routed_domain)
     assert rows, "query returned nothing"
-    assert any("country loaf" in (row.get("raw_text") or "") for row in rows)
+    assert any("Charizard" in (row.get("raw_text") or "") for row in rows)
 
-    # 5. CORRECT — one-message natural-language correction against the fresh object.
+    # 4. CORRECT — one-message natural-language correction against the fresh object.
     corrected = driver.correct(text=CORRECTION_TEXT)
     assert corrected.get("applied") is True, corrected
 
-    # 6. REVIEW — resolve anything pending so the queue has a concrete postcondition.
+    # 5. REVIEW — resolve anything pending so the queue has a concrete postcondition.
     items = driver.review_list()
     for item in items:
         approval_id = item.get("approval_id") or item.get("id")
@@ -84,20 +104,20 @@ def run_journey(driver: JourneyDriver) -> None:
         assert result.get("error") in (None, ""), result
     assert driver.review_list() == []
 
-    # 7. EXPORT — the correction must be visible in canonical data ownership output.
-    dump = driver.export(domain="sourdough")
+    # 6. EXPORT — the correction must be visible in canonical data ownership output.
+    dump = driver.export(domain=routed_domain)
     assert dump["format"] == "domain-foundry-export/1", dump
-    bakes = dump["domains"]["sourdough"]["objects"]["bake"]
-    assert bakes, "export contains no bakes"
+    cards = dump["domains"][routed_domain]["objects"]["card"]
+    assert cards, "export contains no cards"
     assert any(
-        float(bake["fields"].get("hydration") or 0) == 80.0 for bake in bakes
-    ), "corrected hydration (80) missing from export"
+        str(card["fields"].get("notes") or "").upper() == "LP" for card in cards
+    ), "corrected notes (LP) missing from export"
 
-    # 8. RESTART — a new process must see exactly the same durable state.
+    # 7. RESTART — a new process must see exactly the same durable state.
     driver.restart()
-    rows_after_restart = driver.query(domain="sourdough")
+    rows_after_restart = driver.query(domain=routed_domain)
     assert len(rows_after_restart) >= len(rows), "data lost across restart"
-    dump_after_restart = driver.export(domain="sourdough")
+    dump_after_restart = driver.export(domain=routed_domain)
     assert dump_after_restart["counts"] == dump["counts"], (
         "export changed across restart",
         dump,

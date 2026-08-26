@@ -1,0 +1,86 @@
+discipline: software_engineering
+version: 1
+principles:
+  - id: SE-01
+    title: One typed specification drives every target
+    rule: Research, model, experience, runtime, export, and tests exchange a validated versioned intermediate representation rather than prompt-shaped dictionaries.
+    sources: [schemastore, openmetadata_ingestion, owasp_llmsvs]
+    required_evidence: [spec_schema, compatibility_version, derivation_graph]
+    release_checks: [unknown_fields_rejected, round_trip_stable, all_targets_share_spec]
+
+  - id: SE-02
+    title: Prefer deep modules with outcome interfaces
+    rule: Callers request research, propose, model, build, verify, remix, or export outcomes; ordering and invariants remain inside the implementation.
+    sources: [datahub_ingestion, openmetadata_ingestion]
+    required_evidence: [module_interface, adapters, invariant_owner]
+    release_checks: [interface_is_test_surface, no_duplicate_orchestration]
+
+  - id: SE-03
+    title: Evaluation is independent of generation
+    rule: The generator may not author the only examples that judge it; use held-out user workloads, adversarial negatives, and separate schema and experience rubrics.
+    sources: [owasp_llmsvs, govuk_design_principles]
+    required_evidence: [heldout_provenance, judge_rubric, failure_threshold]
+    release_checks: [self_fixture_excluded, unseen_verticals_pass, failures_block_release]
+
+  - id: SE-04
+    title: Builds are reproducible and attributable
+    rule: Record source snapshot, model/provider, prompt/spec version, inputs, tool versions, and artifact hashes for every build.
+    sources: [w3c_prov, slsa]
+    required_evidence: [build_receipt, artifact_hashes, dependency_lock]
+    release_checks: [same_input_same_spec, provenance_emitted, lockfiles_present]
+
+  - id: SE-05
+    title: Treat model output as untrusted input
+    rule: Validate structured output, constrain tools, minimize permissions, redact secrets, and require policy checks before side effects.
+    sources: [owasp_llmsvs, owasp_asvs]
+    required_evidence: [threat_model, output_schema, tool_policy]
+    release_checks: [malformed_output_rejected, prompt_injection_cases, least_privilege_tools]
+
+  - id: SE-06
+    title: Declarative packs remain the default trust unit
+    rule: Generated applications use data-only declarations and a closed operation vocabulary; executable extensions require an explicit installation decision.
+    sources: [owasp_asvs, owasp_llmsvs]
+    required_evidence: [permission_manifest, operation_vocabulary]
+    release_checks: [unknown_capability_fails_closed, executable_extension_not_implicit]
+
+  - id: SE-07
+    title: Open-source release includes supply-chain proof
+    rule: Pin dependencies and workflow permissions, scan secrets and vulnerabilities, produce artifacts in CI, and attach verifiable build provenance.
+    sources: [slsa, openssf_scorecard]
+    required_evidence: [ci_release_workflow, dependency_policy, provenance_attestation]
+    release_checks: [scorecard_baseline, artifact_from_ci, token_permissions_minimal]
+
+  - id: SE-08
+    title: Licensing is data, not prose
+    rule: Record SPDX identities and allowed uses for source, evidence, generated assets, dependencies, and exports; unknown or incompatible licensing blocks copying.
+    sources: [spdx, reuse]
+    required_evidence: [source_licenses, dependency_sbom, output_license]
+    release_checks: [license_audit, incompatible_copy_absent, sbom_emitted]
+
+  - id: SE-09
+    title: Compatibility and migration are public contracts
+    rule: Version specs, packs, capabilities, storage, and exported projects independently; document compatibility and test upgrades before release.
+    sources: [schemastore, slsa]
+    required_evidence: [version_matrix, migration_path, rollback_path]
+    release_checks: [previous_release_upgrade, unsupported_version_fails_clearly]
+
+  - id: SE-10
+    title: A release claim is backed by an executable gate
+    rule: Documentation may only claim an outcome when an independent reproducible artifact or test proves that exact scope.
+    sources: [owasp_asvs, openssf_scorecard, govuk_design_principles]
+    required_evidence: [claim_evidence_map, release_report]
+    release_checks: [docs_claims_audit, no_skipped_release_gate, external_task_evidence]
+
+  - id: SE-11
+    title: Ownership includes exit
+    rule: Users can inspect, export, migrate, back up, restore, and delete their data and generated application without a proprietary service dependency.
+    sources: [govuk_design_principles, spdx]
+    required_evidence: [export_contract, restore_contract, deletion_contract]
+    release_checks: [clean_machine_export, restore_round_trip, uninstall_preserves_export]
+
+  - id: SE-12
+    title: Adapters share conformance, not copied behavior
+    rule: CLI, HTTP, MCP, and future coding harnesses satisfy the same outcome interface and run the same black-box journey.
+    sources: [openmetadata_ingestion, owasp_asvs]
+    required_evidence: [adapter_interface, conformance_journey]
+    release_checks: [all_supported_adapters_pass, unsupported_capability_visible]

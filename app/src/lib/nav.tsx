@@ -8,6 +8,7 @@ export type Route =
   | { name: "domain"; domain: string; viewId?: string }
   | { name: "inbox" }
   | { name: "create" }
+  | { name: "foundry" }
   | { name: "settings"; tab?: SettingsTab };
 
 export type DetailTarget = { domain: string; objectType: string; uid: string };

@@ -52,7 +52,7 @@ after path scrub; history not rewritten).
 - **No `/Users/<name>` home paths** are tracked.
 - **Screenshots / demo GIF:** none are committed yet. The README reserves a
   placeholder; the demo GIF is a human recording gate (see
-  [`LAUNCH_CHECKLIST.md`](../LAUNCH_CHECKLIST.md)). Any future screenshot must be
+  [`LAUNCH_CHECKLIST.md`](https://github.com/finnqiao/domain_foundry/blob/main/LAUNCH_CHECKLIST.md)). Any future screenshot must be
   captured from synthetic packs only and re-audited before commit.
 - **Reference architectures are described, not shipped.** The public plan
   (`docs/OPEN_SOURCE_HARNESS_PLAN.md`) names the private applications only as

@@ -1,0 +1,2008 @@
+{
+  "spec_version": "1.0",
+  "id": "aquarium-tank",
+  "title": "Aquarium Water Journal",
+  "generation": null,
+  "source_ids": [
+    "seriouslyfish",
+    "postgresql_constraints",
+    "sqlite_foreign_keys",
+    "sqlite_query_planner",
+    "w3c_prov",
+    "govuk_design_principles",
+    "wcag_22",
+    "aria_apg",
+    "ui_remix_paper"
+  ],
+  "source_snapshots": [],
+  "principle_ids": [
+    "DE-01",
+    "DE-02",
+    "DE-03",
+    "DE-04",
+    "DE-05",
+    "DE-06",
+    "DE-08",
+    "UX-01",
+    "UX-02",
+    "UX-04",
+    "UX-05",
+    "UX-06",
+    "UX-07",
+    "UX-10",
+    "SE-01",
+    "SE-03",
+    "SE-04",
+    "SE-10",
+    "SE-11"
+  ],
+  "research": {
+    "interest": "Keeping the fish in my aquarium tank alive by watching the water instead of guessing at it",
+    "desired_outcome": "Decide the next water change and the next fish from my own test readings and each species' real needs, not forum folklore",
+    "practice": [
+      "Test pH, ammonia, nitrite, nitrate, KH and GH with a liquid kit and write the numbers down before the tube colours are forgotten",
+      "Change 20 to 30 percent of the water on a rhythm, rinse filter media in old tank water so the bacteria colony survives, and trim plants when they crowd the glass",
+      "Look up each species' temperature, pH and hardness range before it goes in, and count whether the shoal is big enough",
+      "Watch a brand-new tank all the way through cycling until ammonia and nitrite read zero and nitrate finally appears"
+    ],
+    "existing_artifacts": [
+      "notebook of test-kit readings",
+      "phone photos of test tubes held against the colour chart",
+      "a whiteboard by the tank with the last water change date",
+      "saved species care pages"
+    ],
+    "constraints": [
+      "capture works one-handed with wet hands beside the tank glass",
+      "readings are kept exactly as they were read off the kit, never rounded or rewritten",
+      "useful with no probe, controller, or subscription",
+      "works offline in a dim fish room"
+    ],
+    "open_questions": [
+      "how many tanks are running at once",
+      "whether temperature is read in Fahrenheit or Celsius",
+      "whether shrimp, snails and plants count as stock or as scenery",
+      "whether a controller or probe will ever be added"
+    ],
+    "usage_context": [
+      "phone in a wet hand at the tank glass",
+      "desktop on a Sunday when planning stocking"
+    ],
+    "first_value": "Record one water test and watch it land on the tank's timeline with every parameter placed inside or outside its safe band"
+  },
+  "evidence": [
+    {
+      "id": "ev_fish_species",
+      "source_id": "seriouslyfish",
+      "claim": "Species care is stated as a parameter envelope — a temperature range, a pH range, and a hardness range — under both a common and a scientific name.",
+      "use": "fact",
+      "locator": "species care profiles"
+    },
+    {
+      "id": "ev_fish_stocking",
+      "source_id": "seriouslyfish",
+      "claim": "Minimum group size, adult size, tank volume, and tank-mate compatibility are species facts rather than keeper preferences.",
+      "use": "fact",
+      "locator": "species maintenance and compatibility notes"
+    },
+    {
+      "id": "ev_fish_identity",
+      "source_id": "postgresql_constraints",
+      "claim": "Stable identities and relationships should be explicit and enforceable rather than repeated as text fields.",
+      "use": "constraint",
+      "locator": "primary keys and foreign keys"
+    },
+    {
+      "id": "ev_fish_referential",
+      "source_id": "sqlite_foreign_keys",
+      "claim": "Foreign keys must be declared and enforced so a deleted parent cannot silently orphan its records.",
+      "use": "constraint",
+      "locator": "enabling foreign key support"
+    },
+    {
+      "id": "ev_fish_lineage",
+      "source_id": "w3c_prov",
+      "claim": "A water test is an observation of one tank at one time; a correction records a new entity rather than overwriting the original.",
+      "use": "pattern",
+      "locator": "PROV starting point terms"
+    },
+    {
+      "id": "ev_fish_workloads",
+      "source_id": "sqlite_query_planner",
+      "claim": "Indexes should follow concrete filtering, joining, and ordering workloads.",
+      "use": "constraint",
+      "locator": null
+    },
+    {
+      "id": "ev_fish_service",
+      "source_id": "govuk_design_principles",
+      "claim": "Begin with user needs and real context, then do the hard work required to make the service simple.",
+      "use": "pattern",
+      "locator": null
+    },
+    {
+      "id": "ev_fish_access",
+      "source_id": "wcag_22",
+      "claim": "Keyboard access, focus, reflow, labels, status, and error recovery are release requirements, and colour is never the only carrier of meaning.",
+      "use": "constraint",
+      "locator": null
+    }
+  ],
+  "concepts": [
+    {
+      "id": "tank_journal",
+      "title": "Tank Journal",
+      "thesis": "Give each tank one honest timeline where a test, a water change, and a new fish all land in the same column.",
+      "primary_loop": "Test the water, log what you did about it, and watch one tank's timeline lengthen.",
+      "primary_affordance": "A single-tank chronological timeline with the latest parameter strip pinned above it",
+      "differentiator": "The only concept that answers what happened to this tank without a query",
+      "feature_boundary": [
+        "water test capture",
+        "maintenance log",
+        "livestock arrivals and losses",
+        "per-tank timeline"
+      ],
+      "tradeoffs": [
+        "cross-tank comparison is secondary",
+        "species research stays shallow until a card is opened"
+      ],
+      "workflow_ids": [
+        "log_test",
+        "log_maintenance"
+      ],
+      "evidence_ids": [
+        "ev_fish_lineage",
+        "ev_fish_service"
+      ]
+    },
+    {
+      "id": "stocking_book",
+      "title": "Stocking Book",
+      "thesis": "Treat the livestock as a dex where every species carries its own parameter envelope and the tank is judged against it.",
+      "primary_loop": "Add a species, read its care card, and check the whole roster against what the tank actually measures.",
+      "primary_affordance": "A roster of species cards showing required ranges beside the tank's last reading",
+      "differentiator": "Turns stocking from a shop decision into a measurable fit against this tank's water",
+      "feature_boundary": [
+        "species roster with common and scientific names",
+        "per-species parameter ranges",
+        "group-size and compatibility checks",
+        "fit against latest reading"
+      ],
+      "tradeoffs": [
+        "maintenance ritual is barely modelled",
+        "the water's history is invisible"
+      ],
+      "workflow_ids": [
+        "browse_stock",
+        "check_fit"
+      ],
+      "evidence_ids": [
+        "ev_fish_species",
+        "ev_fish_stocking"
+      ]
+    },
+    {
+      "id": "chemistry_lab",
+      "title": "Chemistry Lab",
+      "thesis": "Make the water itself the subject and draw every parameter as a line inside a shaded safe band.",
+      "primary_loop": "Enter a full test, watch each parameter line move inside or outside its band, and act on the one that left.",
+      "primary_affordance": "Stacked parameter trend lines with shaded safe bands and a cycling marker",
+      "differentiator": "Makes a nitrite spike legible as a phase rather than a scare",
+      "feature_boundary": [
+        "full six-parameter capture",
+        "trend lines per parameter",
+        "safe-band shading",
+        "cycling and spike annotation"
+      ],
+      "tradeoffs": [
+        "livestock is reduced to an annotation",
+        "capture is heavier than a single reading"
+      ],
+      "workflow_ids": [
+        "chart_parameters",
+        "spot_spike"
+      ],
+      "evidence_ids": [
+        "ev_fish_workloads",
+        "ev_fish_access"
+      ]
+    }
+  ],
+  "remix": {
+    "selected_concept": "tank_journal",
+    "parent_spec": null,
+    "fragments": [
+      {
+        "kind": "visual_system",
+        "from_concept": "chemistry_lab",
+        "fragment": "safe-band parameter strip pinned above the timeline",
+        "reason": "The journal still has to answer whether tonight's water is safe before it shows what happened.",
+        "evidence_ids": [
+          "ev_fish_workloads"
+        ]
+      },
+      {
+        "kind": "interaction",
+        "from_concept": "stocking_book",
+        "fragment": "species care cards openable from any livestock entry",
+        "reason": "A fish in the timeline is only meaningful next to the range that species actually needs.",
+        "evidence_ids": [
+          "ev_fish_species",
+          "ev_fish_stocking"
+        ]
+      }
+    ],
+    "user_decisions": [
+      "Temperature in Fahrenheit — it's what my thermometer shows",
+      "Tests are sacred readings, never edited, only corrected beside the original",
+      "One tank fills the screen; two tanks never share a page"
+    ]
+  },
+  "domain": {
+    "entities": [
+      {
+        "id": "tank",
+        "title": "Tank",
+        "kind": "owned",
+        "description": "One glass box of water with its own nitrogen cycle, its own history, and its own inhabitants.",
+        "identity": [
+          "tank_id"
+        ],
+        "lifecycle": [
+          "cycling",
+          "cycled",
+          "established",
+          "rescaped",
+          "retired"
+        ],
+        "fields": [
+          {
+            "name": "tank_id",
+            "type": "text",
+            "description": "Stable local identity",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_fish_identity"
+            ]
+          },
+          {
+            "name": "name",
+            "type": "text",
+            "description": "What the keeper calls it, like the 75 or the shrimp bowl",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "volume_liters",
+            "type": "number",
+            "description": "Working water volume, which sets every dosing and water change amount",
+            "required": true,
+            "unit": "L",
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "water_type",
+            "type": "enum",
+            "description": "Water chemistry family",
+            "required": true,
+            "unit": null,
+            "values": [
+              "freshwater",
+              "brackish",
+              "marine"
+            ],
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "planted",
+            "type": "boolean",
+            "description": "Whether this is a planted tank, which changes nitrate uptake and lighting",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "started_at",
+            "type": "date",
+            "description": "The day water first went in and cycling began",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_fish_lineage"
+            ]
+          },
+          {
+            "name": "status",
+            "type": "enum",
+            "description": "Where the tank sits in its nitrogen-cycle life",
+            "required": true,
+            "unit": null,
+            "values": [
+              "cycling",
+              "cycled",
+              "established",
+              "rescaped",
+              "retired"
+            ],
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "substrate",
+            "type": "text",
+            "description": "Substrate and hardscape, since they move KH and GH on their own",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "notes",
+            "type": "text",
+            "description": "Durable context about this specific box of water",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          }
+        ],
+        "evidence_ids": [
+          "ev_fish_identity",
+          "ev_fish_lineage"
+        ]
+      },
+      {
+        "id": "inhabitant",
+        "title": "Inhabitant",
+        "kind": "owned",
+        "description": "One species living in one tank — fish, invertebrate, or plant — carrying the parameter envelope that species needs.",
+        "identity": [
+          "inhabitant_id"
+        ],
+        "lifecycle": [
+          "alive",
+          "lost",
+          "rehomed"
+        ],
+        "fields": [
+          {
+            "name": "inhabitant_id",
+            "type": "text",
+            "description": "Stable local identity",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_fish_identity"
+            ]
+          },
+          {
+            "name": "tank_id",
+            "type": "text",
+            "description": "Tank this species lives in",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_fish_referential"
+            ]
+          },
+          {
+            "name": "common_name",
+            "type": "text",
+            "description": "The name used at the shop, like neon tetra or cherry shrimp",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_fish_species"
+            ]
+          },
+          {
+            "name": "scientific_name",
+            "type": "text",
+            "description": "Binomial name, because three different fish are sold as neon tetra",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_fish_species"
+            ]
+          },
+          {
+            "name": "kind",
+            "type": "enum",
+            "description": "What sort of inhabitant this is",
+            "required": true,
+            "unit": null,
+            "values": [
+              "fish",
+              "invertebrate",
+              "plant"
+            ],
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "quantity",
+            "type": "integer",
+            "description": "How many went in, which matters because shoaling species need a group",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_fish_stocking"
+            ]
+          },
+          {
+            "name": "added_at",
+            "type": "date",
+            "description": "When this species joined the tank",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_fish_lineage"
+            ]
+          },
+          {
+            "name": "source",
+            "type": "text",
+            "description": "Where it came from — local fish shop, a club member, or a split from another tank",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "status",
+            "type": "enum",
+            "description": "Whether this stock is still in the tank",
+            "required": true,
+            "unit": null,
+            "values": [
+              "alive",
+              "lost",
+              "rehomed"
+            ],
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "temp_min_f",
+            "type": "number",
+            "description": "Lowest temperature this species tolerates, from its published care profile",
+            "required": false,
+            "unit": "°F",
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_fish_species"
+            ]
+          },
+          {
+            "name": "temp_max_f",
+            "type": "number",
+            "description": "Highest temperature this species tolerates, from its published care profile",
+            "required": false,
+            "unit": "°F",
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_fish_species"
+            ]
+          },
+          {
+            "name": "ph_min",
+            "type": "number",
+            "description": "Lowest pH in this species' published range",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_fish_species"
+            ]
+          },
+          {
+            "name": "ph_max",
+            "type": "number",
+            "description": "Highest pH in this species' published range",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_fish_species"
+            ]
+          },
+          {
+            "name": "min_group",
+            "type": "integer",
+            "description": "Smallest group this species should be kept in",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_fish_stocking"
+            ]
+          },
+          {
+            "name": "notes",
+            "type": "text",
+            "description": "Behaviour, compatibility, and how it actually settled in",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          }
+        ],
+        "evidence_ids": [
+          "ev_fish_species",
+          "ev_fish_stocking"
+        ]
+      },
+      {
+        "id": "water_test",
+        "title": "Water Test",
+        "kind": "observation",
+        "description": "One immutable set of readings taken off the kit at one moment, corrected beside the original and never overwritten.",
+        "identity": [
+          "test_id"
+        ],
+        "lifecycle": [
+          "observed",
+          "corrected",
+          "superseded"
+        ],
+        "fields": [
+          {
+            "name": "test_id",
+            "type": "text",
+            "description": "Stable observation identity",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_fish_identity"
+            ]
+          },
+          {
+            "name": "tank_id",
+            "type": "text",
+            "description": "Tank that was tested",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_fish_referential"
+            ]
+          },
+          {
+            "name": "tested_at",
+            "type": "datetime",
+            "description": "When the sample was drawn",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_fish_lineage"
+            ]
+          },
+          {
+            "name": "ph",
+            "type": "number",
+            "description": "Acidity as read off the kit — the pH the fish are actually living in",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "ammonia_ppm",
+            "type": "number",
+            "description": "Ammonia in ppm; anything above 0 in a cycled tank is an emergency",
+            "required": false,
+            "unit": "ppm",
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "nitrite_ppm",
+            "type": "number",
+            "description": "Nitrite in ppm; a nitrite spike is expected during cycling and never after it",
+            "required": false,
+            "unit": "ppm",
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "nitrate_ppm",
+            "type": "number",
+            "description": "Nitrate in ppm; the usual freshwater target keeps nitrate under about 20 ppm between water changes",
+            "required": false,
+            "unit": "ppm",
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "temperature_f",
+            "type": "number",
+            "description": "Water temperature in Fahrenheit as the thermometer shows it — 78 °F is about 25.6 °C",
+            "required": false,
+            "unit": "°F",
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "kh_dkh",
+            "type": "number",
+            "description": "Carbonate hardness in dKH, the buffer that keeps pH from swinging",
+            "required": false,
+            "unit": "dKH",
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "gh_dgh",
+            "type": "number",
+            "description": "General hardness in dGH, which shrimp and livebearers care about most",
+            "required": false,
+            "unit": "dGH",
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "method",
+            "type": "enum",
+            "description": "How the reading was taken",
+            "required": true,
+            "unit": null,
+            "values": [
+              "liquid_kit",
+              "test_strip",
+              "probe"
+            ],
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "notes",
+            "type": "text",
+            "description": "What the water looked like and what prompted the test",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          }
+        ],
+        "evidence_ids": [
+          "ev_fish_lineage",
+          "ev_fish_workloads"
+        ]
+      },
+      {
+        "id": "maintenance",
+        "title": "Maintenance",
+        "kind": "event",
+        "description": "One thing the keeper actually did to the tank — a water change, a filter clean, a dose, or a trim.",
+        "identity": [
+          "maintenance_id"
+        ],
+        "lifecycle": [
+          "recorded",
+          "corrected",
+          "superseded"
+        ],
+        "fields": [
+          {
+            "name": "maintenance_id",
+            "type": "text",
+            "description": "Stable event identity",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_fish_identity"
+            ]
+          },
+          {
+            "name": "tank_id",
+            "type": "text",
+            "description": "Tank that was worked on",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_fish_referential"
+            ]
+          },
+          {
+            "name": "done_at",
+            "type": "datetime",
+            "description": "When the work was done",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_fish_lineage"
+            ]
+          },
+          {
+            "name": "kind",
+            "type": "enum",
+            "description": "What kind of maintenance this was",
+            "required": true,
+            "unit": null,
+            "values": [
+              "water_change",
+              "filter_clean",
+              "dosing",
+              "trim"
+            ],
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "water_change_pct",
+            "type": "number",
+            "description": "Percentage of the water replaced, empty for anything that is not a water change",
+            "required": false,
+            "unit": "percent",
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "product",
+            "type": "text",
+            "description": "Dechlorinator, fertiliser, or medication used, in the keeper's own words",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "notes",
+            "type": "text",
+            "description": "What was observed while the arm was in the water",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          }
+        ],
+        "evidence_ids": [
+          "ev_fish_lineage",
+          "ev_fish_service"
+        ]
+      },
+      {
+        "id": "equipment",
+        "title": "Equipment",
+        "kind": "owned",
+        "description": "The hardware holding the tank steady — filter, heater, light, or CO2 — each with its own service life.",
+        "identity": [
+          "equipment_id"
+        ],
+        "lifecycle": [
+          "running",
+          "serviced",
+          "retired"
+        ],
+        "fields": [
+          {
+            "name": "equipment_id",
+            "type": "text",
+            "description": "Stable local identity",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_fish_identity"
+            ]
+          },
+          {
+            "name": "tank_id",
+            "type": "text",
+            "description": "Tank this gear serves",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_fish_referential"
+            ]
+          },
+          {
+            "name": "kind",
+            "type": "enum",
+            "description": "What the gear does",
+            "required": true,
+            "unit": null,
+            "values": [
+              "filter",
+              "heater",
+              "light",
+              "co2",
+              "air_pump"
+            ],
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "name",
+            "type": "text",
+            "description": "Model as printed on the box, like a 950 L/h canister filter or a 100 W heater",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "rating",
+            "type": "text",
+            "description": "Turnover, wattage, or output as rated by the maker",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "setpoint_f",
+            "type": "number",
+            "description": "Heater setpoint in Fahrenheit, so the dial can be compared against the measured temperature",
+            "required": false,
+            "unit": "°F",
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "installed_at",
+            "type": "date",
+            "description": "When this gear went on the tank",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "last_serviced_at",
+            "type": "date",
+            "description": "Last time the media was rinsed or the unit was stripped down",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "status",
+            "type": "enum",
+            "description": "Whether the gear is running",
+            "required": true,
+            "unit": null,
+            "values": [
+              "running",
+              "serviced",
+              "retired"
+            ],
+            "sensitive": false,
+            "evidence_ids": []
+          }
+        ],
+        "evidence_ids": [
+          "ev_fish_identity",
+          "ev_fish_service"
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "tank_inhabitants",
+        "from_entity": "inhabitant",
+        "to_entity": "tank",
+        "cardinality": "many_to_one",
+        "required": true,
+        "on_delete": "restrict",
+        "description": "Every inhabitant lives in exactly one tank.",
+        "evidence_ids": [
+          "ev_fish_identity",
+          "ev_fish_referential"
+        ]
+      },
+      {
+        "id": "tank_tests",
+        "from_entity": "water_test",
+        "to_entity": "tank",
+        "cardinality": "many_to_one",
+        "required": true,
+        "on_delete": "restrict",
+        "description": "Every water test observes exactly one tank.",
+        "evidence_ids": [
+          "ev_fish_lineage",
+          "ev_fish_referential"
+        ]
+      },
+      {
+        "id": "tank_maintenance",
+        "from_entity": "maintenance",
+        "to_entity": "tank",
+        "cardinality": "many_to_one",
+        "required": true,
+        "on_delete": "restrict",
+        "description": "Every water change or filter clean belongs to one tank.",
+        "evidence_ids": [
+          "ev_fish_referential"
+        ]
+      },
+      {
+        "id": "tank_equipment",
+        "from_entity": "equipment",
+        "to_entity": "tank",
+        "cardinality": "many_to_one",
+        "required": true,
+        "on_delete": "restrict",
+        "description": "Filters and heaters are mounted on one tank at a time.",
+        "evidence_ids": [
+          "ev_fish_referential"
+        ]
+      }
+    ],
+    "constraints": [
+      {
+        "id": "positive_volume",
+        "entity": "tank",
+        "kind": "check",
+        "fields": [
+          "volume_liters"
+        ],
+        "expression": "volume_liters > 0",
+        "reason": "A tank with no water is not a tank.",
+        "evidence_ids": [
+          "ev_fish_identity"
+        ]
+      },
+      {
+        "id": "ph_in_range",
+        "entity": "water_test",
+        "kind": "check",
+        "fields": [
+          "ph"
+        ],
+        "expression": "ph > 0 AND ph < 14",
+        "reason": "A pH reading outside the scale is a transcription error, not a measurement.",
+        "evidence_ids": [
+          "ev_fish_workloads"
+        ]
+      },
+      {
+        "id": "nonnegative_nitrogen",
+        "entity": "water_test",
+        "kind": "check",
+        "fields": [
+          "ammonia_ppm",
+          "nitrite_ppm",
+          "nitrate_ppm"
+        ],
+        "expression": "ammonia_ppm >= 0 AND nitrite_ppm >= 0 AND nitrate_ppm >= 0",
+        "reason": "Ammonia, nitrite, and nitrate are concentrations and cannot be negative.",
+        "evidence_ids": [
+          "ev_fish_workloads"
+        ]
+      },
+      {
+        "id": "water_change_fraction",
+        "entity": "maintenance",
+        "kind": "check",
+        "fields": [
+          "water_change_pct"
+        ],
+        "expression": "water_change_pct > 0 AND water_change_pct <= 100",
+        "reason": "A water change replaces some of the water and at most all of it.",
+        "evidence_ids": [
+          "ev_fish_service"
+        ]
+      },
+      {
+        "id": "stocked_quantity",
+        "entity": "inhabitant",
+        "kind": "check",
+        "fields": [
+          "quantity"
+        ],
+        "expression": "quantity > 0",
+        "reason": "Stock that was never added is not stock; losses are recorded by status instead.",
+        "evidence_ids": [
+          "ev_fish_stocking"
+        ]
+      },
+      {
+        "id": "tank_life",
+        "entity": "tank",
+        "kind": "state_transition",
+        "fields": [
+          "status"
+        ],
+        "expression": null,
+        "reason": "A tank cannot be established before it is cycled — the nitrogen cycle has to finish first.",
+        "evidence_ids": [
+          "ev_fish_lineage"
+        ]
+      }
+    ],
+    "indexes": [
+      {
+        "id": "tank_parameter_trend",
+        "entity": "water_test",
+        "fields": [
+          "tank_id",
+          "tested_at"
+        ],
+        "unique": false,
+        "reason": "Every screen reads one tank's parameters in time order.",
+        "workload_ids": [
+          "w_latest_parameters",
+          "w_parameter_trend"
+        ]
+      },
+      {
+        "id": "tank_maintenance_cadence",
+        "entity": "maintenance",
+        "fields": [
+          "tank_id",
+          "kind",
+          "done_at"
+        ],
+        "unique": false,
+        "reason": "Days since the last water change is a per-tank, per-kind, latest-first read.",
+        "workload_ids": [
+          "w_maintenance_cadence"
+        ]
+      },
+      {
+        "id": "tank_stocking",
+        "entity": "inhabitant",
+        "fields": [
+          "tank_id",
+          "status"
+        ],
+        "unique": false,
+        "reason": "The stocking list filters to what is still alive in this tank.",
+        "workload_ids": [
+          "w_stocking_fit"
+        ]
+      }
+    ],
+    "workloads": [
+      {
+        "id": "w_latest_parameters",
+        "question": "Where does this tank's water sit right now against its safe bands?",
+        "kind": "read",
+        "entities": [
+          "tank",
+          "water_test"
+        ],
+        "filters": [
+          "tank_id",
+          "latest test"
+        ],
+        "sort": [
+          "tested_at descending"
+        ],
+        "expected_scale": "hundreds of tests per tank",
+        "acceptance": "Returns pH, ammonia, nitrite, nitrate, KH, GH, and temperature with each value marked inside or outside its band, in under 200 ms for local data.",
+        "evidence_ids": [
+          "ev_fish_workloads",
+          "ev_fish_access"
+        ]
+      },
+      {
+        "id": "w_parameter_trend",
+        "question": "How have ammonia, nitrite, and nitrate moved since this tank was started?",
+        "kind": "analysis",
+        "entities": [
+          "tank",
+          "water_test"
+        ],
+        "filters": [
+          "tank_id",
+          "date range"
+        ],
+        "sort": [
+          "tested_at ascending"
+        ],
+        "expected_scale": "hundreds of tests per tank",
+        "acceptance": "Draws each parameter against its safe band and marks the cycling period so a nitrite spike reads as a phase, not an alarm.",
+        "evidence_ids": [
+          "ev_fish_lineage",
+          "ev_fish_workloads"
+        ]
+      },
+      {
+        "id": "w_maintenance_cadence",
+        "question": "How many days has it been since the last water change on each tank, and since the filter was last cleaned?",
+        "kind": "read",
+        "entities": [
+          "tank",
+          "maintenance",
+          "equipment"
+        ],
+        "filters": [
+          "tank_id",
+          "kind is water_change"
+        ],
+        "sort": [
+          "done_at descending"
+        ],
+        "expected_scale": "hundreds of maintenance events per tank",
+        "acceptance": "Shows days elapsed per tank with the percentage of the last water change, and flags a tank whose nitrate is climbing past its usual rhythm.",
+        "evidence_ids": [
+          "ev_fish_service",
+          "ev_fish_workloads"
+        ]
+      },
+      {
+        "id": "w_stocking_fit",
+        "question": "Does every species in this tank actually fit the water it is living in?",
+        "kind": "analysis",
+        "entities": [
+          "tank",
+          "inhabitant",
+          "water_test"
+        ],
+        "filters": [
+          "tank_id",
+          "status is alive"
+        ],
+        "sort": [
+          "common_name ascending"
+        ],
+        "expected_scale": "tens of species per tank",
+        "acceptance": "Each species' temperature and pH range is compared against the tank's latest reading, and an under-sized shoal is named explicitly.",
+        "evidence_ids": [
+          "ev_fish_species",
+          "ev_fish_stocking"
+        ]
+      }
+    ],
+    "state_machines": [
+      {
+        "id": "tank_lifecycle",
+        "entity": "tank",
+        "field": "status",
+        "states": [
+          "cycling",
+          "cycled",
+          "established",
+          "rescaped",
+          "retired"
+        ],
+        "transitions": [
+          {
+            "from_state": "cycling",
+            "action": "finish_cycle",
+            "to_state": "cycled"
+          },
+          {
+            "from_state": "cycled",
+            "action": "add_first_stock",
+            "to_state": "established"
+          },
+          {
+            "from_state": "established",
+            "action": "rescape",
+            "to_state": "rescaped"
+          },
+          {
+            "from_state": "rescaped",
+            "action": "resettle",
+            "to_state": "established"
+          },
+          {
+            "from_state": "established",
+            "action": "break_down",
+            "to_state": "retired"
+          }
+        ],
+        "evidence_ids": [
+          "ev_fish_lineage"
+        ]
+      },
+      {
+        "id": "inhabitant_lifecycle",
+        "entity": "inhabitant",
+        "field": "status",
+        "states": [
+          "alive",
+          "lost",
+          "rehomed"
+        ],
+        "transitions": [
+          {
+            "from_state": "alive",
+            "action": "record_loss",
+            "to_state": "lost"
+          },
+          {
+            "from_state": "alive",
+            "action": "rehome",
+            "to_state": "rehomed"
+          }
+        ],
+        "evidence_ids": [
+          "ev_fish_stocking"
+        ]
+      }
+    ],
+    "sample_records": {
+      "tank": [
+        {
+          "tank_id": "tank-community-75",
+          "name": "The 75",
+          "volume_liters": 75,
+          "water_type": "freshwater",
+          "planted": true,
+          "started_at": "2026-02-14",
+          "status": "established",
+          "substrate": "capped aquasoil with spiderwood and a little dragon stone",
+          "notes": "South American community, lightly stocked, weekly 25 percent water change on Fridays."
+        }
+      ],
+      "inhabitant": [
+        {
+          "inhabitant_id": "stock-neon-tetra",
+          "tank_id": "tank-community-75",
+          "common_name": "neon tetra",
+          "scientific_name": "Paracheirodon innesi",
+          "kind": "fish",
+          "quantity": 12,
+          "added_at": "2026-08-09",
+          "source": "local fish shop",
+          "status": "alive",
+          "temp_min_f": 68,
+          "temp_max_f": 79,
+          "ph_min": 4.0,
+          "ph_max": 7.5,
+          "min_group": 10,
+          "notes": "Shoaling — colour came up within a week of going into soft water."
+        },
+        {
+          "inhabitant_id": "stock-cherry-shrimp",
+          "tank_id": "tank-community-75",
+          "common_name": "cherry shrimp",
+          "scientific_name": "Neocaridina davidi",
+          "kind": "invertebrate",
+          "quantity": 20,
+          "added_at": "2026-05-30",
+          "source": "club member",
+          "status": "alive",
+          "temp_min_f": 65,
+          "temp_max_f": 84,
+          "ph_min": 6.5,
+          "ph_max": 8.0,
+          "min_group": 10,
+          "notes": "Breeding in the moss; GH matters more to them than pH."
+        },
+        {
+          "inhabitant_id": "stock-crypt-wendtii",
+          "tank_id": "tank-community-75",
+          "common_name": "Cryptocoryne wendtii",
+          "scientific_name": "Cryptocoryne wendtii",
+          "kind": "plant",
+          "quantity": 4,
+          "added_at": "2026-08-21",
+          "source": "local fish shop",
+          "status": "alive",
+          "temp_min_f": 72,
+          "temp_max_f": 82,
+          "ph_min": 6.0,
+          "ph_max": 8.0,
+          "notes": "New plant in the left corner; expect it to melt before it settles."
+        }
+      ],
+      "water_test": [
+        {
+          "test_id": "test-20260222-cycling",
+          "tank_id": "tank-community-75",
+          "tested_at": "2026-02-22T08:05:00-08:00",
+          "ph": 7.0,
+          "ammonia_ppm": 0.5,
+          "nitrite_ppm": 2.0,
+          "nitrate_ppm": 5,
+          "temperature_f": 79,
+          "kh_dkh": 5,
+          "gh_dgh": 8,
+          "method": "liquid_kit",
+          "notes": "Day 8 of cycling — textbook nitrite spike, no livestock in yet."
+        },
+        {
+          "test_id": "test-20260821-evening",
+          "tank_id": "tank-community-75",
+          "tested_at": "2026-08-21T19:20:00-07:00",
+          "ph": 6.8,
+          "ammonia_ppm": 0,
+          "nitrite_ppm": 0,
+          "nitrate_ppm": 10,
+          "temperature_f": 78,
+          "kh_dkh": 4,
+          "gh_dgh": 7,
+          "method": "liquid_kit",
+          "notes": "Tested after the water change; nitrate down to 10 ppm and everything else where it should be."
+        }
+      ],
+      "maintenance": [
+        {
+          "maintenance_id": "maint-20260821-wc",
+          "tank_id": "tank-community-75",
+          "done_at": "2026-08-21T18:40:00-07:00",
+          "kind": "water_change",
+          "water_change_pct": 25,
+          "product": "dechlorinator",
+          "notes": "25 percent water change, gravel vacuumed the front third."
+        },
+        {
+          "maintenance_id": "maint-20260812-filter",
+          "tank_id": "tank-community-75",
+          "done_at": "2026-08-12T10:15:00-07:00",
+          "kind": "filter_clean",
+          "notes": "Rinsed the sponges in old tank water so the bacteria colony survived."
+        }
+      ],
+      "equipment": [
+        {
+          "equipment_id": "gear-canister",
+          "tank_id": "tank-community-75",
+          "kind": "filter",
+          "name": "950 L/h canister filter",
+          "rating": "950 L/h",
+          "installed_at": "2026-02-14",
+          "last_serviced_at": "2026-08-12",
+          "status": "running"
+        },
+        {
+          "equipment_id": "gear-heater",
+          "tank_id": "tank-community-75",
+          "kind": "heater",
+          "name": "100 W inline heater",
+          "rating": "100 W",
+          "setpoint_f": 78,
+          "installed_at": "2026-02-14",
+          "status": "running"
+        }
+      ]
+    },
+    "temporal_policy": [
+      "tested_at and done_at are effective times; captured_at is provenance time",
+      "a corrected reading never overwrites the original test, which stays readable beside it",
+      "species care ranges are reference values, not observations, and never overwrite a measured reading"
+    ],
+    "privacy_policy": [
+      "tank photos and shop names stay local unless the keeper exports them explicitly",
+      "no location is collected — a tank has a room, not a coordinate",
+      "livestock prices and sources are excluded from exports by default"
+    ]
+  },
+  "experience": {
+    "mode": "operate",
+    "visual_world": {
+      "id": "glass-and-water",
+      "name": "Glass and Water",
+      "mood": "Calm, humid, lit from above — a planted tank at feeding time rather than a marine-biology textbook",
+      "typography": "A humanist sans for operation with a monospaced face for ppm, pH, dKH and degrees so columns of readings line up down the page",
+      "color_strategy": "Aquascape greens over glass blue-greys with a warm substrate accent; the shaded safe bands carry the only saturated colour, and danger is reserved for a parameter that has actually left its band",
+      "layout_principle": "One tank fills the viewport as a column of water — the latest parameters sit at the surface and the timeline runs down beneath them; tanks are never tiled into a grid",
+      "density": "Spacious with wet hands at the glass, compact and aligned when comparing readings across weeks",
+      "signature_elements": [
+        "parameter strip with shaded safe bands where each reading sits as a dot inside or outside its band",
+        "livestock roster cards carrying a species silhouette with its temperature and pH range",
+        "water-change cadence ring that fills as days pass since the last change and empties the moment one is logged"
+      ],
+      "avoid": [
+        "cartoon fish clip-art",
+        "neon reef gradients",
+        "generic KPI dashboards"
+      ],
+      "tokens": {
+        "background": "#E8EFEC",
+        "surface": "#F7FAF8",
+        "text": "#16211F",
+        "muted": "#4E605D",
+        "accent": "#2F6B4F",
+        "accent_alt": "#3C6E8F",
+        "border": "#C6D4CE",
+        "focus": "#1C5C7A",
+        "danger": "#A33F2E",
+        "radius_px": 8
+      }
+    },
+    "navigation": {
+      "topology": "hub",
+      "primary_view": "journal",
+      "persistent_regions": [
+        "tank switcher",
+        "log-a-test affordance",
+        "provenance status"
+      ]
+    },
+    "views": [
+      {
+        "id": "journal",
+        "title": "Tank Journal",
+        "purpose": "Answer whether this tank's water is safe right now, then record what was done about it.",
+        "layout": "The safe-band parameter strip pins to the top with the cadence ring beside it; the tank's timeline runs full width beneath, mixing tests, water changes, and livestock arrivals in one column.",
+        "entities": [
+          "tank",
+          "water_test",
+          "maintenance",
+          "inhabitant"
+        ],
+        "workload_ids": [
+          "w_latest_parameters",
+          "w_maintenance_cadence"
+        ],
+        "states": [
+          "first_use",
+          "populated",
+          "loading",
+          "empty",
+          "error",
+          "offline",
+          "correction"
+        ],
+        "regions": [
+          {
+            "id": "parameter_strip",
+            "kind": "chart",
+            "title": "Where the water sits now",
+            "entity": "water_test",
+            "workload_id": "w_latest_parameters",
+            "emphasis": "primary",
+            "span": 8
+          },
+          {
+            "id": "cadence_ring",
+            "kind": "explanation",
+            "title": "Days since the last water change",
+            "entity": "maintenance",
+            "workload_id": "w_maintenance_cadence",
+            "emphasis": "secondary",
+            "span": 4
+          },
+          {
+            "id": "tank_timeline",
+            "kind": "timeline",
+            "title": "This tank so far",
+            "entity": "maintenance",
+            "workload_id": "w_maintenance_cadence",
+            "emphasis": "support",
+            "span": 12
+          }
+        ],
+        "actions": [
+          {
+            "id": "log_test",
+            "label": "Log a test",
+            "operation": "create",
+            "entity": "water_test",
+            "consequence": "Records the readings exactly as they came off the kit and places each one inside or outside its safe band."
+          },
+          {
+            "id": "log_water_change",
+            "label": "Log a water change",
+            "operation": "create",
+            "entity": "maintenance",
+            "consequence": "Records the percentage changed and resets the cadence ring for this tank."
+          },
+          {
+            "id": "add_livestock",
+            "label": "Add livestock",
+            "operation": "create",
+            "entity": "inhabitant",
+            "consequence": "Puts a species on the roster with its own parameter range and drops an arrival on the timeline."
+          },
+          {
+            "id": "correct_reading",
+            "label": "Correct a reading",
+            "operation": "correct",
+            "entity": "water_test",
+            "consequence": "Records the correction beside the original test, which stays readable and unchanged."
+          }
+        ],
+        "evidence_ids": [
+          "ev_fish_lineage",
+          "ev_fish_service",
+          "ev_fish_access"
+        ]
+      },
+      {
+        "id": "stocking",
+        "title": "Stocking Book",
+        "purpose": "Check that every species in the tank fits the water it is actually living in.",
+        "layout": "The roster of species cards leads with silhouettes and counts; the selected species' care ranges sit in an inspector margin beside the tank's last reading.",
+        "entities": [
+          "tank",
+          "inhabitant",
+          "water_test"
+        ],
+        "workload_ids": [
+          "w_stocking_fit"
+        ],
+        "states": [
+          "first_use",
+          "populated",
+          "empty",
+          "partial",
+          "error"
+        ],
+        "regions": [
+          {
+            "id": "roster",
+            "kind": "catalog",
+            "title": "What lives in here",
+            "entity": "inhabitant",
+            "workload_id": "w_stocking_fit",
+            "emphasis": "primary",
+            "span": 8
+          },
+          {
+            "id": "species_card",
+            "kind": "inspector",
+            "title": "What this species needs",
+            "entity": "inhabitant",
+            "workload_id": "w_stocking_fit",
+            "emphasis": "support",
+            "span": 4
+          }
+        ],
+        "actions": [
+          {
+            "id": "add_inhabitant",
+            "label": "Add a species",
+            "operation": "create",
+            "entity": "inhabitant",
+            "consequence": "Adds the species with its common and scientific names and the range it needs."
+          },
+          {
+            "id": "rehome",
+            "label": "Record a loss or rehome",
+            "operation": "update",
+            "entity": "inhabitant",
+            "consequence": "Moves the stock out of the live roster without deleting its arrival."
+          },
+          {
+            "id": "reveal_fit",
+            "label": "Show the reading behind this fit",
+            "operation": "reveal",
+            "entity": "water_test",
+            "consequence": "Opens the exact test whose pH and temperature this fit was judged against."
+          }
+        ],
+        "evidence_ids": [
+          "ev_fish_species",
+          "ev_fish_stocking",
+          "ev_fish_access"
+        ]
+      },
+      {
+        "id": "chemistry",
+        "title": "Chemistry",
+        "purpose": "Watch each parameter move against its safe band and see the cycling period for what it was.",
+        "layout": "Stacked trend lines for pH, ammonia, nitrite, nitrate, KH and GH fill the stage with their bands shaded; filter and heater facts sit in a narrow margin.",
+        "entities": [
+          "tank",
+          "water_test",
+          "equipment"
+        ],
+        "workload_ids": [
+          "w_parameter_trend",
+          "w_maintenance_cadence"
+        ],
+        "states": [
+          "first_use",
+          "populated",
+          "loading",
+          "empty",
+          "partial",
+          "error"
+        ],
+        "regions": [
+          {
+            "id": "parameter_trends",
+            "kind": "chart",
+            "title": "Every parameter against its band",
+            "entity": "water_test",
+            "workload_id": "w_parameter_trend",
+            "emphasis": "primary",
+            "span": 8
+          },
+          {
+            "id": "gear_margin",
+            "kind": "inspector",
+            "title": "Filter and heater",
+            "entity": "equipment",
+            "workload_id": "w_maintenance_cadence",
+            "emphasis": "support",
+            "span": 4
+          }
+        ],
+        "actions": [
+          {
+            "id": "reveal_reading",
+            "label": "Show this reading",
+            "operation": "reveal",
+            "entity": "water_test",
+            "consequence": "Opens the full test behind a point on the line, including how it was measured."
+          },
+          {
+            "id": "service_gear",
+            "label": "Record a service",
+            "operation": "update",
+            "entity": "equipment",
+            "consequence": "Records when the filter media was last rinsed or the heater was last checked against the measured temperature."
+          }
+        ],
+        "evidence_ids": [
+          "ev_fish_workloads",
+          "ev_fish_lineage",
+          "ev_fish_access"
+        ]
+      },
+      {
+        "id": "rack",
+        "title": "The Rack",
+        "purpose": "See every tank's cadence and last reading at once without leaving a single tank's page for long.",
+        "layout": "One row per tank with its cadence ring, its status, and the last reading's out-of-band parameters called out in words as well as colour.",
+        "entities": [
+          "tank",
+          "maintenance",
+          "water_test"
+        ],
+        "workload_ids": [
+          "w_maintenance_cadence",
+          "w_latest_parameters"
+        ],
+        "states": [
+          "first_use",
+          "populated",
+          "empty",
+          "error"
+        ],
+        "regions": [
+          {
+            "id": "tank_rack",
+            "kind": "catalog",
+            "title": "Every tank",
+            "entity": "tank",
+            "workload_id": "w_maintenance_cadence",
+            "emphasis": "primary",
+            "span": 12
+          }
+        ],
+        "actions": [
+          {
+            "id": "add_tank",
+            "label": "Add a tank",
+            "operation": "create",
+            "entity": "tank",
+            "consequence": "Starts a new tank in cycling with the day the water went in."
+          },
+          {
+            "id": "mark_cycled",
+            "label": "Mark it cycled",
+            "operation": "update",
+            "entity": "tank",
+            "consequence": "Moves the tank out of cycling once ammonia and nitrite read zero and nitrate has appeared."
+          }
+        ],
+        "evidence_ids": [
+          "ev_fish_service",
+          "ev_fish_access"
+        ]
+      }
+    ],
+    "flows": [
+      {
+        "id": "first_test",
+        "title": "Record the first real water test",
+        "trigger": "User approves the Tank Journal concept.",
+        "steps": [
+          {
+            "view": "journal",
+            "action": "Name the tank, then enter pH, ammonia, nitrite, nitrate, KH, GH and temperature straight off the kit.",
+            "result": "A test receipt lands on the timeline with every parameter placed inside or outside its safe band."
+          },
+          {
+            "view": "journal",
+            "action": "Confirm or correct the interpreted numbers.",
+            "result": "The canonical reading and its provenance are visible and the original wording is kept."
+          }
+        ],
+        "success": "The keeper can point at tonight's reading and say which parameter, if any, needs acting on."
+      },
+      {
+        "id": "spot_the_spike",
+        "title": "Read a nitrite spike as a phase, not an emergency",
+        "trigger": "A new tank is still cycling.",
+        "steps": [
+          {
+            "view": "chemistry",
+            "action": "Read the nitrite line against its shaded band inside the cycling period.",
+            "result": "The spike shows as expected cycling behaviour rather than as an alarm."
+          },
+          {
+            "view": "journal",
+            "action": "Log a 25 percent water change and the next test.",
+            "result": "The cadence ring resets and the nitrite line starts falling back toward zero."
+          },
+          {
+            "view": "rack",
+            "action": "Mark the tank cycled once ammonia and nitrite read zero and nitrate has appeared.",
+            "result": "The tank leaves cycling and stocking becomes the next honest step."
+          }
+        ],
+        "success": "The keeper waits the cycle out instead of dosing at a spike that was always going to pass."
+      },
+      {
+        "id": "stock_a_species",
+        "title": "Add a species the water can actually hold",
+        "trigger": "A new fish is about to go in.",
+        "steps": [
+          {
+            "view": "stocking",
+            "action": "Open the species card for the neon tetra and read its temperature and pH range.",
+            "result": "The published range appears beside this tank's latest reading."
+          },
+          {
+            "view": "stocking",
+            "action": "Add the shoal at the size the species needs.",
+            "result": "The roster records the count and names an under-sized shoal explicitly."
+          },
+          {
+            "view": "journal",
+            "action": "Watch the arrival land on the timeline beside the evening's test.",
+            "result": "The new stock and the water it went into are readable in one column."
+          }
+        ],
+        "success": "A stocking decision is traceable to a real reading and a published species range."
+      }
+    ],
+    "responsive_strategy": [
+      "On phones the capture form leads with the six parameters in test-kit order with targets big enough for wet hands, and the timeline collapses to one scrollable column.",
+      "On desktop the parameter strip and the timeline sit side by side, and the trend lines gain hover detail with a full data table alternative underneath."
+    ],
+    "accessibility": {
+      "target": "WCAG-2.2-AA",
+      "patterns": [
+        "native dialog for test capture",
+        "data table with caption and row headers behind every trend line",
+        "text alternative for every safe-band shading and cadence ring",
+        "an out-of-band parameter is named in words and never signalled by colour alone"
+      ],
+      "keyboard_model": [
+        "logical order follows tonight's reading then the timeline then stocking",
+        "trend points are reachable through an adjacent data table",
+        "correcting a reading returns focus to the corrected value"
+      ],
+      "manual_checks": [
+        "VoiceOver first-test journey",
+        "200 percent zoom and reflow with the phone held beside the tank",
+        "focus and error identification under dim fish-room light"
+      ]
+    }
+  },
+  "implementation": {
+    "targets": [
+      "foundry_runtime",
+      "standalone_react"
+    ],
+    "capabilities": [
+      "event_capture",
+      "observations",
+      "derived_metrics",
+      "time_series",
+      "comparison",
+      "provenance",
+      "correction"
+    ],
+    "imports": [
+      "CSV test-kit log",
+      "aquarium app export",
+      "species care notes",
+      "photos of the test tubes"
+    ],
+    "exports": [
+      "complete JSON with receipts",
+      "CSV per entity",
+      "photo manifest",
+      "standalone source repository"
+    ],
+    "migrations": [
+      "versioned schema migrations",
+      "water tests append-only with corrections as revisions",
+      "species vocabulary grows without renames"
+    ],
+    "permissions": [
+      "local file import",
+      "local photo access"
+    ],
+    "adapter_seams": [
+      "capture adapter",
+      "species reference adapter",
+      "test-strip photo adapter",
+      "export adapter"
+    ]
+  },
+  "evaluation": {
+    "cases": [
+      {
+        "id": "aquarium_schema_identity",
+        "kind": "schema",
+        "input": "Two tanks are both called Community.",
+        "expected": "They remain distinct owned tanks with independent test histories and independent stock.",
+        "authored_by": "domain_expert"
+      },
+      {
+        "id": "aquarium_invalid_ph",
+        "kind": "schema",
+        "input": "A water test arrives with a pH of 15.2.",
+        "expected": "The write is rejected before canonical storage.",
+        "authored_by": "independent_reviewer"
+      },
+      {
+        "id": "aquarium_first_capture",
+        "kind": "routing",
+        "input": "added a neon tetra, parameters 6.8 pH, 78F, new plant",
+        "expected": "A neon tetra inhabitant and a plant inhabitant file against the current tank, and one water test records pH 6.8 at 78 °F — nothing routes to a dive-site or species-sighting log.",
+        "authored_by": "user"
+      },
+      {
+        "id": "aquarium_water_change",
+        "kind": "routing",
+        "input": "water change 25%, nitrates down to 10",
+        "expected": "A maintenance event files as a water change at 25 percent and a water test records nitrate at 10 ppm against the same tank.",
+        "authored_by": "user"
+      },
+      {
+        "id": "aquarium_cadence_workload",
+        "kind": "workload",
+        "input": "Five tanks with 900 water tests and 400 maintenance events.",
+        "expected": "Latest parameters and days-since-last-water-change load within the local 200 ms budget.",
+        "authored_by": "independent_reviewer"
+      },
+      {
+        "id": "aquarium_correction_lineage",
+        "kind": "schema",
+        "input": "A nitrate reading was transcribed as 100 instead of 10 and is corrected an hour later.",
+        "expected": "The original test remains readable and the correction is recorded beside it rather than overwriting it.",
+        "authored_by": "domain_expert"
+      },
+      {
+        "id": "aquarium_keyboard",
+        "kind": "accessibility",
+        "input": "Complete the test capture and correction journey without a pointer.",
+        "expected": "All controls and status changes are operable and announced, and an out-of-band parameter is named in text.",
+        "authored_by": "standard"
+      },
+      {
+        "id": "aquarium_import_injection",
+        "kind": "security",
+        "input": "An imported CSV row carries prompt-like fields and a filesystem path.",
+        "expected": "Unknown fields are rejected and no tool or filesystem action occurs.",
+        "authored_by": "independent_reviewer"
+      }
+    ],
+    "release_thresholds": {
+      "schema": "all identity, relationship, constraint, and state-transition cases pass",
+      "experience": "first test, nitrite spike, and stocking flows pass on mobile and desktop",
+      "evidence": "every entity and critical view has an approved derivation"
+    }
+  },
+  "derivations": [
+    {
+      "output_path": "domain.entities",
+      "decision": "Separate tank, inhabitant, water test, maintenance, and equipment so the vessel, the livestock, the immutable reading, the ritual, and the hardware each keep their own lifecycle.",
+      "evidence_ids": [
+        "ev_fish_identity",
+        "ev_fish_species"
+      ],
+      "user_decision": null
+    },
+    {
+      "output_path": "domain.entities.water_test",
+      "decision": "Model a test as an immutable observation of one tank at one time so a transcription error is corrected beside the original rather than over it.",
+      "evidence_ids": [
+        "ev_fish_lineage"
+      ],
+      "user_decision": "Tests are sacred readings, never edited, only corrected beside the original."
+    },
+    {
+      "output_path": "domain.entities.tank.lifecycle",
+      "decision": "Make cycling a real state rather than a note, because a nitrite spike during cycling is expected and the same spike in an established tank is an emergency.",
+      "evidence_ids": [
+        "ev_fish_lineage",
+        "ev_fish_workloads"
+      ],
+      "user_decision": null
+    },
+    {
+      "output_path": "domain.entities.inhabitant.fields.temp_min_f",
+      "decision": "Carry each species' own temperature and pH range on the inhabitant so stocking fit is computed against the tank's latest reading instead of remembered.",
+      "evidence_ids": [
+        "ev_fish_species",
+        "ev_fish_stocking"
+      ],
+      "user_decision": "Temperature in Fahrenheit — it's what my thermometer shows."
+    },
+    {
+      "output_path": "domain.indexes.tank_parameter_trend",
+      "decision": "Index water tests by tank and tested time because every screen in the app reads one tank's parameters in time order.",
+      "evidence_ids": [
+        "ev_fish_workloads"
+      ],
+      "user_decision": null
+    },
+    {
+      "output_path": "experience.views.journal",
+      "decision": "Anchor the app on one tank's timeline so a test, a water change, and a new fish land in the same column instead of three separate logs.",
+      "evidence_ids": [
+        "ev_fish_service",
+        "ev_fish_lineage"
+      ],
+      "user_decision": "One tank fills the screen; two tanks never share a page."
+    },
+    {
+      "output_path": "experience.visual_world",
+      "decision": "Use a calm glass-and-water world with shaded safe bands instead of a KPI dashboard, because the reading is checked with wet hands beside the tank in a dim room.",
+      "evidence_ids": [
+        "ev_fish_service",
+        "ev_fish_access"
+      ],
+      "user_decision": null
+    }
+  ]
+}

@@ -42,6 +42,11 @@ findings and disposition them here or in a linked issue. The human evidence
 must include the exact build under review and must not be replaced by fixture
 counts.
 
+The current exact-artifact scope, report requirements, and receipt format are
+in [`release-review-guide.md`](release-review-guide.md). A completed external
+review must make the `security_external` row of
+`scripts/public_release_audit.py` pass; this record alone is not a receipt.
+
 ## Compatibility and deprecation policy
 
 Pack manifests declare a core compatibility range and capabilities are

@@ -1,0 +1,46 @@
+{
+  "spec_id": "ham-radio",
+  "spec_version": "1.0",
+  "generated_at": "2026-08-24T04:38:29.599376Z",
+  "compiler": "domain-foundry-core/foundry-spec-1.1",
+  "artifacts": {
+    "foundry-spec.json": "612fa47ed4193ef3b07792da5f6797f62c8591cf99d92f1a392e3afb34342e5e",
+    "schema.sql": "157042f6d29ab230ba64d6074dd9ad5e6521a57faa29b414903d3120799a2d55",
+    "app.html": "a75c9df46800bc5be7207cb768bf6da03715b5827d6ecb15b1a3a56c4e3ea5a5",
+    "evidence.json": "469252995ed47d3ecee0ac175d2bae08b273203bf799d4afde71dac3e01a2264",
+    "README.md": "4363f7a31c300c4e097ae224be845fc3dcdcdf49100232eaba0bd759f05e3260"
+  },
+  "sources": [
+    "adif_spec",
+    "postgresql_constraints",
+    "sqlite_foreign_keys",
+    "sqlite_query_planner",
+    "w3c_prov",
+    "govuk_design_principles",
+    "wcag_22",
+    "aria_apg",
+    "ui_remix_paper"
+  ],
+  "principles": [
+    "DE-01",
+    "DE-02",
+    "DE-03",
+    "DE-04",
+    "DE-05",
+    "DE-06",
+    "DE-08",
+    "UX-01",
+    "UX-02",
+    "UX-04",
+    "UX-05",
+    "UX-06",
+    "UX-07",
+    "UX-10",
+    "SE-01",
+    "SE-03",
+    "SE-04",
+    "SE-10",
+    "SE-11"
+  ],
+  "generation": null
+}

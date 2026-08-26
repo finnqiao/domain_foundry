@@ -1,0 +1,63 @@
+{
+  "scenario": {
+    "label": "bouldering",
+    "goal": "track my bouldering sessions",
+    "capture": "sent a tough V5 on the overhang today, crux was the heel hook",
+    "idea": {}
+  },
+  "final_url": "http://127.0.0.1:8790/passions/bouldering/route_gallery",
+  "receipt": "Saved to Session log as a route",
+  "page_text": "Skip to content\n◆\nDomain Foundry\nFoundry\nToday\nYour passions\nInbox\nSettings\n\nYOUR PASSIONS\n\n✨\nSession log\n✨\nBrew lab\n✨ Session log\nroute name\nnoted at\nphotos\nnotes\nLog\nAsk\nin Session log\n⌘/Ctrl + Enter\nSave\nSaved to Session log as a route\nGallery\nRoute\n\nNo media yet\n\nAttach a photo while capturing a record and it will appear here.",
+  "wizard_turns": [
+    {
+      "status_code": 200
+    },
+    {
+      "status_code": 200,
+      "state": "fork",
+      "awaiting": "fork",
+      "domain": null,
+      "message": "You said “track my bouldering sessions”. You could:\n1. Session log (suggested): Routes, grades, and whether you sent, flashed, or worked it.\n   a timeline of what you logged · a gallery of the photos\n2. Project board: A catalog of projects plus the sessions you threw at them.\nWhich of these, or say what you want it to do — a chart, photos, a mix board. Paste a notes folder path to ingest text. Photos: have your agent read them first, then send the text.",
+      "status": "scaffold"
+    },
+    {
+      "status_code": 200,
+      "state": "looks",
+      "awaiting": "look",
+      "domain": null,
+      "message": "Here is a look. Pick one, tell me how to change it (darker, denser, more chart), or say 'build it'.\n1. Session log (selected) — media_dex look (round 1)",
+      "status": "scaffold"
+    },
+    {
+      "status_code": 200,
+      "state": "test_drive",
+      "awaiting": "capture",
+      "domain": "bouldering",
+      "message": "No reasoning model is configured, so I can't research “track my bouldering sessions” for real vocabulary and views. You get a solid basic tracker built from your own words; add a key later and I'll rebuild it with research. Session log is ready to try — we'll file route name · noted at · photos · notes. Log one real note and we'll file it.",
+      "pack": {
+        "name": "bouldering",
+        "version": "0.1.0",
+        "title": "Session log",
+        "path": "/private/var/folders/vw/xqh73ydn483_8hc9m9t8jtdc0000gn/T/df-e2e.AUUD6I/packs/bouldering"
+      },
+      "status": "scaffold",
+      "acceptance": {
+        "total": 1,
+        "passed": 1,
+        "accuracy": 1,
+        "failures": [],
+        "heuristic": {
+          "passed": 1,
+          "accuracy": 1,
+          "failures": []
+        },
+        "provider": "heuristic",
+        "provider_live": false,
+        "covered": true
+      }
+    },
+    {
+      "status_code": 200
+    }
+  ]
+}

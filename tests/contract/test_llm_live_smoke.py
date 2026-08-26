@@ -3,12 +3,12 @@
 Skipped unless DOMAIN_FOUNDRY_LIVE_SMOKE=1 and at least one API key is present.
 
 Required env (any subset):
-  DEEPSEEK_API_KEY or DOMAIN_FOUNDRY_ROUTINE_API_KEY  → routine (deepseek-chat)
+  DEEPSEEK_API_KEY or DOMAIN_FOUNDRY_ROUTINE_API_KEY  → routine (deepseek-v4-flash)
   ANTHROPIC_API_KEY or DOMAIN_FOUNDRY_SOTA_API_KEY    → sota (claude-sonnet-4-6)
 
 Optional:
   DOMAIN_FOUNDRY_ROUTINE_MODEL, DOMAIN_FOUNDRY_SOTA_MODEL
-  DOMAIN_FOUNDRY_ROUTINE_BASE_URL (default https://api.deepseek.com/v1)
+  DOMAIN_FOUNDRY_ROUTINE_BASE_URL (default https://api.deepseek.com)
 
 OpenRouter recipe (routine tier via any OpenAI-compatible model, e.g. GLM 5.2):
   DOMAIN_FOUNDRY_ROUTINE_API_KEY=<openrouter key>

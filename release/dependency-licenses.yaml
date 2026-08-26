@@ -1,0 +1,158 @@
+schema_version: 1
+reviewed_at: "2026-08-19"
+freshness_days: 90
+review_status: agent_assisted_pending_independent_review
+policy:
+  allowed_expressions:
+    - Apache-2.0
+    - Apache-2.0 OR BSD-2-Clause
+    - BSD-2-Clause
+    - BSD-3-Clause
+    - BlueOak-1.0.0
+    - ISC
+    - MIT
+    - MPL-2.0
+    - PSF-2.0
+  denied_tokens:
+    - AGPL
+    - BUSL
+    - Commons-Clause
+    - FSL
+    - GPL
+    - LGPL
+    - NOASSERTION
+    - SSPL
+    - UNKNOWN
+python_runtime:
+  - name: annotated-doc
+    version: 0.0.5
+    license: MIT
+    evidence: wheel License-Expression
+  - name: annotated-types
+    version: 0.8.0
+    license: MIT
+    evidence: wheel License-Expression
+  - name: anyio
+    version: 4.14.2
+    license: MIT
+    evidence: wheel License-Expression
+  - name: certifi
+    version: 2026.7.22
+    license: MPL-2.0
+    evidence: wheel License field and OSI classifier
+  - name: click
+    version: 8.4.2
+    license: BSD-3-Clause
+    evidence: wheel License-Expression
+  - name: colorama
+    version: 0.4.6
+    license: BSD-3-Clause
+    evidence: wheel OSI classifier
+  - name: fastapi
+    version: 0.141.1
+    license: MIT
+    evidence: wheel License-Expression
+  - name: h11
+    version: 0.16.0
+    license: MIT
+    evidence: wheel License field and OSI classifier
+  - name: httpcore
+    version: 1.0.9
+    license: BSD-3-Clause
+    evidence: wheel License-Expression
+  - name: httptools
+    version: 0.8.0
+    license: MIT
+    evidence: wheel License-Expression
+  - name: httpx
+    version: 0.28.1
+    license: BSD-3-Clause
+    evidence: wheel License field and OSI classifier
+  - name: idna
+    version: "3.18"
+    license: BSD-3-Clause
+    evidence: wheel License-Expression
+  - name: jinja2
+    version: 3.1.6
+    license: BSD-3-Clause
+    evidence: wheel OSI classifier
+  - name: markdown-it-py
+    version: 4.2.0
+    license: MIT
+    evidence: wheel OSI classifier
+  - name: markupsafe
+    version: 3.0.3
+    license: BSD-3-Clause
+    evidence: wheel License-Expression
+  - name: mdurl
+    version: 0.1.2
+    license: MIT
+    evidence: wheel OSI classifier
+  - name: packaging
+    version: "26.3"
+    license: Apache-2.0 OR BSD-2-Clause
+    evidence: wheel License-Expression
+  - name: pydantic
+    version: 2.13.4
+    license: MIT
+    evidence: wheel License-Expression
+  - name: pydantic-core
+    version: 2.46.4
+    license: MIT
+    evidence: wheel License-Expression
+  - name: pygments
+    version: 2.20.0
+    license: BSD-2-Clause
+    evidence: wheel License-Expression
+  - name: python-dotenv
+    version: 1.2.3
+    license: BSD-3-Clause
+    evidence: wheel License field
+  - name: python-ulid
+    version: 4.0.1
+    license: MIT
+    evidence: wheel License-Expression and OSI classifier
+  - name: pyyaml
+    version: 6.0.3
+    license: MIT
+    evidence: wheel License field and OSI classifier
+  - name: rich
+    version: 15.0.0
+    license: MIT
+    evidence: wheel License field and OSI classifier
+  - name: shellingham
+    version: 1.5.4
+    license: ISC
+    evidence: wheel License field and OSI classifier
+  - name: starlette
+    version: 1.6.0
+    license: BSD-3-Clause
+    evidence: wheel License-Expression
+  - name: typer
+    version: 0.27.1
+    license: MIT
+    evidence: wheel License-Expression
+  - name: typing-extensions
+    version: 4.16.0
+    license: PSF-2.0
+    evidence: wheel License-Expression
+  - name: typing-inspection
+    version: 0.4.4
+    license: MIT
+    evidence: wheel License-Expression
+  - name: uvicorn
+    version: 0.52.3
+    license: BSD-3-Clause
+    evidence: wheel License-Expression
+  - name: uvloop
+    version: 0.22.1
+    license: MIT
+    evidence: wheel License field and project license
+  - name: watchfiles
+    version: 1.2.0
+    license: MIT
+    evidence: wheel License field and OSI classifier
+  - name: websockets
+    version: 17.0.1
+    license: BSD-3-Clause
+    evidence: wheel License-Expression

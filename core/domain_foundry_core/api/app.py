@@ -21,7 +21,7 @@ from typing import Any
 
 from fastapi import Body, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from domain_foundry_core.api.harness import HarnessAPI
@@ -38,6 +38,8 @@ from domain_foundry_core.api.schemas import (
     CaptureBody,
     CorrectBody,
     DrainBody,
+    FoundryCompleteBody,
+    FoundryProposeBody,
     HardeningBody,
     PackEditBody,
     PackExportBody,
@@ -83,6 +85,9 @@ def create_app(
 ) -> FastAPI:
     token = api_token if api_token is not None else os.environ.get("DOMAIN_FOUNDRY_API_TOKEN")
     api = HarnessAPI(home)
+    from domain_foundry_core.foundry.service import FoundryService
+
+    foundry = FoundryService(api.workspace.home)
     roamboard_import = RoamboardImportService(api.workspace)
     pack_import = PackImportService(api.workspace, registry=api.packs)
 
@@ -122,6 +127,94 @@ def create_app(
             raise HTTPException(status_code=401, detail="bearer token required")
         if authorization.removeprefix("Bearer ").strip() != token:
             raise HTTPException(status_code=403, detail="invalid token")
+
+    @app.get("/api/foundry/goldens")
+    def foundry_goldens(
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(authorization)
+        return {"goldens": foundry.list_goldens()}
+
+    @app.get("/api/foundry/goldens/{spec_id}")
+    def foundry_golden(
+        spec_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(authorization)
+        try:
+            return foundry.get_golden(spec_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    @app.post("/api/foundry/proposals")
+    def foundry_propose(
+        body: FoundryProposeBody,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        from domain_foundry_core.foundry.pipeline import AcceptanceTask, PipelineError
+        from domain_foundry_core.foundry.research import ResearchUnavailable
+
+        _auth(authorization)
+        try:
+            proposal_id, result = foundry.propose(
+                body.goal,
+                artifacts=body.artifacts,
+                constraints=body.constraints,
+                acceptance_tasks=[
+                    AcceptanceTask(input=item.input, expected=item.expected)
+                    for item in body.acceptance_tasks
+                ],
+                use_web_research=body.web_research,
+            )
+        except (ResearchUnavailable, PipelineError) as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except RuntimeError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        return {
+            "proposal_id": proposal_id,
+            "candidate_sources": result.candidate_count,
+            "proposal": result.proposal.model_dump(mode="json"),
+            "sources": foundry.proposal_sources(result.proposal),
+        }
+
+    @app.post("/api/foundry/proposals/{proposal_id}/complete")
+    def foundry_complete(
+        proposal_id: str,
+        body: FoundryCompleteBody,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        from domain_foundry_core.foundry.models import RemixSelection
+        from domain_foundry_core.foundry.pipeline import PipelineError
+
+        _auth(authorization)
+        try:
+            return foundry.complete(
+                proposal_id,
+                RemixSelection(
+                    selected_concept=body.selected_concept,
+                    fragments=body.fragments,
+                    user_decisions=body.user_decisions,
+                ),
+            )
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except (ValueError, PipelineError) as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except (RuntimeError, FileExistsError) as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    @app.get("/api/foundry/apps/{proposal_id}", response_class=HTMLResponse)
+    def foundry_app(
+        proposal_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> FileResponse:
+        _auth(authorization)
+        try:
+            return FileResponse(foundry.app_path(proposal_id), media_type="text/html")
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     def _pack_operation(operation: Callable[[], dict[str, Any]]) -> dict[str, Any]:
         """Run one registry lifecycle operation with truthful HTTP failures."""
@@ -788,7 +881,11 @@ def create_app(
     ) -> dict[str, Any]:
         _auth(authorization)
         try:
-            return api.new_domain(body.goal_text, test_drive=body.test_drive)
+            return api.new_domain(
+                body.goal_text,
+                test_drive=body.test_drive,
+                release_mode=body.release,
+            )
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -808,6 +905,92 @@ def create_app(
         if str(result.get("error", "")).startswith("unknown wizard session"):
             raise HTTPException(status_code=404, detail=str(result["error"]))
         return result
+
+    # Release creation seam.  The older /api/wizard contract remains available
+    # to existing adapters; the app uses this path so its copy and topic policy
+    # can evolve without changing automation payloads.
+    @app.post("/api/create")
+    def create_start(
+        body: WizardBody,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(authorization)
+        try:
+            return api.create_domain(body.goal_text, test_drive=body.test_drive)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.get("/api/create/{session_id}")
+    def create_resume(
+        session_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(authorization)
+        result = api.create_resume(session_id)
+        if str(result.get("error", "")).startswith("unknown wizard session"):
+            raise HTTPException(status_code=404, detail=str(result["error"]))
+        return result
+
+    @app.post("/api/create/{session_id}/reply")
+    def create_reply(
+        session_id: str,
+        body: WizardReplyBody,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(authorization)
+        try:
+            result = api.wizard_reply(session_id, body.text)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        if str(result.get("error", "")).startswith("unknown wizard session"):
+            raise HTTPException(status_code=404, detail=str(result["error"]))
+        return result
+
+    @app.post("/api/create/{session_id}/cancel")
+    def create_cancel(
+        session_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(authorization)
+        result = api.create_cancel(session_id)
+        if str(result.get("error", "")).startswith("unknown wizard session"):
+            raise HTTPException(status_code=404, detail=str(result["error"]))
+        return result
+
+    @app.get("/api/create/{session_id}/events")
+    def create_events(
+        session_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> StreamingResponse:
+        _auth(authorization)
+        result = api.create_resume(session_id)
+        if str(result.get("error", "")).startswith("unknown wizard session"):
+            raise HTTPException(status_code=404, detail=str(result["error"]))
+
+        def stream() -> Any:
+            yield f"event: progress\ndata: {json.dumps(result.get('progress') or [])}\n\n"
+            yield f"event: state\ndata: {json.dumps({'state': result.get('state'), 'session_id': session_id})}\n\n"
+
+        return StreamingResponse(stream(), media_type="text/event-stream")
+
+    @app.get("/api/create/{session_id}/preview", response_model=None)
+    def create_preview(
+        session_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any] | HTMLResponse:
+        _auth(authorization)
+        result = api.create_resume(session_id)
+        if str(result.get("error", "")).startswith("unknown wizard session"):
+            raise HTTPException(status_code=404, detail=str(result["error"]))
+        pack = result.get("pack") or {}
+        path = Path(str(pack.get("path") or "")) / "app.html"
+        if path.is_file():
+            return HTMLResponse(path.read_text(encoding="utf-8"))
+        return {
+            "available": False,
+            "message": "The preview is not available yet. Your choices are saved.",
+            "session_id": session_id,
+        }
 
     @app.post("/api/domains/{domain}/hardening/preview")
     def hardening_preview(
@@ -894,6 +1077,14 @@ def create_app(
     spa_index = dist / "index.html"
     if spa_index.is_file():
         app.mount("/assets", StaticFiles(directory=dist / "assets"), name="assets")
+        notices = dist / "THIRD_PARTY_NOTICES.txt"
+
+        @app.get("/THIRD_PARTY_NOTICES.txt", include_in_schema=False)
+        def third_party_notices() -> FileResponse:
+            """Expose the redistribution notices shipped beside the SPA."""
+            if not notices.is_file():
+                raise HTTPException(status_code=404, detail="third-party notices unavailable")
+            return FileResponse(notices, media_type="text/plain; charset=utf-8")
 
         @app.get("/", response_model=None)
         def spa_root() -> FileResponse | HTMLResponse:
@@ -920,6 +1111,7 @@ def create_app(
             "docs",
             "redoc",
             "openapi.json",
+            "THIRD_PARTY_NOTICES.txt",
         }
 
         @app.get("/{full_path:path}")

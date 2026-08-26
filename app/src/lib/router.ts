@@ -23,6 +23,8 @@ export function routeToPath(route: Route): string {
       return "/inbox";
     case "create":
       return "/create";
+    case "foundry":
+      return "/foundry";
     case "settings":
       return route.tab ? `/settings/${route.tab}` : "/settings";
   }
@@ -51,6 +53,8 @@ export function pathToRoute(path: string): Route {
       return { name: "inbox" };
     case "create":
       return { name: "create" };
+    case "foundry":
+      return { name: "foundry" };
     case "settings":
       return segments[1] && isSettingsTab(segments[1])
         ? { name: "settings", tab: segments[1] }

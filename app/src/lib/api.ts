@@ -27,6 +27,10 @@ import type {
   QuizActivity,
   QuizSession,
   ScheduleStatus,
+  FoundryCompletionResponse,
+  FoundryGoldenSummary,
+  FoundryProposalResponse,
+  FoundrySpec,
 } from "./types";
 
 // A bearer token can be injected at build/runtime for non-local binds.
@@ -310,8 +314,57 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ text }),
     }),
+  createStart: (goal: string) =>
+    req<WizardTurn>("/api/create", {
+      method: "POST",
+      body: JSON.stringify({ goal_text: goal }),
+    }),
+  createResume: (sessionId: string) =>
+    req<WizardTurn>(`/api/create/${encodeURIComponent(sessionId)}`),
+  createReply: (sessionId: string, text: string) =>
+    req<WizardTurn>(`/api/create/${encodeURIComponent(sessionId)}/reply`, {
+      method: "POST",
+      body: JSON.stringify({ text }),
+    }),
+  createCancel: (sessionId: string) =>
+    req<WizardTurn>(`/api/create/${encodeURIComponent(sessionId)}/cancel`, {
+      method: "POST",
+    }),
   wizardSuggest: (domain: string) =>
     req<{ suggestion: { suggestion?: string; idea_id?: string; apply_edit?: string } | null }>(
       `/api/wizard/${encodeURIComponent(domain)}/suggest`,
+    ),
+  foundryGoldens: () =>
+    req<{ goldens: FoundryGoldenSummary[] }>("/api/foundry/goldens").then((r) => r.goldens),
+  foundryGolden: (id: string) =>
+    req<FoundrySpec>(`/api/foundry/goldens/${encodeURIComponent(id)}`),
+  foundryPropose: (body: {
+    goal: string;
+    artifacts: string[];
+    constraints: string[];
+    acceptance_tasks: Array<{ input: string; expected: string }>;
+    web_research: boolean;
+  }) =>
+    req<FoundryProposalResponse>("/api/foundry/proposals", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  foundryComplete: (
+    proposalId: string,
+    body: {
+      selected_concept: string;
+      user_decisions: string[];
+      fragments: Array<{
+        kind: "workflow" | "schema" | "interaction" | "visual_system" | "concept";
+        from_concept: string;
+        fragment: string;
+        reason: string;
+        evidence_ids: string[];
+      }>;
+    },
+  ) =>
+    req<FoundryCompletionResponse>(
+      `/api/foundry/proposals/${encodeURIComponent(proposalId)}/complete`,
+      { method: "POST", body: JSON.stringify(body) },
     ),
 };

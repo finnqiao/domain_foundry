@@ -3,7 +3,8 @@
 Launches ``domain-foundry-mcp`` over stdio exactly as Claude Desktop / Cursor do,
 then drives the full loop through real MCP ``tools/call`` requests:
 
-    new_domain -> wizard_reply(skip) -> capture -> query -> correct -> review -> health
+    new_domain -> wizard_reply(looks) -> wizard_reply(build it) -> capture
+    -> query -> correct -> review -> health
 
 Offline and deterministic (heuristic router, no API key). Run standalone to print
 the transcript used as the tutorial's MCP proof snapshot:
@@ -30,6 +31,12 @@ pytest.importorskip("mcp", reason="pip install 'mcp>=1.2.0' to run the MCP proof
 from mcp import ClientSession, StdioServerParameters  # noqa: E402
 from mcp.client.stdio import stdio_client  # noqa: E402
 
+GOAL = "i collect pokemon cards"
+PICK = "a dex of the cards i own with photos"
+BUILD = "build it"
+CAP = "pulled a holographic Charizard from a 151 booster, NM"
+CORR = "that Charizard was LP not NM"
+
 
 def _unwrap(result: Any) -> Any:
     """Return the tool's structured payload from a CallToolResult."""
@@ -43,6 +50,15 @@ def _unwrap(result: Any) -> Any:
         if text:
             return json.loads(text)
     return None
+
+
+def _looks_have_html(turn: dict[str, Any]) -> bool:
+    return any("html" in (item or {}) for item in (turn.get("looks") or []))
+
+
+def _is_cards_domain(name: str | None) -> bool:
+    token = (name or "").lower()
+    return "pokemon" in token or "card" in token
 
 
 async def _run(home: str, echo: bool = False) -> list[tuple[str, Any]]:
@@ -69,24 +85,44 @@ async def _run(home: str, echo: bool = False) -> list[tuple[str, Any]]:
 
             r = await session.call_tool(
                 "domain_foundry_new_domain",
-                {"goal": "track my bouldering climbing sessions"},
+                {"goal": GOAL},
             )
             turn = _unwrap(r)
             sid = turn["session_id"]
-            log("new_domain", {"session_id": sid, "state": turn.get("state"),
-                               "domain": turn.get("domain")})
+            log("new_domain", {
+                "session_id": sid,
+                "state": turn.get("state"),
+                "domain": turn.get("domain"),
+                "ideas": [
+                    i.get("title")
+                    for i in ((turn.get("neighborhood") or {}).get("ideas") or [])
+                ],
+            })
 
             r = await session.call_tool(
-                "domain_foundry_wizard_reply", {"session_id": sid, "text": "skip"}
+                "domain_foundry_wizard_reply", {"session_id": sid, "text": PICK}
+            )
+            looks = _unwrap(r)
+            log("wizard_reply(looks)", {
+                "state": looks.get("state"),
+                "looks": [
+                    {k: v for k, v in (item or {}).items() if k != "html"}
+                    for item in (looks.get("looks") or [])
+                ],
+                "html_in_payload": _looks_have_html(looks),
+            })
+
+            r = await session.call_tool(
+                "domain_foundry_wizard_reply", {"session_id": sid, "text": BUILD}
             )
             activated = _unwrap(r)
-            log("wizard_reply(skip)", {"state": activated.get("state"),
-                                       "domain": activated.get("domain")})
+            log("wizard_reply(build it)", {
+                "state": activated.get("state"),
+                "domain": activated.get("domain")
+                or ((activated.get("pack") or {}).get("name")),
+            })
 
-            r = await session.call_tool(
-                "domain_foundry_capture",
-                {"text": "good bouldering session at the gym, felt strong"},
-            )
+            r = await session.call_tool("domain_foundry_capture", {"text": CAP})
             cap = _unwrap(r)
             routed = (cap.get("routed") or [{}])[0]
             log("capture", {"status": cap.get("status"),
@@ -110,12 +146,13 @@ async def _run(home: str, echo: bool = False) -> list[tuple[str, Any]]:
 
             r = await session.call_tool(
                 "domain_foundry_correct",
-                {"text": "actually the rating was moderate not hard"},
+                {"text": CORR},
             )
             corr = _unwrap(r)
             log("correct", {"action": corr.get("action"),
                             "applied": corr.get("applied"),
-                            "eval_case": bool(corr.get("eval_case_id"))})
+                            "eval_case": bool(corr.get("eval_case_id")),
+                            "fields": (corr.get("details") or {}).get("fields")})
 
             r = await session.call_tool("domain_foundry_review_list", {})
             log("review_list", {"pending": len(_unwrap(r).get("items", []))})
@@ -137,13 +174,22 @@ def test_mcp_end_to_end() -> None:
     assert "domain_foundry_export" in steps["tools/list"]
     assert steps["ask"]["has_answer"] is True
     assert steps["new_domain"].get("state") == "fork"
-    assert steps["wizard_reply(skip)"]["domain"] == "bouldering"
-    assert steps["wizard_reply(skip)"]["state"] in {"test_drive", "repair"}
-    assert steps["capture"]["domain"] == "bouldering"
+    ideas = " ".join(steps["new_domain"].get("ideas") or []).lower()
+    assert "card dex" in ideas
+    assert steps["wizard_reply(looks)"]["state"] == "looks"
+    assert steps["wizard_reply(looks)"]["html_in_payload"] is False
+    assert steps["wizard_reply(looks)"]["looks"]
+    assert all("html" not in item for item in steps["wizard_reply(looks)"]["looks"])
+    domain = steps["wizard_reply(build it)"]["domain"]
+    assert _is_cards_domain(domain)
+    assert steps["wizard_reply(build it)"]["state"] in {"test_drive", "repair"}
+    assert _is_cards_domain(steps["capture"]["domain"])
     assert steps["capture"]["status"] == "applied"
     assert steps["query"]["rows"] >= 1
+    assert "Charizard" in (steps["query"]["first"] or "")
     assert steps["correct"]["applied"] is True
     assert steps["correct"]["eval_case"] is True
+    assert (steps["correct"].get("fields") or {}).get("notes") == "LP"
     assert steps["health"]["ok"] is True
 
 

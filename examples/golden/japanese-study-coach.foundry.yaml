@@ -1,0 +1,366 @@
+spec_version: "1.0"
+id: japanese-study-coach
+title: Japanese Study Coach
+source_ids:
+  - anki_scheduler
+  - fsrs4anki
+  - postgresql_constraints
+  - sqlite_foreign_keys
+  - sqlite_query_planner
+  - w3c_prov
+  - govuk_design_principles
+  - wcag_22
+  - aria_apg
+  - ui_remix_paper
+principle_ids: [DE-01, DE-02, DE-03, DE-04, DE-05, DE-06, DE-08, DE-09, UX-01, UX-02, UX-03, UX-04, UX-05, UX-06, UX-07, UX-08, UX-09, UX-10, SE-01, SE-03, SE-04, SE-05, SE-10, SE-11]
+research:
+  interest: Learning Japanese vocabulary and grammar through spaced review and real encounters
+  desired_outcome: Remember useful language, understand why an item is due, and reconnect reviews to the media or situation where it was learned
+  practice:
+    - Capture words, expressions, kanji, and grammar from lessons, books, shows, conversations, and daily life
+    - Review prompts, grade recall honestly, and let scheduling state evolve from review history
+    - Notice leeches, ambiguity, and weak prompts and repair the learning item rather than merely increasing repetitions
+  existing_artifacts: [Anki export, vocabulary notes, sentence screenshots, audio clips, textbook chapter lists]
+  constraints: [review must work offline, scheduling history must remain auditable, the app cannot claim pedagogical certainty]
+  open_questions: [preferred daily session length, recognition versus production balance, furigana policy, existing scheduler import]
+  usage_context: [short phone sessions in transit, desktop item repair and progress reflection]
+  first_value: Review one real expression and see the next due state plus the exact source and history behind it
+evidence:
+  - id: ev_jp_scheduler
+    source_id: anki_scheduler
+    claim: Spaced review distinguishes new, learning, review, and relearning states with due timing, lapses, leeches, queues, and memory state.
+    use: pattern
+    locator: scheduler protocol messages and states
+  - id: ev_jp_fsrs
+    source_id: fsrs4anki
+    claim: Scheduling and optimization are separate concerns and can learn parameters from review history while retaining interpretable state.
+    use: pattern
+    locator: README scheduler and optimizer
+  - id: ev_jp_integrity
+    source_id: postgresql_constraints
+    claim: Note identity, prompt identity, review events, and scheduling state need distinct keys and enforced relationships.
+    use: constraint
+  - id: ev_jp_lineage
+    source_id: w3c_prov
+    claim: Review outcomes, source artifacts, corrections, and derived schedules should retain derivation lineage.
+    use: pattern
+  - id: ev_jp_workloads
+    source_id: sqlite_query_planner
+    claim: Due queues and history analysis require indexes chosen from filter and ordering workloads.
+    use: constraint
+  - id: ev_jp_remix
+    source_id: ui_remix_paper
+    claim: Structurally different sourced concepts can be remixed at workflow and interaction level.
+    use: pattern
+  - id: ev_jp_service
+    source_id: govuk_design_principles
+    claim: Start with the learner's context and make the whole learning service useful rather than designing an isolated review screen.
+    use: pattern
+  - id: ev_jp_access
+    source_id: wcag_22
+    claim: Review timing, motion, focus, labels, error recovery, and status must remain operable and understandable.
+    use: constraint
+concepts:
+  - id: quick_review
+    title: Pocket Review
+    thesis: Remove everything between the learner and a focused five-minute session.
+    primary_loop: Open, answer the next prompt, grade recall, and leave with a clear completion state.
+    primary_affordance: One full-viewport prompt with four stable grading actions
+    differentiator: Fastest and least distracting daily practice
+    feature_boundary: [due queue, review interaction, session completion, lightweight correction]
+    tradeoffs: [limited insight into source context and long-term memory patterns]
+    workflow_ids: [start_session, answer_prompt, finish_session]
+    evidence_ids: [ev_jp_scheduler, ev_jp_service]
+  - id: memory_observatory
+    title: Memory Observatory
+    thesis: Make scheduling state understandable so the learner can repair weak items and trust the queue.
+    primary_loop: Review, inspect the changed memory state, repair a leech, and watch stability improve.
+    primary_affordance: A review stage paired with a quiet memory trajectory and explainable next interval
+    differentiator: Turns opaque scheduling into actionable learning feedback
+    feature_boundary: [due queue, review history, memory state, leech repair, progress analysis]
+    tradeoffs: [more explanation is available than a casual learner may want]
+    workflow_ids: [start_session, answer_prompt, explain_schedule, repair_item, inspect_memory]
+    evidence_ids: [ev_jp_scheduler, ev_jp_fsrs, ev_jp_lineage]
+  - id: immersion_bridge
+    title: Immersion Bridge
+    thesis: Organize study around encounters in books, shows, and conversations so review returns language to its original world.
+    primary_loop: Capture an encounter, shape prompts, review in context, and revisit the source cluster.
+    primary_affordance: A source shelf that opens into annotated expressions and audio before creating review prompts
+    differentiator: Strongest connection between deliberate review and authentic language use
+    feature_boundary: [source capture, notes and prompts, contextual review, source progress]
+    tradeoffs: [requires more source metadata and item authoring]
+    workflow_ids: [capture_encounter, shape_prompt, review_in_context, revisit_source]
+    evidence_ids: [ev_jp_lineage, ev_jp_service]
+remix:
+  selected_concept: memory_observatory
+  fragments:
+    - kind: interaction
+      from_concept: quick_review
+      fragment: uninterrupted single-prompt review stage
+      reason: Explanations must never crowd the recall moment.
+      evidence_ids: [ev_jp_service, ev_jp_access]
+    - kind: schema
+      from_concept: immersion_bridge
+      fragment: source artifact and encounter lineage
+      reason: Prompts are more repairable when the learner can revisit where the language came from.
+      evidence_ids: [ev_jp_lineage]
+  user_decisions: [Prioritize explainable scheduling, keep the active prompt visually quiet, preserve source sentences and audio locally]
+domain:
+  entities:
+    - id: source_artifact
+      title: Source Artifact
+      kind: reference
+      description: A book, lesson, episode, conversation, or other origin of learning material.
+      identity: [source_id]
+      lifecycle: [active, completed, archived]
+      evidence_ids: [ev_jp_lineage, ev_jp_service]
+      fields:
+        - {name: source_id, type: text, description: Stable local source identity, required: true}
+        - {name: title, type: text, description: Learner-facing source name, required: true}
+        - {name: kind, type: enum, description: Source medium, required: true, values: [book, lesson, video, audio, conversation, environment, other]}
+        - {name: status, type: enum, description: Source lifecycle, required: true, values: [active, completed, archived]}
+        - {name: locator, type: text, description: "Chapter, timestamp, page, or private note locating the encounter"}
+    - id: note
+      title: Learning Note
+      kind: canonical
+      description: A semantic item such as an expression, word, kanji, or grammar point independent of its review directions.
+      identity: [note_id]
+      lifecycle: [draft, active, suspended, archived]
+      evidence_ids: [ev_jp_integrity, ev_jp_scheduler]
+      fields:
+        - {name: note_id, type: text, description: Stable semantic identity, required: true}
+        - {name: expression, type: text, description: Japanese expression or form, required: true}
+        - {name: reading, type: text, description: Kana reading when useful}
+        - {name: meaning, type: text, description: Learner-authored meaning in context, required: true}
+        - {name: context_sentence, type: text, description: Source sentence preserving actual use}
+        - {name: audio, type: attachment, description: Optional local pronunciation or source audio}
+        - {name: status, type: enum, description: Note lifecycle, required: true, values: [draft, active, suspended, archived]}
+    - id: prompt
+      title: Review Prompt
+      kind: owned
+      description: One recall direction generated from a note, such as recognition or production.
+      identity: [prompt_id]
+      lifecycle: [new, learning, review, relearning, suspended, retired]
+      evidence_ids: [ev_jp_scheduler, ev_jp_integrity]
+      fields:
+        - {name: prompt_id, type: text, description: Stable prompt identity, required: true}
+        - {name: note_id, type: text, description: Semantic note under review, required: true}
+        - {name: direction, type: enum, description: Recall direction, required: true, values: [recognition, production, listening, reading]}
+        - {name: cue, type: text, description: Prompt shown before recall, required: true}
+        - {name: answer, type: text, description: Expected answer or rubric, required: true}
+        - {name: phase, type: enum, description: Scheduler phase, required: true, values: [new, learning, review, relearning, suspended, retired]}
+        - {name: created_at, type: datetime, description: Prompt creation time, required: true}
+    - id: review_attempt
+      title: Review Attempt
+      kind: event
+      description: An immutable recall attempt and learner grade at one time.
+      identity: [attempt_id]
+      lifecycle: [recorded, corrected, invalidated]
+      evidence_ids: [ev_jp_scheduler, ev_jp_lineage]
+      fields:
+        - {name: attempt_id, type: text, description: Stable event identity, required: true}
+        - {name: prompt_id, type: text, description: Reviewed prompt, required: true}
+        - {name: reviewed_at, type: datetime, description: Effective review time, required: true}
+        - {name: grade, type: enum, description: Learner's recall grade, required: true, values: [again, hard, good, easy]}
+        - {name: response_ms, type: integer, description: Optional response duration, unit: ms}
+        - {name: typed_response, type: text, description: Optional local answer evidence, sensitive: true}
+        - {name: session_id, type: text, description: Review session containing the attempt, required: true}
+    - id: scheduling_state
+      title: Scheduling State
+      kind: state
+      description: Current derived due and memory state for one prompt, reproducible from review history and scheduler version.
+      identity: [prompt_id]
+      lifecycle: [current, superseded]
+      evidence_ids: [ev_jp_scheduler, ev_jp_fsrs, ev_jp_lineage]
+      fields:
+        - {name: prompt_id, type: text, description: Prompt whose current state this represents, required: true}
+        - {name: due_at, type: datetime, description: Next eligible review time, required: true}
+        - {name: phase, type: enum, description: Current scheduler phase, required: true, values: [new, learning, review, relearning, suspended, retired]}
+        - {name: stability_days, type: number, description: Estimated memory stability in days, unit: days}
+        - {name: difficulty, type: number, description: Scheduler difficulty estimate}
+        - {name: lapses, type: integer, description: Count of lapse transitions, required: true}
+        - {name: scheduler_version, type: text, description: Algorithm and parameter version, required: true, evidence_ids: [ev_jp_lineage]}
+        - {name: computed_at, type: datetime, description: Derivation time, required: true}
+    - id: review_session
+      title: Review Session
+      kind: event
+      description: A bounded learner intention and its completion outcome.
+      identity: [session_id]
+      lifecycle: [planned, active, completed, abandoned]
+      evidence_ids: [ev_jp_scheduler, ev_jp_service]
+      fields:
+        - {name: session_id, type: text, description: Stable session identity, required: true}
+        - {name: started_at, type: datetime, description: Session start time, required: true}
+        - {name: completed_at, type: datetime, description: Session completion time}
+        - {name: status, type: enum, description: Session lifecycle, required: true, values: [planned, active, completed, abandoned]}
+        - {name: target_minutes, type: integer, description: Learner-selected time box, unit: minutes}
+        - {name: attempts_completed, type: integer, description: Completed attempt count, required: true}
+  relationships:
+    - {id: notes_sources, from_entity: note, to_entity: source_artifact, cardinality: many_to_many, on_delete: archive, description: A semantic note may appear in several sources and one source yields many notes., evidence_ids: [ev_jp_lineage]}
+    - {id: prompts_note, from_entity: prompt, to_entity: note, cardinality: many_to_one, required: true, on_delete: restrict, description: Several recall directions can share one semantic note., evidence_ids: [ev_jp_integrity]}
+    - {id: attempts_prompt, from_entity: review_attempt, to_entity: prompt, cardinality: many_to_one, required: true, on_delete: restrict, description: Review history is immutable per prompt., evidence_ids: [ev_jp_scheduler]}
+    - {id: attempts_session, from_entity: review_attempt, to_entity: review_session, cardinality: many_to_one, required: true, on_delete: restrict, description: Attempts retain their session context., evidence_ids: [ev_jp_scheduler]}
+    - {id: state_prompt, from_entity: scheduling_state, to_entity: prompt, cardinality: one_to_one, required: true, on_delete: cascade, description: One current derived state exists per active prompt., evidence_ids: [ev_jp_scheduler, ev_jp_fsrs]}
+  constraints:
+    - {id: one_prompt_state, entity: scheduling_state, kind: unique, fields: [prompt_id], reason: A prompt has exactly one current scheduling state while prior derivations remain in provenance., evidence_ids: [ev_jp_integrity]}
+    - {id: nonnegative_lapses, entity: scheduling_state, kind: check, fields: [lapses], expression: "lapses >= 0", reason: Lapse counts cannot be negative., evidence_ids: [ev_jp_integrity]}
+    - {id: prompt_phase_transition, entity: prompt, kind: state_transition, fields: [phase], reason: "New, learning, review, and relearning transitions follow explicit review events.", evidence_ids: [ev_jp_scheduler]}
+  indexes:
+    - {id: due_queue, entity: scheduling_state, fields: [phase, due_at], unique: false, reason: Daily sessions select eligible prompts by phase and due time., workload_ids: [w_due_session]}
+    - {id: prompt_history, entity: review_attempt, fields: [prompt_id, reviewed_at], unique: false, reason: Scheduling explanation and repair inspect ordered review history., workload_ids: [w_explain_schedule, w_find_leeches]}
+    - {id: source_notes, entity: note, fields: [expression, status], unique: false, reason: Capture and repair search semantic notes before creating duplicates., workload_ids: [w_source_recall]}
+  workloads:
+    - {id: w_due_session, question: "Which prompts should this learner review in the next five minutes?", kind: read, entities: [prompt, scheduling_state, review_session], filters: [due_at at or before now, active phases, session time box], sort: [phase priority, due_at ascending], expected_scale: tens of thousands of prompts, acceptance: Produces a stable offline queue without changing due state until an attempt is recorded., evidence_ids: [ev_jp_scheduler, ev_jp_workloads]}
+    - {id: w_explain_schedule, question: "Why is this prompt due now and how will this grade change it?", kind: analysis, entities: [prompt, review_attempt, scheduling_state], filters: [prompt_id], sort: [reviewed_at ascending], expected_scale: hundreds of attempts per prompt, acceptance: "Shows the relevant history, scheduler version, and a labeled projection without presenting uncertainty as certainty.", evidence_ids: [ev_jp_scheduler, ev_jp_fsrs, ev_jp_lineage]}
+    - {id: w_find_leeches, question: "Which prompts repeatedly lapse and what can be repaired?", kind: analysis, entities: [note, prompt, review_attempt, scheduling_state], filters: [lapses threshold, active phase], sort: [lapses descending], expected_scale: tens of thousands of prompts, acceptance: "Finds repeated failures and links them to cue, answer, direction, and source context.", evidence_ids: [ev_jp_scheduler, ev_jp_workloads]}
+    - {id: w_source_recall, question: "What have I learned from this source and how well is it holding?", kind: analysis, entities: [source_artifact, note, prompt, scheduling_state], filters: [source_id, active notes], sort: [due_at ascending], expected_scale: thousands of notes per source, acceptance: Separates source coverage from memory estimates and shows suspended items explicitly., evidence_ids: [ev_jp_lineage, ev_jp_service]}
+  state_machines:
+    - id: prompt_learning_phase
+      entity: prompt
+      field: phase
+      states: [new, learning, review, relearning, suspended, retired]
+      transitions:
+        - {from_state: new, action: first_attempt, to_state: learning}
+        - {from_state: learning, action: graduate, to_state: review}
+        - {from_state: review, action: lapse, to_state: relearning}
+        - {from_state: relearning, action: recover, to_state: review}
+        - {from_state: review, action: suspend, to_state: suspended}
+        - {from_state: suspended, action: restore, to_state: review}
+        - {from_state: suspended, action: retire, to_state: retired}
+      evidence_ids: [ev_jp_scheduler]
+  sample_records:
+    source_artifact:
+      - {source_id: source-novel-01, title: Convenience Store Woman, kind: book, status: active, locator: Chapter 2 margin note}
+    note:
+      - {note_id: note-mimamoru, expression: 見守る, reading: みまもる, meaning: to watch over someone or something, context_sentence: 店長は新人の仕事を静かに見守っていた。, status: active}
+    prompt:
+      - {prompt_id: prompt-mimamoru-recognition, note_id: note-mimamoru, direction: recognition, cue: 見守る, answer: to watch over, phase: review, created_at: "2026-08-05T19:00:00-10:00"}
+    review_attempt:
+      - {attempt_id: attempt-mimamoru-07, prompt_id: prompt-mimamoru-recognition, reviewed_at: "2026-08-18T07:42:00-10:00", grade: good, response_ms: 4100, session_id: session-20260818-am}
+    scheduling_state:
+      - {prompt_id: prompt-mimamoru-recognition, due_at: "2026-08-23T07:42:00-10:00", phase: review, stability_days: 7.4, difficulty: 4.8, lapses: 1, scheduler_version: fsrs-5-learner-202608, computed_at: "2026-08-18T07:42:02-10:00"}
+    review_session:
+      - {session_id: session-20260818-am, started_at: "2026-08-18T07:35:00-10:00", completed_at: "2026-08-18T07:48:00-10:00", status: completed, target_minutes: 15, attempts_completed: 22}
+  temporal_policy: [reviewed_at is effective attempt time, due_at is a derived schedule, computed_at identifies the scheduler derivation, capture time remains separate provenance]
+  privacy_policy: [typed answers and private source notes remain local, imported media keeps source and license metadata, no learning data leaves the device without explicit provider consent]
+experience:
+  mode: operate
+  visual_world:
+    id: memory-corridor
+    name: Memory Corridor
+    mood: Focused, calm, literate, and transparent without becoming clinical
+    typography: Japanese-capable text face with generous counters paired with a compact neutral UI sans
+    color_strategy: Rice-paper ground with sumi text; indigo marks stable knowledge and persimmon marks items needing repair
+    layout_principle: One prompt occupies the present moment while history and explanation live on a revealable depth axis
+    density: Singular and quiet during recall, dense and chronological during repair
+    signature_elements: [vertical memory trail behind the active prompt, source-context slips, interval change drawn as a measured horizon]
+    avoid: [gamified streak fireworks, dashboard KPI cards, faux-Japanese ornament, grading by color alone]
+    tokens: {background: "#F1EEE6", surface: "#FFFEFA", text: "#191A19", muted: "#62645E", accent: "#385A73", accent_alt: "#B85C38", border: "#D1CDC0", focus: "#1E6580", danger: "#A53C39", radius_px: 8}
+  navigation:
+    topology: session
+    primary_view: review_stage
+    persistent_regions: [session progress, pause and exit, offline status]
+  views:
+    - id: review_stage
+      title: Review Stage
+      purpose: Recall one prompt without distraction and grade it consistently.
+      layout: Full-height prompt and answer stage; explanation remains collapsed until after grading.
+      entities: [prompt, note, review_attempt, scheduling_state, review_session]
+      workload_ids: [w_due_session, w_explain_schedule]
+      states: [first_use, populated, loading, empty, error, offline, correction]
+      regions:
+        - {id: active_prompt, kind: session, title: Active recall, entity: prompt, workload_id: w_due_session, emphasis: primary, span: 9}
+        - {id: memory_trail, kind: explanation, title: Memory trail, entity: scheduling_state, workload_id: w_explain_schedule, emphasis: support, span: 3}
+      actions:
+        - {id: reveal_answer, label: Reveal answer, operation: reveal, entity: prompt, consequence: Shows the answer without recording an outcome.}
+        - {id: grade_attempt, label: Grade recall, operation: create, entity: review_attempt, consequence: Records one attempt and derives a new scheduling state.}
+      evidence_ids: [ev_jp_scheduler, ev_jp_access]
+    - id: schedule_explanation
+      title: Why This Is Due
+      purpose: Explain the new interval and make uncertainty and history inspectable.
+      layout: A compact interval horizon above the exact review events that affected it.
+      entities: [prompt, review_attempt, scheduling_state]
+      workload_ids: [w_explain_schedule]
+      states: [populated, loading, empty, error, partial]
+      regions:
+        - {id: interval_horizon, kind: explanation, title: Interval change, entity: scheduling_state, workload_id: w_explain_schedule, emphasis: primary, span: 5}
+        - {id: attempt_history, kind: timeline, title: Attempts that changed it, entity: review_attempt, workload_id: w_explain_schedule, emphasis: secondary, span: 7}
+      actions:
+        - {id: correct_grade, label: Correct last grade, operation: correct, entity: review_attempt, consequence: Preserves the original event and recomputes scheduling state.}
+      evidence_ids: [ev_jp_fsrs, ev_jp_lineage]
+    - id: repair_workbench
+      title: Repair Workbench
+      purpose: Fix prompts that repeatedly fail because of ambiguity, direction, or missing context.
+      layout: Failure history on the left; cue, answer, source, and direction editor on the right.
+      entities: [note, prompt, review_attempt, scheduling_state, source_artifact]
+      workload_ids: [w_find_leeches, w_explain_schedule]
+      states: [first_use, populated, loading, empty, error, conflict, correction]
+      regions:
+        - {id: failure_history, kind: timeline, title: Failure pattern, entity: review_attempt, workload_id: w_find_leeches, emphasis: secondary, span: 5}
+        - {id: prompt_editor, kind: workbench, title: Repair prompt, entity: prompt, workload_id: w_explain_schedule, emphasis: primary, span: 7}
+      actions:
+        - {id: revise_prompt, label: Revise prompt, operation: update, entity: prompt, consequence: Versions the learning direction without erasing review history.}
+        - {id: suspend_prompt, label: Suspend, operation: update, entity: prompt, consequence: Removes the prompt from due queues while preserving evidence.}
+      evidence_ids: [ev_jp_scheduler, ev_jp_lineage, ev_jp_access]
+    - id: source_shelf
+      title: Source Shelf
+      purpose: Reconnect learned material to the book, lesson, scene, or conversation where it appeared.
+      layout: Source spines open into chronological encounters and their current recall state.
+      entities: [source_artifact, note, prompt, scheduling_state]
+      workload_ids: [w_source_recall]
+      states: [first_use, populated, loading, empty, error, partial, offline]
+      regions:
+        - {id: source_library, kind: shelf, title: Source shelf, entity: source_artifact, workload_id: w_source_recall, emphasis: primary, span: 4}
+        - {id: source_notes, kind: catalog, title: Encounters and recall, entity: note, workload_id: w_source_recall, emphasis: secondary, span: 8}
+      actions:
+        - {id: capture_expression, label: Add expression, operation: create, entity: note, consequence: Creates a sourced note before proposing review directions.}
+      evidence_ids: [ev_jp_lineage, ev_jp_service]
+  flows:
+    - id: first_review
+      title: Complete the first real review
+      trigger: User approves the Japanese Study Coach concept.
+      steps:
+        - {view: source_shelf, action: Import or enter one expression with its real context., result: A note and proposed recognition prompt appear with source lineage.}
+        - {view: review_stage, action: "Recall, reveal, and grade the prompt.", result: One immutable attempt and a new scheduling state are recorded.}
+        - {view: schedule_explanation, action: Inspect why the next interval changed., result: Review evidence and scheduler version explain the derivation.}
+      success: The learner understands the next due state and can return to the original context.
+    - id: repair_leech
+      title: Repair a repeatedly failing prompt
+      trigger: A prompt crosses the configured lapse threshold.
+      steps:
+        - {view: repair_workbench, action: Compare failures and inspect the source sentence., result: Ambiguity or direction problems become visible.}
+        - {view: repair_workbench, action: Revise or suspend the prompt., result: The prompt versions or leaves the due queue without deleting history.}
+        - {view: schedule_explanation, action: Review the resulting state., result: The changed derivation is traceable to the repair decision.}
+      success: A weak prompt becomes more specific or is safely suspended while its prior attempts remain auditable.
+  responsive_strategy: [On phones the session is a single uninterrupted stage and explanation opens as a post-grade sheet., On desktop repair uses a split evidence-and-editor workspace while the review stage remains visually singular.]
+  accessibility:
+    target: WCAG-2.2-AA
+    patterns: [native buttons for fixed grades, disclosure pattern for explanations, labeled ruby and furigana behavior, non-timed alternatives]
+    keyboard_model: [Space reveals only when focus is on the stage, number shortcuts are optional and always labeled, grading moves focus to status before the next prompt, Escape pauses safely]
+    manual_checks: [screen-reader review and correction journey, Japanese pronunciation and reading order, reduced motion, 200 percent reflow, no timing-only information]
+implementation:
+  targets: [foundry_runtime, standalone_react]
+  capabilities: [import, sessions, scheduling, event_capture, derived_state, attachments, provenance, correction, offline_queue]
+  imports: [Anki-compatible review export through an isolated adapter, CSV vocabulary, local media folder]
+  exports: [notes and prompts JSON, immutable review history JSONL, scheduling-state snapshot, media manifest, standalone source repository]
+  migrations: [scheduler version changes recompute derived state without rewriting attempts, imported identities retain source namespace, prompt revisions preserve history]
+  permissions: [local file import, optional microphone attachment capture]
+  adapter_seams: [scheduler adapter, Anki import adapter, media adapter, export adapter]
+evaluation:
+  cases:
+    - {id: jp_note_prompt_split, kind: schema, input: One expression needs recognition and production review directions., expected: One semantic note relates to two independently scheduled prompts., authored_by: domain_expert}
+    - {id: jp_review_immutability, kind: schema, input: Learner corrects an accidental Easy grade to Again., expected: Original attempt remains auditable and derived state recomputes from the correction., authored_by: independent_reviewer}
+    - {id: jp_due_queue, kind: workload, input: "20000 prompts across new, learning, review, suspended, and future-due states.", expected: Only eligible prompts enter a stable offline session in the intended order., authored_by: independent_reviewer}
+    - {id: jp_first_task, kind: task, input: New learner adds and reviews one sourced expression on a phone., expected: "Attempt, due state, source, and explanation are visible without scheduler configuration.", authored_by: user}
+    - {id: jp_keyboard_review, kind: accessibility, input: Complete and correct a review without a pointer., expected: "Cue, answer, grade, status, and correction are announced in logical order.", authored_by: standard}
+    - {id: jp_import_prompt_injection, kind: security, input: Imported note contains tool instructions and unknown executable fields., expected: "Text remains inert, unknown fields enter review, and no tool is invoked.", authored_by: independent_reviewer}
+  release_thresholds:
+    schema: note, prompt, attempt, state, session, and source lifecycles pass all held-out cases
+    experience: first review and leech repair pass offline, mobile, desktop, keyboard, and screen-reader smoke
+    evidence: every schedule explanation exposes algorithm version and supporting attempts
+derivations:
+  - {output_path: domain.entities, decision: "Separate semantic notes, recall prompts, immutable attempts, derived scheduling state, sessions, and source artifacts.", evidence_ids: [ev_jp_scheduler, ev_jp_integrity, ev_jp_lineage]}
+  - {output_path: experience.views.review_stage, decision: Keep active recall singular and defer explanations until after grading., evidence_ids: [ev_jp_service, ev_jp_access], user_decision: Keep the active prompt visually quiet.}
+  - {output_path: experience.views.schedule_explanation, decision: Show interval change with exact attempts and scheduler version., evidence_ids: [ev_jp_scheduler, ev_jp_fsrs, ev_jp_lineage]}
+  - {output_path: experience.views.repair_workbench, decision: Treat repeated failure as a prompt-repair workflow rather than only more repetitions., evidence_ids: [ev_jp_scheduler], user_decision: Prioritize explainable scheduling.}
+  - {output_path: experience.visual_world, decision: Use a calm memory corridor that differentiates recall from repair without generic analytics chrome., evidence_ids: [ev_jp_remix], user_decision: Avoid gamified streak pressure.}

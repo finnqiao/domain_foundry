@@ -10,6 +10,7 @@ const EVERY_ROUTE: Route[] = [
   { name: "domain", domain: "weird name/slash" },
   { name: "inbox" },
   { name: "create" },
+  { name: "foundry" },
   { name: "settings" },
   { name: "settings", tab: "sources" },
   { name: "settings", tab: "providers" },

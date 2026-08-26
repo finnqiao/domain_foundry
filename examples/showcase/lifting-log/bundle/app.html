@@ -1,0 +1,1332 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Barbell Logbook</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --bg: #f3f0e8; --surface: #fffdf8; --ink: #1c1c1a; --muted: #65645f;
+      --accent: #965131; --accent-alt: #315866; --border: #d1c9ba;
+      --focus: #17627c; --danger: #a53a35; --radius: 10px;
+      --shadow: 0 14px 40px rgba(32, 28, 22, .12);
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+    }
+    html { background: var(--bg); color: var(--ink); }
+    body { margin: 0; min-height: 100vh; background: var(--bg); }
+    button, input, select, textarea { font: inherit; }
+    button { min-height: 44px; cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .58; }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 3px solid var(--focus); outline-offset: 3px;
+    }
+    .skip { position: fixed; left: 1rem; top: -5rem; z-index: 20; background: var(--ink); color: var(--surface); padding: .7rem 1rem; }
+    .skip:focus { top: 1rem; }
+    .app { min-height: 100vh; display: grid; grid-template-columns: minmax(210px, 260px) 1fr; }
+    .rail { min-height: 100vh; padding: 2rem 1.25rem; border-right: 1px solid var(--border); background: color-mix(in srgb, var(--surface) 72%, var(--bg)); position: sticky; top: 0; align-self: start; }
+    .brand { margin: 0 0 2.5rem; font-size: clamp(1.6rem, 3vw, 2.5rem); line-height: .98; letter-spacing: -.035em; max-width: 8ch; }
+    .world { color: var(--muted); line-height: 1.45; margin: -.9rem 0 2rem; }
+    .view-nav { display: grid; gap: .25rem; }
+    .view-nav button { text-align: left; padding: .7rem .8rem; border: 0; border-radius: calc(var(--radius) - 3px); color: var(--ink); background: transparent; }
+    .view-nav button:hover { background: var(--surface); }
+    .view-nav button[aria-current="page"] { background: var(--ink); color: var(--surface); }
+    .rail-foot { margin-top: 2.5rem; font-size: .82rem; color: var(--muted); }
+    main { min-width: 0; padding: clamp(1.25rem, 4vw, 3.75rem); }
+    .topbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 2rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+    .topbar h1 { margin: 0; font-size: clamp(2.4rem, 7vw, 5.7rem); line-height: .92; letter-spacing: -.04em; max-width: 11ch; text-wrap: balance; }
+    .topbar p { max-width: 65ch; color: var(--muted); }
+    .toolbar { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .55rem; }
+    .button { border: 1px solid var(--border); background: var(--surface); color: var(--ink); border-radius: calc(var(--radius) - 2px); padding: .65rem .9rem; }
+    .button:hover { border-color: var(--ink); }
+    .button.primary { background: var(--accent); color: #fff; border-color: transparent; }
+    .button.danger { color: var(--danger); }
+    .view-head { margin: 3.5rem 0 2rem; display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 32rem); gap: 2rem; align-items: end; }
+    .view-head h2 { margin: 0; font-size: clamp(2rem, 5vw, 4rem); line-height: 1; letter-spacing: -.035em; }
+    .view-head p { margin: 0; color: var(--muted); max-width: 70ch; }
+    .regions { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1rem; }
+    .region { grid-column: span var(--span); min-width: 0; padding: clamp(1rem, 2.4vw, 2rem); background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .region.support { background: transparent; box-shadow: none; border: 1px solid var(--border); }
+    .region h3 { margin: 0 0 1.4rem; font-size: 1.1rem; }
+    .region-meta { color: var(--muted); font-size: .78rem; margin: -.9rem 0 1.4rem; }
+    .record-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .7rem; }
+    .record { padding: .85rem 0; border-top: 1px solid var(--border); min-width: 0; }
+    .record:first-child { border-top: 0; padding-top: 0; }
+    .record strong { display: block; font-size: 1.05rem; margin-bottom: .25rem; }
+    .record-select { width: 100%; min-height: 0; padding: .45rem; margin: -.45rem; border: 0; border-radius: calc(var(--radius) - 4px); background: transparent; color: inherit; text-align: start; }
+    .record-select:hover { background: color-mix(in srgb, var(--accent) 7%, transparent); }
+    .record-select[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 12%, transparent); outline: 1px solid var(--accent); }
+    .record dl, .detail-grid { margin: .6rem 0 0; display: grid; grid-template-columns: minmax(7rem, .7fr) minmax(0, 1.3fr); gap: .3rem .8rem; }
+    dt { color: var(--muted); } dd { margin: 0; overflow-wrap: anywhere; }
+    .canvas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: .65rem; }
+    .slot { aspect-ratio: .72; padding: .65rem; background: color-mix(in srgb, var(--accent) 8%, var(--surface)); border: 1px solid var(--border); border-radius: calc(var(--radius) - 3px); display: flex; flex-direction: column; justify-content: space-between; }
+    .slot.empty { background: transparent; border-style: dashed; color: var(--muted); }
+    .slot-number { font-variant-numeric: tabular-nums; font-size: .75rem; color: var(--muted); }
+    .session-card { min-height: 20rem; display: grid; place-items: center; text-align: center; padding: 3rem 1rem; }
+    .session-card .cue { font-size: clamp(2.7rem, 9vw, 7rem); line-height: 1; letter-spacing: -.03em; }
+    .session-answer { margin-top: 2rem; font-size: 1.15rem; }
+    .measure { font-family: ui-monospace, "SFMono-Regular", monospace; font-variant-numeric: tabular-nums; }
+    .timeline { border-inline-start: 1px solid var(--accent-alt); padding-inline-start: 1rem; }
+    .timeline .record { position: relative; }
+    .timeline .record::before { content: ""; position: absolute; width: 9px; height: 9px; border-radius: 50%; background: var(--accent-alt); inset-inline-start: calc(-1rem - 5px); top: 1.1rem; }
+    .timeline time { display: block; color: var(--muted); font-size: .78rem; margin-bottom: .35rem; }
+    .chart-figure { margin: 0; }
+    .chart-figure svg { display: block; width: 100%; min-height: 220px; overflow: visible; }
+    .chart-grid { stroke: var(--border); stroke-width: 1; }
+    .chart-area { fill: color-mix(in srgb, var(--accent) 14%, transparent); }
+    .chart-line { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    .chart-point { fill: var(--surface); stroke: var(--accent); stroke-width: 3; }
+    .chart-figure figcaption { color: var(--muted); font-size: .82rem; margin-top: .7rem; }
+    .data-table-wrap { max-width: 100%; overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+    .data-table th, .data-table td { padding: .65rem .7rem; border-bottom: 1px solid var(--border); text-align: start; vertical-align: top; overflow-wrap: anywhere; }
+    .data-table th { color: var(--muted); font-size: .76rem; font-weight: 650; }
+    .data-table tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+    .data-table tbody tr { cursor: pointer; }
+    .shelf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .8rem; }
+    .shelf-item { min-height: 8rem; padding: 1rem; border: 1px solid var(--border); border-radius: calc(var(--radius) - 3px); background: color-mix(in srgb, var(--surface) 84%, var(--accent-alt)); color: var(--ink); text-align: start; }
+    .shelf-item[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .shelf-item small { display: block; color: var(--muted); margin-top: .7rem; }
+    .workbench { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 1rem; }
+    .workbench aside { border-inline-end: 1px solid var(--border); padding-inline-end: 1rem; }
+    .explanation { max-width: 68ch; }
+    .explanation strong { display: block; margin-bottom: .55rem; }
+    .storage-note { color: var(--muted); font-size: .78rem; margin: .8rem 0 0; }
+    .empty-state { min-height: 12rem; display: grid; align-content: center; justify-items: start; gap: .75rem; color: var(--muted); }
+    .empty-state p { max-width: 45ch; margin: 0; }
+    .view-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1.2rem; }
+    .status { min-height: 1.5rem; margin-top: 1rem; color: var(--ink); font-weight: 650; }
+    .error { min-height: 1.5rem; margin-top: .35rem; color: var(--danger); font-weight: 650; }
+    dialog { width: min(680px, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); border: 0; border-radius: var(--radius); padding: 0; color: var(--ink); background: var(--surface); box-shadow: 0 24px 80px rgba(0,0,0,.28); }
+    dialog::backdrop { background: rgba(18, 17, 14, .68); }
+    .dialog-inner { padding: clamp(1.2rem, 4vw, 2.5rem); }
+    .dialog-head { display: flex; justify-content: space-between; gap: 1rem; align-items: start; }
+    .dialog-head h2 { margin: 0; font-size: 2rem; letter-spacing: -.03em; }
+    .icon-button { width: 44px; padding: 0; border: 1px solid var(--border); border-radius: 50%; background: transparent; }
+    .form-grid { margin-top: 1.5rem; display: grid; gap: 1rem; }
+    label { display: grid; gap: .35rem; font-weight: 650; }
+    label small { color: var(--muted); font-weight: 400; }
+    input, select, textarea { width: 100%; min-height: 44px; padding: .65rem .7rem; border: 1px solid var(--border); border-radius: calc(var(--radius) - 3px); background: var(--bg); color: var(--ink); }
+    textarea { min-height: 7rem; resize: vertical; }
+    .dialog-actions { margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: .6rem; }
+    .evidence-item { padding: 1rem 0; border-top: 1px solid var(--border); }
+    .evidence-item a { color: var(--accent-alt); }
+    .visually-hidden { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
+    body[data-topology="session"] .app { grid-template-columns: 1fr; }
+    body[data-topology="session"] .rail { min-height: auto; position: static; border-right: 0; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: auto 1fr; gap: 2rem; padding: 1rem clamp(1rem, 4vw, 3rem); align-items: center; }
+    body[data-topology="session"] .brand { margin: 0; max-width: none; font-size: 1.15rem; }
+    body[data-topology="session"] .world, body[data-topology="session"] .rail-foot { display: none; }
+    body[data-topology="session"] .view-nav { display: flex; justify-content: flex-end; overflow-x: auto; }
+    body[data-topology="session"] main { width: min(1100px, 100%); margin: auto; }
+    @media (max-width: 820px) {
+      .app { grid-template-columns: 1fr; min-width: 0; width: 100%; }
+      .rail { min-width: 0; width: 100%; max-width: 100vw; min-height: auto; position: static; border-right: 0; border-bottom: 1px solid var(--border); padding: 1rem; overflow: hidden; }
+      .brand { max-width: none; margin: 0 0 .3rem; font-size: 1.4rem; }
+      .world, .rail-foot { display: none; }
+      .view-nav { display: flex; min-width: 0; width: 100%; max-width: calc(100vw - 2rem); overflow-x: auto; padding-bottom: .2rem; }
+      .view-nav button { flex: 0 0 auto; }
+      main { min-width: 0; width: 100%; }
+      .topbar, .view-head { grid-template-columns: 1fr; display: grid; }
+      .toolbar { justify-content: flex-start; }
+      .region { grid-column: 1 / -1 !important; }
+      .record dl, .detail-grid { grid-template-columns: 1fr; }
+      .workbench { grid-template-columns: 1fr; }
+      .workbench aside { border-inline-end: 0; border-bottom: 1px solid var(--border); padding-inline-end: 0; padding-bottom: 1rem; }
+      body[data-topology="session"] .rail { display: block; padding: 1rem; }
+      body[data-topology="session"] .brand { margin-bottom: .8rem; }
+      body[data-topology="session"] .view-nav { justify-content: flex-start; max-width: calc(100vw - 2rem); }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .region { animation: resolve-in 420ms cubic-bezier(.16,1,.3,1) both; }
+      @keyframes resolve-in { from { opacity: .6; transform: translateY(8px); filter: blur(3px); } to { opacity: 1; transform: none; filter: none; } }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to application</a>
+  <div id="app"></div>
+  <dialog id="capture-dialog" aria-labelledby="capture-title"><div class="dialog-inner" id="capture-content"></div></dialog>
+  <dialog id="evidence-dialog" aria-labelledby="evidence-title"><div class="dialog-inner" id="evidence-content"></div></dialog>
+  <script type="application/json" id="foundry-spec">{"spec_version": "1.0", "id": "lifting-log", "title": "Barbell Logbook", "generation": null, "source_ids": ["wger_workout", "postgresql_constraints", "sqlite_foreign_keys", "sqlite_query_planner", "w3c_prov", "govuk_design_principles", "wcag_22", "aria_apg", "ui_remix_paper"], "source_snapshots": [], "principle_ids": ["DE-01", "DE-02", "DE-03", "DE-04", "DE-05", "DE-06", "DE-08", "UX-01", "UX-02", "UX-04", "UX-05", "UX-06", "UX-07", "UX-10", "SE-01", "SE-03", "SE-04", "SE-10", "SE-11"], "research": {"interest": "Logging a barbell program so the next session's load is decided by what I actually lifted", "desired_outcome": "Walk into the gym knowing exactly what goes on the bar and walk out with the evidence that sets next week", "practice": ["Run a written block like 5x5 LP and add load session by session until a lift stalls", "Log every working set between sets with chalk on both hands and the phone on the rack", "Deload a stalled lift on purpose and pick the progression back up from a lighter load", "Watch estimated one-rep max per main lift to see whether the block is still working"], "existing_artifacts": ["a notes app full of lines like squat 5x5 100kg", "a printed program sheet in the gym bag", "screenshots of a spreadsheet", "an export from an old tracker"], "constraints": ["capture must survive chalky hands and take under ten seconds", "loads stay in the unit they were lifted in", "effort words stay exactly as written", "works offline in a basement gym"], "open_questions": ["whether accessory work needs the same detail as main lifts", "whether bodyweight belongs in the same log", "whether the bar weight varies between gyms"], "usage_context": ["phone propped on the rack between sets", "laptop on Sunday when the next block gets written"], "first_value": "File one set the way you would say it out loud and watch it land under today's prescribed day"}, "evidence": [{"id": "ev_lift_catalog", "source_id": "wger_workout", "claim": "A serious training tracker keeps exercises as a canonical catalog with category and equipment rather than free text retyped into every session.", "use": "pattern", "locator": "exercise database and category models"}, {"id": "ev_lift_program", "source_id": "wger_workout", "claim": "Plans days and sets are separated structures — a plan prescribes days, a day prescribes sets of an exercise, and a separate log records what was actually lifted.", "use": "pattern", "locator": "workout plan, day, set, and workout log structures"}, {"id": "ev_lift_identity", "source_id": "postgresql_constraints", "claim": "Stable identities and relationships should be explicit and enforceable rather than repeated as text fields.", "use": "constraint", "locator": "primary keys and foreign keys"}, {"id": "ev_lift_lineage", "source_id": "w3c_prov", "claim": "A filed set is an observation made by one agent at one time; a correction records the change without erasing what was first written.", "use": "pattern", "locator": "PROV starting point terms"}, {"id": "ev_lift_derived", "source_id": "w3c_prov", "claim": "A derived value is generated from observations and stays traceable to them rather than being stored as an independent fact.", "use": "pattern", "locator": "PROV derivation"}, {"id": "ev_lift_workloads", "source_id": "sqlite_query_planner", "claim": "Indexes should follow concrete filtering, joining, and ordering workloads.", "use": "constraint", "locator": null}, {"id": "ev_lift_concepts", "source_id": "ui_remix_paper", "claim": "Global and local example-driven alternatives support meaningful concept exploration and remix.", "use": "pattern", "locator": null}, {"id": "ev_lift_service", "source_id": "govuk_design_principles", "claim": "Begin with user needs and real context, then do the hard work required to make the service simple.", "use": "pattern", "locator": null}, {"id": "ev_lift_access", "source_id": "wcag_22", "claim": "Keyboard access, focus, reflow, labels, status, and error recovery are release requirements.", "use": "constraint", "locator": null}], "concepts": [{"id": "session_logbook", "title": "Session Logbook", "thesis": "Capture the set while the plates are still on the bar and let the block assemble itself from filed work.", "primary_loop": "Open to today's day, file the set you just did, and put the phone back on the rack.", "primary_affordance": "A thumb-height set row prefilled with the prescribed scheme and load", "differentiator": "The only concept that files a real set between sets without a menu", "feature_boundary": ["set capture with scheme and load", "effort and RPE on the set that earned it", "today's prescribed day", "correction of a filed set"], "tradeoffs": ["block-level planning stays shallow", "trends arrive only after sets accumulate"], "workflow_ids": ["log_set", "finish_session"], "evidence_ids": ["ev_lift_program", "ev_lift_service"]}, {"id": "program_board", "title": "Program Board", "thesis": "Make the written block the interface and treat the log as adherence against it.", "primary_loop": "Lay out the block by day, tick prescribed work as it lands, and let a stall trigger the deload.", "primary_affordance": "A week-by-day board of prescribed lifts with adherence marks", "differentiator": "Best answer to whether the block is being run as written", "feature_boundary": ["block authoring by day", "prescribed load progression", "adherence and stall detection", "deload scheduling"], "tradeoffs": ["in-gym capture is slower", "one-off sessions outside the block feel foreign"], "workflow_ids": ["plan_block", "track_adherence"], "evidence_ids": ["ev_lift_program", "ev_lift_concepts"]}, {"id": "strength_curve", "title": "Strength Curve", "thesis": "Treat every working set as a point on a strength curve and let the estimated one-rep max drive the next target.", "primary_loop": "Pick a main lift, read its e1RM line across the block, and set the next load from the curve.", "primary_affordance": "An e1RM line per main lift with the filed sets plotted beneath it", "differentiator": "Turns scattered numbers into whether the training is actually working", "feature_boundary": ["e1RM estimation from load and reps", "PR board per rep range", "trend comparison across blocks"], "tradeoffs": ["needs months of filed sets before it pays off", "says nothing about today's session"], "workflow_ids": ["read_curve", "set_target"], "evidence_ids": ["ev_lift_derived", "ev_lift_workloads"]}], "remix": {"selected_concept": "session_logbook", "parent_spec": null, "fragments": [{"kind": "workflow", "from_concept": "program_board", "fragment": "prescribed-day strip above the set row", "reason": "Capture is fastest when today's prescription is already on screen to accept or overwrite.", "evidence_ids": ["ev_lift_program"]}, {"kind": "visual_system", "from_concept": "strength_curve", "fragment": "e1RM trend rail beside the filed set", "reason": "One glance tells the lifter whether the block is still progressing without leaving capture.", "evidence_ids": ["ev_lift_derived"]}], "user_decisions": ["Loads are in kg and the bar is 20 kg", "Capture between sets has to take under ten seconds with one thumb", "A grind is data — effort words stay verbatim on the set that earned them", "A deload is a planned state of the block, not a missed week"]}, "domain": {"entities": [{"id": "exercise", "title": "Exercise", "kind": "canonical", "description": "One movement in the lifter's catalog, named once and pointed at by every set that used it.", "identity": ["exercise_id"], "lifecycle": ["active", "retired"], "fields": [{"name": "exercise_id", "type": "text", "description": "Stable catalog identity", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": ["ev_lift_identity"]}, {"name": "name", "type": "text", "description": "Lift name as the lifter says it, like back squat or bench press", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": ["ev_lift_catalog"]}, {"name": "category", "type": "enum", "description": "Movement pattern this lift trains", "required": true, "unit": null, "values": ["squat", "hinge", "press", "pull", "carry", "accessory"], "sensitive": false, "evidence_ids": ["ev_lift_catalog"]}, {"name": "unit", "type": "enum", "description": "Unit every load for this lift is written in", "required": true, "unit": null, "values": ["kg", "lb"], "sensitive": false, "evidence_ids": []}, {"name": "is_main_lift", "type": "boolean", "description": "Whether this lift carries the block's progression and earns an e1RM curve", "required": false, "unit": null, "values": null, "sensitive": false, "evidence_ids": []}, {"name": "bar_weight_kg", "type": "number", "description": "Weight of the empty bar or implement used for plate math", "required": false, "unit": "kg", "values": null, "sensitive": false, "evidence_ids": []}, {"name": "cues", "type": "text", "description": "The lifter's own setup cues for this movement", "required": false, "unit": null, "values": null, "sensitive": false, "evidence_ids": []}], "evidence_ids": ["ev_lift_catalog", "ev_lift_identity"]}, {"id": "program", "title": "Training Block", "kind": "state", "description": "A named block of training with its own progression rule and its own deload.", "identity": ["program_id"], "lifecycle": ["planned", "running", "deloading", "completed", "abandoned"], "fields": [{"name": "program_id", "type": "text", "description": "Stable block identity", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": ["ev_lift_identity"]}, {"name": "name", "type": "text", "description": "Block name the lifter uses, like 5x5 LP", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": []}, {"name": "status", "type": "enum", "description": "Where the block currently stands", "required": true, "unit": null, "values": ["planned", "running", "deloading", "completed", "abandoned"], "sensitive": false, "evidence_ids": ["ev_lift_program"]}, {"name": "days_per_week", "type": "integer", "description": "Training days the block asks for each week", "required": false, "unit": null, "values": null, "sensitive": false, "evidence_ids": []}, {"name": "started_on", "type": "date", "description": "First day of the block", "required": false, "unit": null, "values": null, "sensitive": false, "evidence_ids": []}, {"name": "progression_rule", "type": "text", "description": "How load moves between sessions, like add 2.5 kg to every main lift until a stall", "required": false, "unit": null, "values": null, "sensitive": false, "evidence_ids": []}, {"name": "deload_rule", "type": "text", "description": "What a deload means in this block, like drop to 90 percent for one week after two stalls", "required": false, "unit": null, "values": null, "sensitive": false, "evidence_ids": []}], "evidence_ids": ["ev_lift_program", "ev_lift_identity"]}, {"id": "prescription", "title": "Prescribed Work", "kind": "reference", "description": "What the block asks for on a given day, written before anything is lifted.", "identity": ["prescription_id"], "lifecycle": ["active", "superseded"], "fields": [{"name": "prescription_id", "type": "text", "description": "Stable prescription identity", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": []}, {"name": "program_id", "type": "text", "description": "Block that prescribes this work", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": ["ev_lift_identity"]}, {"name": "exercise_id", "type": "text", "description": "Lift being prescribed", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": ["ev_lift_identity"]}, {"name": "day_label", "type": "text", "description": "Day of the block this belongs to, like Day A", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": ["ev_lift_program"]}, {"name": "scheme", "type": "text", "description": "Prescribed scheme, like 5x5 or 3x8", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": ["ev_lift_program"]}, {"name": "target_load_kg", "type": "number", "description": "Load the block asks for on this day", "required": false, "unit": "kg", "values": null, "sensitive": false, "evidence_ids": []}, {"name": "load_step_kg", "type": "number", "description": "How much load is added once the prescription is met", "required": false, "unit": "kg", "values": null, "sensitive": false, "evidence_ids": []}, {"name": "order_index", "type": "integer", "description": "Order of this work within the day", "required": false, "unit": null, "values": null, "sensitive": false, "evidence_ids": []}], "evidence_ids": ["ev_lift_program", "ev_lift_identity"]}, {"id": "session", "title": "Session", "kind": "event", "description": "One training session on the platform, in the lifter's own words.", "identity": ["session_id"], "lifecycle": ["recorded", "corrected", "superseded"], "fields": [{"name": "session_id", "type": "text", "description": "Stable event identity", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": ["ev_lift_identity"]}, {"name": "program_id", "type": "text", "description": "Block this session belongs to", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": ["ev_lift_identity"]}, {"name": "trained_at", "type": "datetime", "description": "When the session actually happened", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": ["ev_lift_lineage"]}, {"name": "day_label", "type": "text", "description": "Which prescribed day this was, like Day A", "required": false, "unit": null, "values": null, "sensitive": false, "evidence_ids": []}, {"name": "bodyweight_kg", "type": "number", "description": "Bodyweight on the day", "required": false, "unit": "kg", "values": null, "sensitive": true, "evidence_ids": []}, {"name": "notes", "type": "text", "description": "Session notes in the lifter's own words, like the room was hot and the last set was a grind", "required": false, "unit": null, "values": null, "sensitive": false, "evidence_ids": []}, {"name": "duration_min", "type": "number", "description": "Time from first warm-up to last set", "required": false, "unit": "min", "values": null, "sensitive": false, "evidence_ids": []}], "evidence_ids": ["ev_lift_program", "ev_lift_lineage"]}, {"id": "set_entry", "title": "Set", "kind": "observation", "description": "One block of work as it was actually lifted — the atom of the log.", "identity": ["set_id"], "lifecycle": ["observed", "corrected", "retracted"], "fields": [{"name": "set_id", "type": "text", "description": "Stable observation identity", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": []}, {"name": "session_id", "type": "text", "description": "Session this work was filed in", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": ["ev_lift_identity"]}, {"name": "exercise_id", "type": "text", "description": "Lift that was performed", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": ["ev_lift_identity"]}, {"name": "scheme", "type": "text", "description": "The lifter's own shorthand kept verbatim, like 5x5 or 3x8 or 1xAMRAP", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": ["ev_lift_program"]}, {"name": "sets", "type": "integer", "description": "Sets in the scheme", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": []}, {"name": "reps", "type": "integer", "description": "Reps per set as lifted — for an AMRAP this is what was actually hit", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": []}, {"name": "load_kg", "type": "number", "description": "Load on the bar for this work", "required": true, "unit": "kg", "values": null, "sensitive": false, "evidence_ids": []}, {"name": "rpe", "type": "number", "description": "RPE for the hardest set from 1 to 10", "required": false, "unit": null, "values": null, "sensitive": false, "evidence_ids": []}, {"name": "is_top_set", "type": "boolean", "description": "Whether this was the heaviest working set of that movement on the day", "required": false, "unit": null, "values": null, "sensitive": false, "evidence_ids": []}, {"name": "is_pr", "type": "boolean", "description": "Whether this beat the lifter's best load at this rep range", "required": false, "unit": null, "values": null, "sensitive": false, "evidence_ids": []}, {"name": "effort_note", "type": "text", "description": "What the lifter said about the effort, like last set was a grind", "required": false, "unit": null, "values": null, "sensitive": false, "evidence_ids": ["ev_lift_lineage"]}, {"name": "order_index", "type": "integer", "description": "Position of this work within the session", "required": false, "unit": null, "values": null, "sensitive": false, "evidence_ids": []}], "evidence_ids": ["ev_lift_program", "ev_lift_lineage"]}], "relationships": [{"id": "block_sessions", "from_entity": "session", "to_entity": "program", "cardinality": "many_to_one", "required": true, "on_delete": "restrict", "description": "Every session is trained inside one block.", "evidence_ids": ["ev_lift_identity"]}, {"id": "session_sets", "from_entity": "set_entry", "to_entity": "session", "cardinality": "many_to_one", "required": true, "on_delete": "cascade", "description": "Every filed set belongs to the session it was lifted in.", "evidence_ids": ["ev_lift_lineage"]}, {"id": "set_movement", "from_entity": "set_entry", "to_entity": "exercise", "cardinality": "many_to_one", "required": true, "on_delete": "restrict", "description": "Every filed set names one catalog movement.", "evidence_ids": ["ev_lift_catalog", "ev_lift_identity"]}, {"id": "block_prescriptions", "from_entity": "prescription", "to_entity": "program", "cardinality": "many_to_one", "required": true, "on_delete": "cascade", "description": "Prescribed work belongs to the block that wrote it.", "evidence_ids": ["ev_lift_program"]}, {"id": "prescribed_movement", "from_entity": "prescription", "to_entity": "exercise", "cardinality": "many_to_one", "required": true, "on_delete": "restrict", "description": "Prescribed work points at the same catalog movement the log will use.", "evidence_ids": ["ev_lift_catalog", "ev_lift_identity"]}], "constraints": [{"id": "unique_movement_name", "entity": "exercise", "kind": "unique", "fields": ["name"], "expression": null, "reason": "The catalog holds one squat rather than five spellings of it.", "evidence_ids": ["ev_lift_catalog", "ev_lift_identity"]}, {"id": "sane_load", "entity": "set_entry", "kind": "check", "fields": ["load_kg"], "expression": "load_kg > 0 AND load_kg < 500", "reason": "A filed load stays inside what a barbell can physically hold.", "evidence_ids": ["ev_lift_identity"]}, {"id": "rpe_scale", "entity": "set_entry", "kind": "check", "fields": ["rpe"], "expression": "rpe >= 1 AND rpe <= 10", "reason": "RPE is a 1 to 10 effort scale and anything outside it is a typo.", "evidence_ids": ["ev_lift_program"]}, {"id": "real_scheme", "entity": "set_entry", "kind": "check", "fields": ["sets", "reps"], "expression": "sets > 0 AND reps > 0", "reason": "A scheme like 5x5 always resolves to positive sets and reps.", "evidence_ids": ["ev_lift_program"]}, {"id": "sane_bodyweight", "entity": "session", "kind": "check", "fields": ["bodyweight_kg"], "expression": "bodyweight_kg > 20 AND bodyweight_kg < 300", "reason": "An optional bodyweight is either plausible or rejected before storage.", "evidence_ids": ["ev_lift_identity"]}, {"id": "block_lifecycle_rule", "entity": "program", "kind": "state_transition", "fields": ["status"], "expression": null, "reason": "A block cannot be completed before it has run and a deload is a state it passes through.", "evidence_ids": ["ev_lift_program"]}], "indexes": [{"id": "session_day", "entity": "session", "fields": ["program_id", "trained_at"], "unique": false, "reason": "Today's session is looked up by block and date on every capture.", "workload_ids": ["w_today_vs_plan", "w_weekly_volume"]}, {"id": "program_day_plan", "entity": "prescription", "fields": ["program_id", "day_label", "order_index"], "unique": false, "reason": "The prescribed day is read in written order before the first set.", "workload_ids": ["w_today_vs_plan"]}, {"id": "lift_history", "entity": "set_entry", "fields": ["exercise_id", "session_id"], "unique": false, "reason": "Every trend for one lift reads its sets in session order.", "workload_ids": ["w_e1rm_trend", "w_weekly_volume"]}, {"id": "pr_board", "entity": "set_entry", "fields": ["exercise_id", "reps", "load_kg"], "unique": false, "reason": "A PR is the heaviest load at one rep range for one lift.", "workload_ids": ["w_pr_board"]}], "workloads": [{"id": "w_today_vs_plan", "question": "What does today's day prescribe and what have I actually filed against it?", "kind": "read", "entities": ["program", "prescription", "session", "set_entry"], "filters": ["block status is running or deloading", "day_label"], "sort": ["order_index ascending"], "expected_scale": "fewer than ten prescribed items per day", "acceptance": "Every prescribed lift shows its target beside what was filed, and unfiled work is obvious at arm's length.", "evidence_ids": ["ev_lift_program", "ev_lift_service"]}, {"id": "w_e1rm_trend", "question": "Is my e1RM on this main lift still going up across the block?", "kind": "analysis", "entities": ["exercise", "set_entry", "session"], "filters": ["is_main_lift is true", "exercise_id"], "sort": ["trained_at ascending"], "expected_scale": "hundreds of working sets per lift per year", "acceptance": "e1RM is computed from load and reps with Epley at read time and never stored, and every point links back to the set that produced it.", "evidence_ids": ["ev_lift_derived", "ev_lift_workloads"]}, {"id": "w_weekly_volume", "question": "How many working sets did each movement category get this week?", "kind": "analysis", "entities": ["exercise", "set_entry", "session"], "filters": ["trained_at inside the week", "category"], "sort": ["working sets descending"], "expected_scale": "tens of working sets per week", "acceptance": "Squat hinge press pull and carry volume add up per week with accessory work counted apart from main lifts.", "evidence_ids": ["ev_lift_catalog", "ev_lift_workloads"]}, {"id": "w_pr_board", "question": "What is my best load at each rep range for this lift?", "kind": "analysis", "entities": ["exercise", "set_entry"], "filters": ["exercise_id", "reps"], "sort": ["load_kg descending"], "expected_scale": "thousands of filed sets across the catalog", "acceptance": "A PR is reported per lift per rep range and never as one unqualified number.", "evidence_ids": ["ev_lift_catalog", "ev_lift_workloads"]}], "state_machines": [{"id": "block_lifecycle", "entity": "program", "field": "status", "states": ["planned", "running", "deloading", "completed", "abandoned"], "transitions": [{"from_state": "planned", "action": "start", "to_state": "running"}, {"from_state": "running", "action": "deload", "to_state": "deloading"}, {"from_state": "deloading", "action": "resume", "to_state": "running"}, {"from_state": "running", "action": "complete", "to_state": "completed"}, {"from_state": "deloading", "action": "complete", "to_state": "completed"}, {"from_state": "running", "action": "abandon", "to_state": "abandoned"}], "evidence_ids": ["ev_lift_program"]}], "sample_records": {"exercise": [{"exercise_id": "ex-back-squat", "name": "back squat", "category": "squat", "unit": "kg", "is_main_lift": true, "bar_weight_kg": 20, "cues": "brace before the walkout, knees out on the way up"}, {"exercise_id": "ex-bench-press", "name": "bench press", "category": "press", "unit": "kg", "is_main_lift": true, "bar_weight_kg": 20, "cues": "shoulder blades pinned, touch below the sternum"}, {"exercise_id": "ex-deadlift", "name": "deadlift", "category": "hinge", "unit": "kg", "is_main_lift": true, "bar_weight_kg": 20, "cues": "take the slack out before the pull"}, {"exercise_id": "ex-overhead-press", "name": "overhead press", "category": "press", "unit": "kg", "is_main_lift": true, "bar_weight_kg": 20, "cues": "squeeze the glutes and finish with the bar over the ears"}, {"exercise_id": "ex-barbell-row", "name": "barbell row", "category": "pull", "unit": "kg", "is_main_lift": false, "bar_weight_kg": 20, "cues": "same hip angle every rep"}], "program": [{"program_id": "block-5x5-lp", "name": "5x5 LP", "status": "running", "days_per_week": 3, "started_on": "2026-07-06", "progression_rule": "add 2.5 kg to every main lift each session, 5 kg on the deadlift", "deload_rule": "after two stalls at the same load drop to 90 percent for one week"}], "prescription": [{"prescription_id": "presc-a-squat", "program_id": "block-5x5-lp", "exercise_id": "ex-back-squat", "day_label": "Day A", "scheme": "5x5", "target_load_kg": 100, "load_step_kg": 2.5, "order_index": 1}, {"prescription_id": "presc-a-bench", "program_id": "block-5x5-lp", "exercise_id": "ex-bench-press", "day_label": "Day A", "scheme": "3x8", "target_load_kg": 70, "load_step_kg": 1.25, "order_index": 2}, {"prescription_id": "presc-a-row", "program_id": "block-5x5-lp", "exercise_id": "ex-barbell-row", "day_label": "Day A", "scheme": "3x8", "target_load_kg": 60, "load_step_kg": 1.25, "order_index": 3}, {"prescription_id": "presc-b-deadlift", "program_id": "block-5x5-lp", "exercise_id": "ex-deadlift", "day_label": "Day B", "scheme": "1xAMRAP", "target_load_kg": 140, "load_step_kg": 5, "order_index": 1}], "session": [{"session_id": "sess-20260821", "program_id": "block-5x5-lp", "trained_at": "2026-08-21T18:40:00+01:00", "day_label": "Day A", "bodyweight_kg": 82.4, "notes": "hot room and a short night — the bar still moved", "duration_min": 58}, {"session_id": "sess-20260819", "program_id": "block-5x5-lp", "trained_at": "2026-08-19T18:25:00+01:00", "day_label": "Day B", "bodyweight_kg": 82.1, "notes": "pulled fresh for once", "duration_min": 44}], "set_entry": [{"set_id": "set-20260821-squat", "session_id": "sess-20260821", "exercise_id": "ex-back-squat", "scheme": "5x5", "sets": 5, "reps": 5, "load_kg": 100, "rpe": 8.5, "is_top_set": true, "is_pr": false, "effort_note": "last set was a grind", "order_index": 1}, {"set_id": "set-20260821-bench", "session_id": "sess-20260821", "exercise_id": "ex-bench-press", "scheme": "3x8", "sets": 3, "reps": 8, "load_kg": 70, "rpe": 8, "is_top_set": false, "is_pr": false, "effort_note": "deload next week", "order_index": 2}, {"set_id": "set-20260821-row", "session_id": "sess-20260821", "exercise_id": "ex-barbell-row", "scheme": "3x8", "sets": 3, "reps": 8, "load_kg": 60, "rpe": 7, "is_top_set": false, "is_pr": false, "effort_note": "easy", "order_index": 3}, {"set_id": "set-20260819-deadlift", "session_id": "sess-20260819", "exercise_id": "ex-deadlift", "scheme": "1xAMRAP", "sets": 1, "reps": 6, "load_kg": 140, "rpe": 9, "is_top_set": true, "is_pr": true, "effort_note": "six at 140 — best top set of the block", "order_index": 1}]}, "temporal_policy": ["trained_at is the effective training time and a filed set inherits its session's clock", "captured_at is provenance time", "a correction never overwrites the load or the words that were first filed"], "privacy_policy": ["bodyweight is sensitive and stays on the device unless the lifter explicitly exports it", "effort notes and session notes are local by default", "no gym location or coach account is collected"]}, "experience": {"mode": "operate", "visual_world": {"id": "chalk-platform", "name": "Chalk and Platform", "mood": "Chalked hands on a rubber platform — plain, unhurried, and legible at arm's length", "typography": "A condensed grotesque for lift names with tabular monospaced numerals for load, reps, and RPE so columns line up between sets", "color_strategy": "Platform black and chalk white with competition-plate colour carrying meaning — blue for the working load and red for a top set or a PR — and nothing else coloured", "layout_principle": "The set row sits under the thumb at the bottom of the viewport; the prescribed day and the trend unfold behind it rather than as a dashboard grid", "density": "Loose and thumb-sized between sets, tight and aligned when reading a whole block", "signature_elements": ["loaded-barbell plate diagram that draws the actual plates per side for the top set", "e1RM trend rail with the working-set band behind it", "program-day checklist strip showing prescribed work against what was filed"], "avoid": ["neon fitness-app gradients", "motivational-poster styling", "generic KPI cards", "flame and streak badges"], "tokens": {"background": "#141618", "surface": "#1F2225", "text": "#EDEEEA", "muted": "#929794", "accent": "#2E6E9C", "accent_alt": "#C1452F", "border": "#33383B", "focus": "#E8C24A", "danger": "#E4695A", "radius_px": 6}}, "navigation": {"topology": "hub", "primary_view": "platform", "persistent_regions": ["today's day strip", "file-a-set affordance", "block status and provenance"]}, "views": [{"id": "platform", "title": "The Platform", "purpose": "File the set you just did in under ten seconds and see it land under today's prescribed day.", "layout": "The set row dominates the lower half within thumb reach; the prescribed day strip sits above it and the plate diagram to its side.", "entities": ["session", "set_entry", "prescription", "exercise"], "workload_ids": ["w_today_vs_plan"], "states": ["first_use", "populated", "loading", "empty", "error", "offline", "correction"], "regions": [{"id": "set_row", "kind": "form", "title": "This set", "entity": "set_entry", "workload_id": "w_today_vs_plan", "emphasis": "primary", "span": 6}, {"id": "day_strip", "kind": "session", "title": "Today's day", "entity": "prescription", "workload_id": "w_today_vs_plan", "emphasis": "support", "span": 3}, {"id": "plate_math", "kind": "canvas", "title": "What goes on the bar", "entity": "exercise", "workload_id": "w_today_vs_plan", "emphasis": "secondary", "span": 3}], "actions": [{"id": "start_session", "label": "Start the session", "operation": "create", "entity": "session", "consequence": "Opens today's session against the running block and loads the prescribed day."}, {"id": "file_set", "label": "File this set", "operation": "create", "entity": "set_entry", "consequence": "Files the scheme and load against today's session and keeps the effort words verbatim on the set that earned them."}, {"id": "correct_set", "label": "Correct the set", "operation": "correct", "entity": "set_entry", "consequence": "Keeps the original filed load and wording and records the correction beside it."}], "evidence_ids": ["ev_lift_program", "ev_lift_lineage", "ev_lift_access"]}, {"id": "block", "title": "The Block", "purpose": "Run the written block, see adherence day by day, and call the deload on purpose.", "layout": "The day board leads at full reading width; the week's working-set split sits beside it as evidence rather than decoration.", "entities": ["program", "prescription", "session", "set_entry", "exercise"], "workload_ids": ["w_today_vs_plan", "w_weekly_volume"], "states": ["first_use", "populated", "empty", "error", "conflict"], "regions": [{"id": "day_board", "kind": "catalog", "title": "The block by day", "entity": "prescription", "workload_id": "w_today_vs_plan", "emphasis": "primary", "span": 7}, {"id": "volume_split", "kind": "chart", "title": "Working sets by category", "entity": "set_entry", "workload_id": "w_weekly_volume", "emphasis": "secondary", "span": 5}], "actions": [{"id": "start_block", "label": "Start a block", "operation": "create", "entity": "program", "consequence": "Writes the block's days and progression rule and moves it from planned to running."}, {"id": "call_deload", "label": "Call the deload", "operation": "update", "entity": "program", "consequence": "Moves the running block into deloading and drops every prescribed load by the block's deload rule without rewriting past sessions."}], "evidence_ids": ["ev_lift_program", "ev_lift_service"]}, {"id": "curve", "title": "Strength Curve", "purpose": "Read whether a main lift is still progressing and set the next target from the curve.", "layout": "The e1RM line fills the stage with filed sets plotted beneath it; the PR board aligns per rep range in a comparison rail.", "entities": ["exercise", "set_entry", "session"], "workload_ids": ["w_e1rm_trend", "w_pr_board"], "states": ["first_use", "populated", "empty", "partial", "error"], "regions": [{"id": "e1rm_line", "kind": "chart", "title": "e1RM across the block", "entity": "set_entry", "workload_id": "w_e1rm_trend", "emphasis": "primary", "span": 8}, {"id": "rep_range_prs", "kind": "comparison", "title": "Best by rep range", "entity": "set_entry", "workload_id": "w_pr_board", "emphasis": "support", "span": 4}], "actions": [{"id": "reveal_sets", "label": "Show the sets behind this", "operation": "reveal", "entity": "set_entry", "consequence": "Opens the exact sets and sessions that produced the selected point on the curve."}], "evidence_ids": ["ev_lift_derived", "ev_lift_access"]}, {"id": "rack", "title": "The Rack", "purpose": "Keep one canonical movement per lift so every set files against the same thing.", "layout": "The movement catalog leads grouped by pattern; the selected lift's facts and bests sit in an inspector margin.", "entities": ["exercise", "set_entry"], "workload_ids": ["w_weekly_volume", "w_pr_board"], "states": ["first_use", "populated", "empty", "error"], "regions": [{"id": "lift_catalog", "kind": "catalog", "title": "Movements", "entity": "exercise", "workload_id": "w_weekly_volume", "emphasis": "primary", "span": 7}, {"id": "lift_detail", "kind": "inspector", "title": "This lift", "entity": "exercise", "workload_id": "w_pr_board", "emphasis": "support", "span": 5}], "actions": [{"id": "add_lift", "label": "Add a movement", "operation": "create", "entity": "exercise", "consequence": "Puts one canonical lift in the catalog with its pattern, unit, and bar weight."}, {"id": "retire_lift", "label": "Retire it", "operation": "update", "entity": "exercise", "consequence": "Removes the lift from capture without touching the sets already filed against it."}], "evidence_ids": ["ev_lift_catalog", "ev_lift_access"]}], "flows": [{"id": "first_set", "title": "File the first real set", "trigger": "User approves the Session Logbook concept.", "steps": [{"view": "platform", "action": "Say or type squat 5x5 at 100kg and whatever you would say about the last set.", "result": "A set receipt appears with the scheme, the load, and the lifter's own words kept verbatim."}, {"view": "platform", "action": "Confirm or correct the interpreted movement and load.", "result": "The filed set sits under today's prescribed day with its provenance visible."}], "success": "The lifter can point at the set they just did and every number and word in it is theirs."}, {"id": "call_the_deload", "title": "Call the deload", "trigger": "A main lift stalls twice at the same load.", "steps": [{"view": "curve", "action": "Read the e1RM line flattening across the block.", "result": "The stall is visible against the block's written progression rule."}, {"view": "block", "action": "Move the block into deloading.", "result": "Prescribed loads drop by the deload rule and the block records the state change."}, {"view": "platform", "action": "File the first lighter session.", "result": "The deload week reads as intended training rather than as missing data."}], "success": "A deload is a recorded state of the block instead of a gap in the log."}], "responsive_strategy": ["Phone in the rack first — the set row and its number pad occupy the lower half of the screen, the prescribed day collapses to a single line above it, and the plate diagram becomes a tappable summary.", "On a laptop the block board and the e1RM curve sit side by side with a full data table behind every chart."], "accessibility": {"target": "WCAG-2.2-AA", "patterns": ["native dialog for set capture", "data table with caption and row headers behind the e1RM chart", "text alternative naming every plate on the bar diagram"], "keyboard_model": ["logical order runs prescribed day then set row then filed sets", "chart points are reachable through the adjacent data table", "correction returns focus to the corrected set"], "manual_checks": ["VoiceOver first-set journey with one hand", "200 percent zoom and reflow on the set row", "focus and error identification against the dark platform theme"]}}, "implementation": {"targets": ["foundry_runtime", "standalone_react"], "capabilities": ["event_capture", "derived_metrics", "comparison", "planning", "provenance", "correction"], "imports": ["CSV set history", "wger workout log export", "plain-text program sheet"], "exports": ["complete JSON with receipts", "CSV per entity", "standalone source repository"], "migrations": ["versioned schema migrations", "filed sets are append-only with corrections as revisions", "block revisions never rewrite past sessions"], "permissions": ["local file import"], "adapter_seams": ["capture adapter", "program import adapter", "e1RM estimator adapter", "export adapter"]}, "evaluation": {"cases": [{"id": "lifting_routing_squat", "kind": "routing", "input": "squat 5x5 at 100kg, last set was a grind", "expected": "A set_entry files against today's session for the back squat with scheme 5x5 resolved to five sets of five at 100 kg, and last set was a grind is kept verbatim as the effort note.", "authored_by": "user"}, {"id": "lifting_routing_bench", "kind": "routing", "input": "bench 3x8 at 70kg, RPE 8, deload next week", "expected": "A set_entry files for the bench press with scheme 3x8 at 70 kg and RPE 8, and deload next week is offered as a block state change rather than buried in free text.", "authored_by": "user"}, {"id": "lifting_schema_identity", "kind": "schema", "input": "The same movement is written as squat one week and back squat the next.", "expected": "Both file against one canonical exercise so the PR board and the e1RM curve stay unbroken.", "authored_by": "domain_expert"}, {"id": "lifting_invalid_rpe", "kind": "schema", "input": "A set arrives with RPE 14.", "expected": "The write is rejected before canonical storage.", "authored_by": "independent_reviewer"}, {"id": "lifting_e1rm_workload", "kind": "workload", "input": "Three thousand filed sets across two years and four main lifts.", "expected": "The e1RM trend and the week's volume split load within the local 200 ms budget with e1RM computed at read time.", "authored_by": "independent_reviewer"}, {"id": "lifting_keyboard", "kind": "accessibility", "input": "Complete the file-a-set and correction journey without a pointer.", "expected": "All controls and status changes are operable and announced.", "authored_by": "standard"}, {"id": "lifting_import_injection", "kind": "security", "input": "An imported tracker CSV row carries prompt-like fields and a path.", "expected": "Unknown fields are rejected and no tool or filesystem action occurs.", "authored_by": "independent_reviewer"}], "release_thresholds": {"schema": "all identity, relationship, constraint, and state-transition cases pass", "experience": "the first-set and call-the-deload flows pass on phone and desktop", "evidence": "every entity and critical view has an approved derivation"}}, "derivations": [{"output_path": "domain.entities", "decision": "Separate the movement, the block, the prescription, the session, and the set so the catalog, the plan, the event, and the observation each keep their own lifecycle.", "evidence_ids": ["ev_lift_catalog", "ev_lift_program", "ev_lift_identity"], "user_decision": null}, {"output_path": "domain.entities.set_entry.fields.scheme", "decision": "Keep the lifter's shorthand verbatim in scheme and resolve it into sets and reps beside it, because 5x5 is how the work is said and five sets of five is how it must be queried.", "evidence_ids": ["ev_lift_program"], "user_decision": "Capture between sets has to take under ten seconds with one thumb"}, {"output_path": "domain.entities.set_entry.fields.effort_note", "decision": "Hold the effort words on the set that earned them rather than flattening them into a session note.", "evidence_ids": ["ev_lift_lineage"], "user_decision": "A grind is data — effort words stay verbatim on the set that earned them"}, {"output_path": "domain.state_machines.block_lifecycle", "decision": "Model deloading as a real state of the block with transitions in and out, so a lighter week is intentional training rather than a hole in the data.", "evidence_ids": ["ev_lift_program"], "user_decision": "A deload is a planned state of the block, not a missed week"}, {"output_path": "domain.workloads.w_e1rm_trend", "decision": "Compute e1RM from load and reps with the Epley estimate at read time and never store it, so the estimate stays traceable to the sets behind it and changes when a set is corrected.", "evidence_ids": ["ev_lift_derived", "ev_lift_workloads"], "user_decision": null}, {"output_path": "domain.entities.session.fields.bodyweight_kg", "decision": "Mark bodyweight sensitive and keep it out of exports by default because it is the one number a lifter does not want leaving the device.", "evidence_ids": ["ev_lift_lineage"], "user_decision": null}, {"output_path": "experience.views.platform", "decision": "Anchor the app on the set row rather than a summary dashboard because capture happens standing at the rack between sets.", "evidence_ids": ["ev_lift_service"], "user_decision": "Capture between sets has to take under ten seconds with one thumb"}, {"output_path": "experience.visual_world", "decision": "Use a platform-black chalk world with competition-plate colour carrying meaning instead of neon fitness gradients, so colour marks a top set rather than decorating the screen.", "evidence_ids": ["ev_lift_concepts"], "user_decision": "Loads are in kg and the bar is 20 kg"}], "_source_records": [{"id": "postgresql_constraints", "title": "PostgreSQL — Constraints", "publisher": "PostgreSQL Global Development Group", "url": "https://www.postgresql.org/docs/current/ddl-constraints.html", "kind": "official_documentation", "tier": "authoritative", "license": "PostgreSQL", "allowed_uses": ["reference_facts", "paraphrase"], "status": "approved", "retrieved_at": "2026-08-19", "freshness_days": 180, "topics": ["data_modeling", "constraints", "identity", "relationships"]}, {"id": "sqlite_foreign_keys", "title": "SQLite Foreign Key Support", "publisher": "SQLite", "url": "https://www.sqlite.org/foreignkeys.html", "kind": "official_documentation", "tier": "authoritative", "license": "reference-only", "allowed_uses": ["reference_facts", "paraphrase"], "status": "approved", "retrieved_at": "2026-08-19", "freshness_days": 365, "topics": ["sqlite", "constraints", "relationships"]}, {"id": "sqlite_query_planner", "title": "SQLite Query Planning", "publisher": "SQLite", "url": "https://www.sqlite.org/queryplanner.html", "kind": "official_documentation", "tier": "authoritative", "license": "reference-only", "allowed_uses": ["reference_facts", "paraphrase"], "status": "approved", "retrieved_at": "2026-08-19", "freshness_days": 365, "topics": ["sqlite", "indexes", "workloads"]}, {"id": "w3c_prov", "title": "PROV-O — The PROV Ontology", "publisher": "W3C", "url": "https://www.w3.org/TR/prov-o/", "kind": "standard", "tier": "authoritative", "license": "W3C-Document", "allowed_uses": ["reference_facts", "paraphrase"], "status": "approved", "retrieved_at": "2026-08-19", "freshness_days": 1825, "topics": ["provenance", "lineage", "reproducibility"]}, {"id": "govuk_design_principles", "title": "Government Design Principles", "publisher": "UK Government Digital Service", "url": "https://www.gov.uk/guidance/government-design-principles", "kind": "public_design_standard", "tier": "authoritative", "license": "OGL-3.0", "allowed_uses": ["reference_facts", "paraphrase"], "status": "approved", "retrieved_at": "2026-08-19", "freshness_days": 365, "topics": ["user_needs", "service_design", "iteration", "inclusion"]}, {"id": "wcag_22", "title": "Web Content Accessibility Guidelines 2.2", "publisher": "W3C", "url": "https://www.w3.org/TR/WCAG22/", "kind": "standard", "tier": "authoritative", "license": "W3C-Document", "allowed_uses": ["reference_facts", "paraphrase"], "status": "approved", "retrieved_at": "2026-08-19", "freshness_days": 365, "topics": ["accessibility", "interaction", "responsive_design"]}, {"id": "aria_apg", "title": "ARIA Authoring Practices Guide", "publisher": "W3C Web Accessibility Initiative", "url": "https://www.w3.org/WAI/ARIA/apg/", "kind": "public_design_standard", "tier": "authoritative", "license": "W3C-Document", "allowed_uses": ["reference_facts", "paraphrase", "inspect_examples"], "status": "approved", "retrieved_at": "2026-08-19", "freshness_days": 365, "topics": ["accessibility", "semantics", "keyboard", "interaction_patterns"]}, {"id": "ui_remix_paper", "title": "UI Remix — Example-Driven UI Design with Multimodal Retrieval", "publisher": "arXiv authors", "url": "https://arxiv.org/abs/2601.18759", "kind": "research_paper", "tier": "research", "license": "reference-only", "allowed_uses": ["reference_facts", "paraphrase"], "status": "approved", "retrieved_at": "2026-08-19", "freshness_days": 730, "topics": ["remix", "retrieval", "provenance", "concept_exploration"]}, {"id": "wger_workout", "title": "wger Workout Manager — open-source fitness tracker", "publisher": "wger project contributors", "url": "https://github.com/wger-project/wger", "kind": "open_source_exemplar", "tier": "domain_exemplar", "license": "AGPL-3.0-reference", "allowed_uses": ["reference_facts", "paraphrase", "inspect_schema"], "status": "reference_only", "retrieved_at": "2026-08-23", "freshness_days": 365, "topics": ["strength_training", "workouts", "exercises", "sets_reps", "progression"]}]}</script>
+  <script>
+(() => {
+  "use strict";
+
+  const RUNTIME_SCHEMA_VERSION = 2;
+  const MAX_RECORDS = 10000;
+  const MAX_VISIBLE = 100;
+  const MAX_BACKUP_BYTES = 10 * 1024 * 1024;
+  const spec = JSON.parse(document.getElementById("foundry-spec").textContent);
+  const sources = new Map((spec._source_records || []).map((item) => [item.id, item]));
+  const entityIds = new Set(spec.domain.entities.map((item) => item.id));
+  const storageKey = `foundry-app:${spec.id}:v2`;
+  const legacyStorageKey = `domain-foundry:${spec.id}:v1`;
+  const selected = Object.create(null);
+  let activeViewId = spec.experience.navigation.primary_view;
+  let statusMessage = "";
+  let errorMessage = "";
+
+  const uid = () =>
+    globalThis.crypto?.randomUUID?.() ||
+    `local-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const object = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+  const esc = (value) =>
+    String(value ?? "").replace(
+      /[&<>"]/g,
+      (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[char],
+    );
+  const label = (name) =>
+    String(name).replaceAll("_", " ").replace(/\b\w/g, (char) => char.toUpperCase());
+  const entity = (id) => spec.domain.entities.find((item) => item.id === id);
+  const view = () => spec.experience.views.find((item) => item.id === activeViewId);
+  const clone = (value) => JSON.parse(JSON.stringify(value));
+  const clean = (value) =>
+    object(value)
+      ? Object.fromEntries(
+          Object.entries(value).filter(
+            ([key]) => !["__proto__", "constructor", "prototype"].includes(key),
+          ),
+        )
+      : {};
+
+  function sanitizeRecord(entityId, value) {
+    const allowed = new Set([
+      ...entity(entityId).fields.map((field) => field.name),
+      "object_uid",
+      "captured_at",
+      "updated_at",
+      "_record_uid",
+      "_version",
+      "_supersedes",
+      "_superseded_by",
+    ]);
+    return Object.fromEntries(
+      Object.entries(clean(value)).filter(([key]) => allowed.has(key)),
+    );
+  }
+
+  function sanitizeStore(value, strict = false) {
+    const candidate = clean(value);
+    if (strict && (!object(candidate.records) || !Array.isArray(candidate.receipts))) {
+      throw new Error("Backup does not contain records and receipts.");
+    }
+    const records = Object.create(null);
+    for (const entityId of entityIds) {
+      const raw = candidate.records?.[entityId];
+      if (raw === undefined) continue;
+      if (!Array.isArray(raw)) {
+        if (strict) throw new Error(`Records for ${entityId} must be an array.`);
+        continue;
+      }
+      if (raw.length > MAX_RECORDS) {
+        throw new Error(`Records for ${entityId} exceed the ${MAX_RECORDS} limit.`);
+      }
+      records[entityId] = raw.filter(object).map((item) => sanitizeRecord(entityId, item));
+    }
+    return {
+      runtime_schema_version: RUNTIME_SCHEMA_VERSION,
+      records,
+      receipts: Array.isArray(candidate.receipts)
+        ? candidate.receipts.slice(0, MAX_RECORDS * entityIds.size).map(clean)
+        : [],
+      sample_overrides: Object.fromEntries(
+        Object.entries(clean(candidate.sample_overrides)).filter(
+          ([key, target]) =>
+            key.startsWith("sample:") && typeof target === "string" && target.length <= 240,
+        ),
+      ),
+    };
+  }
+
+  const emptyStore = () =>
+    sanitizeStore({ records: {}, receipts: [], sample_overrides: {} });
+  let store = emptyStore();
+  try {
+    const current = localStorage.getItem(storageKey);
+    const legacy = current === null ? localStorage.getItem(legacyStorageKey) : null;
+    if (current || legacy) {
+      store = sanitizeStore(JSON.parse(current || legacy));
+      if (legacy) {
+        statusMessage = "Earlier local records loaded; they migrate on the next save.";
+      }
+    }
+  } catch {
+    errorMessage =
+      "Stored data could not be read. The app opened safely without changing that backup.";
+  }
+
+  const tokens = spec.experience.visual_world.tokens;
+  const tokenMap = {
+    background: "--bg",
+    surface: "--surface",
+    text: "--ink",
+    muted: "--muted",
+    accent: "--accent",
+    accent_alt: "--accent-alt",
+    border: "--border",
+    focus: "--focus",
+    danger: "--danger",
+  };
+  Object.entries(tokenMap).forEach(([name, property]) =>
+    document.documentElement.style.setProperty(property, tokens[name]),
+  );
+  document.documentElement.style.setProperty("--radius", `${tokens.radius_px}px`);
+  document.body.dataset.topology = spec.experience.navigation.topology;
+
+  function sampleKey(entityId, record) {
+    const identity = entity(entityId).identity.map((field) => record[field] ?? "").join("|");
+    return `sample:${entityId}:${identity}`;
+  }
+
+  function recordKey(entityId, record, origin = "local") {
+    return origin === "sample"
+      ? sampleKey(entityId, record)
+      : String(record._record_uid || record.object_uid || sampleKey(entityId, record));
+  }
+
+  function records(entityId, includeSuperseded = false) {
+    const samples = (spec.domain.sample_records[entityId] || []).map((record) => ({
+      ...record,
+      __origin: "sample",
+      __record_key: sampleKey(entityId, record),
+    }));
+    const local = (store.records[entityId] || []).map((record) => ({
+      ...record,
+      __origin: "local",
+      __record_key: recordKey(entityId, record),
+    }));
+    if (includeSuperseded) return [...samples, ...local];
+    return [
+      ...samples.filter((record) => !store.sample_overrides[record.__record_key]),
+      ...local.filter((record) => !record._superseded_by),
+    ];
+  }
+
+  const stripContext = (record) =>
+    Object.fromEntries(Object.entries(record).filter(([key]) => !key.startsWith("__")));
+  const selectedRecord = (entityId) => {
+    const items = records(entityId);
+    return (
+      items.find((item) => item.__record_key === selected[entityId]) ||
+      items.at(-1) ||
+      null
+    );
+  };
+  const primaryValue = (record, entitySpec) => {
+    const field = [
+      "name",
+      "title",
+      "expression",
+      "cue",
+      "kind",
+      ...entitySpec.identity,
+    ].find((name) => record[name] !== undefined);
+    return field ? record[field] : entitySpec.title;
+  };
+  const valueText = (value) =>
+    value === null || value === undefined || value === ""
+      ? "—"
+      : typeof value === "object"
+        ? JSON.stringify(value)
+        : String(value);
+  const fieldsFor = (record, entitySpec, limit = 5) =>
+    entitySpec.fields
+      .filter((field) => record[field.name] !== undefined)
+      .slice(0, limit);
+
+  function details(record, entitySpec, limit = 8) {
+    return `<dl class="detail-grid">${fieldsFor(record, entitySpec, limit)
+      .map(
+        (field) =>
+          `<dt>${esc(label(field.name))}<\/dt><dd>${esc(valueText(record[field.name]))}${
+            field.unit ? ` <span class="measure">${esc(field.unit)}<\/span>` : ""
+          }<\/dd>`,
+      )
+      .join("")}<\/dl>`;
+  }
+
+  function recordItem(record, entitySpec) {
+    const isSelected = selected[entitySpec.id] === record.__record_key;
+    return `<li class="record"><button class="record-select" type="button" data-record="${esc(
+      record.__record_key,
+    )}" data-entity="${esc(entitySpec.id)}" aria-pressed="${isSelected}"><strong>${esc(
+      primaryValue(record, entitySpec),
+    )}<\/strong><\/button>${details(record, entitySpec)}<\/li>`;
+  }
+
+  const empty = (entitySpec) =>
+    `<div class="empty-state"><strong>No ${esc(
+      entitySpec.title.toLowerCase(),
+    )} yet<\/strong><p>${esc(entitySpec.description)}<\/p><\/div>`;
+  const temporalField = (entitySpec) =>
+    entitySpec.fields.find((field) => ["datetime", "date"].includes(field.type)) ||
+    entitySpec.fields.find((field) => /(?:_at|_on|date|time)$/.test(field.name));
+  const formattedDate = (value) => {
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.valueOf())) return valueText(value);
+    return new Intl.DateTimeFormat(undefined, {
+      dateStyle: "medium",
+      timeStyle: String(value).includes("T") ? "short" : undefined,
+    }).format(parsed);
+  };
+
+  function timeline(items, entitySpec) {
+    const temporal = temporalField(entitySpec);
+    const ordered = [...items].sort((left, right) => {
+      const a = Date.parse(left[temporal?.name] || left.captured_at || "") || 0;
+      const b = Date.parse(right[temporal?.name] || right.captured_at || "") || 0;
+      return b - a;
+    });
+    return `<ol class="record-list timeline">${ordered
+      .slice(0, MAX_VISIBLE)
+      .map((record) => {
+        const raw = temporal ? record[temporal.name] : record.captured_at;
+        const time = raw
+          ? `<time datetime="${esc(raw)}">${esc(formattedDate(raw))}<\/time>`
+          : "";
+        return recordItem(record, entitySpec).replace(
+          '<li class="record">',
+          `<li class="record">${time}`,
+        );
+      })
+      .join("")}<\/ol>`;
+  }
+
+  function chart(items, entitySpec, region) {
+    const numeric = entitySpec.fields.find((field) =>
+      ["integer", "number", "duration"].includes(field.type),
+    );
+    if (!numeric) {
+      return `<div class="explanation"><strong>${esc(
+        region.title,
+      )}<\/strong><p>No numeric measure is declared. Records remain visible without fabricating a metric.<\/p><\/div>`;
+    }
+    const points = items
+      .map((record) => ({ record, value: Number(record[numeric.name]) }))
+      .filter((point) => Number.isFinite(point.value))
+      .slice(-MAX_VISIBLE);
+    if (!points.length) return empty(entitySpec);
+    const width = 640;
+    const height = 250;
+    const pad = 32;
+    const minimum = Math.min(...points.map((point) => point.value));
+    const maximum = Math.max(...points.map((point) => point.value));
+    const range = maximum - minimum || 1;
+    const positioned = points.map((point, index) => ({
+      ...point,
+      x:
+        points.length === 1
+          ? width / 2
+          : pad + (index / (points.length - 1)) * (width - pad * 2),
+      y: height - pad - ((point.value - minimum) / range) * (height - pad * 2),
+    }));
+    const path = positioned
+      .map((point, index) => `${index ? "L" : "M"} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`)
+      .join(" ");
+    const area = `${path} L ${positioned.at(-1).x.toFixed(1)} ${height - pad} L ${positioned[0].x.toFixed(1)} ${height - pad} Z`;
+    const titleId = `chart-title-${region.id}`;
+    return `<figure class="chart-figure"><svg viewBox="0 0 ${width} ${height}" role="img" aria-labelledby="${esc(
+      titleId,
+    )}"><title id="${esc(titleId)}">${esc(region.title)}: ${esc(
+      label(numeric.name),
+    )} from ${esc(minimum)} to ${esc(maximum)}<\/title><line class="chart-grid" x1="${pad}" y1="${
+      height - pad
+    }" x2="${width - pad}" y2="${height - pad}"><\/line><path class="chart-area" d="${area}"><\/path><path class="chart-line" d="${path}"><\/path>${positioned
+      .map(
+        (point) =>
+          `<circle class="chart-point" cx="${point.x}" cy="${point.y}" r="5"><title>${esc(
+            primaryValue(point.record, entitySpec),
+          )}: ${esc(point.value)}${numeric.unit ? ` ${esc(numeric.unit)}` : ""}<\/title><\/circle>`,
+      )
+      .join("")}<\/svg><figcaption>${esc(label(numeric.name))}${
+      numeric.unit ? ` in ${esc(numeric.unit)}` : ""
+    } · ${points.length} observed ${points.length === 1 ? "record" : "records"}; no invented interpolation.<\/figcaption><\/figure>`;
+  }
+
+  function table(items, entitySpec) {
+    const fields = entitySpec.fields
+      .filter((field) => items.some((record) => record[field.name] !== undefined))
+      .slice(0, 5);
+    if (!items.length || !fields.length) return empty(entitySpec);
+    return `<div class="data-table-wrap"><table class="data-table"><thead><tr>${fields
+      .map((field) => `<th scope="col">${esc(label(field.name))}<\/th>`)
+      .join("")}<\/tr><\/thead><tbody>${items
+      .slice(0, MAX_VISIBLE)
+      .map((record) => {
+        const isSelected = selected[entitySpec.id] === record.__record_key;
+        return `<tr aria-selected="${isSelected}">${fields
+          .map((field, index) => {
+            const content = `${esc(valueText(record[field.name]))}${
+              field.unit ? ` <span class="measure">${esc(field.unit)}<\/span>` : ""
+            }`;
+            return index === 0
+              ? `<td><button class="record-select" type="button" data-record="${esc(
+                  record.__record_key,
+                )}" data-entity="${esc(
+                  entitySpec.id,
+                )}" aria-pressed="${isSelected}">${content}<\/button><\/td>`
+              : `<td>${content}<\/td>`;
+          })
+          .join("")}<\/tr>`;
+      })
+      .join("")}<\/tbody><\/table><\/div>`;
+  }
+
+  function canvas(items, entitySpec) {
+    const slots = items.slice(0, MAX_VISIBLE).map((record, index) => {
+      const isSelected = selected[entitySpec.id] === record.__record_key;
+      return `<button class="slot" type="button" data-record="${esc(
+        record.__record_key,
+      )}" data-entity="${esc(entitySpec.id)}" aria-pressed="${isSelected}"><span class="slot-number">${esc(
+        record.collector_number || String(index + 1).padStart(3, "0"),
+      )}<\/span><strong>${esc(primaryValue(record, entitySpec))}<\/strong><\/button>`;
+    });
+    while (slots.length < 8) {
+      slots.push(
+        `<div class="slot empty"><span class="slot-number">${String(
+          slots.length + 1,
+        ).padStart(3, "0")}<\/span><span>Open position<\/span><\/div>`,
+      );
+    }
+    return `<div class="canvas-grid">${slots.join("")}<\/div>`;
+  }
+
+  function shelf(items, entitySpec) {
+    if (!items.length) return empty(entitySpec);
+    return `<div class="shelf-grid">${items
+      .slice(0, MAX_VISIBLE)
+      .map((record) => {
+        const isSelected = selected[entitySpec.id] === record.__record_key;
+        const secondary = fieldsFor(record, entitySpec, 3)
+          .slice(1)
+          .map((field) => valueText(record[field.name]))
+          .filter((value) => value !== "—")
+          .join(" · ");
+        return `<button class="shelf-item" type="button" data-record="${esc(
+          record.__record_key,
+        )}" data-entity="${esc(entitySpec.id)}" aria-pressed="${isSelected}"><strong>${esc(
+          primaryValue(record, entitySpec),
+        )}<\/strong>${secondary ? `<small>${esc(secondary)}<\/small>` : ""}<\/button>`;
+      })
+      .join("")}<\/div>`;
+  }
+
+  function inspector(items, entitySpec) {
+    const record = selectedRecord(entitySpec.id) || items[0];
+    if (!record) return empty(entitySpec);
+    return `<div class="explanation"><strong>${esc(
+      primaryValue(record, entitySpec),
+    )}<\/strong>${details(
+      record,
+      entitySpec,
+      12,
+    )}<p class="storage-note">Select a record before using an update or correction action.<\/p><\/div>`;
+  }
+
+  function workbench(items, entitySpec) {
+    if (!items.length) return empty(entitySpec);
+    const current = selectedRecord(entitySpec.id) || items[0];
+    return `<div class="workbench"><aside><ul class="record-list">${items
+      .slice(0, 12)
+      .map((record) => recordItem(record, entitySpec))
+      .join("")}<\/ul><\/aside><div><strong>${esc(
+      primaryValue(current, entitySpec),
+    )}<\/strong>${details(
+      current,
+      entitySpec,
+      12,
+    )}<p class="storage-note">Choose a record, then use the view action to create an immutable revision.<\/p><\/div><\/div>`;
+  }
+
+  function session(items, entitySpec, region) {
+    const record = selectedRecord(entitySpec.id) || items[0];
+    if (!record) return empty(entitySpec);
+    const answerId = `session-answer-${region.id}`;
+    return `<div class="session-card"><div><div class="cue">${esc(
+      record.cue || primaryValue(record, entitySpec),
+    )}<\/div><button class="button" data-reveal="${esc(
+      answerId,
+    )}" type="button">Reveal answer<\/button><p class="session-answer" id="${esc(
+      answerId,
+    )}" hidden>${esc(record.answer || "Review the source context")}<\/p><\/div><\/div>`;
+  }
+
+  function explanation(region) {
+    const workload = spec.domain.workloads.find((item) => item.id === region.workload_id);
+    return `<div class="explanation"><strong>${esc(
+      workload?.question || region.title,
+    )}<\/strong><p>${esc(
+      workload?.acceptance || "This region is derived from a declared user workload.",
+    )}<\/p><p class="storage-note">Expected scale: ${esc(
+      workload?.expected_scale || "not specified",
+    )} · ${esc(label(workload?.kind || "read"))}<\/p><\/div>`;
+  }
+
+  function region(regionSpec) {
+    const entitySpec = entity(regionSpec.entity);
+    const items = records(regionSpec.entity);
+    let content;
+    switch (regionSpec.kind) {
+      case "canvas":
+        content = canvas(items, entitySpec);
+        break;
+      case "session":
+        content = session(items, entitySpec, regionSpec);
+        break;
+      case "chart":
+        content = chart(items, entitySpec, regionSpec);
+        break;
+      case "timeline":
+        content = items.length ? timeline(items, entitySpec) : empty(entitySpec);
+        break;
+      case "comparison":
+      case "table":
+      case "ledger":
+        content = table(items, entitySpec);
+        break;
+      case "shelf":
+      case "catalog":
+      case "media":
+        content = shelf(items, entitySpec);
+        break;
+      case "inspector":
+        content = inspector(items, entitySpec);
+        break;
+      case "workbench":
+        content = workbench(items, entitySpec);
+        break;
+      case "explanation":
+        content = explanation(regionSpec);
+        break;
+      default:
+        content = items.length
+          ? `<ul class="record-list">${items
+              .slice(0, MAX_VISIBLE)
+              .map((record) => recordItem(record, entitySpec))
+              .join("")}<\/ul>`
+          : empty(entitySpec);
+    }
+    const clipped =
+      items.length > MAX_VISIBLE
+        ? `<p class="storage-note">Showing ${MAX_VISIBLE} of ${items.length} records. Complete history remains in export.<\/p>`
+        : "";
+    return `<section class="region ${esc(regionSpec.emphasis)} kind-${esc(
+      regionSpec.kind,
+    )}" style="--span:${regionSpec.span}" aria-labelledby="region-${esc(
+      regionSpec.id,
+    )}"><h3 id="region-${esc(regionSpec.id)}">${esc(
+      regionSpec.title,
+    )}<\/h3><p class="region-meta">${esc(label(regionSpec.kind))} · ${esc(
+      entitySpec.title,
+    )}<\/p>${content}${clipped}<\/section>`;
+  }
+
+  function announce(message, isError = false) {
+    statusMessage = isError ? "" : message;
+    errorMessage = isError ? message : "";
+    const status = document.getElementById("status");
+    const error = document.getElementById("runtime-error");
+    if (status) status.textContent = statusMessage;
+    if (error) error.textContent = errorMessage;
+  }
+
+  function reveal(button) {
+    const answer = document.getElementById(button.dataset.reveal);
+    if (!answer) {
+      announce("This view has no revealable answer.", true);
+      return;
+    }
+    answer.hidden = false;
+    button.disabled = true;
+    announce("Answer revealed. No review outcome was recorded.");
+  }
+
+  function render() {
+    const current = view();
+    const primary = current.actions[0];
+    const stored = Object.values(store.records).reduce(
+      (total, items) => total + items.length,
+      0,
+    );
+    document.getElementById("app").innerHTML = `<div class="app"><aside class="rail"><div><h2 class="brand">${esc(
+      spec.title,
+    )}<\/h2><p class="world">${esc(spec.experience.visual_world.name)}<br>${esc(
+      spec.experience.visual_world.mood,
+    )}<\/p><\/div><nav class="view-nav" aria-label="Application views">${spec.experience.views
+      .map(
+        (item) =>
+          `<button type="button" data-view="${esc(item.id)}" ${
+            item.id === current.id ? 'aria-current="page"' : ""
+          }>${esc(item.title)}<\/button>`,
+      )
+      .join("")}<\/nav><p class="rail-foot">Local application<br>Spec ${esc(
+      spec.spec_version,
+    )} · runtime ${RUNTIME_SCHEMA_VERSION}<br>${stored} owned ${
+      stored === 1 ? "version" : "versions"
+    }<\/p><\/aside><main id="main" tabindex="-1"><header class="topbar"><div><h1>${esc(
+      spec.title,
+    )}<\/h1><p>${esc(
+      spec.research.desired_outcome,
+    )}<\/p><\/div><div class="toolbar"><button class="button" id="evidence" type="button">Why this app<\/button><button class="button" id="export" type="button">Export backup<\/button><button class="button" id="restore" type="button">Restore backup<\/button><input class="visually-hidden" id="restore-file" type="file" accept="application/json,.json" aria-label="Choose JSON backup">${
+      primary
+        ? `<button class="button primary" id="primary-action" type="button" data-operation="${esc(
+            primary.operation,
+          )}">${esc(primary.label)}<\/button>`
+        : ""
+    }<\/div><\/header><section class="view-head" aria-labelledby="view-title"><h2 id="view-title">${esc(
+      current.title,
+    )}<\/h2><p>${esc(current.purpose)} ${esc(
+      current.layout,
+    )}<\/p><\/section><div class="regions">${current.regions
+      .map(region)
+      .join("")}<\/div><div class="view-actions">${current.actions
+      .slice(1)
+      .map(
+        (action) =>
+          `<button class="button" type="button" data-action="${esc(
+            action.id,
+          )}" data-operation="${esc(action.operation)}">${esc(action.label)}<\/button>`,
+      )
+      .join("")}<\/div><p class="status" id="status" role="status" aria-live="polite">${esc(
+      statusMessage,
+    )}<\/p><p class="error" id="runtime-error" role="alert">${esc(
+      errorMessage,
+    )}<\/p><\/main><\/div>`;
+
+    document.querySelectorAll("[data-view]").forEach((button) =>
+      button.addEventListener("click", () => {
+        activeViewId = button.dataset.view;
+        render();
+        document.getElementById("main").focus();
+      }),
+    );
+    document.querySelectorAll("[data-record]").forEach((button) =>
+      button.addEventListener("click", () => {
+        const entityId = button.dataset.entity;
+        const recordId = button.dataset.record;
+        selected[entityId] = recordId;
+        render();
+        [...document.querySelectorAll("[data-record]")]
+          .find(
+            (candidate) =>
+              candidate.dataset.entity === entityId &&
+              candidate.dataset.record === recordId,
+          )
+          ?.focus();
+      }),
+    );
+    document.querySelectorAll("[data-reveal]").forEach((button) =>
+      button.addEventListener("click", () => reveal(button)),
+    );
+    document
+      .getElementById("primary-action")
+      ?.addEventListener("click", () => runAction(primary));
+    document.querySelectorAll("[data-action]").forEach((button) =>
+      button.addEventListener("click", () =>
+        runAction(current.actions.find((action) => action.id === button.dataset.action)),
+      ),
+    );
+    document.getElementById("evidence").addEventListener("click", openEvidence);
+    document.getElementById("export").addEventListener("click", exportData);
+    document
+      .getElementById("restore")
+      .addEventListener("click", () => document.getElementById("restore-file").click());
+    document.getElementById("restore-file").addEventListener("change", restoreData);
+  }
+
+  function runAction(action) {
+    if (!action) return;
+    if (action.operation === "reveal") {
+      const button = document.querySelector("[data-reveal]");
+      if (button) reveal(button);
+      else announce("This action has no revealable content in the current view.", true);
+      return;
+    }
+    const revising = ["update", "correct"].includes(action.operation);
+    const current = revising ? selectedRecord(action.entity) : null;
+    if (revising && !current) {
+      announce(
+        `Add or select ${entity(action.entity).title.toLowerCase()} before ${action.label.toLowerCase()}.`,
+        true,
+      );
+      return;
+    }
+    openCapture(action.entity, action, current);
+  }
+
+  function relationshipForField(entityId, fieldName) {
+    return spec.domain.relationships.find((relationship) => {
+      if (relationship.from_entity !== entityId) return false;
+      const target = entity(relationship.to_entity);
+      return [`${target.id}_id`, target.identity[0]].includes(fieldName);
+    });
+  }
+
+  function controlValue(field, record) {
+    const value = record?.[field.name];
+    if (value === null || value === undefined) return "";
+    if (field.type === "json") return JSON.stringify(value, null, 2);
+    if (field.type === "datetime") return String(value).slice(0, 16);
+    return String(value);
+  }
+
+  function inputFor(field, entitySpec, current) {
+    const id = `field-${field.name}`;
+    const helpId = `${id}-help`;
+    const value = controlValue(field, current);
+    const required = field.required ? " required" : "";
+    const sensitive = field.sensitive ? ' autocomplete="off"' : "";
+    const help = `<small id="${esc(helpId)}">${esc(field.description)}${
+      field.unit ? ` · ${esc(field.unit)}` : ""
+    }<\/small>`;
+    const relationship = relationshipForField(entitySpec.id, field.name);
+    if (relationship) {
+      const target = entity(relationship.to_entity);
+      const options = records(target.id)
+        .map((record) => ({
+          value: record[target.identity[0]],
+          title: primaryValue(record, target),
+        }))
+        .filter((option) => option.value !== undefined);
+      if (value && !options.some((option) => String(option.value) === value)) {
+        options.unshift({ value, title: value });
+      }
+      return `<label for="${esc(id)}">${esc(label(field.name))}${help}<select id="${esc(
+        id,
+      )}" name="${esc(field.name)}" aria-describedby="${esc(helpId)}"${required}><option value="">Choose…<\/option>${options
+        .map(
+          (option) =>
+            `<option value="${esc(option.value)}" ${
+              String(option.value) === value ? "selected" : ""
+            }>${esc(option.title)}<\/option>`,
+        )
+        .join("")}<\/select><\/label>`;
+    }
+    if (field.type === "enum") {
+      return `<label for="${esc(id)}">${esc(label(field.name))}${help}<select id="${esc(
+        id,
+      )}" name="${esc(field.name)}" aria-describedby="${esc(helpId)}"${required}><option value="">Choose…<\/option>${(
+        field.values || []
+      )
+        .map(
+          (option) =>
+            `<option value="${esc(option)}" ${
+              String(option) === value ? "selected" : ""
+            }>${esc(label(option))}<\/option>`,
+        )
+        .join("")}<\/select><\/label>`;
+    }
+    if (field.type === "boolean") {
+      return `<label for="${esc(id)}">${esc(label(field.name))}${help}<select id="${esc(
+        id,
+      )}" name="${esc(field.name)}" aria-describedby="${esc(helpId)}"${required}><option value="">Not set<\/option><option value="true" ${
+        value === "true" ? "selected" : ""
+      }>Yes<\/option><option value="false" ${
+        value === "false" ? "selected" : ""
+      }>No<\/option><\/select><\/label>`;
+    }
+    const type = ["integer", "number", "duration"].includes(field.type)
+      ? "number"
+      : field.type === "date"
+        ? "date"
+        : field.type === "datetime"
+          ? "datetime-local"
+          : "text";
+    const long =
+      field.type === "json" ||
+      /notes|method|context|answer|meaning|hypothesis|conclusion|description/.test(
+        field.name,
+      );
+    const control = long
+      ? `<textarea id="${esc(id)}" name="${esc(
+          field.name,
+        )}" aria-describedby="${esc(helpId)}" maxlength="2000"${required}${sensitive}>${esc(
+          value,
+        )}<\/textarea>`
+      : `<input id="${esc(id)}" name="${esc(field.name)}" type="${type}" aria-describedby="${esc(
+          helpId,
+        )}"${type === "text" ? ' maxlength="2000"' : ""} value="${esc(
+          value,
+        )}"${required}${sensitive}${type === "number" ? ' step="any"' : ""}>`;
+    return `<label for="${esc(id)}">${esc(label(field.name))}${help}${control}<\/label>`;
+  }
+
+  function parseField(field, raw) {
+    if (raw === null || raw === "") return undefined;
+    if (["integer", "number", "duration"].includes(field.type)) {
+      const value = Number(raw);
+      if (!Number.isFinite(value)) throw new Error(`${label(field.name)} must be a number.`);
+      if (field.type === "integer" && !Number.isInteger(value)) {
+        throw new Error(`${label(field.name)} must be a whole number.`);
+      }
+      return value;
+    }
+    if (field.type === "boolean") return raw === "true";
+    if (field.type === "json") {
+      try {
+        return JSON.parse(raw);
+      } catch {
+        throw new Error(`${label(field.name)} must be valid JSON.`);
+      }
+    }
+    return raw;
+  }
+
+  function comparison(left, operator, right) {
+    if (operator === ">") return left > right;
+    if (operator === ">=") return left >= right;
+    if (operator === "<") return left < right;
+    if (operator === "<=") return left <= right;
+    if (["=", "=="].includes(operator)) return left === right;
+    if (operator === "!=") return left !== right;
+    return false;
+  }
+
+  function expressionValue(raw) {
+    if (/^-?\d+(?:\.\d+)?$/.test(raw)) return Number(raw);
+    if (/^'.*'$|^".*"$/.test(raw)) return raw.slice(1, -1);
+    if (raw.toUpperCase() === "NULL") return null;
+    throw new Error("unsupported comparison value");
+  }
+
+  function evaluateCheck(expression, record) {
+    return expression.split(/\s+OR\s+/i).some((group) =>
+      group.split(/\s+AND\s+/i).every((clause) => {
+        const match = clause
+          .trim()
+          .match(
+            /^([A-Za-z_][A-Za-z0-9_]*)\s*(>=|<=|!=|==|=|>|<)\s*(-?\d+(?:\.\d+)?|'.*'|".*"|NULL)$/i,
+          );
+        if (!match) throw new Error("unsupported check expression");
+        return comparison(record[match[1]], match[2], expressionValue(match[3]));
+      }),
+    );
+  }
+
+  function validateRecord(entitySpec, record, current) {
+    const missing = entitySpec.fields
+      .filter(
+        (field) =>
+          field.required &&
+          (record[field.name] === undefined || record[field.name] === ""),
+      )
+      .map((field) => label(field.name));
+    if (missing.length) {
+      throw new Error(`Complete the required fields: ${missing.join(", ")}.`);
+    }
+    const uniqueSets = [
+      entitySpec.identity,
+      ...spec.domain.constraints
+        .filter(
+          (constraint) =>
+            constraint.entity === entitySpec.id && constraint.kind === "unique",
+        )
+        .map((constraint) => constraint.fields),
+    ];
+    const peers = records(entitySpec.id).filter(
+      (candidate) => candidate.__record_key !== current?.__record_key,
+    );
+    for (const fields of uniqueSets) {
+      const duplicate = peers.some((candidate) =>
+        fields.every(
+          (field) =>
+            candidate[field] !== undefined &&
+            record[field] !== undefined &&
+            String(candidate[field]) === String(record[field]),
+        ),
+      );
+      if (duplicate) {
+        throw new Error(
+          `A ${entitySpec.title.toLowerCase()} with the same ${fields
+            .map(label)
+            .join(" and ")} already exists.`,
+        );
+      }
+    }
+    for (const constraint of spec.domain.constraints.filter(
+      (item) =>
+        item.entity === entitySpec.id && item.kind === "check" && item.expression,
+    )) {
+      let accepted;
+      try {
+        accepted = evaluateCheck(constraint.expression, record);
+      } catch {
+        throw new Error(
+          `The app cannot safely evaluate “${constraint.reason}”. Rebuild with a supported declarative constraint.`,
+        );
+      }
+      if (!accepted) throw new Error(constraint.reason);
+    }
+  }
+
+  function validateBackup(next) {
+    const activeByEntity = Object.create(null);
+    for (const entityId of entityIds) {
+      const entitySpec = entity(entityId);
+      const imported = next.records[entityId] || [];
+      for (const record of imported) {
+        if (
+          typeof record.object_uid !== "string" ||
+          typeof record._record_uid !== "string" ||
+          !Number.isInteger(record._version) ||
+          record._version < 1
+        ) {
+          throw new Error(`${entitySpec.title} backup history lacks version identity.`);
+        }
+        for (const field of entitySpec.fields) {
+          const value = record[field.name];
+          if (field.required && (value === undefined || value === "")) {
+            throw new Error(`${entitySpec.title} is missing ${label(field.name)}.`);
+          }
+          if (value === undefined || value === null) continue;
+          if (field.type === "integer" && !Number.isInteger(value)) {
+            throw new Error(`${label(field.name)} must be a whole number.`);
+          }
+          if (["number", "duration"].includes(field.type) && !Number.isFinite(value)) {
+            throw new Error(`${label(field.name)} must be a number.`);
+          }
+          if (field.type === "boolean" && typeof value !== "boolean") {
+            throw new Error(`${label(field.name)} must be true or false.`);
+          }
+          if (
+            ["text", "date", "datetime", "enum", "attachment", "location"].includes(
+              field.type,
+            ) &&
+            typeof value !== "string"
+          ) {
+            throw new Error(`${label(field.name)} must be text.`);
+          }
+          if (field.type === "enum" && !(field.values || []).includes(value)) {
+            throw new Error(`${label(field.name)} has an unsupported value.`);
+          }
+        }
+        for (const constraint of spec.domain.constraints.filter(
+          (item) => item.entity === entityId && item.kind === "check" && item.expression,
+        )) {
+          if (!evaluateCheck(constraint.expression, record)) {
+            throw new Error(constraint.reason);
+          }
+        }
+      }
+      const samples = (spec.domain.sample_records[entityId] || []).filter(
+        (record) => !next.sample_overrides[sampleKey(entityId, record)],
+      );
+      activeByEntity[entityId] = [
+        ...samples,
+        ...imported.filter((record) => !record._superseded_by),
+      ];
+      const uniqueSets = [
+        entitySpec.identity,
+        ...spec.domain.constraints
+          .filter((item) => item.entity === entityId && item.kind === "unique")
+          .map((item) => item.fields),
+      ];
+      for (const fields of uniqueSets) {
+        const seen = new Set();
+        for (const record of activeByEntity[entityId]) {
+          const identity = JSON.stringify(fields.map((field) => record[field]));
+          if (seen.has(identity)) {
+            throw new Error(
+              `${entitySpec.title} backup duplicates ${fields.map(label).join(" and ")}.`,
+            );
+          }
+          seen.add(identity);
+        }
+      }
+    }
+    const importedVersionIds = new Set(
+      Object.values(next.records).flatMap((items) =>
+        items.map((record) => record._record_uid),
+      ),
+    );
+    if (
+      Object.values(next.sample_overrides).some(
+        (recordUid) => !importedVersionIds.has(recordUid),
+      )
+    ) {
+      throw new Error("Backup contains a sample override without its replacement version.");
+    }
+  }
+
+  function persist(next) {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(next));
+      store = next;
+      return true;
+    } catch {
+      announce(
+        "The browser could not save this change. Export the current backup and free local storage before retrying.",
+        true,
+      );
+      return false;
+    }
+  }
+
+  function commit(entitySpec, action, form, current) {
+    const operation = action?.operation || "create";
+    const now = new Date().toISOString();
+    const fields = entitySpec.fields.filter(
+      (field) => !entitySpec.identity.includes(field.name),
+    );
+    const stableUid = current?.object_uid || uid();
+    const before = current ? stripContext(current) : {};
+    const record = Object.fromEntries(
+      Object.entries(before).filter(([key]) => !key.startsWith("_")),
+    );
+    record.object_uid = stableUid;
+    record.captured_at = current?.captured_at || now;
+    record.updated_at = now;
+    if (!current) {
+      entitySpec.identity.forEach((name, index) => {
+        const field = entitySpec.fields.find((item) => item.name === name);
+        record[name] =
+          index === 0
+            ? `${entitySpec.id}-${stableUid.slice(0, 8)}`
+            : ["integer", "number"].includes(field?.type)
+              ? 1
+              : `v${index + 1}`;
+      });
+    }
+    for (const field of fields) {
+      const value = parseField(field, form.get(field.name));
+      if (value === undefined) delete record[field.name];
+      else record[field.name] = value;
+    }
+    validateRecord(entitySpec, record, current);
+
+    const next = clone(store);
+    next.records[entitySpec.id] = next.records[entitySpec.id] || [];
+    const recordUid = uid();
+    record._record_uid = recordUid;
+    record._version = Number(current?._version || 0) + 1;
+    if (current) {
+      record._supersedes = current.__record_key;
+      if (current.__origin === "sample") {
+        next.sample_overrides[current.__record_key] = recordUid;
+      } else {
+        const previous = next.records[entitySpec.id].find(
+          (candidate) => recordKey(entitySpec.id, candidate) === current.__record_key,
+        );
+        if (!previous) {
+          throw new Error("The selected record changed. Select it again and retry.");
+        }
+        previous._superseded_by = recordUid;
+      }
+    }
+    next.records[entitySpec.id].push(record);
+    next.receipts.push({
+      receipt_id: uid(),
+      object_uid: stableUid,
+      record_uid: recordUid,
+      entity: entitySpec.id,
+      operation,
+      captured_at: now,
+      spec_id: spec.id,
+      supersedes: current?.__record_key || null,
+      changed_fields: fields
+        .filter((field) => valueText(before[field.name]) !== valueText(record[field.name]))
+        .map((field) => field.name),
+      consequence: action?.consequence || entitySpec.description,
+    });
+    if (!persist(next)) return false;
+    selected[entitySpec.id] = recordUid;
+    return true;
+  }
+
+  function openCapture(entityId, action = null, current = null) {
+    const entitySpec = entity(entityId);
+    const operation = action?.operation || "create";
+    const fields = entitySpec.fields.filter(
+      (field) => !entitySpec.identity.includes(field.name),
+    );
+    const dialog = document.getElementById("capture-dialog");
+    const versionNote =
+      operation === "correct"
+        ? '<p class="storage-note">Saving creates a correction version. The prior interpretation remains in history and export.<\/p>'
+        : operation === "update"
+          ? '<p class="storage-note">Saving creates a new version and preserves the prior state.<\/p>'
+          : "";
+    const submitLabel =
+      operation === "correct"
+        ? "Save correction"
+        : operation === "update"
+          ? "Save revision"
+          : `Save ${entitySpec.title.toLowerCase()}`;
+    document.getElementById("capture-content").innerHTML = `<div class="dialog-head"><div><h2 id="capture-title">${esc(
+      action?.label || `Add ${entitySpec.title}`,
+    )}<\/h2><p>${esc(
+      action?.consequence || entitySpec.description,
+    )}<\/p>${versionNote}<\/div><button class="icon-button" type="button" data-close aria-label="Close">Close<\/button><\/div><form id="capture-form"><div class="form-grid">${fields
+      .map((field) => inputFor(field, entitySpec, current))
+      .join(
+        "",
+      )}<\/div><p class="error" id="form-error" role="alert"><\/p><div class="dialog-actions"><button class="button" type="button" data-close>Cancel<\/button><button class="button primary" type="submit">${esc(
+      submitLabel,
+    )}<\/button><\/div><\/form>`;
+    document
+      .getElementById("capture-content")
+      .querySelectorAll("[data-close]")
+      .forEach((button) => button.addEventListener("click", () => dialog.close()));
+    document.getElementById("capture-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const submit = event.currentTarget.querySelector('button[type="submit"]');
+      submit.disabled = true;
+      document.getElementById("form-error").textContent = "";
+      try {
+        if (!commit(entitySpec, action, new FormData(event.currentTarget), current)) {
+          submit.disabled = false;
+          return;
+        }
+        dialog.close();
+        statusMessage =
+          operation === "correct"
+            ? `${entitySpec.title} corrected; the prior version remains in export history.`
+            : operation === "update"
+              ? `${entitySpec.title} revised; the prior version remains in export history.`
+              : `${entitySpec.title} saved locally with an exportable receipt.`;
+        errorMessage = "";
+        render();
+        document.getElementById("main").focus();
+      } catch (error) {
+        document.getElementById("form-error").textContent =
+          error instanceof Error ? error.message : "The record could not be saved.";
+        submit.disabled = false;
+      }
+    });
+    dialog.showModal();
+    dialog.querySelector("input, select, textarea, button")?.focus();
+  }
+
+  function openEvidence() {
+    const dialog = document.getElementById("evidence-dialog");
+    const current = view();
+    let derivations = spec.derivations.filter(
+      (item) =>
+        item.output_path.includes(current.id) ||
+        item.output_path === "domain.entities" ||
+        item.output_path === "experience.visual_world",
+    );
+    if (!derivations.length) derivations = spec.derivations;
+    const citationIds = new Set(derivations.flatMap((item) => item.evidence_ids));
+    const citations = spec.evidence.filter((item) => citationIds.has(item.id));
+    document.getElementById("evidence-content").innerHTML = `<div class="dialog-head"><div><h2 id="evidence-title">Why this app<\/h2><p>Material decisions trace to reviewed evidence or an explicit user choice.<\/p><\/div><button class="icon-button" type="button" data-close aria-label="Close">Close<\/button><\/div>${derivations
+      .map(
+        (item) =>
+          `<div class="evidence-item"><strong>${esc(
+            item.output_path,
+          )}<\/strong><p>${esc(item.decision)}<\/p>${
+            item.user_decision
+              ? `<p><b>User decision:<\/b> ${esc(item.user_decision)}<\/p>`
+              : ""
+          }<\/div>`,
+      )
+      .join("")}${citations
+      .map((item) => {
+        const source = sources.get(item.source_id);
+        const sourceLabel = source?.title || item.source_id;
+        const heading = source?.url
+          ? `<a href="${esc(
+              source.url,
+            )}" target="_blank" rel="noreferrer">${esc(sourceLabel)}<\/a>`
+          : `<strong>${esc(sourceLabel)}<\/strong>`;
+        return `<div class="evidence-item">${heading}<p>${esc(item.claim)}<\/p><\/div>`;
+      })
+      .join("")}`;
+    dialog.querySelector("[data-close]").addEventListener("click", () => dialog.close());
+    dialog.showModal();
+    dialog.querySelector("button")?.focus();
+  }
+
+  function exportData() {
+    const activeRecords = Object.fromEntries(
+      [...entityIds].map((entityId) => [
+        entityId,
+        records(entityId).map(stripContext),
+      ]),
+    );
+    const payload = {
+      backup_format: "foundry-owned-app",
+      runtime_schema_version: RUNTIME_SCHEMA_VERSION,
+      spec_id: spec.id,
+      spec_version: spec.spec_version,
+      exported_at: new Date().toISOString(),
+      store,
+      records: store.records,
+      active_records: activeRecords,
+      receipts: store.receipts,
+      foundry_spec: spec,
+      evidence: {
+        sources: spec._source_records || [],
+        citations: spec.evidence,
+        derivations: spec.derivations,
+      },
+      derivations: spec.derivations,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${spec.id}-backup.json`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+    announce("Complete data, history, receipts, spec, and evidence exported as JSON.");
+  }
+
+  async function restoreData(event) {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = "";
+    if (!file) return;
+    if (file.size > MAX_BACKUP_BYTES) {
+      announce("Backup is larger than 10 MB and was not opened.", true);
+      return;
+    }
+    try {
+      const payload = JSON.parse(await file.text());
+      if (payload.backup_format !== "foundry-owned-app") {
+        throw new Error("This is not a Foundry owned-app backup.");
+      }
+      if (payload.spec_id !== spec.id || payload.spec_version !== spec.spec_version) {
+        throw new Error(
+          `Backup belongs to ${payload.spec_id || "another app"} spec ${
+            payload.spec_version || "unknown"
+          }; this app is ${spec.id} spec ${spec.spec_version}.`,
+        );
+      }
+      if (Number(payload.runtime_schema_version) > RUNTIME_SCHEMA_VERSION) {
+        throw new Error("Backup uses a newer runtime. Upgrade before restoring it.");
+      }
+      const restored = sanitizeStore(
+        payload.store || { records: payload.records, receipts: payload.receipts },
+        true,
+      );
+      validateBackup(restored);
+      if (
+        !globalThis.confirm(
+          "Restore this backup? It will replace the current browser copy after validation.",
+        )
+      ) {
+        announce("Restore cancelled; local data was not changed.");
+        return;
+      }
+      if (!persist(restored)) return;
+      statusMessage = "Backup restored after spec and schema validation.";
+      errorMessage = "";
+      render();
+    } catch (error) {
+      announce(
+        error instanceof Error ? error.message : "Backup could not be restored.",
+        true,
+      );
+    }
+  }
+
+  render();
+})();
+
+  </script>
+</body>
+</html>

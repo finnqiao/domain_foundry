@@ -1,0 +1,60 @@
+{
+  "scenario": {
+    "label": "coffee brewing",
+    "goal": "keep a coffee brewing log",
+    "capture": "V60 Ethiopian, 15g in and 250g out, tasted like blueberry",
+    "idea": {}
+  },
+  "final_url": "http://127.0.0.1:8790/passions/coffee/brews",
+  "receipt": "Saved to Brew lab as a brew",
+  "page_text": "Skip to content\n◆\nDomain Foundry\nFoundry\nToday\nYour passions\nInbox\nSettings\n\nYOUR PASSIONS\n\n✨\nBrew lab\n✨ Brew lab\nbrew name\nnoted at\nvalue\nnotes\nLog\nAsk\nin Brew lab\n⌘/Ctrl + Enter\nSave\nSaved to Brew lab as a brew\nBrew\nCompare\nStats\nAug 24, 2026, 03:12 PM\ncoffee:brew:\nBrew Name V60 Ethiopian",
+  "wizard_turns": [
+    {
+      "status_code": 200,
+      "state": "fork",
+      "awaiting": "fork",
+      "domain": null,
+      "message": "You said “keep a coffee brewing log”. You could:\n1. Brew lab (suggested): Ratio, grind, and taste — compare brews the way a bake lab compares loaves.\n   a mix board of what worked · a timeline of what you logged · chart how inputs lead to outcomes\n2. Bean shelf: Bags on the shelf and which ones actually got used.\nWhich of these, or say what you want it to do — a chart, photos, a mix board. Paste a notes folder path to ingest text. Photos: have your agent read them first, then send the text.",
+      "status": "scaffold"
+    },
+    {
+      "status_code": 200,
+      "state": "looks",
+      "awaiting": "look",
+      "domain": null,
+      "message": "Here is a look. Pick one, tell me how to change it (darker, denser, more chart), or say 'build it'.\n1. Brew lab (selected) — improvement look (round 1)",
+      "status": "scaffold"
+    },
+    {
+      "status_code": 200,
+      "state": "test_drive",
+      "awaiting": "capture",
+      "domain": "coffee",
+      "message": "Brew lab is ready to try — we'll file brew name · noted at · value · notes. Log one real note and we'll file it.",
+      "pack": {
+        "name": "coffee",
+        "version": "0.1.0",
+        "title": "Brew lab",
+        "path": "/private/var/folders/vw/xqh73ydn483_8hc9m9t8jtdc0000gn/T/df-e2e.AUUD6I/packs/coffee"
+      },
+      "status": "scaffold",
+      "acceptance": {
+        "total": 1,
+        "passed": 1,
+        "accuracy": 1,
+        "failures": [],
+        "heuristic": {
+          "passed": 1,
+          "accuracy": 1,
+          "failures": []
+        },
+        "provider": "heuristic",
+        "provider_live": false,
+        "covered": true
+      }
+    },
+    {
+      "status_code": 200
+    }
+  ]
+}

@@ -9,19 +9,29 @@ Legend: ☐ = not started · ✅ = in-repo prepared / done · 🔒 = human/manua
 
 ---
 
-## 0. Name decision 🔒 (mostly done — availability still on you)
+## 0. Name decision 🔒 (provisional — exact-mark collision blocks release)
+
+- ✅ A screened [replacement-name slate](docs/name-replacement-slate.md) now
+  recommends **Patternstead** and documents two alternatives, rejected
+  collisions, registry limitations, and the full pre-0.1 rename blast radius.
+  This is a recommendation, not the maintainer's selection or legal clearance.
+- ☐ Maintainer selects the final public stem before external reviewers sign the
+  candidate. A rename invalidates candidate hashes and every receipt.
 
 - ✅ Provisional public name: **Domain Foundry** — see
   [ADR-005](docs/adr/ADR-005-name-decision.md). Mechanical rename applied
   (`domain-foundry-core`, CLI `domain-foundry`, `~/.domain_foundry/`,
   `DOMAIN_FOUNDRY_*`, hermes entry-point `domain_foundry`, docs/README/mkdocs).
-- ✅ **PyPI availability checked 2026-07-29 — all five names free and unclaimed:**
+- ✅ **PyPI public-project check repeated 2026-08-19 — all five JSON endpoints
+  return 404:**
   `domain-foundry`, `domain-foundry-core`, `domain-foundry-mcp`,
   `domain-foundry-telegram`, `domain-foundry-hermes-agent` (each returns 404 on
-  `pypi.org/pypi/<name>/json`). Availability is not a reservation — first upload
-  wins, so this can go stale.
+  `pypi.org/pypi/<name>/json`). This proves only that no public project exists at
+  check time. It neither reserves a name nor guarantees PyPI will accept an
+  upload. The seven-day evidence and its limitations are recorded in
+  [`release/name-availability.yaml`](release/name-availability.yaml).
 - ☐ **Claim them.** Distributions are built and verified (`dist/`, `twine check`
-  PASSED, wheel contains the SPA + all nine reference packs). Needs a PyPI API
+  PASSED, wheel contains the SPA + all eight reference packs). Needs a PyPI API
   token, which was not present in the build environment:
   ```bash
   # already done: npm run build && scripts/stage_webapp.sh && python -m build
@@ -31,8 +41,21 @@ Legend: ☐ = not started · ✅ = in-repo prepared / done · 🔒 = human/manua
   Uploading a version is **irreversible** — PyPI will not let you re-use
   `0.1.0`. Confirm the name is the one you want (ADR-005 still calls it
   provisional) before the second command.
-- ☐ GitHub org `domain-foundry`, docs domain, trademark sanity check. Update
-  placeholder GitHub URLs if the org differs from `finnqiao`.
+- ⚠️ GitHub organization `Domain-Foundry` is already occupied (created 2013,
+  ownership unverified, zero public repositories at the 2026-08-19 check). Do
+  not plan to claim it without a verified transfer. The current public repository
+  is `finnqiao/domain_foundry`.
+- ⛔ **Material exact-mark collision:** USPTO TSDR lists live application
+  `99880503` for the standard-character mark **DOMAIN FOUNDRY**, filed by
+  Semantic Foundry LLC on 2026-06-11 in class 042. Its stated services include
+  semantic/domain modeling, AI-assisted software development, evidence-based
+  code generation, and compiling domain models into deployable software
+  artifacts. That directly overlaps this project. Publication under the current
+  name requires a rename, documented rights agreement, or qualified legal
+  clearance; a maintainer “sanity check” alone cannot clear the gate. This is
+  preliminary risk evidence, not legal advice.
+- ☐ Maintainer approves the final repository coordinate, docs domain, and
+  trademark sanity check. Update placeholder URLs if the repository moves.
 - ☐ Confirm `scripts/release_audit.sh` green on the rename commit (agent re-runs
   this; you confirm before publish).
 
@@ -57,14 +80,20 @@ Legend: ☐ = not started · ✅ = in-repo prepared / done · 🔒 = human/manua
 Run and confirm before anything ships:
 
 ```bash
-scripts/release_audit.sh
+scripts/candidate_gate.sh
+python scripts/review_packet.py prepare
+# complete reports and receipts with the named human reviewers
+python scripts/review_packet.py seal
+python scripts/public_release_audit.py
 ```
 
-This aggregates: leakscan · clock audit · no tracked DBs · git history starts at
-P0 · ruff · full pytest · `mkdocs build` · eval corpus replay vs baseline. All
-green as of this commit (see [`docs/LEAK_AUDIT.md`](docs/LEAK_AUDIT.md)).
+This aggregates code quality and typing, the full Python and browser suites,
+documentation claims/builds, knowledge and Foundry/held-out audits, SPDX and
+locked dependency vulnerability evidence, a production app build, hermetic
+initialization, and eval-corpus replay. All are green in the current candidate
+(see [`docs/LEAK_AUDIT.md`](docs/LEAK_AUDIT.md)).
 
-- ✅ `scripts/release_audit.sh` **9/9 PASS** on the release commit — now
+- ✅ `scripts/release_audit.sh` **aggregate PASS** on the current candidate —
   including `pyright`, which it previously omitted.
 - ✅ **Pyright debt cleared (was 45 errors / red since 2026-07-17).** Fixing it
   surfaced three things the red badge was hiding: Pyright runs *before* pytest in
@@ -79,6 +108,10 @@ green as of this commit (see [`docs/LEAK_AUDIT.md`](docs/LEAK_AUDIT.md)).
   adapters. The local gate can no longer be weaker than the merge gate.
 - 🔒 External security pass on the API surface (independent reviewer) — see
   [`docs/security.md`](docs/security.md).
+- 🔒 Independent editorial review of the initial source registry and principle
+  slate; `approved` means compiler-eligible, not independently endorsed.
+- 🔒 Independent review of source/dependency licensing, generated-output
+  boundaries, the runtime SBOM, and bundled third-party notices.
 - 🔒 Founder-as-user-0 validation completed privately — see
   [`docs/FOUNDER_VALIDATION.md`](docs/FOUNDER_VALIDATION.md).
 - 🔒 **One live `setup` probe per provider you intend to document.** The
@@ -97,6 +130,11 @@ green as of this commit (see [`docs/LEAK_AUDIT.md`](docs/LEAK_AUDIT.md)).
   Verified so far: a **bad** key correctly reports `HTTP 401: invalid x-api-key`
   on both tiers (so the failure path and the transport are real). The success
   path is unproven.
+
+The exact scopes and fail-closed receipt templates for all human gates are in
+[`docs/release-review-guide.md`](docs/release-review-guide.md) and
+`release/templates/`. `public_release_audit.py` also requires that the receipt
+commit, source-tree identity, wheel, sdist, and SBOM match the candidate manifest.
 
 ## 2. Demo GIF 🔒
 
@@ -201,6 +239,8 @@ Step-by-step handoff: [`docs/HANDOFF.md`](docs/HANDOFF.md).
 Synthetic UI evidence: [`docs/assets/evidence/`](docs/assets/evidence/).
 
 - 🔒 Name availability/trademark checks (provisional name **Domain Foundry** already applied).
+- 🔒 Resolve the exact-mark collision by rename, rights agreement, or qualified
+  clearance before approving any publication action.
 - 🔒 PyPI publish (core + adapter) and GitHub release/tag push.
 - 🔒 Show HN / lobste.rs / Nous posts + awesome-list PRs.
 - 🔒 External security pass on the API surface.

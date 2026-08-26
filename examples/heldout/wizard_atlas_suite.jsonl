@@ -4,4 +4,6 @@
 {"id": "atlas_sports", "goal": "sports", "expect_refine": ["soccer"], "not_generic_workout": true}
 {"id": "atlas_soccer", "goal": "soccer", "expect_ideas": ["training", "pickup", "tactical"], "not_generic_workout": true}
 {"id": "atlas_recipe_tracker", "goal": "recipe tracker", "expect_highlight": ["recipe"], "expect_expand": ["cook", "dining", "map"]}
-{"id": "atlas_underwater_animals", "goal": "I want to remember the animals I see underwater", "expect_ideas": ["pokedex", "species", "naturalism"], "expect_world_analog": true}
+{"id": "atlas_underwater_animals", "goal": "I want to remember the animals I see underwater", "expect_ideas": ["pokedex", "species", "naturalism"], "expect_world_analog": true, "expect_highlight": ["pokedex", "species"]}
+{"id": "atlas_sourdough_bakes", "goal": "i have a log of sourdough bakes", "expect_ideas": ["bake", "sourdough"], "expect_highlight": ["bake", "sourdough"]}
+{"id": "atlas_pokemon_cards", "goal": "i collect pokemon cards", "expect_ideas": ["card", "set", "pull"], "expect_highlight": ["card"], "expect_world_analog": true}

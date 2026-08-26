@@ -21,5 +21,16 @@ issues as quickly as practical.
 - Query paths use read-only SQLite connections.
 - Path writes go through `safe_join` (workspace-rooted only).
 - Secrets are redacted before persistence into notes, receipts, or logs.
+- Foundry rejects credential-shaped brief content before it reaches a configured
+  reasoning model or research provider and bounds all prompt-bearing fields.
+- Model and search output is untrusted, schema validated, and closed against
+  supplied evidence and contract identifiers before compilation.
+- Generated applications ship with a network-denying Content Security Policy;
+  preview iframes are sandboxed, and record content is escaped before rendering.
+- Foundry bundles are staged before an atomic rename and include a frozen
+  evidence snapshot plus hashes for every owned artifact.
 - Third-party Domain Packs are data (YAML/SQL/JSONL), not executable code in v1.
 - There is no telemetry.
+
+The Foundry-specific boundaries, attacks, controls, and residual risks are in
+[`docs/concepts/foundry-threat-model.md`](docs/concepts/foundry-threat-model.md).

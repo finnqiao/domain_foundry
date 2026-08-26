@@ -7,7 +7,8 @@ nodes:
   - id: diving.scuba
     kind: practice
     title: Scuba
-    aliases: [scuba diving, open water, rec diving, tank]
+    aliases: [scuba diving, open water, rec diving]
+    jargon: [scuba tank, back gas]
     pitch: Dives with tanks — sites, depth, time, gas, and whether your air is improving.
   - id: diving.scuba.dive_log
     kind: idea
@@ -95,19 +96,20 @@ nodes:
   - id: diving.marine_naturalism
     kind: practice
     title: Marine naturalism
-    aliases: [animals, species, wildlife, fish, turtle, reef life, marine life]
+    aliases: [animals, species, wildlife, turtle, reef life, marine life]
+    jargon: [fish ID, reef fish, macro life]
     pitch: The animals you've seen — a pokedex, not a dive timer.
   - id: diving.marine_naturalism.species_pokedex
     kind: idea
     title: Species pokedex
-    aliases: [pokedex, species dex, fish ID, animals I've seen]
+    aliases: [pokedex, species dex, animals I've seen, field guide, field-guide, fieldguide]
     pitch: A catalog of animals you've seen, with photos, where, and how many times.
     jobs: [catalog, event_log, media_dex, atlas]
     provenance: both
     domain_slug: species
     identity_hint: species_name
     example: spotted a turtle at Blue Hole, 18m, got a photo
-    jargon: [nudibranch, frogfish, turtle, ID]
+    jargon: [nudibranch, frogfish, turtle, fish ID]
     world_analogs:
       - {name: iNaturalist, one_liner: Species observations with a community ID}
   - id: diving.marine_naturalism.site_species_graph
@@ -132,11 +134,28 @@ nodes:
     aliases: [spear log]
     pitch: What you took, where, and the conditions — honest, not a trophy wall.
     jobs: [event_log, atlas]
-    provenance: foundry
+    provenance: both
     domain_slug: spear
     identity_hint: species_name
     example: one palani on the west wall, surge was annoying
-    jargon: [flopper, stringer, surge]
+    jargon: [flopper, stringer, surge, freedive hunt]
+    vocabulary:
+      [hogfish, speared, spearing, stringer, flopper, surge, shaft, gun,
+       bluewater, aspetto, kelp, viz, hunt, boated, snapper, grouper]
+    routing_examples:
+      - {text: "freedive hunt off the point, two hogfish on the stringer", object: event}
+      - {text: "speared one clean at 8m, surge was heavy", object: event}
+      - {text: "took the gun down to 12m, nothing worth shooting", object: event}
+      - {text: "one palani on the west wall, viz was milky", object: event}
+      - {text: "aspetto in the kelp, a grouper came in close", object: event}
+    negative_examples:
+      - the fish market was closed on Sunday
+      - speared a slice of cake with a fork
+    llm_hints: >
+      A hunt is one outing; species and count belong to it. "Speared", "shot"
+      and "boated" all mean taken. Depth in metres, viz in words.
+    world_analogs:
+      - {name: Spearboard logs, one_liner: Hunt reports with conditions}
   - id: diving.dive_travel
     kind: practice
     title: Dive travel

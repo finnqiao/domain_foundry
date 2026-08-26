@@ -29,6 +29,7 @@ from domain_foundry_core.llm.provider import (
     AnthropicProvider,
     HeuristicProvider,
     LLMError,
+    OpenAICompatibleProvider,
     TieredLLMProvider,
     resolve_tier_settings,
 )
@@ -36,6 +37,8 @@ from domain_foundry_core.llm.providers import (
     all_providers,
     anthropic_request_caps,
     is_anthropic_base,
+    is_deepseek_base,
+    is_openai_base,
 )
 from domain_foundry_core.onboarding import (
     build_config,
@@ -82,6 +85,15 @@ def test_registry_has_stable_ids_and_anthropic_first() -> None:
     assert ids[0] == "anthropic", "setup preselects the first entry; keep it stable"
     assert "none" in ids, "an offline / no-model choice must always be offerable"
     assert len(set(ids)) == len(ids)
+
+
+def test_network_provider_defaults_are_current() -> None:
+    providers = {provider.id: provider for provider in all_providers()}
+    assert providers["openai"].routine_model == "gpt-5.6-luna"
+    assert providers["openai"].sota_model == "gpt-5.6-sol"
+    assert providers["deepseek"].routine_model == "deepseek-v4-flash"
+    assert providers["deepseek"].sota_model == "deepseek-v4-pro"
+    assert providers["deepseek"].base_url == "https://api.deepseek.com"
 
 
 @pytest.mark.parametrize(
@@ -132,6 +144,14 @@ def test_is_anthropic_base_discriminates_gateways() -> None:
     assert not is_anthropic_base("https://openrouter.ai/api/v1")
     assert not is_anthropic_base("http://127.0.0.1:11434/v1")
     assert not is_anthropic_base(None)
+
+
+def test_first_party_openai_compatible_bases_are_not_confused_with_gateways() -> None:
+    assert is_openai_base("https://api.openai.com/v1")
+    assert not is_openai_base("https://openrouter.ai/api/v1")
+    assert is_deepseek_base("https://api.deepseek.com")
+    assert is_deepseek_base("https://api.deepseek.com/v1")
+    assert not is_deepseek_base("https://openrouter.ai/api/v1")
 
 
 # ---------------------------------------------------------------------------
@@ -195,10 +215,10 @@ def test_env_beats_config_file(tmp_path: Path, clean_env: None, monkeypatch) -> 
 def test_config_file_beats_registry_default(tmp_path: Path, clean_env: None) -> None:
     save_llm_config(build_config(provider_id="deepseek"), tmp_path)
     routine = resolve_tier_settings("routine", home=tmp_path)
-    assert routine.model == "deepseek-chat"
-    assert routine.base_url == "https://api.deepseek.com/v1"
+    assert routine.model == "deepseek-v4-flash"
+    assert routine.base_url == "https://api.deepseek.com"
     # The sota tier follows the chosen provider, not a hard-coded Anthropic default.
-    assert resolve_tier_settings("sota", home=tmp_path).model == "deepseek-reasoner"
+    assert resolve_tier_settings("sota", home=tmp_path).model == "deepseek-v4-pro"
 
 
 def test_registry_default_when_nothing_configured(tmp_path: Path, clean_env: None) -> None:
@@ -260,6 +280,75 @@ class _Capture:
         self.requests.append(kwargs.get("json") or {})
         request = httpx.Request("POST", url)
         return httpx.Response(self.status, json=self.body, request=request)
+
+
+def _openai_capture() -> _Capture:
+    return _Capture(
+        body={
+            "choices": [{"message": {"content": '{"ok": true}'}}],
+            "usage": {"prompt_tokens": 5, "completion_tokens": 3},
+        }
+    )
+
+
+def test_openai_current_default_uses_compatible_request_shape(
+    monkeypatch: pytest.MonkeyPatch,
+    clean_env: None,
+) -> None:
+    cap = _openai_capture()
+    monkeypatch.setattr(httpx, "post", cap)
+    provider = OpenAICompatibleProvider(
+        base_url="https://api.openai.com/v1",
+        api_key="sk-test",
+    )
+    result = provider.complete_json(
+        system="Return JSON.",
+        user='Return {"ok": true}.',
+        schema={"type": "object"},
+    )
+    assert result.data == {"ok": True}
+    body = cap.requests[0]
+    assert body["model"] == "gpt-5.6-luna"
+    assert body["messages"][0]["role"] == "developer"
+    assert body["response_format"]["type"] == "json_schema"
+    assert "temperature" not in body
+
+
+@pytest.mark.parametrize(
+    "tier,model,thinking,effort",
+    [
+        ("routine", "deepseek-v4-flash", "disabled", None),
+        ("sota", "deepseek-v4-pro", "enabled", "high"),
+    ],
+)
+def test_deepseek_v4_uses_supported_json_and_thinking_shape(
+    monkeypatch: pytest.MonkeyPatch,
+    tier: str,
+    model: str,
+    thinking: str,
+    effort: str | None,
+) -> None:
+    cap = _openai_capture()
+    monkeypatch.setattr(httpx, "post", cap)
+    provider = OpenAICompatibleProvider(
+        base_url="https://api.deepseek.com",
+        api_key="sk-test",
+        default_model=model,
+        default_tier=tier,
+    )
+    result = provider.complete_json(
+        system="Return JSON.",
+        user='Return {"ok": true}.',
+        schema={"type": "object"},
+        tier=tier,
+    )
+    assert result.data == {"ok": True}
+    body = cap.requests[0]
+    assert body["messages"][0]["role"] == "system"
+    assert body["response_format"] == {"type": "json_object"}
+    assert body["thinking"] == {"type": thinking}
+    assert body.get("reasoning_effort") == effort
+    assert "temperature" not in body
 
 
 def _run(monkeypatch: pytest.MonkeyPatch, capture: _Capture, model: str) -> None:

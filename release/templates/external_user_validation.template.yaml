@@ -1,0 +1,37 @@
+schema_version: 1
+gate: external_user_validation
+candidate_id: sha256:REPLACE_FROM_CANDIDATE_JSON
+reviewed_commit: REPLACE_WITH_40_CHARACTER_GIT_SHA
+reviewed_at: "YYYY-MM-DDTHH:MM:SS+00:00"
+outcome: pending
+reviewer:
+  identifier: REPLACE_WITH_FACILITATOR_NAME_OR_HANDLE
+  relationship: maintainer
+  expertise: moderated product research
+scope:
+  - cold interest brief through concept comparison and remix
+  - schema and evidence comprehension
+  - first real act, correction, and owned export
+evidence:
+  - path: release/evidence/reports/external-user-validation-report.md
+    sha256: REPLACE_WITH_64_CHARACTER_SHA256_AFTER_REPORT_IS_FINAL
+artifacts:
+  wheel: REPLACE_WITH_64_CHARACTER_SHA256
+  sdist: REPLACE_WITH_64_CHARACTER_SHA256
+  sbom: REPLACE_WITH_64_CHARACTER_SHA256
+details:
+  sessions:
+    - participant_id: participant-a
+      interest: REPLACE_WITH_NON_SENSITIVE_INTEREST
+      tasks_attempted: 0
+      critical_tasks_passed: false
+    - participant_id: participant-b
+      interest: REPLACE_WITH_DISTINCT_NON_SENSITIVE_INTEREST
+      tasks_attempted: 0
+      critical_tasks_passed: false
+    - participant_id: participant-c
+      interest: REPLACE_WITH_THIRD_DISTINCT_NON_SENSITIVE_INTEREST
+      tasks_attempted: 0
+      critical_tasks_passed: false
+  unresolved_blockers: -1
+attestation: REPLACE_WITH_A_SUBSTANTIVE_HUMAN_ATTESTATION_OF_THE_SESSIONS_AND_RESULT

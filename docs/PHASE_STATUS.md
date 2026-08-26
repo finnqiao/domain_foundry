@@ -84,7 +84,12 @@ Tracking implementation of `docs/OPEN_SOURCE_HARNESS_PLAN.md`.
 
 ### Human launch gates remaining (NOT done by the build)
 
-1. **Name decision** (provisional): **Domain Foundry** chosen; mechanical rename done (ADR-005). Still need PyPI/GitHub/domain/trademark availability checks before publish.
+1. **Name decision** (provisional): **Domain Foundry** chosen; mechanical rename
+   done (ADR-005). Current evidence records PyPI 404s without treating them as
+   reservations and records the occupied `Domain-Foundry` GitHub organization.
+   A live exact-mark US application covers directly overlapping software
+   services; rename, rights agreement, or qualified clearance plus maintainer
+   coordinate/domain approval still blocks publish.
 2. **PyPI publish** (core + hermes-agent adapter) and the GitHub release/tag push — steps in `LAUNCH_CHECKLIST.md §3`, not executed.
 3. **Launch posts**: Show HN, lobste.rs, Nous, and awesome-list PRs — drafts prepared, posted by hand.
 4. **External security pass** on the API surface by an independent reviewer.

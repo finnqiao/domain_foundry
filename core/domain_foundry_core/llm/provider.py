@@ -32,13 +32,15 @@ from domain_foundry_core.llm.providers import (
     anthropic_request_caps,
     get_provider,
     is_anthropic_base,
+    is_deepseek_base,
+    is_openai_base,
 )
 
 ModelTier = Literal["routine", "sota"]
 
-DEFAULT_ROUTINE_MODEL = "deepseek-chat"
+DEFAULT_ROUTINE_MODEL = "deepseek-v4-flash"
 DEFAULT_SOTA_MODEL = "claude-opus-5"
-DEFAULT_ROUTINE_BASE_URL = "https://api.deepseek.com/v1"
+DEFAULT_ROUTINE_BASE_URL = "https://api.deepseek.com"
 DEFAULT_SOTA_BASE_URL = "https://api.anthropic.com"
 
 # Enough room for the JSON plus, on models where thinking is on by default,
@@ -278,7 +280,7 @@ class OpenAICompatibleProvider(LLMProvider):
         self.default_model = (
             default_model
             or os.environ.get("DOMAIN_FOUNDRY_LLM_MODEL")
-            or "gpt-4o-mini"
+            or "gpt-5.6-luna"
         )
         self.default_tier = default_tier
         # Reasoners and design calls routinely exceed 60s; a short timeout
@@ -298,15 +300,25 @@ class OpenAICompatibleProvider(LLMProvider):
             raise LLMError("no API key configured")
         model = model or self.default_model
         resolved_tier = tier or self.default_tier
+        deepseek_api = is_deepseek_base(self.base_url)
+        system_role = "developer" if is_openai_base(self.base_url) else "system"
         body: dict[str, Any] = {
             "model": model,
             "messages": [
-                {"role": "system", "content": system},
+                {"role": system_role, "content": system},
                 {"role": "user", "content": user},
             ],
-            "temperature": 0,
         }
-        if schema:
+        if deepseek_api:
+            # V4 defaults to thinking. Keep the high-volume path fast and make
+            # the stronger design/correction tier's intent explicit.
+            body["thinking"] = {
+                "type": "disabled" if resolved_tier == "routine" else "enabled"
+            }
+            if resolved_tier == "sota":
+                body["reasoning_effort"] = "high"
+
+        if schema and not deepseek_api:
             body["response_format"] = {
                 "type": "json_schema",
                 "json_schema": {"name": "route", "schema": schema, "strict": False},
@@ -333,7 +345,7 @@ class OpenAICompatibleProvider(LLMProvider):
             body.pop("response_format", None)
             body["messages"] = [
                 {
-                    "role": "system",
+                    "role": system_role,
                     "content": system + "\nRespond with a single JSON object only.",
                 },
                 {"role": "user", "content": user},

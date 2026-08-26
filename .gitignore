@@ -59,3 +59,9 @@ core/domain_foundry_core/_webapp/
 
 # Playwright output
 app/test-results/
+
+# Keep local browser recordings out of the source tree; screenshots and JSON
+# evidence can still be versioned when they are useful to a release review.
+artifacts/**/*.trace.zip
+artifacts/**/*.zip
+artifacts/**/*.webm

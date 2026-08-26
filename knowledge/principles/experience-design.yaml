@@ -1,0 +1,72 @@
+discipline: experience_design
+version: 1
+principles:
+  - id: UX-01
+    title: Begin with the real practice
+    rule: Research what the person does, keeps, decides, and struggles with before asking for screens, colors, or features.
+    sources: [govuk_design_principles]
+    required_evidence: [practice, desired_outcome, current_artifacts, constraints]
+    release_checks: [brief_has_user_need, brief_has_real_artifact_or_example]
+
+  - id: UX-02
+    title: Offer product hypotheses, not cosmetic themes
+    rule: Present three concepts that disagree about workflow, hierarchy, and primary affordance; color-only variants do not count.
+    sources: [ui_remix_paper, govuk_design_principles]
+    required_evidence: [concept_theses, structural_differences, tradeoffs]
+    release_checks: [three_distinct_concepts, concept_data_consequences_visible]
+
+  - id: UX-03
+    title: Remix globally and locally
+    rule: A person can fork a full concept or combine a workflow, schema fragment, interaction, or visual system while retaining lineage.
+    sources: [ui_remix_paper, sekai]
+    required_evidence: [parent_lineage, selected_fragments, resulting_diff]
+    release_checks: [source_not_mutated, remix_diff_reproducible]
+
+  - id: UX-04
+    title: The preview is the implementation contract
+    rule: Preview and final app compile from the same experience specification and realistic data; a disposable mockup cannot promise behavior.
+    sources: [figma_sds, storybook, figma_make_kits]
+    required_evidence: [experience_spec, preview_build_hash]
+    release_checks: [preview_and_runtime_share_spec, critical_flow_matches]
+
+  - id: UX-05
+    title: Be consistent, not uniform
+    rule: Reuse accessible primitives and interaction conventions while giving each domain its own task topology, density, language, and visual world.
+    sources: [govuk_design_principles, aria_apg, figma_sds]
+    required_evidence: [shared_primitives, domain_visual_contract, task_topology]
+    release_checks: [goldens_structurally_distinct, primitives_conform]
+
+  - id: UX-06
+    title: Design complete task states
+    rule: Every critical workflow specifies first use, populated, loading, empty, error, partial, conflict, offline, and correction states where applicable.
+    sources: [storybook, aria_apg]
+    required_evidence: [state_matrix, recovery_actions]
+    release_checks: [critical_states_rendered, errors_have_recovery]
+
+  - id: UX-07
+    title: Accessibility is compiled, then verified
+    rule: Semantic HTML, keyboard behavior, names, focus, contrast, reflow, target size, and status messages are specification requirements, not a polish pass.
+    sources: [wcag_22, aria_apg]
+    required_evidence: [semantic_pattern, keyboard_model, accessibility_target]
+    release_checks: [wcag_aa_automated, keyboard_journey, manual_screen_reader_smoke]
+
+  - id: UX-08
+    title: Trust is visible at the moment of consequence
+    rule: Show why a field, recommendation, interpretation, or action exists and make correction available without leaving the task context.
+    sources: [w3c_prov, ui_remix_paper, govuk_design_principles]
+    required_evidence: [decision_explanation, provenance_entry, correction_path]
+    release_checks: [high_impact_decisions_cited, correction_from_result]
+
+  - id: UX-09
+    title: Design for the user's context
+    rule: Device, environment, frequency, expertise, interruption, and data volume determine layout and interaction choices.
+    sources: [govuk_design_principles, wcag_22]
+    required_evidence: [usage_context, device_matrix, density_assumption]
+    release_checks: [mobile_journey, desktop_journey, reflow_passes]
+
+  - id: UX-10
+    title: The first useful act beats configuration
+    rule: After concept approval, guide the user to import or record one real item and immediately show a domain-specific payoff.
+    sources: [govuk_design_principles, sekai]
+    required_evidence: [activation_action, immediate_payoff]
+    release_checks: [first_value_journey, no_dead_end_setup]

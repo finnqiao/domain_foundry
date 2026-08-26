@@ -5,28 +5,30 @@
 One of Domain Foundry's three **tested harnesses** (with the
 [MCP server](../mcp) and the [hermes-agent adapter](../hermes_agent)). Messages
 you send the bot are captured-first into your local ledger and routed to typed
-domain records — and a one-message correction ("actually that was a V6") amends
-the canonical record and becomes a regression test. Everything lives in local
+domain records — and a one-message correction ("that Charizard was LP not NM")
+amends the canonical record and becomes a regression test. Everything lives in local
 SQLite; the only network hop is to Telegram to receive and send messages.
 
 ## What it feels like
 
-> **You:** /new track my bouldering sessions
-> **Bot:** Sports → climbing. Ideas: session log, ticklist, training cycle…
-> **You:** skip
-> **Bot:** *bouldering* is ready. Send a real note and we’ll file it.
-> **You:** sent a tough V5 on the overhang today, crux was the heel hook
-> **Bot:** ✅ Logged to *bouldering* (entry).
-> **You:** actually the rating was moderate not hard
+> **You:** /new i collect pokemon cards
+> **Bot:** You said “i collect pokemon cards”. You could: 3. Card dex…
+> **You:** a dex of the cards i own with photos
+> **Bot:** Here is a look. Reply with a number or say `build it`.
+> **You:** build it
+> **Bot:** *pokemon* is ready. Send a real note and we’ll file it.
+> **You:** pulled a holographic Charizard from a 151 booster, NM
+> **Bot:** ✅ Logged to *pokemon* (card).
+> **You:** that Charizard was LP not NM
 > **Bot:** ✏️ Corrected — and saved as a regression test.
-> **You:** /query bouldering
-> **Bot:** 📚 *bouldering* — 1 shown: • sent a tough V5 on the overhang…
+> **You:** /query pokemon
+> **Bot:** 📚 *pokemon* — 1 shown: • pulled a holographic Charizard…
 
 ## Install
 
 ```bash
-pipx install domain-foundry-telegram      # or: pip install domain-foundry-telegram
-# from a checkout:  pip install -e ./adapters/telegram
+pip install -e ./adapters/telegram        # from a checkout
+# published:  pipx install domain-foundry-telegram
 ```
 
 ## Create your bot (2 minutes, all in the Telegram app)
@@ -64,8 +66,8 @@ queue; `/help`.
 ## Proven end-to-end
 
 `tests/test_telegram_bridge.py` runs the **entire conversation loop** — `/new` →
-capture → correction → `/query` → `/review` — through the real poller against an
-in-memory mock Telegram API, offline and deterministic (no token needed). It is
-part of CI and regenerates the tutorial's Telegram proof snapshot. The only piece
-that needs a live token is the final over-the-wire hop, which the mock stands in
-for byte-for-byte.
+looks → `build it` → capture → correction → `/query` → `/review` — through the
+real poller against an in-memory mock Telegram API, offline and deterministic
+(no token needed). It is part of CI and regenerates the tutorial's Telegram
+proof snapshot. The only piece that needs a live token is the final
+over-the-wire hop, which the mock stands in for byte-for-byte.

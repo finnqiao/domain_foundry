@@ -4,8 +4,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from domain_foundry_core.atlas.loader import load_atlas, validate_atlas, graph_stats
-from domain_foundry_core.atlas.query import query_neighborhood
+from domain_foundry_core.atlas.loader import graph_stats, load_atlas, validate_atlas
+from domain_foundry_core.atlas.query import (
+    _content_tokens,
+    _goal_tokens,
+    query_neighborhood,
+    score_node,
+)
 
 
 def _ids(cards: list[dict]) -> set[str]:
@@ -68,6 +73,45 @@ def test_recipe_tracker_highlights_recipe_and_still_offers_expand():
     assert "cook" in blob or "dining" in blob or "map" in blob
 
 
+def test_pokedex_of_cards_is_collecting_not_diving():
+    nb = query_neighborhood("i want a pokedex of my cards")
+    cursor = nb.get("cursor") or ""
+    assert "diving" not in cursor
+    titles = _titles(nb["ideas"])
+    assert "card" in titles
+
+
+def test_fountain_pens_are_unindexed_not_food():
+    nb = query_neighborhood("fountain pens and ink")
+    assert _unindexed(nb), nb.get("cursor")
+    assert (nb.get("cursor") or "") != "food"
+
+
+def test_short_token_ink_does_not_fuzzy_match_drinks():
+    graph = load_atlas()
+    food = graph.get("food")
+    assert food is not None
+    assert score_node(food, {"fountain", "pens", "ink"}, "fountain pens and ink") == 0
+
+
+def test_pokemon_cards_lands_on_collecting_not_diving():
+    nb = query_neighborhood("i collect pokemon cards")
+    blob = (
+        " ".join(b["id"] for b in nb["breadcrumb"])
+        + " "
+        + _titles(nb["ideas"] + nb["refine"] + nb["expand"])
+        + " "
+        + " ".join(_ids(nb["ideas"]))
+    )
+    assert "collecting" in blob or "card" in blob
+    assert "diving" not in (nb.get("cursor") or "")
+    titles = _titles(nb["ideas"])
+    assert "card" in titles
+    assert "set" in titles or "pull" in titles
+    highlighted = [i for i in nb["ideas"] if i.get("highlighted")]
+    assert any("card" in (i.get("title") or "").lower() for i in highlighted)
+
+
 def test_underwater_animals_lands_near_pokedex():
     nb = query_neighborhood("I want to remember the animals I see underwater")
     blob = (
@@ -96,5 +140,87 @@ edges: []
         encoding="utf-8",
     )
     graph = load_atlas(overlay)
-    assert graph.get("food") is not None
-    assert graph.get("food").title == "Food (overlay)"
+    food = graph.get("food")
+    assert food is not None
+    assert food.title == "Food (overlay)"
+
+
+def _unindexed(nb: dict) -> bool:
+    return nb.get("unindexed") is True or not nb.get("cursor")
+
+
+def test_unknown_goals_are_unindexed_not_wildlife():
+    for goal in ("xyzzy plugh foobar", "track my lego builds", "warhammer painting"):
+        nb = query_neighborhood(goal)
+        assert _unindexed(nb), (goal, nb.get("cursor"))
+        assert "wildlife" not in (nb.get("cursor") or "")
+        assert "animals.wildlife" not in (nb.get("cursor") or "")
+
+
+def test_kind_bonus_requires_token_or_alias_overlap():
+    graph = load_atlas()
+    wildlife = graph.get("animals.wildlife")
+    assert wildlife is not None
+    assert score_node(wildlife, {"xyzzy", "plugh", "foobar"}, "xyzzy plugh foobar") == 0
+    assert score_node(wildlife, _content_tokens("track my lego builds"), "track my lego builds") == 0
+
+
+def test_birdwatching_tokenizes_and_lands_on_wildlife():
+    graph = load_atlas()
+    tokens = _goal_tokens(graph, "birdwatching")
+    assert "birdwatching" in tokens
+    assert "bird" in tokens
+    assert "watching" in tokens
+    nb = query_neighborhood("birdwatching")
+    assert nb.get("unindexed") is not True
+    cursor = nb.get("cursor") or ""
+    blob = (
+        cursor
+        + " "
+        + " ".join(b["id"] for b in nb["breadcrumb"])
+        + " "
+        + _titles(nb["ideas"] + nb["refine"] + nb["expand"])
+    )
+    assert "wildlife" in blob
+    wildlife = graph.get("animals.wildlife")
+    assert wildlife is not None
+    assert score_node(wildlife, tokens, "birdwatching") > 2
+
+
+def test_sourdough_bakes_still_bake_lab():
+    nb = query_neighborhood("i have a log of sourdough bakes")
+    blob = (
+        " ".join(b["id"] for b in nb["breadcrumb"])
+        + " "
+        + _titles(nb["ideas"] + nb["refine"] + nb["expand"])
+        + " "
+        + " ".join(_ids(nb["ideas"]))
+    )
+    assert "bake" in blob or "sourdough" in blob
+    assert "soccer" not in (nb.get("cursor") or "")
+
+
+def test_whisky_tasting_is_not_dining():
+    nb = query_neighborhood("whisky tasting")
+    cursor = nb.get("cursor") or ""
+    assert "food.dining" not in cursor
+    assert _unindexed(nb) or "dining" not in cursor
+
+
+def test_sourdough_discard_recipes_prefers_fermentation():
+    nb = query_neighborhood("sourdough discard recipes")
+    cursor = nb.get("cursor") or ""
+    blob = (
+        cursor
+        + " "
+        + " ".join(b["id"] for b in nb["breadcrumb"])
+        + " "
+        + _titles(nb["ideas"] + nb["refine"] + nb["expand"])
+        + " "
+        + " ".join(_ids(nb["ideas"]))
+    )
+    assert "fermentation" in blob or "bake" in blob or "discard" in blob
+    assert cursor != "food.cooking"
+    assert "recipe_lab" not in cursor
+    ideas = _titles(nb["ideas"])
+    assert "recipe lab" not in ideas or "bake" in ideas or "sourdough" in ideas or "discard" in ideas

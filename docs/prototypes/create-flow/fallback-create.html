@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fallback — honest demo mode, no key configured</title>
+<style>
+  :root {
+    --night: #12120f;
+    --night-2: #1b1b17;
+    --paper: #f1eee4;
+    --paper-3: #e8e4da;
+    --ink: #1c1c18;
+    --ink-2: #5e5b53;
+    --line: #383832;
+    --rule: #c8c0b2;
+    --muted: #aaa79c;
+    --cool: #9bb8bc;
+    --slate: #526e73;
+    --amber: #efa853;
+    --amber-ink: #8a531a;
+    --green: #6f8f6a;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --serif: Georgia, "Times New Roman", serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--night); color: var(--paper);
+    font: 16px/1.65 -apple-system, "Segoe UI", system-ui, sans-serif;
+  }
+  .mock-banner {
+    position: sticky; top: 0; z-index: 20;
+    display: flex; gap: 1rem; align-items: baseline; flex-wrap: wrap;
+    padding: 0.65rem clamp(1.2rem, 4vw, 4rem);
+    background: var(--amber); color: var(--ink);
+    font-family: var(--mono); font-size: 0.72rem;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .mock-banner a { color: inherit; }
+  header.mast {
+    padding: clamp(2rem, 5vw, 5rem) clamp(1.3rem, 4vw, 4rem);
+    border-bottom: 1px solid var(--line);
+    display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
+    gap: 3rem; align-items: end;
+  }
+  .kicker {
+    margin: 0 0 0.6rem; color: var(--cool);
+    font-family: var(--mono); font-size: 0.7rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  h1 {
+    margin: 0; max-width: 15ch; font-family: var(--serif); font-weight: 400;
+    font-size: clamp(2.6rem, 6.5vw, 6rem);
+    letter-spacing: -0.04em; line-height: 0.96;
+  }
+  .lede { margin: 0; max-width: 48ch; color: var(--muted); }
+  .lede strong { color: var(--paper); font-weight: 650; }
+  main { padding: 0 clamp(1.3rem, 4vw, 4rem) 4rem; }
+  .stage { padding: clamp(2rem, 4.5vw, 3.4rem) 0; border-top: 1px solid var(--line); }
+  .stage:first-of-type { border-top: 0; }
+  .stage-head {
+    display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(260px, 0.7fr);
+    gap: clamp(1rem, 3vw, 3rem); align-items: end; margin-bottom: 1.6rem;
+  }
+  .stage-head h2 {
+    margin: 0; max-width: 15ch; font-family: var(--serif); font-weight: 400;
+    font-size: clamp(1.9rem, 4.2vw, 3.6rem);
+    letter-spacing: -0.045em; line-height: 0.95;
+  }
+  .stage-head p { margin: 0; max-width: 56ch; color: var(--muted); }
+  .two { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(240px, 0.85fr); gap: clamp(1rem, 2.5vw, 2.5rem); }
+  .paper {
+    padding: clamp(1.1rem, 2.5vw, 2rem);
+    background: var(--paper); color: var(--ink);
+    box-shadow: 0 18px 56px rgba(0, 0, 0, 0.35);
+  }
+  .paper h3 { margin: 0 0 0.9rem; font-size: 1.25rem; }
+  .paper p { margin: 0 0 0.8rem; }
+  .paper p:last-child { margin-bottom: 0; }
+  .paper code, .margin code { font-family: var(--mono); font-size: 0.82em; }
+  .paper code { color: var(--amber-ink); }
+  .margin code { color: var(--paper); background: var(--night-2); padding: 0.1rem 0.3rem; }
+  .said { margin: 0 0 1rem; font-family: var(--mono); font-size: 1.02rem; color: var(--paper); }
+  .said::before { content: "you › "; color: var(--cool); }
+  .said.app::before { content: "app › "; color: var(--amber); }
+  .margin h4 {
+    margin: 0 0 0.5rem; color: var(--cool); font-family: var(--mono);
+    font-weight: 400; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .margin p { margin: 0 0 0.8rem; color: var(--muted); font-size: 0.88rem; }
+
+  .mode-note {
+    display: grid; grid-template-columns: auto 1fr; gap: 0 0.9rem;
+    align-items: start;
+    padding: 1rem 1.1rem; margin-bottom: 1.4rem;
+    border: 1px solid var(--slate);
+  }
+  .mode-note .tag {
+    font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--night); background: var(--cool);
+    padding: 0.2rem 0.5rem; white-space: nowrap;
+  }
+  .mode-note p { margin: 0; color: var(--paper); }
+  .mode-note p + p { margin-top: 0.5rem; color: var(--muted); font-size: 0.92rem; }
+  .mode-note p.span { grid-column: 2; }
+
+  .ideas { display: grid; gap: 0; margin-top: 0.4rem; }
+  .idea {
+    display: grid; grid-template-columns: 1.6rem 1fr; gap: 0.8rem;
+    padding: 0.8rem 0; border-top: 1px solid var(--rule);
+  }
+  .idea > span { font-family: var(--mono); color: var(--amber-ink); }
+  .idea strong { font-weight: 650; }
+  .idea p { margin: 0.2rem 0 0; color: var(--ink-2); font-size: 0.93rem; }
+  .idea .from { display: block; margin-top: 0.3rem; font-family: var(--mono); font-size: 0.72rem; color: var(--slate); }
+
+  .filed {
+    border-top: 3px solid var(--green); padding: 0.9rem 1rem;
+    background: var(--paper-3); color: var(--ink);
+  }
+  .filed .head { display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; flex-wrap: wrap; }
+  .filed strong { font-weight: 650; }
+  .filed .conf { font-family: var(--mono); font-size: 0.78rem; color: #3f6238; }
+  .filed dl { margin: 0.7rem 0 0; display: grid; grid-template-columns: 7rem 1fr; gap: 0.25rem 0.8rem; font-size: 0.92rem; }
+  .filed dt { color: #6d6a61; font-family: var(--mono); font-size: 0.78rem; }
+  .filed dd { margin: 0; }
+  .verbatim { font-style: italic; }
+
+  .ledger { margin-top: 1.4rem; }
+  .ledger h4 { margin: 0 0 0.6rem; font-family: var(--mono); font-weight: 400; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cool); }
+  .ledger table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  .ledger caption { text-align: left; color: var(--muted); font-size: 0.85rem; padding-bottom: 0.6rem; }
+  .ledger th, .ledger td { text-align: left; padding: 0.55rem 0.8rem 0.55rem 0; border-top: 1px solid var(--line); vertical-align: top; }
+  .ledger th { color: var(--muted); font-weight: 400; font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; }
+  .ledger td b { color: var(--paper); font-weight: 650; }
+  .ledger td.has { color: var(--paper); }
+  .ledger td.hasnt { color: var(--muted); }
+
+  .upgrade {
+    margin-top: 3rem; padding: clamp(1.4rem, 3vw, 2.4rem);
+    border: 1px solid var(--cool);
+  }
+  .upgrade h2 { margin: 0 0 0.8rem; font-family: var(--serif); font-weight: 400; font-size: clamp(1.7rem, 3.5vw, 2.6rem); letter-spacing: -0.03em; }
+  .upgrade p { margin: 0 0 0.7rem; max-width: 72ch; color: var(--muted); }
+  .upgrade p strong { color: var(--paper); }
+  .links { margin-top: 1.6rem; display: flex; gap: 1rem; flex-wrap: wrap; }
+  .links a {
+    min-height: 44px; display: inline-flex; align-items: center;
+    padding: 0.7rem 1.1rem; text-decoration: none; font-weight: 700;
+    background: var(--amber); color: var(--ink);
+  }
+  .links a.quiet { background: transparent; color: var(--paper); border: 1px solid var(--line); }
+  a:focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; }
+  footer { padding: 2rem clamp(1.3rem, 4vw, 4rem) 4rem; color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--line); }
+  @media (max-width: 760px) {
+    header.mast, .stage-head, .two { grid-template-columns: 1fr; gap: 1.2rem; }
+    .mode-note { grid-template-columns: 1fr; gap: 0.6rem; }
+    .mode-note p.span { grid-column: 1; }
+  }
+</style>
+</head>
+<body>
+<!--
+THESIS: degraded does not mean dishonest; this page shows the keyless path naming its own ceiling in the user's language and still finishing the loop, refusing both the upsell wall and the silent pretence that a keyword scaffold was researched.
+OWN-WORLD: Domain Foundry's documentary edit bench, held one stop down — the same night ground and paper surfaces, but cool slate carries the mode notices where the keyed page spends amber, so limitation reads as information rather than alarm.
+STORY: the visitor sees a user with no API key get a working whisky tracker built from their own two sentences, told plainly what it lacks, and shown exactly what a key would add.
+FIRST VIEWPORT: honest mockup banner, serif headline "No key. No pretending.", lede naming demo mode, first turn with its slate mode notice.
+FORM: annotated production sequence matching ideal-create.html so the two can be read side by side; direction inherited from DESIGN.md, no concept roll (established world).
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+-->
+<p class="mock-banner"><strong>Hand-authored mockup</strong><span>the Phase-0 bar for keyless demo mode · not product output</span><a href="../../gallery.md">gallery</a></p>
+<header class="mast">
+  <div>
+    <p class="kicker">Create flow · fallback, no reasoning model configured</p>
+    <h1>No key. No pretending.</h1>
+  </div>
+  <p class="lede">Same goal, no API key. The system builds something that genuinely works from the user's own words, and <strong>says exactly what it could not do</strong>. It never calls a keyword scaffold researched.</p>
+</header>
+<main>
+
+  <section class="stage">
+    <div class="stage-head">
+      <div><p class="kicker">Stage 01</p><h2>The ceiling, stated first.</h2></div>
+      <p>Not a paywall and not a silent downgrade. The limitation is named in the user's language, with the payoff of fixing it and the cost of ignoring it both concrete.</p>
+    </div>
+    <div class="two">
+      <div>
+        <p class="said">whisky tasting notes</p>
+        <div class="paper">
+          <div class="mode-note">
+            <span class="tag">demo mode</span>
+            <p>No reasoning model is configured, so <strong>I can't research whisky for real vocabulary and views.</strong></p>
+            <p class="span">I'll build a solid basic tracker from your own words instead. Add a key later and I'll rebuild it with research — your entries carry over.</p>
+          </div>
+          <p>Whisky isn't in my reviewed atlas, so I'm not going to pretend it is. Tell me how you'd actually log a pour and I'll shape it around that.</p>
+        </div>
+      </div>
+      <aside class="margin">
+        <h4>What changed</h4>
+        <p>Today this goal silently installs <code>Dev Notes</code> because a stray token scored. Here the fork admits it is unindexed, and the absence of a key is surfaced as a fact rather than discovered later as a mystery.</p>
+        <p>The docs call this the project's most dangerous failure mode: a misconfigured key looking identical to no key at all.</p>
+      </aside>
+    </div>
+  </section>
+
+  <section class="stage">
+    <div class="stage-head">
+      <div><p class="kicker">Stage 02</p><h2>Your words are the whole world model.</h2></div>
+      <p>With no research available, the user's two sentences carry the entire vocabulary. So they're asked for properly, and used honestly.</p>
+    </div>
+    <div class="two">
+      <div>
+        <p class="said app">Say one thing you'd log — exactly how you'd type it. That becomes the first test of the app.</p>
+        <p class="said">peated dram, iodine and orchard fruit, 12 year, neat</p>
+        <p class="said app">And one more, a different kind of thing.</p>
+        <p class="said">opened the Ardbeg 10 tonight, about two-thirds left</p>
+        <div class="paper">
+          <h3>Built from what you said</h3>
+          <div class="ideas">
+            <div class="idea">
+              <span>1</span>
+              <div>
+                <strong>Dram log</strong>
+                <p>One card per pour — what it was, how you took it, what you tasted.</p>
+                <span class="from">vocabulary from your words: dram · peated · neat · iodine · orchard fruit</span>
+              </div>
+            </div>
+            <div class="idea">
+              <span>2</span>
+              <div>
+                <strong>Bottle shelf</strong>
+                <p>What's open, what's sealed, and roughly how much is left.</p>
+                <span class="from">vocabulary from your words: bottle · opened · Ardbeg</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="margin">
+        <h4>Not the old skeleton</h4>
+        <p>The current keyless path offers <code>Whisky shelf</code> / <code>Whisky timeline</code> / <code>Whisky chart</code>: the same three cards it offers for Lego and for nonsense, with jargon <code>[shelf, dex, photos, keeper]</code>.</p>
+        <p>These two are shaped by what the user actually typed, which is the only honest source of domain language when no research is possible.</p>
+      </aside>
+    </div>
+  </section>
+
+  <section class="stage">
+    <div class="stage-head">
+      <div><p class="kicker">Stage 03</p><h2>It still has to file.</h2></div>
+      <p>Degraded is not an excuse for a dead first capture. The keyless pack routes the user's own vocabulary, and reports the held-out sentence truthfully.</p>
+    </div>
+    <div class="two">
+      <div>
+        <p class="said">peated dram, iodine and orchard fruit, 12 year, neat</p>
+        <div class="filed">
+          <div class="head"><strong>Filed to Dram log as a dram</strong><span class="conf">71% · saved, review if wrong</span></div>
+          <dl>
+            <dt>dram</dt><dd>peated, 12 year</dd>
+            <dt>serving</dt><dd>neat</dd>
+            <dt>notes</dt><dd class="verbatim">“iodine and orchard fruit”</dd>
+          </dl>
+        </div>
+
+        <div class="mode-note" style="margin-top:1.4rem">
+          <span class="tag">demo mode</span>
+          <p>Filed — but with your vocabulary only, not a researched model.</p>
+          <p class="span">A researched build would know that <em>peated</em>, <em>12 year</em>, and <em>neat</em> are three different kinds of fact (a malt characteristic, an age statement, and a serving style), and would separate the bottle from the pour. This one keeps them together in one card.</p>
+        </div>
+      </div>
+      <aside class="margin">
+        <h4>Honest confidence</h4>
+        <p>71%, not 86%. The number reflects a rule built from two sentences rather than a researched vocabulary, and the disposition reads <em>saved, review if wrong</em> instead of auto-applying silently.</p>
+        <h4 style="margin-top:1.4rem">Still correctable</h4>
+        <p>“no, the 12 not the 10” works here exactly as it does in the keyed build. Correction and provenance are trusted primitives, not premium features.</p>
+      </aside>
+    </div>
+  </section>
+
+  <section class="stage">
+    <div class="stage-head">
+      <div><p class="kicker">Stage 04</p><h2>What a key would actually buy.</h2></div>
+      <p>Named concretely, in domain terms, so the choice is informed rather than aspirational.</p>
+    </div>
+    <div class="ledger">
+      <table>
+        <caption>The same goal, both modes — what the user gets either way.</caption>
+        <thead>
+          <tr><th scope="col">&nbsp;</th><th scope="col">Demo mode (now)</th><th scope="col">With a reasoning model</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Vocabulary</th><td class="hasnt">Your two sentences</td><td class="has"><b>Researched</b> — cask, dunnage, finish, expression, independent bottling</td></tr>
+          <tr><th scope="row">Model</th><td class="hasnt">One card per pour</td><td class="has"><b>Distillery · bottle · dram · flavor note</b>, each with its own lifecycle</td></tr>
+          <tr><th scope="row">Evidence</th><td class="hasnt">None — and it says so</td><td class="has">Cited sources with tier and license, kept in the pack</td></tr>
+          <tr><th scope="row">Look</th><td class="hasnt">A clean template carrying your words</td><td class="has">A visual world designed for the domain</td></tr>
+          <tr><th scope="row">Capture, correction, export</th><td class="has">Works</td><td class="has">Works</td></tr>
+          <tr><th scope="row">Runs offline afterwards</th><td class="has">Yes</td><td class="has">Yes</td></tr>
+          <tr><th scope="row">Costs money</th><td class="has">No</td><td class="hasnt">Roughly $0.18 for this build</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="upgrade">
+    <h2>The floor is the product too.</h2>
+    <p>Most people meeting this project will not have a key configured on their first run. <strong>Demo mode is what they judge the whole idea by</strong>, so it has to file their first sentence, keep their words verbatim, and be straight about its ceiling.</p>
+    <p>The plan holds the keyless path to a real number: the fifty-interest suite runs entirely in this mode, and its pass rate is a blocking gate that ratchets upward every phase.</p>
+    <p class="links">
+      <a href="ideal-create.html">The keyed path →</a>
+      <a class="quiet" href="before.html">← What it does today</a>
+    </p>
+  </div>
+</main>
+<footer>
+  <p>Hand-authored mockup — the Phase-0 bar for keyless demo mode. Conversation copy is illustrative; confidence figures and the cost estimate are placeholders pending live runs. The failure it contrasts against (<code>Whisky shelf / timeline / chart</code>, jargon <code>[shelf, dex, photos, keeper]</code>) is current verified behavior of <code>invent_idea_cards</code>. Not generated output.</p>
+</footer>
+</body>
+</html>

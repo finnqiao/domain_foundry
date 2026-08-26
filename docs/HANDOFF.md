@@ -29,20 +29,26 @@ checkout (renamed from `domain_expert`).
 ### 1. Name availability (still blocks publish)
 
 ```bash
-# PyPI
-pip index versions domain-foundry-core 2>&1 || true
-pip index versions domain-foundry-hermes-agent 2>&1 || true
+# Recheck all five official PyPI JSON endpoints from release/name-availability.yaml.
+# A 404 means no public project exists now; it does not reserve the name.
+python scripts/name_availability_audit.py
 
-# GitHub org / repo (create if missing)
-gh api user
-# then create org `domain-foundry` + repo `domain_foundry`, or change URLs in
-# pyproject.toml / mkdocs.yml / README / launch drafts to the real owner.
+# Verify the current repository coordinate and your authority over it.
+git remote -v
+# `Domain-Foundry` is an existing GitHub organization with unverified ownership;
+# do not plan to create or claim it without a verified transfer.
 
 # Trademark sanity: USPTO / EUIPO search “Domain Foundry”
 ```
 
-If the org name differs, search-replace
-`github.com/finnqiao/domain_foundry` before tagging.
+Do not treat this as an open-ended sanity check: USPTO TSDR currently records
+live application `99880503` for **DOMAIN FOUNDRY** by Semantic Foundry LLC with
+directly overlapping software services. The current name is release-blocked
+until a rename, documented rights agreement, or qualified clearance is recorded.
+
+The currently verified repository is `github.com/finnqiao/domain_foundry`. If
+the maintainer chooses another coordinate, update every project URL and rerun
+the exact candidate and public-release gates before tagging.
 
 ### 2. Commit + push remote (when ready)
 
@@ -52,7 +58,6 @@ cd /path/to/domain_foundry
 #   mv .venv /tmp/df_venv_old && python3 -m venv .venv
 #   .venv/bin/python -m pip install -e ".[dev,docs]" -e ./adapters/hermes_agent
 
-git remote add origin git@github.com:domain-foundry/domain_foundry.git  # if none
 git add -A
 git status   # review; evidence PNGs are synthetic and safe
 # ask agent to commit, or:
@@ -63,6 +68,14 @@ Provisional public name; keep availability/trademark checks before publish.
 EOF
 )"
 git push -u origin HEAD
+```
+
+After the clean commit, create the exact machine candidate and pending reviewer
+handoff. Do not fill or seal a review on a dirty candidate:
+
+```bash
+scripts/candidate_gate.sh
+python scripts/review_packet.py prepare
 ```
 
 ### 3. External security pass
@@ -101,7 +114,8 @@ Tools: QuickTime / Kap / `ffmpeg`. Do not fabricate a binary GIF.
 
 ### 6. Tag + PyPI + GitHub release
 
-Prereqs: audit green, name availability OK, `build` + `twine` installed.
+Prereqs: audit green, the exact-mark collision resolved, explicit publication
+authority, and `build` + `twine` installed.
 
 ```bash
 cd /path/to/domain_foundry

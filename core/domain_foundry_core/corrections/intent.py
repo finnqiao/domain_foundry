@@ -46,6 +46,18 @@ FIELD_TO_RE = re.compile(
     re.I,
 )
 
+# "that Charizard was LP not NM" — the proper noun is an identity value, not a field.
+PROPER_NOUN_WAS_RE = re.compile(
+    r"\b(?:that|the)\s+([A-Z][\w'-]+(?:\s+[A-Z][\w'-]+)?)\s+was\s+(\w+)\s+not\s+(\w+)\b",
+)
+
+
+def _looks_like_field_name(raw: str) -> bool:
+    """Schema fields are snake_case or lowercase; proper nouns are not fields."""
+    if not raw or "_" in raw:
+        return bool(raw)
+    return raw == raw.lower()
+
 
 @dataclass
 class ParsedCorrection:
@@ -82,17 +94,26 @@ def parse_correction_text(text: str) -> ParsedCorrection:
         )
 
     fields: dict[str, Any] = {}
+    proper = PROPER_NOUN_WAS_RE.search(text)
+    if proper:
+        fields["_identity"] = proper.group(1)
+        fields["_value"] = _num_or_str(proper.group(2).rstrip("%"))
+        fields["_wrong"] = _num_or_str(proper.group(3).rstrip("%"))
     m = HYDRATION_RE.search(text)
     if m:
         fields["hydration"] = float(m.group(1))
         fields["_wrong"] = float(m.group(2))
     m2 = FIELD_WAS_RE.search(text)
-    if m2:
+    if m2 and _looks_like_field_name(m2.group(1)):
         fname = m2.group(1).lower()
         right = m2.group(2).rstrip("%")
         fields[fname] = _num_or_str(right)
         fields["_wrong"] = _num_or_str(m2.group(3).rstrip("%"))
-    if not fields:
+    elif m2 and not _user_fields(fields):
+        fields["_identity"] = m2.group(1)
+        fields["_value"] = _num_or_str(m2.group(2).rstrip("%"))
+        fields["_wrong"] = _num_or_str(m2.group(3).rstrip("%"))
+    if not _user_fields(fields) and not fields.get("_identity"):
         m3 = WAS_N_NOT_M.search(text)
         if m3 and "hydration" in text.lower():
             fields["hydration"] = float(m3.group(1))
@@ -103,9 +124,9 @@ def parse_correction_text(text: str) -> ParsedCorrection:
             fields["_value"] = float(m3.group(1))
             fields["_wrong"] = float(m3.group(2))
 
-    if not _user_fields(fields):
+    if not _user_fields(fields) and not fields.get("_identity"):
         m4 = FIELD_EQ_RE.search(text) or FIELD_TO_RE.search(text)
-        if m4:
+        if m4 and _looks_like_field_name(m4.group(1)):
             fields[m4.group(1).lower()] = _num_or_str(m4.group(2).rstrip("%"))
 
     # result enums

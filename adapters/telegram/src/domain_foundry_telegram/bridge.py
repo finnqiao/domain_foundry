@@ -2,9 +2,9 @@
 
 Text a Telegram bot; the message is captured-first into your local ledger and
 routed to a typed domain record — the same harness the CLI and MCP server drive.
-Corrections ("actually that was a V6") amend the canonical record and become
-regression tests. Everything stays in local SQLite; the only network hop is to
-Telegram's own API to receive/send messages.
+Corrections ("that Charizard was LP not NM") amend the canonical record and
+become regression tests. Everything stays in local SQLite; the only network hop
+is to Telegram's own API to receive/send messages.
 
 The message-handling logic (:meth:`TelegramBridge.handle_update`) is pure and
 transport-free, so it is proven offline against a mock Telegram API in
@@ -29,10 +29,10 @@ HELP_TEXT = (
     "🗒️ *Domain Foundry*\n"
     "Just text me and I'll remember it as structured, permanent data.\n\n"
     "• send any note → I capture + file it\n"
-    "• `/new track my bouldering sessions` → create a domain\n"
-    "• `/query bouldering` → show recent records\n"
+    "• `/new i collect pokemon cards` → create a domain\n"
+    "• `/query pokemon` → show recent records\n"
     "• `/review` → things I wasn't sure about\n"
-    "• `actually that was a V6` → I correct the last record\n"
+    "• `that Charizard was LP not NM` → I correct the last record\n"
 )
 
 
@@ -134,8 +134,12 @@ class TelegramBridge:
         if not sid:
             return "Couldn't start that domain — try rephrasing the goal."
         self._wizard[chat_id] = sid
-        message = turn.get("message") or "Pick an idea, refine a topic, or say skip."
-        return f"{message}\n\nReply with an idea name, a topic to go deeper, or `skip`."
+        message = turn.get("message") or "Pick an idea, or describe the look you want."
+        return (
+            f"{message}\n\n"
+            "Reply with a number, an idea name, or describe the look "
+            "(chart, photos, a field guide). I won't skip ahead."
+        )
 
     def _wizard_continue(self, chat_id: int, text: str) -> str:
         sid = self._wizard.get(chat_id)
@@ -146,8 +150,20 @@ class TelegramBridge:
         if state in {"test_drive", "repair", "done", "failed"}:
             self._wizard.pop(chat_id, None)
         domain = turn.get("domain")
+        if state == "looks":
+            return turn.get("message") or (
+                "Here are the looks. Reply with a number, describe a change, or say `build it`."
+            )
         if state in {"test_drive", "repair"} and domain:
-            return f"🎉 *{domain}* is ready. Send me sample notes and I'll file them."
+            ready = f"🎉 *{domain}* is ready. Send me sample notes and I'll file them."
+            # The held-out replay is the one honest measurement of the build.
+            # Swallowing it here would leave Telegram the only channel that
+            # claims success without showing the check that produced it.
+            held_out = turn.get("held_out")
+            if isinstance(held_out, dict):
+                verdict = "filed" if held_out.get("filed") else "did not file"
+                ready += f"\n\nHeld-out check: “{held_out.get('text')}” {verdict}."
+            return ready
         return turn.get("message") or "Got it."
 
     def _query(self, domain: str | None) -> str:

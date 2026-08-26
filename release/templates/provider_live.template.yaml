@@ -1,0 +1,36 @@
+schema_version: 1
+gate: provider_live
+candidate_id: sha256:REPLACE_FROM_CANDIDATE_JSON
+reviewed_commit: REPLACE_WITH_40_CHARACTER_GIT_SHA
+reviewed_at: "YYYY-MM-DDTHH:MM:SS+00:00"
+outcome: pending
+reviewer:
+  identifier: REPLACE_WITH_OPERATOR_NAME_OR_HANDLE
+  relationship: operator
+  expertise: Domain Foundry release operation
+scope:
+  - current default routine and design model for every documented network provider
+  - successful structured JSON response with usage metadata
+  - redacted setup and probe output only
+evidence:
+  - path: release/evidence/reports/provider-live-report.md
+    sha256: REPLACE_WITH_64_CHARACTER_SHA256_AFTER_REPORT_IS_FINAL
+artifacts:
+  wheel: REPLACE_WITH_64_CHARACTER_SHA256
+  sdist: REPLACE_WITH_64_CHARACTER_SHA256
+  sbom: REPLACE_WITH_64_CHARACTER_SHA256
+details:
+  providers:
+    - id: anthropic
+      routine: {model: claude-haiku-4-5, ok: false}
+      sota: {model: claude-opus-5, ok: false}
+    - id: openai
+      routine: {model: gpt-5.6-luna, ok: false}
+      sota: {model: gpt-5.6-sol, ok: false}
+    - id: deepseek
+      routine: {model: deepseek-v4-flash, ok: false}
+      sota: {model: deepseek-v4-pro, ok: false}
+    - id: openrouter
+      routine: {model: z-ai/glm-5.2, ok: false}
+      sota: {model: anthropic/claude-opus-5, ok: false}
+attestation: REPLACE_WITH_A_SUBSTANTIVE_HUMAN_ATTESTATION_OF_THE_PROBES_AND_RESULT

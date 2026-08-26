@@ -1,35 +1,92 @@
 # Domain Foundry for developers
 
-A local-first app that turns natural-language notes into typed, correctable
-records for any passion you describe. This guide gets you from clone to a
-running system you understand, and shows every seam you'd extend.
+Same weekend as the story page, from the terminal. Click-through of bake / dive /
+cards: **[Bring the log. Pick a look.](end-to-end.html)**.
 
-**You'll leave with:** a working install, the mental model, and the exact commands
-for each surface (CLI, MCP, Telegram, hermes-agent, HTTP, ingest). Click-through
-version of the same coffee loop: **[Turn a hobby into an app](end-to-end.html#dev)**
-(pick **If you like terminals**).
+## The weekend, as commands
+
+From a checkout:
+
+```bash
+git clone https://github.com/finnqiao/domain_foundry && cd domain_foundry
+python3.11 -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+# optional adapters: pip install -e ./adapters/mcp
+domain-foundry init
+```
+
+Bake log:
+
+```bash
+domain-foundry new-domain "i have a log of sourdough bakes"
+domain-foundry wizard reply <session> "i want to data visualize all my bakes"
+domain-foundry wizard reply <session> "the scatter one"
+domain-foundry ask "which hydrations actually sprang?"
+domain-foundry correct "that sunday batard was 78 not 72"
+```
+
+Copy `<session>` from the first command’s JSON. “the scatter one” accepts the look
+and builds it.
+
+Card binder (look → critique → **build it** → a card files):
+
+```bash
+domain-foundry new-domain "i collect pokemon cards"
+domain-foundry wizard reply <session> "a dex of the cards i own with photos"
+domain-foundry wizard reply <session> "make the gallery denser"
+domain-foundry wizard reply <session> "build it"
+domain-foundry wizard reply <session> "pulled a holographic Charizard from a 151 booster, NM"
+domain-foundry ask "which cards did I log?"
+```
+
+`skip` is not install. It only accepts the suggested idea and shows a look:
+
+```bash
+domain-foundry new-domain "I want to remember the animals I see underwater" --reply skip
+domain-foundry wizard reply <session> "build it"
+```
+
+## What just happened
+
+1. **`new-domain`** opened a neighborhood of apps you could build. Nothing is live.
+2. Your reply picked a job (visualize / photos / field guide). Foundry sketched a look.
+3. **the scatter one** or **build it** compiled that look onto your computer.
+4. **ask** reads your records. A one-sentence **correct** amends the row; history stays.
+
+The ledger, L1/L2 filing, and YAML definitions live in
+[Concepts](../concepts/index.md). Sketch below if you want it on this page.
+
+Data lives at `~/.domain_foundry` (override with `--home` or `DOMAIN_FOUNDRY_HOME`)
+— two SQLite files: `ledger.sqlite` (captures, corrections, cost) and
+`domains.sqlite` (typed rows). Open them with any SQLite browser; there's no magic.
+
+Install the other tested adapters when you need them:
+
+```bash
+pip install -e ./adapters/mcp -e ./adapters/telegram -e ./adapters/hermes_agent
+```
 
 ---
 
-## Mental model (read this first)
+## Mental model
 
 ```
 capture (raw text) ──► ledger (append-only, SQLite)
                           │
                           ▼
                     route  ── L1 rules (zero-cost) ─► confident? file it
-                          └─ L2 LLM (on ambiguity) ─► review / unfiled if not
+                          └─ L2 LLM (on ambiguity) ─► review / Inbox if not
                           │
                           ▼
-                    canonical objects (typed rows) ──► projections (vault, app, maps)
+                    canonical objects (typed rows) ──► views (vault, app, maps)
                           ▲
-                    correct (one message) ──► amends the row + writes an eval case
+                    correct (one message) ──► amends the row + writes a replay case
 ```
 
 Four invariants worth internalizing:
 
-1. **Capture is first and durable.** Raw text + provenance are written before any
-   interpretation. Nothing is dropped; uncertainty becomes a review or unfiled card.
+1. **Capture is first and durable.** Raw text + where it came from are written before any
+   interpretation. Nothing is dropped; uncertainty becomes a review or Inbox card.
 2. **Domains are data, not code.** A pack is a folder of YAML (schema, routing
    rules, policy, projections). The wizard generates one from a plain-language goal.
 3. **Writes share one contract.** `HarnessAPI` writes straight to SQLite, and
@@ -42,32 +99,6 @@ Four invariants worth internalizing:
 
 ---
 
-## Install
-
-```bash
-git clone https://github.com/finnqiao/domain_foundry && cd domain_foundry
-python3.11 -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-# the three tested harness adapters:
-pip install -e ./adapters/mcp -e ./adapters/telegram -e ./adapters/hermes_agent
-```
-
-Data lives at `~/.domain_foundry` (override with `--home` or `DOMAIN_FOUNDRY_HOME`)
-— two SQLite files: `ledger.sqlite` (captures, corrections, cost) and
-`domains.sqlite` (typed rows). Open them with any SQLite browser; there's no magic.
-
-## The core loop
-
-```bash
-domain-foundry init
-domain-foundry new-domain "track my bouldering sessions"   # wizard → pack
-domain-foundry capture "sent a tough V5 on the overhang"   # → routed
-domain-foundry query --domain bouldering
-domain-foundry correct "rating = moderate"                   # → amend + eval
-domain-foundry ask "what was my last session?"
-domain-foundry health                                        # integrity + spend
-```
-
 ## Routing & LLM backends
 
 L1 is deterministic keyword rules (no cost). L2 escalates to an LLM only on
@@ -78,7 +109,7 @@ Settings resolve **env > config file > provider default**, so pick whichever
 layer suits you. Env only, as before:
 
 ```bash
-# DeepSeek (native API — cheapest per capture; design uses deepseek-reasoner)
+# DeepSeek (native API — cheapest per capture; design uses deepseek-v4-pro)
 export DEEPSEEK_API_KEY=...
 export DOMAIN_FOUNDRY_LLM=live
 domain-foundry setup --provider deepseek -y
@@ -101,8 +132,8 @@ domain-foundry setup --provider deepseek -y     # or openrouter / anthropic
 domain-foundry setup --show                     # resolved values + their source
 ```
 
-`setup --provider deepseek` writes routine=`deepseek-chat` and
-sota=`deepseek-reasoner` against `https://api.deepseek.com/v1`. Mix tiers if you
+`setup --provider deepseek` writes routine=`deepseek-v4-flash` and
+sota=`deepseek-v4-pro` against `https://api.deepseek.com`. Mix tiers if you
 want a stronger designer than your everyday router — env vars win over the file.
 
 With no key it runs the heuristic router (deterministic, keyword-only) — great for
@@ -144,11 +175,11 @@ keeps dynamic pack schemas working across every BYO backend.
 ## Bolt existing data on (ingest)
 
 ```bash
-domain-foundry ingest ~/Notes/climbing --dry-run          # preview routing (no writes)
-domain-foundry ingest ~/Notes/climbing                    # pull in (idempotent)
-domain-foundry ingest ~/Notes --only bouldering           # only notes that route here
+domain-foundry ingest ~/Notes/baking --dry-run          # preview routing (no writes)
+domain-foundry ingest ~/Notes/baking                    # pull in (idempotent)
+domain-foundry ingest ~/Notes --only sourdough          # only notes that route here
 domain-foundry ingest ~/logs/journal.log --split lines    # one capture per line
-domain-foundry ingest ~/Notes/climbing --watch            # re-scan, pull in new notes
+domain-foundry ingest ~/Notes/baking --watch            # re-scan, pull in new notes
 
 # in the app: `domain-foundry serve` → Settings → Sources (same engine)
 ```
@@ -207,7 +238,7 @@ schema; remix a real one in an afternoon with the
 
 ```bash
 python -m pytest tests adapters/mcp/tests adapters/telegram/tests adapters/hermes_agent/tests
-# → all passed, 2 skipped   (the skips are live-LLM smokes; see the runbook §9)
+# → full suite green, 2 skipped   (the skips are live-LLM smokes; see the runbook §9)
 ```
 
 Full verification — every surface, with expected output and troubleshooting — is

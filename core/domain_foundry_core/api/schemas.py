@@ -19,9 +19,11 @@ SPA forms so both dialects are legal at the HTTP boundary.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Annotated, Any
 
 from pydantic import BaseModel, Field, field_validator
+
+from domain_foundry_core.foundry.models import RemixFragment
 
 _DECISION_ALIASES = {
     "approve": "approved",
@@ -152,6 +154,9 @@ class HardeningBody(BaseModel):
 class WizardBody(BaseModel):
     goal_text: str
     test_drive: int = Field(default=5, ge=0, le=50)
+    # Only the new /api/create surface enables the release renderer and
+    # first-use policy.  /api/wizard remains a compatibility endpoint.
+    release: bool = False
 
 
 class WizardReplyBody(BaseModel):
@@ -163,6 +168,28 @@ class WizardReplyBody(BaseModel):
         if not value.strip():
             raise ValueError("text must not be blank")
         return value
+
+
+FoundryText = Annotated[str, Field(min_length=1, max_length=2_000)]
+
+
+class FoundryAcceptanceTaskBody(BaseModel):
+    input: FoundryText
+    expected: FoundryText
+
+
+class FoundryProposeBody(BaseModel):
+    goal: str = Field(min_length=3, max_length=4_000)
+    artifacts: list[FoundryText] = Field(default_factory=list, max_length=20)
+    constraints: list[FoundryText] = Field(default_factory=list, max_length=20)
+    acceptance_tasks: list[FoundryAcceptanceTaskBody] = Field(min_length=2, max_length=10)
+    web_research: bool = True
+
+
+class FoundryCompleteBody(BaseModel):
+    selected_concept: str = Field(min_length=1, max_length=120)
+    fragments: list[RemixFragment] = Field(default_factory=list, max_length=10)
+    user_decisions: list[FoundryText] = Field(min_length=1, max_length=10)
 
 
 class AtlasSearchBody(BaseModel):

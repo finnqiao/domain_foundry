@@ -1,0 +1,669 @@
+{
+  "snapshot_version": 1,
+  "spec_id": "lego-builds",
+  "sources": [
+    {
+      "id": "postgresql_constraints",
+      "title": "PostgreSQL — Constraints",
+      "publisher": "PostgreSQL Global Development Group",
+      "url": "https://www.postgresql.org/docs/current/ddl-constraints.html",
+      "kind": "official_documentation",
+      "tier": "authoritative",
+      "license": "PostgreSQL",
+      "allowed_uses": [
+        "reference_facts",
+        "paraphrase"
+      ],
+      "status": "approved",
+      "retrieved_at": "2026-08-19",
+      "freshness_days": 180,
+      "topics": [
+        "data_modeling",
+        "constraints",
+        "identity",
+        "relationships"
+      ]
+    },
+    {
+      "id": "sqlite_foreign_keys",
+      "title": "SQLite Foreign Key Support",
+      "publisher": "SQLite",
+      "url": "https://www.sqlite.org/foreignkeys.html",
+      "kind": "official_documentation",
+      "tier": "authoritative",
+      "license": "reference-only",
+      "allowed_uses": [
+        "reference_facts",
+        "paraphrase"
+      ],
+      "status": "approved",
+      "retrieved_at": "2026-08-19",
+      "freshness_days": 365,
+      "topics": [
+        "sqlite",
+        "constraints",
+        "relationships"
+      ]
+    },
+    {
+      "id": "sqlite_query_planner",
+      "title": "SQLite Query Planning",
+      "publisher": "SQLite",
+      "url": "https://www.sqlite.org/queryplanner.html",
+      "kind": "official_documentation",
+      "tier": "authoritative",
+      "license": "reference-only",
+      "allowed_uses": [
+        "reference_facts",
+        "paraphrase"
+      ],
+      "status": "approved",
+      "retrieved_at": "2026-08-19",
+      "freshness_days": 365,
+      "topics": [
+        "sqlite",
+        "indexes",
+        "workloads"
+      ]
+    },
+    {
+      "id": "w3c_prov",
+      "title": "PROV-O — The PROV Ontology",
+      "publisher": "W3C",
+      "url": "https://www.w3.org/TR/prov-o/",
+      "kind": "standard",
+      "tier": "authoritative",
+      "license": "W3C-Document",
+      "allowed_uses": [
+        "reference_facts",
+        "paraphrase"
+      ],
+      "status": "approved",
+      "retrieved_at": "2026-08-19",
+      "freshness_days": 1825,
+      "topics": [
+        "provenance",
+        "lineage",
+        "reproducibility"
+      ]
+    },
+    {
+      "id": "govuk_design_principles",
+      "title": "Government Design Principles",
+      "publisher": "UK Government Digital Service",
+      "url": "https://www.gov.uk/guidance/government-design-principles",
+      "kind": "public_design_standard",
+      "tier": "authoritative",
+      "license": "OGL-3.0",
+      "allowed_uses": [
+        "reference_facts",
+        "paraphrase"
+      ],
+      "status": "approved",
+      "retrieved_at": "2026-08-19",
+      "freshness_days": 365,
+      "topics": [
+        "user_needs",
+        "service_design",
+        "iteration",
+        "inclusion"
+      ]
+    },
+    {
+      "id": "wcag_22",
+      "title": "Web Content Accessibility Guidelines 2.2",
+      "publisher": "W3C",
+      "url": "https://www.w3.org/TR/WCAG22/",
+      "kind": "standard",
+      "tier": "authoritative",
+      "license": "W3C-Document",
+      "allowed_uses": [
+        "reference_facts",
+        "paraphrase"
+      ],
+      "status": "approved",
+      "retrieved_at": "2026-08-19",
+      "freshness_days": 365,
+      "topics": [
+        "accessibility",
+        "interaction",
+        "responsive_design"
+      ]
+    },
+    {
+      "id": "aria_apg",
+      "title": "ARIA Authoring Practices Guide",
+      "publisher": "W3C Web Accessibility Initiative",
+      "url": "https://www.w3.org/WAI/ARIA/apg/",
+      "kind": "public_design_standard",
+      "tier": "authoritative",
+      "license": "W3C-Document",
+      "allowed_uses": [
+        "reference_facts",
+        "paraphrase",
+        "inspect_examples"
+      ],
+      "status": "approved",
+      "retrieved_at": "2026-08-19",
+      "freshness_days": 365,
+      "topics": [
+        "accessibility",
+        "semantics",
+        "keyboard",
+        "interaction_patterns"
+      ]
+    },
+    {
+      "id": "ui_remix_paper",
+      "title": "UI Remix — Example-Driven UI Design with Multimodal Retrieval",
+      "publisher": "arXiv authors",
+      "url": "https://arxiv.org/abs/2601.18759",
+      "kind": "research_paper",
+      "tier": "research",
+      "license": "reference-only",
+      "allowed_uses": [
+        "reference_facts",
+        "paraphrase"
+      ],
+      "status": "approved",
+      "retrieved_at": "2026-08-19",
+      "freshness_days": 730,
+      "topics": [
+        "remix",
+        "retrieval",
+        "provenance",
+        "concept_exploration"
+      ]
+    },
+    {
+      "id": "rebrickable_api",
+      "title": "Rebrickable — LEGO sets, parts, and MOC database and API",
+      "publisher": "Rebrickable",
+      "url": "https://rebrickable.com/api/",
+      "kind": "open_data_reference",
+      "tier": "domain_exemplar",
+      "license": "CC-BY-4.0-data-reference",
+      "allowed_uses": [
+        "reference_facts",
+        "paraphrase",
+        "inspect_schema"
+      ],
+      "status": "reference_only",
+      "retrieved_at": "2026-08-23",
+      "freshness_days": 365,
+      "topics": [
+        "lego",
+        "sets",
+        "parts",
+        "mocs",
+        "build_tracking",
+        "collection_tracking"
+      ]
+    }
+  ],
+  "principles": [
+    {
+      "id": "DE-01",
+      "title": "Model identity before attributes",
+      "rule": "Distinguish a reusable domain identity from a user's owned, observed, or performed instance whenever their lifecycles differ.",
+      "sources": [
+        "postgresql_constraints",
+        "pokemon_tcg_api",
+        "tcgdex_cards"
+      ],
+      "required_evidence": [
+        "identity_strategy",
+        "example_duplicate",
+        "merge_behavior"
+      ],
+      "release_checks": [
+        "primary_or_natural_key_declared",
+        "duplicate_policy_tested"
+      ]
+    },
+    {
+      "id": "DE-02",
+      "title": "Relationships are stored invariants",
+      "rule": "Cardinality, ownership, delete behavior, and referential integrity are part of the model and must compile into enforceable storage behavior.",
+      "sources": [
+        "postgresql_constraints",
+        "sqlite_foreign_keys"
+      ],
+      "required_evidence": [
+        "relationship_graph",
+        "cardinalities",
+        "delete_behaviors"
+      ],
+      "release_checks": [
+        "foreign_keys_enabled",
+        "orphan_write_rejected",
+        "many_to_many_join_tested"
+      ]
+    },
+    {
+      "id": "DE-03",
+      "title": "Separate facts, current state, and derivation",
+      "rule": "Preserve source events and provenance separately from mutable canonical records and derived projections.",
+      "sources": [
+        "w3c_prov",
+        "datahub_ingestion"
+      ],
+      "required_evidence": [
+        "event_record_projection_map",
+        "derivation_links"
+      ],
+      "release_checks": [
+        "source_receipt_preserved",
+        "projection_rebuild_is_deterministic"
+      ]
+    },
+    {
+      "id": "DE-04",
+      "title": "Time has explicit semantics",
+      "rule": "Name observed, effective, recorded, scheduled, and superseded time separately; do not overload one timestamp.",
+      "sources": [
+        "w3c_prov",
+        "anki_scheduler",
+        "sourdough_ai"
+      ],
+      "required_evidence": [
+        "temporal_questions",
+        "timestamp_meanings"
+      ],
+      "release_checks": [
+        "timezone_policy_declared",
+        "historical_ordering_tested"
+      ]
+    },
+    {
+      "id": "DE-05",
+      "title": "Workloads justify structures",
+      "rule": "Entities, projections, and indexes must answer named user questions and interaction workloads rather than reflect a generic field quota.",
+      "sources": [
+        "postgresql_indexes",
+        "sqlite_query_planner"
+      ],
+      "required_evidence": [
+        "workload_catalog",
+        "query_shapes",
+        "expected_scale"
+      ],
+      "release_checks": [
+        "critical_queries_explained",
+        "workload_fixtures_pass"
+      ]
+    },
+    {
+      "id": "DE-06",
+      "title": "Invalid states fail at the write seam",
+      "rule": "Required values, ranges, enumerations, uniqueness, and cross-field invariants compile into schema or validated operations as close to storage as practical.",
+      "sources": [
+        "postgresql_constraints"
+      ],
+      "required_evidence": [
+        "invariant_catalog",
+        "enforcement_location"
+      ],
+      "release_checks": [
+        "negative_writes_rejected",
+        "constraints_named"
+      ]
+    },
+    {
+      "id": "DE-08",
+      "title": "Sources are contracts with lineage",
+      "rule": "Imported and researched data carries source identity, version, retrieval time, license, transformation history, and freshness.",
+      "sources": [
+        "w3c_prov",
+        "openmetadata_ingestion",
+        "datahub_ingestion"
+      ],
+      "required_evidence": [
+        "source_records",
+        "freshness_policy",
+        "derivation_map"
+      ],
+      "release_checks": [
+        "unknown_license_blocks_copy",
+        "stale_source_flagged",
+        "output_traceable"
+      ]
+    },
+    {
+      "id": "UX-01",
+      "title": "Begin with the real practice",
+      "rule": "Research what the person does, keeps, decides, and struggles with before asking for screens, colors, or features.",
+      "sources": [
+        "govuk_design_principles"
+      ],
+      "required_evidence": [
+        "practice",
+        "desired_outcome",
+        "current_artifacts",
+        "constraints"
+      ],
+      "release_checks": [
+        "brief_has_user_need",
+        "brief_has_real_artifact_or_example"
+      ]
+    },
+    {
+      "id": "UX-02",
+      "title": "Offer product hypotheses, not cosmetic themes",
+      "rule": "Present three concepts that disagree about workflow, hierarchy, and primary affordance; color-only variants do not count.",
+      "sources": [
+        "ui_remix_paper",
+        "govuk_design_principles"
+      ],
+      "required_evidence": [
+        "concept_theses",
+        "structural_differences",
+        "tradeoffs"
+      ],
+      "release_checks": [
+        "three_distinct_concepts",
+        "concept_data_consequences_visible"
+      ]
+    },
+    {
+      "id": "UX-04",
+      "title": "The preview is the implementation contract",
+      "rule": "Preview and final app compile from the same experience specification and realistic data; a disposable mockup cannot promise behavior.",
+      "sources": [
+        "figma_sds",
+        "storybook",
+        "figma_make_kits"
+      ],
+      "required_evidence": [
+        "experience_spec",
+        "preview_build_hash"
+      ],
+      "release_checks": [
+        "preview_and_runtime_share_spec",
+        "critical_flow_matches"
+      ]
+    },
+    {
+      "id": "UX-05",
+      "title": "Be consistent, not uniform",
+      "rule": "Reuse accessible primitives and interaction conventions while giving each domain its own task topology, density, language, and visual world.",
+      "sources": [
+        "govuk_design_principles",
+        "aria_apg",
+        "figma_sds"
+      ],
+      "required_evidence": [
+        "shared_primitives",
+        "domain_visual_contract",
+        "task_topology"
+      ],
+      "release_checks": [
+        "goldens_structurally_distinct",
+        "primitives_conform"
+      ]
+    },
+    {
+      "id": "UX-06",
+      "title": "Design complete task states",
+      "rule": "Every critical workflow specifies first use, populated, loading, empty, error, partial, conflict, offline, and correction states where applicable.",
+      "sources": [
+        "storybook",
+        "aria_apg"
+      ],
+      "required_evidence": [
+        "state_matrix",
+        "recovery_actions"
+      ],
+      "release_checks": [
+        "critical_states_rendered",
+        "errors_have_recovery"
+      ]
+    },
+    {
+      "id": "UX-07",
+      "title": "Accessibility is compiled, then verified",
+      "rule": "Semantic HTML, keyboard behavior, names, focus, contrast, reflow, target size, and status messages are specification requirements, not a polish pass.",
+      "sources": [
+        "wcag_22",
+        "aria_apg"
+      ],
+      "required_evidence": [
+        "semantic_pattern",
+        "keyboard_model",
+        "accessibility_target"
+      ],
+      "release_checks": [
+        "wcag_aa_automated",
+        "keyboard_journey",
+        "manual_screen_reader_smoke"
+      ]
+    },
+    {
+      "id": "UX-10",
+      "title": "The first useful act beats configuration",
+      "rule": "After concept approval, guide the user to import or record one real item and immediately show a domain-specific payoff.",
+      "sources": [
+        "govuk_design_principles",
+        "sekai"
+      ],
+      "required_evidence": [
+        "activation_action",
+        "immediate_payoff"
+      ],
+      "release_checks": [
+        "first_value_journey",
+        "no_dead_end_setup"
+      ]
+    },
+    {
+      "id": "SE-01",
+      "title": "One typed specification drives every target",
+      "rule": "Research, model, experience, runtime, export, and tests exchange a validated versioned intermediate representation rather than prompt-shaped dictionaries.",
+      "sources": [
+        "schemastore",
+        "openmetadata_ingestion",
+        "owasp_llmsvs"
+      ],
+      "required_evidence": [
+        "spec_schema",
+        "compatibility_version",
+        "derivation_graph"
+      ],
+      "release_checks": [
+        "unknown_fields_rejected",
+        "round_trip_stable",
+        "all_targets_share_spec"
+      ]
+    },
+    {
+      "id": "SE-03",
+      "title": "Evaluation is independent of generation",
+      "rule": "The generator may not author the only examples that judge it; use held-out user workloads, adversarial negatives, and separate schema and experience rubrics.",
+      "sources": [
+        "owasp_llmsvs",
+        "govuk_design_principles"
+      ],
+      "required_evidence": [
+        "heldout_provenance",
+        "judge_rubric",
+        "failure_threshold"
+      ],
+      "release_checks": [
+        "self_fixture_excluded",
+        "unseen_verticals_pass",
+        "failures_block_release"
+      ]
+    },
+    {
+      "id": "SE-04",
+      "title": "Builds are reproducible and attributable",
+      "rule": "Record source snapshot, model/provider, prompt/spec version, inputs, tool versions, and artifact hashes for every build.",
+      "sources": [
+        "w3c_prov",
+        "slsa"
+      ],
+      "required_evidence": [
+        "build_receipt",
+        "artifact_hashes",
+        "dependency_lock"
+      ],
+      "release_checks": [
+        "same_input_same_spec",
+        "provenance_emitted",
+        "lockfiles_present"
+      ]
+    },
+    {
+      "id": "SE-10",
+      "title": "A release claim is backed by an executable gate",
+      "rule": "Documentation may only claim an outcome when an independent reproducible artifact or test proves that exact scope.",
+      "sources": [
+        "owasp_asvs",
+        "openssf_scorecard",
+        "govuk_design_principles"
+      ],
+      "required_evidence": [
+        "claim_evidence_map",
+        "release_report"
+      ],
+      "release_checks": [
+        "docs_claims_audit",
+        "no_skipped_release_gate",
+        "external_task_evidence"
+      ]
+    },
+    {
+      "id": "SE-11",
+      "title": "Ownership includes exit",
+      "rule": "Users can inspect, export, migrate, back up, restore, and delete their data and generated application without a proprietary service dependency.",
+      "sources": [
+        "govuk_design_principles",
+        "spdx"
+      ],
+      "required_evidence": [
+        "export_contract",
+        "restore_contract",
+        "deletion_contract"
+      ],
+      "release_checks": [
+        "clean_machine_export",
+        "restore_round_trip",
+        "uninstall_preserves_export"
+      ]
+    }
+  ],
+  "citations": [
+    {
+      "id": "ev_lego_catalog",
+      "source_id": "rebrickable_api",
+      "claim": "Serious LEGO tracking keeps the official set as canonical identity addressed by set number, separate from the builder's own copy of it.",
+      "use": "pattern",
+      "locator": "sets endpoint and set numbers"
+    },
+    {
+      "id": "ev_lego_parts",
+      "source_id": "rebrickable_api",
+      "claim": "Parts and colours are first-class records addressed by part number and colour rather than free text on a set, and MOCs are catalogued beside official sets.",
+      "use": "pattern",
+      "locator": "parts, colors, and MOC endpoints"
+    },
+    {
+      "id": "ev_lego_identity",
+      "source_id": "postgresql_constraints",
+      "claim": "Stable identities and relationships should be explicit and enforceable rather than repeated as text fields.",
+      "use": "constraint",
+      "locator": "primary keys and foreign keys"
+    },
+    {
+      "id": "ev_lego_lineage",
+      "source_id": "w3c_prov",
+      "claim": "A build sitting is an activity against a project; corrections preserve the original log rather than overwriting it.",
+      "use": "pattern",
+      "locator": "PROV starting point terms"
+    },
+    {
+      "id": "ev_lego_workloads",
+      "source_id": "sqlite_query_planner",
+      "claim": "Indexes should follow concrete filtering, joining, and ordering workloads.",
+      "use": "constraint",
+      "locator": null
+    },
+    {
+      "id": "ev_lego_concepts",
+      "source_id": "ui_remix_paper",
+      "claim": "Global and local example-driven alternatives support meaningful concept exploration and remix.",
+      "use": "pattern",
+      "locator": null
+    },
+    {
+      "id": "ev_lego_service",
+      "source_id": "govuk_design_principles",
+      "claim": "Begin with user needs and real context, then do the hard work required to make the service simple.",
+      "use": "pattern",
+      "locator": null
+    },
+    {
+      "id": "ev_lego_access",
+      "source_id": "wcag_22",
+      "claim": "Keyboard access, focus, reflow, labels, status, and error recovery are release requirements.",
+      "use": "constraint",
+      "locator": null
+    }
+  ],
+  "derivations": [
+    {
+      "output_path": "domain.entities",
+      "decision": "Separate the catalogued set, the builder's copy, the sitting, the shortage, and the place it lives so identity, ownership, activity, observation, and storage each keep their own lifecycle.",
+      "evidence_ids": [
+        "ev_lego_catalog",
+        "ev_lego_identity"
+      ],
+      "user_decision": null
+    },
+    {
+      "output_path": "domain.entities.build_project.fields.origin",
+      "decision": "Make origin an explicit enum so a MOC is a first-class project with a designer and a claimed piece count instead of an official set number that does not exist.",
+      "evidence_ids": [
+        "ev_lego_catalog",
+        "ev_lego_parts"
+      ],
+      "user_decision": "A MOC is a first-class project — it has no set number but it still has a build log."
+    },
+    {
+      "output_path": "domain.state_machines.project_lifecycle",
+      "decision": "Model parting out as a legal end state rather than a deletion, because a parted-out set still explains where its bricks went.",
+      "evidence_ids": [
+        "ev_lego_catalog",
+        "ev_lego_lineage"
+      ],
+      "user_decision": "Parting a set out is a normal end of life and not a deletion."
+    },
+    {
+      "output_path": "experience.views.bench",
+      "decision": "Anchor the app on the build in progress and the bag it stopped on rather than on the finished collection, because capture happens at the mat with parts in both hands.",
+      "evidence_ids": [
+        "ev_lego_service",
+        "ev_lego_lineage"
+      ],
+      "user_decision": "Logging where I stopped has to take one action with parts in both hands."
+    },
+    {
+      "output_path": "domain.indexes.open_shortages",
+      "decision": "Index shortages by status and part number so one order list can cover every waiting build at once.",
+      "evidence_ids": [
+        "ev_lego_workloads",
+        "ev_lego_parts"
+      ],
+      "user_decision": null
+    },
+    {
+      "output_path": "experience.visual_world",
+      "decision": "Use an instruction-booklet world with a stud-grid progress rail instead of a kanban board or toy-aisle colour, so the app reads as documentation of a build rather than a shop.",
+      "evidence_ids": [
+        "ev_lego_concepts",
+        "ev_lego_service"
+      ],
+      "user_decision": null
+    }
+  ]
+}

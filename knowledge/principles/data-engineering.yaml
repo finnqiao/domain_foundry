@@ -1,0 +1,72 @@
+discipline: data_engineering
+version: 1
+principles:
+  - id: DE-01
+    title: Model identity before attributes
+    rule: Distinguish a reusable domain identity from a user's owned, observed, or performed instance whenever their lifecycles differ.
+    sources: [postgresql_constraints, pokemon_tcg_api, tcgdex_cards]
+    required_evidence: [identity_strategy, example_duplicate, merge_behavior]
+    release_checks: [primary_or_natural_key_declared, duplicate_policy_tested]
+
+  - id: DE-02
+    title: Relationships are stored invariants
+    rule: Cardinality, ownership, delete behavior, and referential integrity are part of the model and must compile into enforceable storage behavior.
+    sources: [postgresql_constraints, sqlite_foreign_keys]
+    required_evidence: [relationship_graph, cardinalities, delete_behaviors]
+    release_checks: [foreign_keys_enabled, orphan_write_rejected, many_to_many_join_tested]
+
+  - id: DE-03
+    title: Separate facts, current state, and derivation
+    rule: Preserve source events and provenance separately from mutable canonical records and derived projections.
+    sources: [w3c_prov, datahub_ingestion]
+    required_evidence: [event_record_projection_map, derivation_links]
+    release_checks: [source_receipt_preserved, projection_rebuild_is_deterministic]
+
+  - id: DE-04
+    title: Time has explicit semantics
+    rule: Name observed, effective, recorded, scheduled, and superseded time separately; do not overload one timestamp.
+    sources: [w3c_prov, anki_scheduler, sourdough_ai]
+    required_evidence: [temporal_questions, timestamp_meanings]
+    release_checks: [timezone_policy_declared, historical_ordering_tested]
+
+  - id: DE-05
+    title: Workloads justify structures
+    rule: Entities, projections, and indexes must answer named user questions and interaction workloads rather than reflect a generic field quota.
+    sources: [postgresql_indexes, sqlite_query_planner]
+    required_evidence: [workload_catalog, query_shapes, expected_scale]
+    release_checks: [critical_queries_explained, workload_fixtures_pass]
+
+  - id: DE-06
+    title: Invalid states fail at the write seam
+    rule: Required values, ranges, enumerations, uniqueness, and cross-field invariants compile into schema or validated operations as close to storage as practical.
+    sources: [postgresql_constraints]
+    required_evidence: [invariant_catalog, enforcement_location]
+    release_checks: [negative_writes_rejected, constraints_named]
+
+  - id: DE-07
+    title: Evolution is part of the initial model
+    rule: Every schema has a version, compatibility posture, forward migration, rollback or recovery plan, and data-loss classification.
+    sources: [postgresql_constraints, schemastore, slsa]
+    required_evidence: [schema_version, compatibility_policy, migration_plan]
+    release_checks: [upgrade_tested, restart_after_upgrade_tested, destructive_change_flagged]
+
+  - id: DE-08
+    title: Sources are contracts with lineage
+    rule: Imported and researched data carries source identity, version, retrieval time, license, transformation history, and freshness.
+    sources: [w3c_prov, openmetadata_ingestion, datahub_ingestion]
+    required_evidence: [source_records, freshness_policy, derivation_map]
+    release_checks: [unknown_license_blocks_copy, stale_source_flagged, output_traceable]
+
+  - id: DE-09
+    title: Corrections improve the system without erasing history
+    rule: User corrections create a new canonical decision, preserve the prior interpretation, and add independent regression cases.
+    sources: [w3c_prov]
+    required_evidence: [correction_workflow, regression_case]
+    release_checks: [prior_value_auditable, correction_replays, self_fixture_excluded]
+
+  - id: DE-10
+    title: Store the minimum useful personal data
+    rule: Every sensitive field needs a user outcome, retention posture, export behavior, and deletion behavior.
+    sources: [owasp_asvs, govuk_design_principles]
+    required_evidence: [field_purpose, sensitivity_class, retention_policy]
+    release_checks: [secret_scan_passes, deletion_tested, export_reviewed]

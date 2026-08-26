@@ -24,14 +24,14 @@ on:
       model:
         description: "Pinned model to replay against (overrides default)"
         required: false
-        default: "gpt-4o-mini"
+        default: "gpt-5.6-luna"
 
 jobs:
   live-replay:
     runs-on: ubuntu-latest
     env:
       # Pinned model — bumping this is a deliberate, reviewed change.
-      DOMAIN_FOUNDRY_LLM_MODEL: ${{ github.event.inputs.model || 'gpt-4o-mini' }}
+      DOMAIN_FOUNDRY_LLM_MODEL: ${{ github.event.inputs.model || 'gpt-5.6-luna' }}
       DOMAIN_FOUNDRY_LLM: openai_compatible
       DOMAIN_FOUNDRY_LLM_API_KEY: ${{ secrets.DOMAIN_FOUNDRY_LLM_API_KEY }}
     steps:

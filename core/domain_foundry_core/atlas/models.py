@@ -43,6 +43,24 @@ class WorldAnalog(_Strict):
     one_liner: str
 
 
+class RoutingExample(_Strict):
+    """A sentence this interest is actually written in, and where it belongs.
+
+    ``object`` is a placeholder — ``catalog`` for the thing, ``event`` for the
+    happening — because the compiler names the objects, not the atlas.
+    """
+
+    text: str
+    object: Literal["catalog", "event"] = "event"
+
+
+class MeasureHint(_Strict):
+    """What the improvement job should count, when the atlas knows."""
+
+    name: str
+    unit: str = ""
+
+
 class AtlasNode(_Strict):
     id: str
     kind: NodeKind
@@ -57,6 +75,14 @@ class AtlasNode(_Strict):
     identity_hint: str | None = None
     example: str = ""
     jargon: list[str] = Field(default_factory=list)
+    # The words the interest is written in. Feeds both the fork scorer (via
+    # vocab_terms) and the compiled pack's routing rule, so enriching a node
+    # improves where a goal lands *and* whether the first sentence files.
+    vocabulary: list[str] = Field(default_factory=list)
+    routing_examples: list[RoutingExample] = Field(default_factory=list)
+    negative_examples: list[str] = Field(default_factory=list)
+    measure: MeasureHint | None = None
+    llm_hints: str | None = None
 
     @field_validator("id")
     @classmethod
@@ -73,12 +99,29 @@ class AtlasNode(_Strict):
             raise ValueError(f"unknown jobs {unknown}")
         return list(dict.fromkeys(value))
 
+    def vocab_terms(self) -> list[str]:
+        """What this node is *called*: the only text that may score as vocabulary.
+
+        Ids are addresses, not words. ``learning.languages`` must never answer
+        for "learn to juggle" because "learn" happens to be a prefix of its id.
+        Multi-word jargon is excluded too: it has to match as a phrase, or
+        "tasting menu" starts answering for "tasting".
+        """
+        out = [self.title, *(self.aliases or [])]
+        if self.domain_slug:
+            out.append(self.domain_slug)
+        out.extend(j for j in (self.jargon or []) if j.strip() and " " not in j.strip())
+        out.extend(v for v in (self.vocabulary or []) if v.strip() and " " not in v.strip())
+        return [t for t in out if t and t.strip()]
+
     def terms(self) -> list[str]:
+        """Everything addressable about this node, ids included. Not for scoring."""
         out = [self.id, self.title, *(self.aliases or [])]
         if self.domain_slug:
             out.append(self.domain_slug)
         out.extend(part for part in self.id.replace("-", ".").split(".") if part)
         out.extend(self.jargon or [])
+        out.extend(self.vocabulary or [])
         return out
 
 

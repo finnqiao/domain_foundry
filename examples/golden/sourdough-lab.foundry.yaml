@@ -1,0 +1,358 @@
+spec_version: "1.0"
+id: sourdough-lab
+title: Sourdough Lab
+source_ids:
+  - sourdough_ai
+  - postgresql_constraints
+  - sqlite_foreign_keys
+  - sqlite_query_planner
+  - w3c_prov
+  - govuk_design_principles
+  - wcag_22
+  - aria_apg
+  - ui_remix_paper
+principle_ids: [DE-01, DE-02, DE-03, DE-04, DE-05, DE-06, DE-08, UX-01, UX-02, UX-04, UX-05, UX-06, UX-07, UX-10, SE-01, SE-03, SE-04, SE-10, SE-11]
+research:
+  interest: Baking naturally leavened bread and learning how a starter behaves
+  desired_outcome: Make feeding and bake decisions from personal evidence instead of scattered notes and guesswork
+  practice:
+    - Feed one or more starters and observe rise, smell, temperature, and time to peak
+    - Adapt formulas and bake schedules based on flour, hydration, room conditions, and prior results
+    - Compare experiments to learn which changes improved strength, timing, crumb, and flavor
+  existing_artifacts: [notebook feeding logs, recipe spreadsheets, loaf photos, optional temperature or rise sensor data]
+  constraints: [fast one-handed capture in a kitchen, useful without sensors or AI, measurements retain their original units]
+  open_questions: [number of active starters, whether the baker owns a sensor, preferred baker-percentage workflow]
+  usage_context: [phone during feeding and mixing, desktop during recipe planning and experiment review]
+  first_value: Record one feeding and receive an evidence-based expected peak window with a clear uncertainty label
+evidence:
+  - id: ev_sourdough_workflows
+    source_id: sourdough_ai
+    claim: A serious sourdough tool separates starters, feedings, recipes, bakes, sensor telemetry, planning, and analytics.
+    use: pattern
+    locator: README features and packages
+  - id: ev_sourdough_identity
+    source_id: postgresql_constraints
+    claim: Stable identities and relationships should be explicit and enforceable rather than repeated as text fields.
+    use: constraint
+    locator: primary keys and foreign keys
+  - id: ev_sourdough_lineage
+    source_id: w3c_prov
+    claim: Observations, activities, agents, and derivations remain separately traceable.
+    use: pattern
+    locator: PROV starting point terms
+  - id: ev_sourdough_workloads
+    source_id: sqlite_query_planner
+    claim: Indexes should follow concrete filtering, joining, and ordering workloads.
+    use: constraint
+  - id: ev_sourdough_concepts
+    source_id: ui_remix_paper
+    claim: Global and local example-driven alternatives support meaningful concept exploration and remix.
+    use: pattern
+  - id: ev_sourdough_service
+    source_id: govuk_design_principles
+    claim: Begin with user needs and real context, then do the hard work required to make the service simple.
+    use: pattern
+  - id: ev_sourdough_access
+    source_id: wcag_22
+    claim: Keyboard access, focus, reflow, labels, status, and error recovery are release requirements.
+    use: constraint
+concepts:
+  - id: ritual
+    title: Daily Starter Ritual
+    thesis: Make the next feeding decision effortless and keep deeper analysis out of the kitchen path.
+    primary_loop: Feed, observe, see the next expected peak, and close the app.
+    primary_affordance: A single chronological starter card with a large Feed now action
+    differentiator: Calmest and fastest path for one active starter
+    feature_boundary: [feeding and observation capture, peak window, starter health history]
+    tradeoffs: [recipe and bake experimentation is secondary]
+    workflow_ids: [feed_starter, inspect_peak]
+    evidence_ids: [ev_sourdough_workflows, ev_sourdough_service]
+  - id: lab
+    title: Fermentation Lab
+    thesis: Treat every feeding and bake as a comparable experiment without making capture feel scientific.
+    primary_loop: Capture a controlled change, follow the live curve, compare the result, and record a conclusion.
+    primary_affordance: A live fermentation curve beside the current experiment card
+    differentiator: Connects environmental conditions to outcomes and reusable conclusions
+    feature_boundary: [starter and feeding capture, recipes and bakes, sensor curves, experiment comparison]
+    tradeoffs: [requires more structured observations to unlock its full value]
+    workflow_ids: [feed_starter, inspect_peak, run_experiment, compare_bakes]
+    evidence_ids: [ev_sourdough_workflows, ev_sourdough_lineage, ev_sourdough_workloads]
+  - id: bake_day
+    title: Bake-Day Conductor
+    thesis: Organize backwards from a desired bake time and keep the baker on schedule.
+    primary_loop: Choose a recipe and target time, execute timed steps, then review the loaf.
+    primary_affordance: A vertical day schedule with the current step anchored in view
+    differentiator: Turns starter readiness and formula data into an operational plan
+    feature_boundary: [recipe selection, backwards schedule, step completion, final bake notes]
+    tradeoffs: [less useful for open-ended starter experiments]
+    workflow_ids: [plan_bake, execute_bake, review_bake]
+    evidence_ids: [ev_sourdough_workflows, ev_sourdough_service]
+remix:
+  selected_concept: lab
+  fragments:
+    - kind: interaction
+      from_concept: ritual
+      fragment: one-handed Feed now capture
+      reason: Preserve kitchen-speed capture inside the richer lab concept.
+      evidence_ids: [ev_sourdough_service]
+    - kind: workflow
+      from_concept: bake_day
+      fragment: backwards bake schedule
+      reason: Experiments still need an executable bake plan.
+      evidence_ids: [ev_sourdough_workflows]
+  user_decisions: [Optimize for learning across repeated bakes, keep sensor support optional, show baker percentages alongside entered units]
+domain:
+  entities:
+    - id: starter
+      title: Starter
+      kind: owned
+      description: A maintained culture with its own lifecycle and learned behavior.
+      identity: [starter_id]
+      lifecycle: [active, paused, archived]
+      evidence_ids: [ev_sourdough_workflows, ev_sourdough_identity]
+      fields:
+        - {name: starter_id, type: text, description: Stable local identity, required: true, evidence_ids: [ev_sourdough_identity]}
+        - {name: name, type: text, description: Baker-facing name, required: true}
+        - {name: status, type: enum, description: Current maintenance state, required: true, values: [active, paused, archived]}
+        - {name: created_at, type: datetime, description: When this maintained culture began, required: true, evidence_ids: [ev_sourdough_lineage]}
+        - {name: notes, type: text, description: Durable culture-specific context}
+    - id: feeding
+      title: Feeding
+      kind: event
+      description: A measured refresh of one starter at an effective time.
+      identity: [feeding_id]
+      lifecycle: [recorded, corrected, superseded]
+      evidence_ids: [ev_sourdough_workflows, ev_sourdough_lineage]
+      fields:
+        - {name: feeding_id, type: text, description: Stable event identity, required: true, evidence_ids: [ev_sourdough_identity]}
+        - {name: starter_id, type: text, description: Starter that was fed, required: true, evidence_ids: [ev_sourdough_identity]}
+        - {name: fed_at, type: datetime, description: Effective feeding time, required: true, evidence_ids: [ev_sourdough_lineage]}
+        - {name: starter_mass_g, type: number, description: Retained starter mass, required: true, unit: g}
+        - {name: flour_mass_g, type: number, description: Added flour mass, required: true, unit: g}
+        - {name: water_mass_g, type: number, description: Added water mass, required: true, unit: g}
+        - {name: ambient_temp_c, type: number, description: Ambient temperature at feeding, unit: C}
+        - {name: observed_peak_at, type: datetime, description: Observed peak rather than predicted peak, evidence_ids: [ev_sourdough_lineage]}
+    - id: recipe
+      title: Formula
+      kind: canonical
+      description: A versioned baker-percentage formula that can be reused across bakes.
+      identity: [recipe_id, version]
+      lifecycle: [draft, active, retired]
+      evidence_ids: [ev_sourdough_workflows, ev_sourdough_identity]
+      fields:
+        - {name: recipe_id, type: text, description: Stable formula family identity, required: true}
+        - {name: version, type: integer, description: Immutable formula revision, required: true}
+        - {name: name, type: text, description: Formula name, required: true}
+        - {name: flour_total_g, type: number, description: Reference flour mass, required: true, unit: g}
+        - {name: hydration_pct, type: number, description: Water as percentage of flour, required: true, unit: percent}
+        - {name: salt_pct, type: number, description: Salt as percentage of flour, required: true, unit: percent}
+        - {name: method, type: text, description: Ordered method and handling notes, required: true}
+    - id: bake
+      title: Bake
+      kind: event
+      description: One execution and outcome of a formula.
+      identity: [bake_id]
+      lifecycle: [planned, active, baked, reviewed, archived]
+      evidence_ids: [ev_sourdough_workflows, ev_sourdough_lineage]
+      fields:
+        - {name: bake_id, type: text, description: Stable bake identity, required: true}
+        - {name: recipe_id, type: text, description: Formula family used, required: true}
+        - {name: recipe_version, type: integer, description: Exact immutable formula revision, required: true}
+        - {name: starter_id, type: text, description: Starter used, required: true}
+        - {name: status, type: enum, description: Bake lifecycle state, required: true, values: [planned, active, baked, reviewed, archived]}
+        - {name: target_bake_at, type: datetime, description: Planned oven time}
+        - {name: baked_at, type: datetime, description: Actual oven time, evidence_ids: [ev_sourdough_lineage]}
+        - {name: crumb_score, type: integer, description: Baker's repeatable crumb assessment}
+        - {name: flavor_score, type: integer, description: Baker's repeatable flavor assessment}
+        - {name: photos, type: attachment, description: Loaf and crumb evidence}
+    - id: sensor_reading
+      title: Fermentation Reading
+      kind: observation
+      description: Optional immutable time-series reading from a sensor or manual observation.
+      identity: [reading_id]
+      lifecycle: [observed, invalidated]
+      evidence_ids: [ev_sourdough_workflows, ev_sourdough_lineage]
+      fields:
+        - {name: reading_id, type: text, description: Stable observation identity, required: true}
+        - {name: starter_id, type: text, description: Observed starter, required: true}
+        - {name: observed_at, type: datetime, description: Time of measurement, required: true}
+        - {name: temperature_c, type: number, description: Measured temperature, unit: C}
+        - {name: rise_ratio, type: number, description: Height relative to post-feed baseline}
+        - {name: source, type: enum, description: Observation origin, required: true, values: [sensor, manual]}
+    - id: experiment
+      title: Experiment
+      kind: state
+      description: A declared change and conclusion spanning comparable feedings or bakes.
+      identity: [experiment_id]
+      lifecycle: [planned, running, concluded, abandoned]
+      evidence_ids: [ev_sourdough_workflows, ev_sourdough_lineage]
+      fields:
+        - {name: experiment_id, type: text, description: Stable experiment identity, required: true}
+        - {name: title, type: text, description: Human-readable hypothesis, required: true}
+        - {name: status, type: enum, description: Experiment lifecycle, required: true, values: [planned, running, concluded, abandoned]}
+        - {name: variable, type: text, description: Deliberately changed factor, required: true}
+        - {name: hypothesis, type: text, description: Expected result, required: true}
+        - {name: conclusion, type: text, description: Evidence-backed learning after comparison}
+  relationships:
+    - {id: starter_feedings, from_entity: feeding, to_entity: starter, cardinality: many_to_one, required: true, on_delete: restrict, description: Every feeding belongs to one starter., evidence_ids: [ev_sourdough_identity]}
+    - {id: starter_readings, from_entity: sensor_reading, to_entity: starter, cardinality: many_to_one, required: true, on_delete: restrict, description: Every reading observes one starter., evidence_ids: [ev_sourdough_identity]}
+    - {id: bake_formula, from_entity: bake, to_entity: recipe, cardinality: many_to_one, required: true, on_delete: restrict, description: A bake pins an exact formula version., evidence_ids: [ev_sourdough_identity]}
+    - {id: bake_starter, from_entity: bake, to_entity: starter, cardinality: many_to_one, required: true, on_delete: restrict, description: A bake records which culture supplied the levain., evidence_ids: [ev_sourdough_identity]}
+    - {id: experiment_bakes, from_entity: experiment, to_entity: bake, cardinality: many_to_many, on_delete: archive, description: An experiment compares one or more bakes without owning them., evidence_ids: [ev_sourdough_lineage]}
+  constraints:
+    - {id: unique_formula_version, entity: recipe, kind: unique, fields: [recipe_id, version], reason: A formula revision is immutable and addressable., evidence_ids: [ev_sourdough_identity]}
+    - {id: positive_feeding_masses, entity: feeding, kind: check, fields: [starter_mass_g, flour_mass_g, water_mass_g], expression: "starter_mass_g > 0 AND flour_mass_g > 0 AND water_mass_g > 0", reason: A feeding cannot contain negative or zero ingredient masses., evidence_ids: [ev_sourdough_identity]}
+    - {id: valid_bake_state, entity: bake, kind: state_transition, fields: [status], reason: A bake cannot be reviewed before it is baked., evidence_ids: [ev_sourdough_workflows]}
+  indexes:
+    - {id: feeding_history, entity: feeding, fields: [starter_id, fed_at], unique: false, reason: Recent feedings and time-to-peak history are the daily workload., workload_ids: [w_next_peak, w_feeding_history]}
+    - {id: sensor_curve, entity: sensor_reading, fields: [starter_id, observed_at], unique: false, reason: Fermentation curves are ordered time-series reads., workload_ids: [w_next_peak]}
+    - {id: bake_comparison, entity: bake, fields: [recipe_id, recipe_version, baked_at], unique: false, reason: Comparisons group formula versions over time., workload_ids: [w_compare_bakes]}
+  workloads:
+    - {id: w_next_peak, question: "When is this starter likely to peak after its latest feeding?", kind: analysis, entities: [starter, feeding, sensor_reading], filters: [starter_id, latest feeding], sort: [observed_at ascending], expected_scale: thousands of readings per starter, acceptance: Returns an observed or predicted window with source and uncertainty in under 200 ms for local data., evidence_ids: [ev_sourdough_workflows, ev_sourdough_workloads]}
+    - {id: w_feeding_history, question: "How has feeding ratio and temperature affected time to peak?", kind: analysis, entities: [starter, feeding], filters: [starter_id, date range], sort: [fed_at descending], expected_scale: hundreds of feedings per starter, acceptance: Compares ratios and observed peak durations without losing original measurements., evidence_ids: [ev_sourdough_workflows, ev_sourdough_workloads]}
+    - {id: w_plan_bake, question: "What must happen next to bake this formula at the target time?", kind: read, entities: [recipe, bake, starter], filters: [bake_id, status], sort: [target time], expected_scale: fewer than ten active bakes, acceptance: Shows the next actionable step and flags a starter-readiness conflict., evidence_ids: [ev_sourdough_workflows, ev_sourdough_service]}
+    - {id: w_compare_bakes, question: "Did the controlled change improve this formula's outcome?", kind: analysis, entities: [experiment, bake, recipe], filters: [experiment_id], sort: [baked_at ascending], expected_scale: tens of bakes per experiment, acceptance: "Displays inputs, outcomes, photos, and the baker's conclusion side by side.", evidence_ids: [ev_sourdough_workflows, ev_sourdough_lineage]}
+  state_machines:
+    - id: bake_lifecycle
+      entity: bake
+      field: status
+      states: [planned, active, baked, reviewed, archived]
+      transitions:
+        - {from_state: planned, action: start, to_state: active}
+        - {from_state: active, action: mark_baked, to_state: baked}
+        - {from_state: baked, action: review, to_state: reviewed}
+        - {from_state: reviewed, action: archive, to_state: archived}
+      evidence_ids: [ev_sourdough_workflows]
+  sample_records:
+    starter:
+      - {starter_id: starter-haleakala, name: Haleakalā, status: active, created_at: "2026-07-12T07:30:00-10:00", notes: Reliable with bread flour at warm room temperature.}
+    feeding:
+      - {feeding_id: feed-20260819-am, starter_id: starter-haleakala, fed_at: "2026-08-19T07:10:00-10:00", starter_mass_g: 25, flour_mass_g: 50, water_mass_g: 50, ambient_temp_c: 25.5, observed_peak_at: "2026-08-19T12:32:00-10:00"}
+    recipe:
+      - {recipe_id: country-loaf, version: 3, name: Weekday country loaf, flour_total_g: 500, hydration_pct: 76, salt_pct: 2, method: "Autolyse, mix levain and salt, four folds, shape, and cold proof."}
+    bake:
+      - {bake_id: bake-20260818, recipe_id: country-loaf, recipe_version: 3, starter_id: starter-haleakala, status: reviewed, target_bake_at: "2026-08-18T08:00:00-10:00", baked_at: "2026-08-18T08:14:00-10:00", crumb_score: 4, flavor_score: 5}
+    sensor_reading:
+      - {reading_id: reading-20260819-1010, starter_id: starter-haleakala, observed_at: "2026-08-19T10:10:00-10:00", temperature_c: 25.1, rise_ratio: 1.72, source: sensor}
+    experiment:
+      - {experiment_id: experiment-warm-bulk, title: Shorter warm bulk, status: running, variable: End bulk at 40 percent rise, hypothesis: Preserve strength while keeping the same open crumb.}
+  temporal_policy: [fed_at and baked_at are effective times, captured_at is provenance time, predictions never overwrite observations]
+  privacy_policy: [sensor tokens are secrets and never exported, photos remain local unless explicitly shared, location is not collected]
+experience:
+  mode: operate
+  visual_world:
+    id: fermentation-bench
+    name: Fermentation Bench
+    mood: Warm, tactile, observant, and quietly scientific
+    typography: Humanist sans for operation with a restrained monospaced face for measurements
+    color_strategy: Flour and linen neutrals with living amber for fermentation and ink-blue for measured evidence
+    layout_principle: A working bench centered on the live culture, with evidence unfolding laterally rather than a dashboard grid
+    density: Spacious during capture, compact and aligned during comparison
+    signature_elements: [continuous rise curve crossing the current-time marker, baker-percentage formula strip, photographic crumb rail]
+    avoid: [generic KPI cards, neon laboratory styling, decorative bread photography]
+    tokens: {background: "#F4EEDF", surface: "#FFFCF5", text: "#28251F", muted: "#6B6256", accent: "#A9582F", accent_alt: "#345A65", border: "#D8CCB7", focus: "#1D5F73", danger: "#A33A32", radius_px: 10}
+  navigation:
+    topology: hub
+    primary_view: bench
+    persistent_regions: [active starter switcher, capture affordance, provenance status]
+  views:
+    - id: bench
+      title: The Bench
+      purpose: Decide what the active starter needs now and record it in seconds.
+      layout: Live curve and readiness window dominate; feeding history is a narrow chronological rail.
+      entities: [starter, feeding, sensor_reading]
+      workload_ids: [w_next_peak, w_feeding_history]
+      states: [first_use, populated, loading, empty, error, offline, correction]
+      regions:
+        - {id: live_curve, kind: chart, title: Live fermentation, entity: sensor_reading, workload_id: w_next_peak, emphasis: primary, span: 8}
+        - {id: feeding_rail, kind: timeline, title: Feeding evidence, entity: feeding, workload_id: w_feeding_history, emphasis: support, span: 4}
+      actions:
+        - {id: feed_now, label: Feed now, operation: create, entity: feeding, consequence: Records a measured feeding and starts a new rise window.}
+        - {id: correct_feeding, label: Correct feeding, operation: correct, entity: feeding, consequence: Preserves the original receipt and recalculates derived windows.}
+      evidence_ids: [ev_sourdough_workflows, ev_sourdough_access]
+    - id: formula
+      title: Formula Table
+      purpose: Version a formula and plan a bake without losing baker-percentage meaning.
+      layout: Formula sheet on the left and backwards schedule on the right.
+      entities: [recipe, bake, starter]
+      workload_ids: [w_plan_bake]
+      states: [first_use, populated, empty, error, conflict]
+      regions:
+        - {id: formula_sheet, kind: form, title: Baker's formula, entity: recipe, workload_id: w_plan_bake, emphasis: primary, span: 7}
+        - {id: bake_schedule, kind: timeline, title: Backwards schedule, entity: bake, workload_id: w_plan_bake, emphasis: secondary, span: 5}
+      actions:
+        - {id: plan_bake, label: Plan this bake, operation: create, entity: bake, consequence: Pins the formula revision and creates a backwards schedule.}
+      evidence_ids: [ev_sourdough_workflows, ev_sourdough_service]
+    - id: bake_review
+      title: Bake Review
+      purpose: Record outcomes while sensory memory is fresh.
+      layout: Loaf and crumb photographs lead; scores and method deviations sit in an annotated margin.
+      entities: [bake, recipe]
+      workload_ids: [w_compare_bakes]
+      states: [first_use, populated, empty, error, correction]
+      regions:
+        - {id: loaf_evidence, kind: media, title: Loaf and crumb, entity: bake, workload_id: w_compare_bakes, emphasis: primary, span: 7}
+        - {id: formula_margin, kind: inspector, title: Formula and deviations, entity: recipe, workload_id: w_compare_bakes, emphasis: support, span: 5}
+      actions:
+        - {id: review_bake, label: Review loaf, operation: update, entity: bake, consequence: Completes the bake evidence and makes it comparable.}
+      evidence_ids: [ev_sourdough_workflows, ev_sourdough_lineage]
+    - id: experiment_compare
+      title: Experiment Table
+      purpose: Compare controlled changes and preserve a reusable conclusion.
+      layout: Columnar comparison table aligned by input, environment, curve, and outcome; conclusion remains pinned.
+      entities: [experiment, bake, feeding, sensor_reading]
+      workload_ids: [w_compare_bakes, w_feeding_history]
+      states: [first_use, populated, empty, partial, error]
+      regions:
+        - {id: comparison_table, kind: comparison, title: Controlled comparison, entity: experiment, workload_id: w_compare_bakes, emphasis: primary, span: 12}
+      actions:
+        - {id: conclude, label: Record conclusion, operation: update, entity: experiment, consequence: Closes the experiment without altering its source evidence.}
+      evidence_ids: [ev_sourdough_lineage, ev_sourdough_access]
+  flows:
+    - id: first_feeding
+      title: Record the first real feeding
+      trigger: User approves the Sourdough Lab concept.
+      steps:
+        - {view: bench, action: "Name the starter and enter retained starter, flour, and water.", result: A feeding receipt and live window appear.}
+        - {view: bench, action: Confirm or correct the interpreted measurements., result: The canonical feeding and provenance are visible.}
+      success: The user can state what to do next and why the app predicts that window.
+    - id: compare_experiment
+      title: Learn from a controlled change
+      trigger: Two comparable bakes exist.
+      steps:
+        - {view: experiment_compare, action: Select the changed variable and comparison bakes., result: Inputs and outcomes align in one table.}
+        - {view: bake_review, action: Inspect source observations and photos., result: Each comparison value links to its receipt.}
+        - {view: experiment_compare, action: Record a conclusion., result: The learning becomes searchable without mutating bake history.}
+      success: A conclusion is traceable to the exact feedings, readings, formula, and bakes that support it.
+  responsive_strategy: [On phones the live decision and Feed now action precede the curve; comparison becomes horizontally paged., On desktop the bench uses the curve and evidence rail together without card-grid fragmentation.]
+  accessibility:
+    target: WCAG-2.2-AA
+    patterns: [native dialog for capture, data table with caption and row headers for comparisons, text alternative for every curve]
+    keyboard_model: [logical document order follows decision then evidence, chart points are reachable through an adjacent data table, correction returns focus to the changed value]
+    manual_checks: [VoiceOver first-feeding journey, 200 percent zoom and reflow, high-contrast focus and error identification]
+implementation:
+  targets: [foundry_runtime, standalone_react]
+  capabilities: [event_capture, attachments, derived_metrics, time_series, comparison, planning, provenance, correction]
+  imports: [CSV feeding history, JSON sensor readings, recipe markdown]
+  exports: [complete JSON with receipts, CSV per entity, photos manifest, standalone source repository]
+  migrations: [versioned schema migrations, formula revisions are immutable, sensor readings append-only]
+  permissions: [local file import, optional local-network sensor ingest]
+  adapter_seams: [capture adapter, sensor source adapter, peak prediction adapter, export adapter]
+evaluation:
+  cases:
+    - {id: sourdough_schema_identity, kind: schema, input: Two starters share the name Starter., expected: They remain distinct owned cultures with independent histories., authored_by: domain_expert}
+    - {id: sourdough_invalid_mass, kind: schema, input: Feeding contains negative water mass., expected: The write is rejected before canonical storage., authored_by: independent_reviewer}
+    - {id: sourdough_peak_workload, kind: workload, input: 10000 ordered sensor readings and 300 feedings., expected: Current curve and peak window load within the local 200 ms budget., authored_by: independent_reviewer}
+    - {id: sourdough_first_task, kind: task, input: New user records a 1:2:2 feeding on a phone., expected: Receipt and next expected window appear without configuration detour., authored_by: user}
+    - {id: sourdough_keyboard, kind: accessibility, input: Complete the feeding and correction journey without a pointer., expected: All controls and status changes are operable and announced., authored_by: standard}
+    - {id: sourdough_sensor_injection, kind: security, input: Sensor source sends extra prompt-like fields and a path., expected: Unknown fields are rejected and no tool or filesystem action occurs., authored_by: independent_reviewer}
+  release_thresholds:
+    schema: all identity, relationship, constraint, and migration cases pass
+    experience: first feeding and experiment comparison pass on mobile and desktop
+    evidence: every entity and critical view has an approved derivation
+derivations:
+  - {output_path: domain.entities, decision: "Separate starter, feeding, formula, bake, reading, and experiment lifecycles.", evidence_ids: [ev_sourdough_workflows, ev_sourdough_identity]}
+  - {output_path: experience.views.bench, decision: Make the current culture decision the first viewport rather than a dashboard summary., evidence_ids: [ev_sourdough_service], user_decision: Kitchen capture must be one-handed.}
+  - {output_path: domain.indexes.sensor_curve, decision: Index readings by starter and observed time for the live curve workload., evidence_ids: [ev_sourdough_workloads]}
+  - {output_path: experience.visual_world, decision: Use a tactile working-bench world with measured evidence instead of generic analytics cards., evidence_ids: [ev_sourdough_concepts], user_decision: "The app should feel like baking, not industrial IoT."}
+  - {output_path: implementation.sensor_adapter, decision: Keep sensor ingestion optional behind an adapter so the core experience works manually., evidence_ids: [ev_sourdough_workflows]}

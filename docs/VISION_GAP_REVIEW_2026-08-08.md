@@ -82,29 +82,29 @@ These scores are review judgments, not telemetry. A 5 means the public promise i
 
 The React client sends mutations to HTTP:
 
-- capture: [`app/src/lib/api.ts`](../app/src/lib/api.ts#L73)
-- pack activation: [`app/src/lib/api.ts`](../app/src/lib/api.ts#L91)
-- correction and review resolution: [`app/src/lib/api.ts`](../app/src/lib/api.ts#L105)
+- capture: [`app/src/lib/api.ts`](https://github.com/finnqiao/domain_foundry/blob/main/app/src/lib/api.ts#L73)
+- pack activation: [`app/src/lib/api.ts`](https://github.com/finnqiao/domain_foundry/blob/main/app/src/lib/api.ts#L91)
+- correction and review resolution: [`app/src/lib/api.ts`](https://github.com/finnqiao/domain_foundry/blob/main/app/src/lib/api.ts#L105)
 
 The FastAPI implementation deliberately returns `410 Gone` for those same operations:
 
-- capture and correction: [`core/domain_foundry_core/api/app.py`](../core/domain_foundry_core/api/app.py#L102)
-- activation and review resolution: [`core/domain_foundry_core/api/app.py`](../core/domain_foundry_core/api/app.py#L222)
-- wizard: [`core/domain_foundry_core/api/app.py`](../core/domain_foundry_core/api/app.py#L350)
+- capture and correction: [`core/domain_foundry_core/api/app.py`](https://github.com/finnqiao/domain_foundry/blob/main/core/domain_foundry_core/api/app.py#L102)
+- activation and review resolution: [`core/domain_foundry_core/api/app.py`](https://github.com/finnqiao/domain_foundry/blob/main/core/domain_foundry_core/api/app.py#L222)
+- wizard: [`core/domain_foundry_core/api/app.py`](https://github.com/finnqiao/domain_foundry/blob/main/core/domain_foundry_core/api/app.py#L350)
 
 Direct calls against the served app confirmed `410` for `/api/capture`, `/api/packs/activate`, and `/api/correct`. The app therefore exposes a capture box, Install buttons, correction actions, and review controls that cannot succeed.
 
-The current contract tests seed mutations with an in-process `HarnessAPI` and then assert that HTTP mutations return `410`; see [`tests/contract/test_app_shell.py`](../tests/contract/test_app_shell.py) and [`tests/contract/test_wizard.py`](../tests/contract/test_wizard.py#L197). This tests the mesh decision but bypasses the user journey.
+The current contract tests seed mutations with an in-process `HarnessAPI` and then assert that HTTP mutations return `410`; see [`tests/contract/test_app_shell.py`](https://github.com/finnqiao/domain_foundry/blob/main/tests/contract/test_app_shell.py) and [`tests/contract/test_wizard.py`](https://github.com/finnqiao/domain_foundry/blob/main/tests/contract/test_wizard.py#L197). This tests the mesh decision but bypasses the user journey.
 
 This also contradicts accepted [ADR-001](adr/ADR-001-http-adapter-contract.md), which says the CLI, SPA, and adapters use the same HTTP contract. The later mesh design changed the implementation but did not supersede the decision record or provide a working browser bridge.
 
 ### The prompt-to-domain blind spot
 
-The wizard does not currently use the configured LLM to design a domain. It selects one of a small number of hard-coded archetypes or falls back to a generic object with `title`, `logged_at`, `rating`, `amount`, and `notes`; see [`wizard/blueprint.py`](../core/domain_foundry_core/wizard/blueprint.py#L293).
+The wizard does not currently use the configured LLM to design a domain. It selects one of a small number of hard-coded archetypes or falls back to a generic object with `title`, `logged_at`, `rating`, `amount`, and `notes`; see [`wizard/blueprint.py`](https://github.com/finnqiao/domain_foundry/blob/main/core/domain_foundry_core/wizard/blueprint.py#L293).
 
-The generic route rule is built from the literal words in the user’s goal. Its examples are then built from the same literal subject word. The dry run evaluates those generated examples with a `HeuristicProvider`; see [`wizard/engine.py`](../core/domain_foundry_core/wizard/engine.py#L158). Passing proves internal consistency, not hobby understanding.
+The generic route rule is built from the literal words in the user’s goal. Its examples are then built from the same literal subject word. The dry run evaluates those generated examples with a `HeuristicProvider`; see [`wizard/engine.py`](https://github.com/finnqiao/domain_foundry/blob/main/core/domain_foundry_core/wizard/engine.py#L158). Passing proves internal consistency, not hobby understanding.
 
-The repository’s golden wizard test states the limitation directly: generated packs must route **their own** examples at ≥95%; see [`tests/contract/test_wizard.py`](../tests/contract/test_wizard.py#L1).
+The repository’s golden wizard test states the limitation directly: generated packs must route **their own** examples at ≥95%; see [`tests/contract/test_wizard.py`](https://github.com/finnqiao/domain_foundry/blob/main/tests/contract/test_wizard.py#L1).
 
 An independent held-out smoke used eight prompts from or adjacent to the golden goals. Every generated pack reported 100% self-eval accuracy:
 
@@ -130,7 +130,7 @@ As of this review:
 - `domain-foundry-core`, `domain-foundry-mcp`, `domain-foundry-telegram`, and `domain-foundry-hermes-agent` return 404 from the PyPI JSON API.
 - The public GitHub repository has no tags or releases.
 - The README’s 90-second demo remains a placeholder.
-- Live success probes for each documented provider, an external security review, and a lived production week remain open in [`LAUNCH_CHECKLIST.md`](../LAUNCH_CHECKLIST.md).
+- Live success probes for each documented provider, an external security review, and a lived production week remain open in [`LAUNCH_CHECKLIST.md`](https://github.com/finnqiao/domain_foundry/blob/main/LAUNCH_CHECKLIST.md).
 
 The checkout path works. The public five-minute install path does not yet exist.
 

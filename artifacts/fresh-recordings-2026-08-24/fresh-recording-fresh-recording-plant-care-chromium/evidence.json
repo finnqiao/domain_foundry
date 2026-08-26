@@ -1,0 +1,49 @@
+{
+  "scenario": {
+    "label": "plant care",
+    "goal": "keep a log of my houseplants",
+    "capture": "watered the monstera, soil still damp, moved it away from the window",
+    "idea": {}
+  },
+  "final_url": "http://127.0.0.1:8790/passions/plants/care",
+  "receipt": "Saved to Plant Care as a care event",
+  "page_text": "Skip to content\n◆\nDomain Foundry\nFoundry\nToday\nYour passions\nInbox\nSettings\n\nYOUR PASSIONS\n\n✨\nSession log\n✨\nBrew lab\n🪴\nPlant Care\n🪴 Plant Care\nplant name\naction\nnoted at\nsoil moisture\nnotes\nplant name\nspecies\nlocation\nLog\nAsk\nin Plant Care\n⌘/Ctrl + Enter\nSave\nSaved to Plant Care as a care event\nCare log\nPlants\nFind\nHistory\nActivity\nAug 24, 2026, 03:12 PM\nmonstera\nAction water · Soil Moisture damp",
+  "wizard_turns": [
+    {
+      "status_code": 200
+    },
+    {
+      "status_code": 200,
+      "state": "fork",
+      "awaiting": "fork",
+      "domain": null,
+      "message": "You said “keep a log of my houseplants”. You could:\n1. Plant care (suggested): Plants as a catalog, watering and repotting as events.\n   a catalog you can page through · a timeline of what you logged\n2. Plant collection: A pokedex of what you own — species, light, status — not only the last watering.\n3. Pest journal: Outbreaks, treatments, and whether they actually cleared.\nWhich of these, or say what you want it to do — a chart, photos, a mix board. Paste a notes folder path to ingest text. Photos: have your agent read them first, then send the text.",
+      "status": "scaffold"
+    },
+    {
+      "status_code": 200,
+      "state": "looks",
+      "awaiting": "look",
+      "domain": null,
+      "message": "Here is a look. Pick one, tell me how to change it (darker, denser, more chart), or say 'build it'.\n1. Plant care (selected) — catalog look (round 1)",
+      "status": "scaffold"
+    },
+    {
+      "status_code": 200,
+      "state": "test_drive",
+      "awaiting": "capture",
+      "domain": "plants",
+      "message": "Installed Plant Care. Talk about it and we'll file it — plant name · action · noted at · soil moisture · notes · species.",
+      "pack": {
+        "name": "plants",
+        "version": "0.1.0",
+        "title": "Plant Care",
+        "path": "/private/var/folders/vw/xqh73ydn483_8hc9m9t8jtdc0000gn/T/df-e2e.AUUD6I/packs/plants"
+      },
+      "status": "live"
+    },
+    {
+      "status_code": 200
+    }
+  ]
+}

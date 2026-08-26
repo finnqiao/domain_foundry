@@ -1,0 +1,578 @@
+version: 1
+reviewed_at: "2026-08-19"
+curation_status: agent_assisted_research_synthesis
+independent_editorial_review: pending
+sources:
+  - id: postgresql_constraints
+    title: PostgreSQL — Constraints
+    publisher: PostgreSQL Global Development Group
+    url: https://www.postgresql.org/docs/current/ddl-constraints.html
+    kind: official_documentation
+    tier: authoritative
+    license: PostgreSQL
+    allowed_uses: [reference_facts, paraphrase]
+    status: approved
+    retrieved_at: "2026-08-19"
+    freshness_days: 180
+    topics: [data_modeling, constraints, identity, relationships]
+
+  - id: postgresql_indexes
+    title: PostgreSQL — Indexes
+    publisher: PostgreSQL Global Development Group
+    url: https://www.postgresql.org/docs/current/indexes.html
+    kind: official_documentation
+    tier: authoritative
+    license: PostgreSQL
+    allowed_uses: [reference_facts, paraphrase]
+    status: approved
+    retrieved_at: "2026-08-19"
+    freshness_days: 180
+    topics: [data_modeling, indexes, workloads]
+
+  - id: sqlite_foreign_keys
+    title: SQLite Foreign Key Support
+    publisher: SQLite
+    url: https://www.sqlite.org/foreignkeys.html
+    kind: official_documentation
+    tier: authoritative
+    license: reference-only
+    allowed_uses: [reference_facts, paraphrase]
+    status: approved
+    retrieved_at: "2026-08-19"
+    freshness_days: 365
+    topics: [sqlite, constraints, relationships]
+
+  - id: sqlite_query_planner
+    title: SQLite Query Planning
+    publisher: SQLite
+    url: https://www.sqlite.org/queryplanner.html
+    kind: official_documentation
+    tier: authoritative
+    license: reference-only
+    allowed_uses: [reference_facts, paraphrase]
+    status: approved
+    retrieved_at: "2026-08-19"
+    freshness_days: 365
+    topics: [sqlite, indexes, workloads]
+
+  - id: w3c_prov
+    title: PROV-O — The PROV Ontology
+    publisher: W3C
+    url: https://www.w3.org/TR/prov-o/
+    kind: standard
+    tier: authoritative
+    license: W3C-Document
+    allowed_uses: [reference_facts, paraphrase]
+    status: approved
+    retrieved_at: "2026-08-19"
+    freshness_days: 1825
+    topics: [provenance, lineage, reproducibility]
+
+  - id: schemastore
+    title: SchemaStore
+    publisher: SchemaStore contributors
+    url: https://github.com/SchemaStore/schemastore
+    kind: open_source_project
+    tier: reviewed_implementation
+    license: Apache-2.0
+    allowed_uses: [reference_facts, paraphrase, inspect_code]
+    status: approved
+    retrieved_at: "2026-08-19"
+    freshness_days: 180
+    topics: [schema_registry, validation, contribution]
+
+  - id: datahub_ingestion
+    title: DataHub Metadata Ingestion Architecture
+    publisher: DataHub Project
+    url: https://github.com/datahub-project/datahub/blob/master/docs/architecture/metadata-ingestion.md
+    kind: open_source_documentation
+    tier: reviewed_implementation
+    license: Apache-2.0
+    allowed_uses: [reference_facts, paraphrase, inspect_code]
+    status: approved
+    retrieved_at: "2026-08-19"
+    freshness_days: 180
+    topics: [metadata, ingestion, lineage, source_adapters]
+
+  - id: openmetadata_ingestion
+    title: OpenMetadata Ingestion Architecture
+    publisher: OpenMetadata
+    url: https://docs.open-metadata.org/v1.12.x/developers/contribute/codebase-deep-dives/metadata-ingestion
+    kind: open_source_documentation
+    tier: reviewed_implementation
+    license: Apache-2.0
+    allowed_uses: [reference_facts, paraphrase, inspect_code]
+    status: approved
+    retrieved_at: "2026-08-19"
+    freshness_days: 180
+    topics: [metadata, ingestion, connectors, freshness]
+
+  - id: govuk_design_principles
+    title: Government Design Principles
+    publisher: UK Government Digital Service
+    url: https://www.gov.uk/guidance/government-design-principles
+    kind: public_design_standard
+    tier: authoritative
+    license: OGL-3.0
+    allowed_uses: [reference_facts, paraphrase]
+    status: approved
+    retrieved_at: "2026-08-19"
+    freshness_days: 365
+    topics: [user_needs, service_design, iteration, inclusion]
+
+  - id: wcag_22
+    title: Web Content Accessibility Guidelines 2.2
+    publisher: W3C
+    url: https://www.w3.org/TR/WCAG22/
+    kind: standard
+    tier: authoritative
+    license: W3C-Document
+    allowed_uses: [reference_facts, paraphrase]
+    status: approved
+    retrieved_at: "2026-08-19"
+    freshness_days: 365
+    topics: [accessibility, interaction, responsive_design]
+
+  - id: aria_apg
+    title: ARIA Authoring Practices Guide
+    publisher: W3C Web Accessibility Initiative
+    url: https://www.w3.org/WAI/ARIA/apg/
+    kind: public_design_standard
+    tier: authoritative
+    license: W3C-Document
+    allowed_uses: [reference_facts, paraphrase, inspect_examples]
+    status: approved
+    retrieved_at: "2026-08-19"
+    freshness_days: 365
+    topics: [accessibility, semantics, keyboard, interaction_patterns]
+
+  - id: open_ui
+    title: Open UI Working Mode
+    publisher: Open UI Community Group
+    url: https://open-ui.org/working-mode/
+    kind: public_design_research
+    tier: authoritative
+    license: W3C-Document
+    allowed_uses: [reference_facts, paraphrase]
+    status: approved
+    retrieved_at: "2026-08-19"
+    freshness_days: 365
+    topics: [component_anatomy, use_cases, behaviors]
+
+  - id: figma_sds
+    title: Figma Simple Design System
+    publisher: Figma
+    url: https://github.com/figma/sds
+    kind: open_source_project
+    tier: reviewed_implementation
+    license: MIT
+    allowed_uses: [reference_facts, paraphrase, inspect_code]
+    status: approved
+    retrieved_at: "2026-08-19"
+    freshness_days: 180
+    topics: [design_systems, tokens, responsive_design, design_to_code]
+
+  - id: storybook
+    title: Storybook
+    publisher: Storybook contributors
+    url: https://github.com/storybookjs/storybook
+    kind: open_source_project
+    tier: reviewed_implementation
+    license: MIT
+    allowed_uses: [reference_facts, paraphrase, inspect_code]
+    status: approved
+    retrieved_at: "2026-08-19"
+    freshness_days: 180
+    topics: [ui_states, component_testing, documentation, accessibility]
+
+  - id: ui_remix_paper
+    title: UI Remix — Example-Driven UI Design with Multimodal Retrieval
+    publisher: arXiv authors
+    url: https://arxiv.org/abs/2601.18759
+    kind: research_paper
+    tier: research
+    license: reference-only
+    allowed_uses: [reference_facts, paraphrase]
+    status: approved
+    retrieved_at: "2026-08-19"
+    freshness_days: 730
+    topics: [remix, retrieval, provenance, concept_exploration]
+
+  - id: figma_make_kits
+    title: Figma Make kits and AI workflows
+    publisher: Figma
+    url: https://help.figma.com/hc/en-us/articles/41159751397783-AI-workflows-collection-Bonus-Turn-designs-into-prototypes-and-prototypes-into-designs
+    kind: product_documentation
+    tier: product_reference
+    license: proprietary-reference
+    allowed_uses: [reference_facts, paraphrase]
+    status: reference_only
+    retrieved_at: "2026-08-19"
+    freshness_days: 180
+    topics: [design_systems, ai_generation, generic_output]
+
+  - id: replit_design_systems
+    title: Replit Custom Design Systems
+    publisher: Replit
+    url: https://docs.replit.com/teams/custom-design-system
+    kind: product_documentation
+    tier: product_reference
+    license: proprietary-reference
+    allowed_uses: [reference_facts, paraphrase]
+    status: reference_only
+    retrieved_at: "2026-08-19"
+    freshness_days: 180
+    topics: [design_systems, ai_generation, implementation_rules]
+
+  - id: sekai
+    title: Sekai — Create, Play, Remix
+    publisher: Sekai
+    url: https://sekai.ai/
+    kind: product_reference
+    tier: product_reference
+    license: proprietary-reference
+    allowed_uses: [reference_facts, paraphrase]
+    status: reference_only
+    retrieved_at: "2026-08-19"
+    freshness_days: 90
+    topics: [remix, playable_apps, community]
+
+  - id: owasp_asvs
+    title: OWASP Application Security Verification Standard 5.0
+    publisher: OWASP Foundation
+    url: https://owasp.org/www-project-application-security-verification-standard/
+    kind: security_standard
+    tier: authoritative
+    license: CC-BY-SA-4.0
+    allowed_uses: [reference_facts, paraphrase]
+    status: approved
+    retrieved_at: "2026-08-19"
+    freshness_days: 365
+    topics: [security, verification, web_applications]
+
+  - id: owasp_llmsvs
+    title: OWASP LLM Verification Standard 2.0
+    publisher: OWASP Foundation
+    url: https://owasp.org/www-project-llm-verification-standard/LLMSVS-v2.0-en.html
+    kind: security_standard
+    tier: authoritative
+    license: CC-BY-SA-4.0
+    allowed_uses: [reference_facts, paraphrase]
+    status: approved
+    retrieved_at: "2026-08-19"
+    freshness_days: 365
+    topics: [llm_security, structured_output, tools, least_privilege]
+
+  - id: slsa
+    title: Supply-chain Levels for Software Artifacts 1.2
+    publisher: OpenSSF
+    url: https://slsa.dev/spec/v1.2/
+    kind: security_standard
+    tier: authoritative
+    license: CC-BY-4.0
+    allowed_uses: [reference_facts, paraphrase]
+    status: approved
+    retrieved_at: "2026-08-19"
+    freshness_days: 365
+    topics: [supply_chain, provenance, builds, releases]
+
+  - id: spdx
+    title: SPDX Specification 3.0.1
+    publisher: SPDX Project
+    url: https://spdx.github.io/spdx-spec/v3.0.1/
+    kind: standard
+    tier: authoritative
+    license: CC-BY-3.0
+    allowed_uses: [reference_facts, paraphrase]
+    status: approved
+    retrieved_at: "2026-08-19"
+    freshness_days: 365
+    topics: [licensing, provenance, sbom]
+
+  - id: reuse
+    title: REUSE Specification 3.3
+    publisher: Free Software Foundation Europe
+    url: https://reuse.software/spec/
+    kind: standard
+    tier: authoritative
+    license: CC-BY-SA-4.0
+    allowed_uses: [reference_facts, paraphrase]
+    status: approved
+    retrieved_at: "2026-08-19"
+    freshness_days: 365
+    topics: [licensing, source_files, spdx]
+
+  - id: openssf_scorecard
+    title: OpenSSF Scorecard
+    publisher: OpenSSF
+    url: https://github.com/ossf/scorecard
+    kind: open_source_project
+    tier: reviewed_implementation
+    license: Apache-2.0
+    allowed_uses: [reference_facts, paraphrase, inspect_code]
+    status: approved
+    retrieved_at: "2026-08-19"
+    freshness_days: 180
+    topics: [open_source, security, dependencies, branch_protection]
+
+  - id: sourdough_ai
+    title: Sourdough AI
+    publisher: timcarlielle
+    url: https://github.com/timcarlielle/sourdough-ai
+    kind: open_source_exemplar
+    tier: domain_exemplar
+    license: MIT
+    allowed_uses: [reference_facts, paraphrase, inspect_code]
+    status: approved
+    retrieved_at: "2026-08-19"
+    freshness_days: 180
+    topics: [sourdough, telemetry, experiments, recipes]
+
+  - id: pokemon_tcg_api
+    title: Pokémon TCG API Card Object
+    publisher: Pokémon TCG Developers
+    url: https://docs.pokemontcg.io/api-reference/cards/card-object/
+    kind: open_api_exemplar
+    tier: domain_exemplar
+    license: MIT-reference
+    allowed_uses: [reference_facts, paraphrase, inspect_schema]
+    status: approved
+    retrieved_at: "2026-08-19"
+    freshness_days: 180
+    topics: [pokemon_cards, canonical_identity, sets, prices]
+
+  - id: tcgdex_cards
+    title: TCGdex Cards Database
+    publisher: TCGdex
+    url: https://github.com/tcgdex/cards-database
+    kind: open_source_exemplar
+    tier: domain_exemplar
+    license: MIT
+    allowed_uses: [reference_facts, paraphrase, inspect_code, inspect_schema]
+    status: approved
+    retrieved_at: "2026-08-19"
+    freshness_days: 180
+    topics: [pokemon_cards, canonical_identity, localization]
+
+  - id: anki_scheduler
+    title: Anki Scheduler Protocol
+    publisher: Anki contributors
+    url: https://github.com/ankitects/anki/blob/main/proto/anki/scheduler.proto
+    kind: open_source_exemplar
+    tier: domain_exemplar
+    license: AGPL-3.0-or-later
+    allowed_uses: [reference_facts, paraphrase, inspect_schema]
+    status: reference_only
+    retrieved_at: "2026-08-19"
+    freshness_days: 180
+    topics: [spaced_repetition, state_machine, reviews]
+
+  - id: fsrs4anki
+    title: FSRS4Anki
+    publisher: Open Spaced Repetition contributors
+    url: https://github.com/open-spaced-repetition/fsrs4anki
+    kind: open_source_exemplar
+    tier: domain_exemplar
+    license: MIT
+    allowed_uses: [reference_facts, paraphrase, inspect_code]
+    status: approved
+    retrieved_at: "2026-08-19"
+    freshness_days: 180
+    topics: [spaced_repetition, scheduling, optimization]
+
+  - id: lovable_remix
+    title: Lovable — Control project access and public remixing
+    publisher: Lovable
+    url: https://docs.lovable.dev/features/project-visibility
+    kind: product_documentation
+    tier: product_reference
+    license: proprietary-reference
+    allowed_uses: [reference_facts, paraphrase]
+    status: reference_only
+    retrieved_at: "2026-08-19"
+    freshness_days: 90
+    topics: [remix, project_copy, access_control, publication]
+
+  - id: replit_apps
+    title: Replit Apps
+    publisher: Replit
+    url: https://docs.replit.com/category/replit-apps
+    kind: product_documentation
+    tier: product_reference
+    license: proprietary-reference
+    allowed_uses: [reference_facts, paraphrase]
+    status: reference_only
+    retrieved_at: "2026-08-19"
+    freshness_days: 90
+    topics: [remix, templates, ai_generation, publishing]
+
+  - id: bolt_sharing
+    title: Bolt — Share your project
+    publisher: StackBlitz
+    url: https://support.bolt.new/building/using-bolt/sharing
+    kind: product_documentation
+    tier: product_reference
+    license: proprietary-reference
+    allowed_uses: [reference_facts, paraphrase]
+    status: reference_only
+    retrieved_at: "2026-08-19"
+    freshness_days: 90
+    topics: [project_copy, collaboration, secrets, publication]
+
+  - id: base44_quickstart
+    title: Base44 — Building an app
+    publisher: Base44
+    url: https://docs.base44.com/Getting-Started/Quick-start-guide
+    kind: product_documentation
+    tier: product_reference
+    license: proprietary-reference
+    allowed_uses: [reference_facts, paraphrase]
+    status: reference_only
+    retrieved_at: "2026-08-19"
+    freshness_days: 90
+    topics: [app_copy, ai_generation, managed_backend, export]
+
+  - id: v0_overview
+    title: v0 — What is v0?
+    publisher: Vercel
+    url: https://v0.dev/docs
+    kind: product_documentation
+    tier: product_reference
+    license: proprietary-reference
+    allowed_uses: [reference_facts, paraphrase]
+    status: reference_only
+    retrieved_at: "2026-08-19"
+    freshness_days: 90
+    topics: [ai_generation, community, full_stack, deployment]
+
+  - id: websim
+    title: Websim — Community games and apps
+    publisher: Websim
+    url: https://websim.com/
+    kind: product_reference
+    tier: product_reference
+    license: proprietary-reference
+    allowed_uses: [reference_facts, paraphrase]
+    status: reference_only
+    retrieved_at: "2026-08-19"
+    freshness_days: 90
+    topics: [community, playable_apps, ai_generation, discovery]
+
+  - id: rosebud_remix
+    title: Rosebud AI Game Maker — Beginner's Guide
+    publisher: Rosebud AI
+    url: https://lab.rosebud.ai/blog/beginner-guide
+    kind: product_documentation
+    tier: product_reference
+    license: proprietary-reference
+    allowed_uses: [reference_facts, paraphrase]
+    status: reference_only
+    retrieved_at: "2026-08-19"
+    freshness_days: 90
+    topics: [remix, playable_games, community, ai_generation]
+
+  - id: magic_patterns
+    title: Magic Patterns — AI prototyping for product teams
+    publisher: Magic Patterns
+    url: https://www.magicpatterns.com/
+    kind: product_reference
+    tier: product_reference
+    license: proprietary-reference
+    allowed_uses: [reference_facts, paraphrase]
+    status: reference_only
+    retrieved_at: "2026-08-19"
+    freshness_days: 90
+    topics: [concept_exploration, design_systems, ui_generation, handoff]
+
+  - id: onlook
+    title: Onlook — Open-source visual-first code editor
+    publisher: Onlook contributors
+    url: https://github.com/onlook-dev/onlook
+    kind: open_source_project
+    tier: reviewed_implementation
+    license: Apache-2.0
+    allowed_uses: [reference_facts, paraphrase, inspect_code]
+    status: approved
+    retrieved_at: "2026-08-19"
+    freshness_days: 180
+    topics: [visual_editing, branches, code_ownership, ai_generation]
+
+  - id: dyad
+    title: Dyad — Local open-source AI app builder
+    publisher: Dyad contributors
+    url: https://github.com/dyad-sh/dyad
+    kind: open_source_project
+    tier: reviewed_implementation
+    license: mixed-Apache-2.0-and-FSL-1.1-reference
+    allowed_uses: [reference_facts, paraphrase, inspect_apache_code]
+    status: reference_only
+    retrieved_at: "2026-08-19"
+    freshness_days: 180
+    topics: [local_first, byo_keys, code_ownership, ai_generation]
+
+  # Showcase-target domain exemplars (2026-08-23). Added agent-assisted for the
+  # examples/showcase specifications; reference_only pending editorial review.
+  - id: whiskybase
+    title: Whiskybase — community whisky database
+    publisher: Whiskybase B.V.
+    url: https://www.whiskybase.com
+    kind: community_database
+    tier: domain_exemplar
+    license: proprietary-reference
+    allowed_uses: [reference_facts, paraphrase]
+    status: reference_only
+    retrieved_at: "2026-08-23"
+    freshness_days: 365
+    topics: [whisky, tasting_notes, bottles, distilleries, collection_tracking]
+
+  - id: rebrickable_api
+    title: Rebrickable — LEGO sets, parts, and MOC database and API
+    publisher: Rebrickable
+    url: https://rebrickable.com/api/
+    kind: open_data_reference
+    tier: domain_exemplar
+    license: CC-BY-4.0-data-reference
+    allowed_uses: [reference_facts, paraphrase, inspect_schema]
+    status: reference_only
+    retrieved_at: "2026-08-23"
+    freshness_days: 365
+    topics: [lego, sets, parts, mocs, build_tracking, collection_tracking]
+
+  - id: wger_workout
+    title: wger Workout Manager — open-source fitness tracker
+    publisher: wger project contributors
+    url: https://github.com/wger-project/wger
+    kind: open_source_exemplar
+    tier: domain_exemplar
+    license: AGPL-3.0-reference
+    allowed_uses: [reference_facts, paraphrase, inspect_schema]
+    status: reference_only
+    retrieved_at: "2026-08-23"
+    freshness_days: 365
+    topics: [strength_training, workouts, exercises, sets_reps, progression]
+
+  - id: adif_spec
+    title: ADIF — Amateur Data Interchange Format specification
+    publisher: ADIF Developers Group
+    url: https://www.adif.org
+    kind: specification
+    tier: domain_exemplar
+    license: open-specification
+    allowed_uses: [reference_facts, paraphrase, inspect_schema]
+    status: reference_only
+    retrieved_at: "2026-08-23"
+    freshness_days: 365
+    topics: [ham_radio, qso_logging, contacts, bands_modes, qsl]
+
+  - id: seriouslyfish
+    title: Seriously Fish — freshwater species care database
+    publisher: Seriously Fish
+    url: https://www.seriouslyfish.com
+    kind: community_database
+    tier: domain_exemplar
+    license: proprietary-reference
+    allowed_uses: [reference_facts, paraphrase]
+    status: reference_only
+    retrieved_at: "2026-08-23"
+    freshness_days: 365
+    topics: [aquarium, fishkeeping, species_care, water_parameters, stocking]

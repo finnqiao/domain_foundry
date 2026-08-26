@@ -74,6 +74,15 @@ PRODUCT_DENYLIST: list[tuple[str, str]] = [
     ("structured-life data layer", "product track leads with user outcomes"),
     ("HarnessAPI", "internal type name must not reach product copy"),
     ("personal agent harness", "product track markets a personal app, not a harness"),
+    ("Routed →", "product track files notes in plain language"),
+    ("eval_case", "internal eval vocabulary must not reach product copy"),
+    ("analog pack", "product track talks about interests and looks, not analog packs"),
+    ("two case studies", "there are three weekend stories: bake, dive, cards"),
+    # PyPI is unpublished. Product pages must lead with checkout (`pip install -e .`).
+    (
+        "pipx install domain-foundry-core",
+        "PyPI is unpublished; product track leads with checkout install",
+    ),
 ]
 
 

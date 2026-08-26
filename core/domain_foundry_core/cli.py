@@ -13,18 +13,19 @@ from domain_foundry_core.api.app import run_server
 from domain_foundry_core.api.harness import HarnessAPI
 from domain_foundry_core.ingest import ingest as ingest_source
 from domain_foundry_core.paths import ENV_HOME, default_home
+from domain_foundry_core.wizard.release import field_label, job_label
 
 app = typer.Typer(
     name="domain-foundry",
-    help="Local-first personal agent harness — capture → structured domain data.",
+    help="Research an interest and compile an evidence-backed local application.",
     no_args_is_help=True,
 )
 pack_app = typer.Typer(help="Manage Domain Packs")
 app.add_typer(pack_app, name="pack")
-mesh_app = typer.Typer(
-    help="[EXPERIMENTAL] Domain mesh (Concierge / Experts / Supervisor)"
-)
+mesh_app = typer.Typer(help="[EXPERIMENTAL] Domain mesh (Concierge / Experts / Supervisor)")
 app.add_typer(mesh_app, name="mesh")
+foundry_app = typer.Typer(help="Compile evidence-backed FoundrySpec applications")
+app.add_typer(foundry_app, name="foundry")
 
 
 @mesh_app.callback()
@@ -99,7 +100,9 @@ def init_cmd(ctx: typer.Context) -> None:
 def setup_cmd(
     ctx: typer.Context,
     provider: str | None = typer.Option(
-        None, "--provider", help="Provider id (anthropic, openai, deepseek, openrouter, local, none)"
+        None,
+        "--provider",
+        help="Provider id (anthropic, openai, deepseek, openrouter, local, none)",
     ),
     routine: str | None = typer.Option(
         None, "--routine", help="Model for the high-volume routing/extraction tier"
@@ -232,11 +235,14 @@ def setup_cmd(
                         default=False,
                     )
             else:
-                api_key_env = typer.prompt(
-                    "Which env var holds it?",
-                    default=spec.canonical_key_env
-                    or (spec.api_key_envs[0] if spec.api_key_envs else ""),
-                ).strip() or None
+                api_key_env = (
+                    typer.prompt(
+                        "Which env var holds it?",
+                        default=spec.canonical_key_env
+                        or (spec.api_key_envs[0] if spec.api_key_envs else ""),
+                    ).strip()
+                    or None
+                )
 
     # ---- models ---------------------------------------------------------
     if interactive and spec.id != "none":
@@ -244,12 +250,9 @@ def setup_cmd(
         typer.echo("Two tiers. Routine handles every capture; sota handles the calls")
         typer.echo("that rewrite a record or change a schema.")
         routine = routine or (
-            typer.prompt("  routine model", default=spec.routine_model or "").strip()
-            or None
+            typer.prompt("  routine model", default=spec.routine_model or "").strip() or None
         )
-        sota = sota or (
-            typer.prompt("  sota model", default=spec.sota_model or "").strip() or None
-        )
+        sota = sota or (typer.prompt("  sota model", default=spec.sota_model or "").strip() or None)
 
     cfg = build_config(
         provider_id=spec.id,
@@ -353,7 +356,9 @@ def capture_cmd(
     text: str = typer.Argument(..., help="Capture text"),
     channel: str = typer.Option("cli", "--channel", "-c"),
     source_ref: str | None = typer.Option(None, "--source-ref", "-s"),
-    as_json: bool = typer.Option(False, "--json", help="Emit machine JSON instead of a plain receipt"),
+    as_json: bool = typer.Option(
+        False, "--json", help="Emit machine JSON instead of a plain receipt"
+    ),
 ) -> None:
     """Save text first, then file it into a passion when confident."""
     from domain_foundry_core.receipts import describe_capture_receipt
@@ -384,11 +389,19 @@ def ingest_cmd(
     path: Path = typer.Argument(..., help="Existing file or folder of notes/logs to pull in"),
     channel: str = typer.Option("folder-import", "--channel", "-c"),
     glob: str | None = typer.Option(None, "--glob", help="Filter files, e.g. '*.md'"),
-    split: str = typer.Option("file", "--split", help="file (one capture per file) | lines (append-only logs)"),
-    dry_run: bool = typer.Option(False, "--dry-run", help="Preview routing without writing anything"),
-    only: str | None = typer.Option(None, "--only", help="Pull ONLY notes that route to this foundry; leave the rest untouched"),
+    split: str = typer.Option(
+        "file", "--split", help="file (one capture per file) | lines (append-only logs)"
+    ),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="Preview routing without writing anything"
+    ),
+    only: str | None = typer.Option(
+        None, "--only", help="Pull ONLY notes that route to this foundry; leave the rest untouched"
+    ),
     limit: int | None = typer.Option(None, "--limit", "-n", help="Cap number of records"),
-    watch: bool = typer.Option(False, "--watch", help="Keep watching the folder and pull in new notes on an interval"),
+    watch: bool = typer.Option(
+        False, "--watch", help="Keep watching the folder and pull in new notes on an interval"
+    ),
     interval: float = typer.Option(30.0, "--interval", help="Seconds between --watch scans"),
 ) -> None:
     """Bolt existing notes/logs onto your foundries — read-only, idempotent.
@@ -408,13 +421,21 @@ def ingest_cmd(
                 api, path, interval=interval, channel=channel, glob=glob, split=split, only=only
             ):
                 d = report.as_dict()
-                typer.echo(f"scan: +{d['captured']} new, {d['skipped_existing']} unchanged, by_domain={d['by_domain']}")
+                typer.echo(
+                    f"scan: +{d['captured']} new, {d['skipped_existing']} unchanged, by_domain={d['by_domain']}"
+                )
         except KeyboardInterrupt:
             typer.echo("stopped.")
         return
     report = ingest_source(
-        api, path, channel=channel, glob=glob, split=split,
-        dry_run=dry_run, only=only, limit=limit,
+        api,
+        path,
+        channel=channel,
+        glob=glob,
+        split=split,
+        dry_run=dry_run,
+        only=only,
+        limit=limit,
     )
     typer.echo(json.dumps(report.as_dict(), indent=2))
 
@@ -424,16 +445,12 @@ def _parse_kv_options(values: list[str] | None, *, flag: str) -> dict[str, str]:
     out: dict[str, str] = {}
     for raw in values or []:
         if "=" not in raw:
-            typer.secho(
-                f"{flag} expects entity=value, got {raw!r}", err=True, fg=typer.colors.RED
-            )
+            typer.secho(f"{flag} expects entity=value, got {raw!r}", err=True, fg=typer.colors.RED)
             raise typer.Exit(code=2)
         entity, _, value = raw.partition("=")
         entity, value = entity.strip(), value.strip()
         if not entity or not value:
-            typer.secho(
-                f"{flag} expects entity=value, got {raw!r}", err=True, fg=typer.colors.RED
-            )
+            typer.secho(f"{flag} expects entity=value, got {raw!r}", err=True, fg=typer.colors.RED)
             raise typer.Exit(code=2)
         out[entity] = value
     return out
@@ -501,9 +518,7 @@ def import_cmd(
     from domain_foundry_core.paths import Workspace
 
     if (sqlite is None) == (source_json is None):
-        typer.secho(
-            "provide exactly one source: --sqlite or --json", err=True, fg=typer.colors.RED
-        )
+        typer.secho("provide exactly one source: --sqlite or --json", err=True, fg=typer.colors.RED)
         raise typer.Exit(code=2)
 
     mapping_path = mapping.expanduser()
@@ -531,9 +546,7 @@ def import_cmd(
         typer.secho(str(exc), err=True, fg=typer.colors.RED)
         raise typer.Exit(code=2) from exc
 
-    importer = GenericImporter(
-        Workspace(ctx.obj["home"]), mapping_config, dry_run=not apply
-    )
+    importer = GenericImporter(Workspace(ctx.obj["home"]), mapping_config, dry_run=not apply)
     report = importer.run(source)
 
     if markdown:
@@ -567,9 +580,7 @@ def query_cmd(
 ) -> None:
     """Query entries (read-only)."""
     api = HarnessAPI(ctx.obj["home"])
-    rows = api.query(
-        domain=domain, object_type=object_type, status=status, q=q, limit=limit
-    )
+    rows = api.query(domain=domain, object_type=object_type, status=status, q=q, limit=limit)
     typer.echo(json.dumps([r.model_dump() for r in rows], indent=2))
 
 
@@ -596,16 +607,12 @@ def search_cmd(
     q: str = typer.Argument(..., help="FTS5 search query"),
     domain: str | None = typer.Option(None, "--domain", "-d"),
     object_type: str | None = typer.Option(None, "--object-type", "-t"),
-    kind: str | None = typer.Option(
-        None, "--kind", "-k", help="entry | canonical (default: both)"
-    ),
+    kind: str | None = typer.Option(None, "--kind", "-k", help="entry | canonical (default: both)"),
     limit: int = typer.Option(50, "--limit", "-n"),
 ) -> None:
     """Full-text search over entry raw text and canonical object text."""
     api = HarnessAPI(ctx.obj["home"])
-    result = api.search(
-        q, domain=domain, object_type=object_type, kind=kind, limit=limit
-    )
+    result = api.search(q, domain=domain, object_type=object_type, kind=kind, limit=limit)
     typer.echo(json.dumps(result, indent=2))
 
 
@@ -680,11 +687,7 @@ def doctor_cmd(
     if layout_ok:
         add_check("Home layout", "PASS", str(workspace.home))
     else:
-        missing = [
-            str(path.relative_to(home))
-            for path in layout_paths
-            if not path.is_dir()
-        ]
+        missing = [str(path.relative_to(home)) for path in layout_paths if not path.is_dir()]
         if not workspace.home.is_dir():
             missing.insert(0, str(workspace.home))
         add_check(
@@ -693,11 +696,7 @@ def doctor_cmd(
             f"missing {', '.join(missing)}; run domain-foundry init",
         )
 
-    initialized = (
-        layout_ok
-        and workspace.ledger_db.is_file()
-        and workspace.domains_db.is_file()
-    )
+    initialized = layout_ok and workspace.ledger_db.is_file() and workspace.domains_db.is_file()
     api: HarnessAPI | None = None
     api_error: str | None = None
     if initialized:
@@ -718,10 +717,7 @@ def doctor_cmd(
             add_check("Database integrity", "FAIL", f"{type(exc).__name__}: {exc}")
         else:
             if not report.ok:
-                detail = (
-                    f"ledger={report.ledger.integrity}, "
-                    f"domains={report.domains.integrity}"
-                )
+                detail = f"ledger={report.ledger.integrity}, domains={report.domains.integrity}"
                 add_check("Database integrity", "FAIL", detail)
             elif report.failed_change_requests:
                 detail = "; ".join(report.warnings) or (
@@ -736,9 +732,7 @@ def doctor_cmd(
         bundled = sorted(
             path
             for path in bundled_root.iterdir()
-            if path.is_dir()
-            and path.name != "_template"
-            and (path / "pack.yaml").is_file()
+            if path.is_dir() and path.name != "_template" and (path / "pack.yaml").is_file()
         )
     except OSError:
         bundled = []
@@ -794,10 +788,7 @@ def doctor_cmd(
         sota_info = provider.get("sota")
         routine = isinstance(routine_info, dict) and bool(routine_info.get("live"))
         sota = isinstance(sota_info, dict) and bool(sota_info.get("live"))
-        detail = (
-            f"provider={provider_name}, mode={mode}, "
-            f"routine.live={routine}, sota.live={sota}"
-        )
+        detail = f"provider={provider_name}, mode={mode}, routine.live={routine}, sota.live={sota}"
         if mode == "live" and not (routine or sota):
             add_check("Providers", "FAIL", f"{detail}; no configured tier is live")
         else:
@@ -833,9 +824,7 @@ def doctor_cmd(
     else:
         typer.echo(f"{'check':<22} {'status':<5} detail")
         for check in checks:
-            typer.echo(
-                f"{check['name']:<22} {check['status']:<5} {check['detail']}"
-            )
+            typer.echo(f"{check['name']:<22} {check['status']:<5} {check['detail']}")
         typer.echo(f"{'overall':<22} {'PASS' if ok else 'FAIL'}")
     raise typer.Exit(code=0 if ok else 1)
 
@@ -845,9 +834,7 @@ def serve_cmd(
     ctx: typer.Context,
     host: str = typer.Option("127.0.0.1", "--host"),
     port: int = typer.Option(8787, "--port", "-p"),
-    token: str | None = typer.Option(
-        None, "--token", envvar="DOMAIN_FOUNDRY_API_TOKEN"
-    ),
+    token: str | None = typer.Option(None, "--token", envvar="DOMAIN_FOUNDRY_API_TOKEN"),
 ) -> None:
     """Run the local app and API (http://127.0.0.1:8787)."""
     run_server(ctx.obj["home"], host=host, port=port, api_token=token)
@@ -949,6 +936,87 @@ def eval_ask_cmd(
         raise typer.Exit(code=1)
 
 
+@eval_app.command("interest-suite")
+def eval_interest_suite_cmd(
+    ctx: typer.Context,
+    cases: Path | None = typer.Option(
+        None, "--cases", help="JSONL interest cases (default: committed 50-interest suite)"
+    ),
+    baseline: Path | None = typer.Option(
+        None, "--baseline", help="Baseline snapshot to ratchet against"
+    ),
+    bucket: str | None = typer.Option(
+        None, "--bucket", help="Only run one bucket (indexed, collision, unindexed)"
+    ),
+    update_baseline: bool = typer.Option(
+        False, "--update-baseline", help="Rewrite the committed baseline and exit"
+    ),
+    min_pass: int | None = typer.Option(
+        None, "--min-pass", help="Fail if fewer than this many cases fully pass"
+    ),
+    report: Path | None = typer.Option(
+        None, "--report", help="Write the full per-case JSON report here"
+    ),
+) -> None:
+    """Run the end-to-end interest suite: type a passion, get an app that files.
+
+    Offline and deterministic. Fails on any case that ends worse than the
+    committed baseline, because aggregate counts hide trades where a fix for one
+    goal quietly breaks another.
+    """
+    from domain_foundry_core.evals import interest as suite
+
+    os.environ.setdefault("DOMAIN_FOUNDRY_LLM", "heuristic")
+    selected = suite.load_cases(cases)
+    if bucket:
+        selected = [case for case in selected if case.get("bucket") == bucket]
+    if not selected:
+        typer.echo("no cases selected", err=True)
+        raise typer.Exit(code=1)
+
+    results = suite.run_suite(selected)
+    summary = suite.summarise(results)
+
+    if report is not None:
+        report.write_text(
+            json.dumps([item.to_json() for item in results], indent=2),
+            encoding="utf-8",
+        )
+
+    baseline_path = baseline or suite.DEFAULT_BASELINE
+    if update_baseline:
+        baseline_path.write_text(
+            json.dumps(suite.build_baseline(results), indent=2) + "\n", encoding="utf-8"
+        )
+        typer.echo(json.dumps(summary, indent=2))
+        typer.echo(f"baseline written: {baseline_path}", err=True)
+        return
+
+    typer.echo(json.dumps(summary, indent=2))
+
+    failed = False
+    errored = [item.id for item in results if item.error]
+    if errored:
+        typer.echo(f"cases crashed: {', '.join(errored)}", err=True)
+        failed = True
+
+    if baseline_path.is_file() and not bucket:
+        snapshot = json.loads(baseline_path.read_text(encoding="utf-8"))
+        regressions = suite.compare_to_baseline(results, snapshot)
+        if regressions:
+            typer.echo("interest-suite regression vs baseline:", err=True)
+            for line in regressions:
+                typer.echo(f"  {line}", err=True)
+            failed = True
+
+    if min_pass is not None and summary["pass"] < min_pass:
+        typer.echo(f"pass {summary['pass']} < required {min_pass}", err=True)
+        failed = True
+
+    if failed:
+        raise typer.Exit(code=1)
+
+
 @eval_app.command("backfill")
 def eval_backfill_cmd(
     ctx: typer.Context,
@@ -982,9 +1050,7 @@ def correct_cmd(
     text: str | None = typer.Argument(None, help="Natural-language correction"),
     entry_id: str | None = typer.Option(None, "--entry-id"),
     object_uid: str | None = typer.Option(None, "--object-uid"),
-    action: str | None = typer.Option(
-        None, "--action", help="amend|move|merge|undo|mark_wrong"
-    ),
+    action: str | None = typer.Option(None, "--action", help="amend|move|merge|undo|mark_wrong"),
     merge_into: str | None = typer.Option(None, "--merge-into"),
     domain: str | None = typer.Option(None, "--domain", help="Target domain for move"),
     as_json: bool = typer.Option(False, "--json", help="Emit machine JSON"),
@@ -1082,9 +1148,7 @@ def projections_status_cmd(
     api = HarnessAPI(ctx.obj["home"])
     typer.echo(
         json.dumps(
-            api.projection_status(
-                entry_id=entry_id, change_request_id=change_request_id
-            ),
+            api.projection_status(entry_id=entry_id, change_request_id=change_request_id),
             indent=2,
         )
     )
@@ -1254,9 +1318,7 @@ def pack_rollback_cmd(
 def pack_export_cmd(
     ctx: typer.Context,
     name: str = typer.Argument(..., help="Installed pack name or alias"),
-    destination: Path | None = typer.Argument(
-        None, help="New destination directory (required)"
-    ),
+    destination: Path | None = typer.Argument(None, help="New destination directory (required)"),
     destination_option: Path | None = typer.Option(
         None, "--destination", "-d", help="New destination directory (required)"
     ),
@@ -1316,6 +1378,254 @@ def _resolve_pack_source(src: str) -> Path:
     raise typer.Exit(code=2)
 
 
+@foundry_app.command("goldens")
+def foundry_goldens_cmd() -> None:
+    """List the reviewed golden specifications shipped with Domain Foundry."""
+    from domain_foundry_core.foundry import load_golden_specs
+
+    payload = [
+        {
+            "id": spec.id,
+            "title": spec.title,
+            "interest": spec.research.interest,
+            "selected_concept": spec.remix.selected_concept,
+            "visual_world": spec.experience.visual_world.id,
+        }
+        for spec in load_golden_specs()
+    ]
+    typer.echo(json.dumps(payload, indent=2, ensure_ascii=False))
+
+
+@foundry_app.command("validate")
+def foundry_validate_cmd(
+    spec_path: Path = typer.Argument(..., exists=True, dir_okay=False, readable=True),
+) -> None:
+    """Validate a FoundrySpec and every source/principle reference it uses."""
+    from domain_foundry_core.foundry import load_foundry_spec
+
+    spec = load_foundry_spec(spec_path.resolve())
+    typer.echo(
+        json.dumps(
+            {
+                "valid": True,
+                "id": spec.id,
+                "spec_version": spec.spec_version,
+                "sources": len(spec.source_ids),
+                "principles": len(spec.principle_ids),
+                "entities": len(spec.domain.entities),
+                "views": len(spec.experience.views),
+                "evaluation_cases": len(spec.evaluation.cases),
+            },
+            indent=2,
+        )
+    )
+
+
+def _foundry_acceptance_task(value: str):  # type: ignore[no-untyped-def]
+    from domain_foundry_core.foundry import AcceptanceTask
+
+    if "=>" not in value:
+        raise typer.BadParameter("tasks use 'what the user does => observable expected outcome'")
+    action, expected = (part.strip() for part in value.split("=>", 1))
+    if not action or not expected:
+        raise typer.BadParameter("both sides of a task must be non-empty")
+    return AcceptanceTask(input=action, expected=expected)
+
+
+def _live_foundry_provider(home: Path):  # type: ignore[no-untyped-def]
+    from domain_foundry_core.llm.provider import build_tiered_provider
+
+    provider = build_tiered_provider(home)
+    if not provider.has_live_keys():
+        typer.secho(
+            "Foundry design requires a configured reasoning model; it will not replace "
+            "research and schema design with the offline keyword scaffold. Run "
+            "`domain-foundry setup` first.",
+            err=True,
+            fg=typer.colors.RED,
+        )
+        raise typer.Exit(code=2)
+    return provider
+
+
+def _foundry_meter(home: Path, *, spec_id: str | None = None):  # type: ignore[no-untyped-def]
+    """Meter Foundry sota calls against the same daily cap capture uses.
+
+    A propose plus a complete is six sota calls. They used to be invisible to
+    the guard that exists to bound spend; now every one writes a ``cost_ledger``
+    row under the ``foundry`` tier and the cap is checked before each call.
+    """
+    from domain_foundry_core.foundry.cost import LedgerCostMeter
+
+    return LedgerCostMeter.for_home(home, spec_id=spec_id)
+
+
+@foundry_app.command("propose")
+def foundry_propose_cmd(
+    ctx: typer.Context,
+    goal: str = typer.Argument(..., help="Interest and desired outcome in plain language"),
+    output: Path = typer.Option(..., "--output", "-o", help="New proposal YAML path"),
+    task: list[str] = typer.Option(
+        [],
+        "--task",
+        help="User-authored acceptance task: 'action => observable outcome' (repeat twice)",
+    ),
+    artifact: list[str] = typer.Option(
+        [], "--artifact", help="Existing notebook, export, folder, or practice artifact"
+    ),
+    constraint: list[str] = typer.Option(
+        [], "--constraint", help="Privacy, device, workflow, or scope constraint"
+    ),
+    web_research: bool = typer.Option(
+        True,
+        "--web-research/--registry-only",
+        help="Use Brave discovery when BRAVE_SEARCH_API_KEY is configured",
+    ),
+) -> None:
+    """Research an interest and produce three evidence-backed product concepts."""
+    from domain_foundry_core.foundry import FoundryPipeline
+    from domain_foundry_core.foundry.pipeline import PipelineError
+    from domain_foundry_core.foundry.research import BraveSearchProvider, ResearchUnavailable
+
+    tasks = [_foundry_acceptance_task(value) for value in task]
+    if len(tasks) < 2:
+        raise typer.BadParameter(
+            "repeat --task at least twice; the generator cannot author its judge"
+        )
+    provider = _live_foundry_provider(ctx.obj["home"])
+    search = (
+        BraveSearchProvider() if web_research and os.environ.get("BRAVE_SEARCH_API_KEY") else None
+    )
+    try:
+        # No allow_model_knowledge here, deliberately: a user who ran
+        # `foundry propose` asked for a researched specification and gets one or
+        # gets nothing (ADR-010).
+        proposed = FoundryPipeline(
+            provider, search=search, meter=_foundry_meter(ctx.obj["home"])
+        ).propose(
+            goal,
+            artifacts=artifact,
+            constraints=constraint,
+            acceptance_tasks=tasks,
+        )
+        proposed.proposal.dump(output.resolve())
+    except (ResearchUnavailable, PipelineError, FileExistsError) as exc:
+        typer.secho(str(exc), err=True, fg=typer.colors.RED)
+        raise typer.Exit(code=2) from exc
+    typer.echo(
+        json.dumps(
+            {
+                "proposed": True,
+                "id": proposed.proposal.id,
+                "title": proposed.proposal.title,
+                "output": str(output.resolve()),
+                "candidate_sources": proposed.candidate_count,
+                "evidence_tier": proposed.proposal.receipt.evidence_tier,
+                "concepts": [
+                    {
+                        "id": concept.id,
+                        "title": concept.title,
+                        "thesis": concept.thesis,
+                        "primary_loop": concept.primary_loop,
+                        "tradeoffs": concept.tradeoffs,
+                    }
+                    for concept in proposed.proposal.concepts
+                ],
+            },
+            indent=2,
+            ensure_ascii=False,
+        )
+    )
+
+
+@foundry_app.command("complete")
+def foundry_complete_cmd(
+    ctx: typer.Context,
+    proposal_path: Path = typer.Argument(..., exists=True, dir_okay=False, readable=True),
+    selected_concept: str = typer.Option(..., "--select", help="Concept id to use as the base"),
+    output: Path = typer.Option(..., "--output", "-o", help="New FoundrySpec YAML path"),
+    decision: list[str] = typer.Option(
+        [], "--decision", help="Explicit user decision retained in remix lineage"
+    ),
+    fragment_json: list[str] = typer.Option(
+        [],
+        "--fragment-json",
+        help="JSON RemixFragment to borrow workflow/schema/interaction/visual pieces",
+    ),
+) -> None:
+    """Turn an approved concept/remix into a complete validated FoundrySpec."""
+    from domain_foundry_core.foundry import (
+        FoundryPipeline,
+        FoundryProposal,
+        dump_foundry_spec,
+    )
+    from domain_foundry_core.foundry.models import RemixFragment, RemixSelection
+    from domain_foundry_core.foundry.pipeline import PipelineError
+
+    if not decision:
+        raise typer.BadParameter("at least one --decision is required for remix lineage")
+    try:
+        fragments = [RemixFragment.model_validate_json(value) for value in fragment_json]
+    except Exception as exc:
+        raise typer.BadParameter(f"invalid --fragment-json: {exc}") from exc
+    proposal = FoundryProposal.load(proposal_path.resolve())
+    provider = _live_foundry_provider(ctx.obj["home"])
+    remix = RemixSelection(
+        selected_concept=selected_concept,
+        fragments=fragments,
+        user_decisions=decision,
+    )
+    try:
+        meter = _foundry_meter(ctx.obj["home"], spec_id=proposal.id)
+        spec = FoundryPipeline(provider, meter=meter).complete(proposal, remix)
+        dump_foundry_spec(spec, output.resolve())
+    except (PipelineError, FileExistsError) as exc:
+        typer.secho(str(exc), err=True, fg=typer.colors.RED)
+        raise typer.Exit(code=2) from exc
+    typer.echo(
+        json.dumps(
+            {
+                "completed": True,
+                "id": spec.id,
+                "output": str(output.resolve()),
+                "entities": len(spec.domain.entities),
+                "views": len(spec.experience.views),
+                "evaluation_cases": len(spec.evaluation.cases),
+                "evidence_tier": spec.evidence_tier,
+                "evidence_label": spec.evidence_tier_label,
+            },
+            indent=2,
+        )
+    )
+
+
+@foundry_app.command("build")
+def foundry_build_cmd(
+    spec_path: Path = typer.Argument(..., exists=True, dir_okay=False, readable=True),
+    output: Path = typer.Option(..., "--output", "-o", help="New or empty output directory"),
+) -> None:
+    """Compile a validated spec into an inspectable, owned application bundle."""
+    from domain_foundry_core.foundry import FoundryCompiler, load_foundry_spec
+
+    spec = load_foundry_spec(spec_path.resolve())
+    artifact = FoundryCompiler().compile(spec, output)
+    typer.echo(
+        json.dumps(
+            {
+                "built": True,
+                "id": spec.id,
+                "root": str(artifact.root),
+                "app": str(artifact.app),
+                "schema": str(artifact.schema),
+                "spec": str(artifact.spec),
+                "evidence": str(artifact.evidence),
+                "receipt": str(artifact.receipt),
+            },
+            indent=2,
+        )
+    )
+
+
 @pack_app.command("new")
 def pack_new_cmd(
     ctx: typer.Context,
@@ -1326,21 +1636,172 @@ def pack_new_cmd(
     typer.echo(json.dumps(info, indent=2))
 
 
+def _creation_progress_text(turn: dict) -> str:
+    """Render only the useful part of the release progress rail."""
+    items = turn.get("progress") or []
+    labels = []
+    for item in items:
+        status = item.get("status")
+        mark = "✓" if status == "done" else "→" if status == "active" else "·"
+        labels.append(f"{mark} {item.get('label', '')}")
+    return "  " + "   ".join(labels) if labels else ""
+
+
+def _creation_schema_text(preview: dict) -> list[str]:
+    fields = preview.get("fields") or []
+    grouped: dict[str, list[str]] = {}
+    for field in fields:
+        if not isinstance(field, dict):
+            continue
+        obj = field_label(str(field.get("object") or "details"))
+        grouped.setdefault(obj, []).append(field_label(str(field.get("name") or "details")))
+    return [f"  {obj}  {', '.join(dict.fromkeys(names))}" for obj, names in grouped.items()]
+
+
+def _render_creation_turn(turn: dict, *, details: bool = False) -> None:
+    """Print the release conversation in the same order as the web journey."""
+    typer.echo(turn.get("user_message") or turn.get("message") or "")
+    progress = _creation_progress_text(turn)
+    if progress:
+        typer.echo(progress)
+
+    neighborhood = turn.get("neighborhood") or {}
+    ideas = neighborhood.get("ideas") or []
+    if ideas and turn.get("state") == "fork":
+        typer.echo("\nChoose a direction:")
+        for index, idea in enumerate(ideas, start=1):
+            marker = " — closest to what you described" if idea.get("highlighted") else ""
+            typer.echo(f"  {index}  {idea.get('title', 'This direction')}{marker}")
+            if idea.get("pitch"):
+                typer.echo(f"     {idea['pitch']}")
+        for heading, key in (("You might also want", "expand"), ("More directions", "refine")):
+            cards = neighborhood.get(key) or []
+            if cards:
+                typer.echo(f"\n{heading}: " + ", ".join(str(card.get("title")) for card in cards[:8]))
+
+    looks = turn.get("looks") or []
+    if looks and turn.get("state") == "looks":
+        typer.echo("\nStarting points:")
+        for index, look in enumerate(looks, start=1):
+            pitch = job_label(look.get("hero_job"))
+            typer.echo(f"  {index}  {look.get('title', 'Starting point')} — {pitch}")
+
+    preview = turn.get("schema_preview")
+    if isinstance(preview, dict):
+        typer.echo("\nThe app will keep track of:")
+        for line in _creation_schema_text(preview):
+            typer.echo(line)
+
+    capture = turn.get("capture") or {}
+    routed = capture.get("routed") or []
+    if routed:
+        first = routed[0]
+        disposition = str(first.get("disposition") or "")
+        if disposition not in {"unfiled", "ledger_only"}:
+            typer.echo(
+                "\nWent to the right place: "
+                f"{field_label(str(first.get('object_type') or 'note'))}."
+            )
+        else:
+            typer.echo("\nYour note is safe, but it did not go to the right place yet.")
+
+    if turn.get("based_on") and turn.get("state") in {"test_drive", "done"}:
+        typer.echo(f"Based on {turn['based_on']}.")
+    if details and turn.get("technical_details"):
+        raw = turn["technical_details"].get("message")
+        if raw:
+            typer.echo(f"\nTechnical details: {raw}")
+
+
+def _run_creation(
+    home: Path,
+    goal: str | None,
+    replies: list[str],
+    *,
+    test_drive: int,
+    json_output: bool,
+    details: bool,
+) -> None:
+    if json_output and not goal:
+        raise typer.BadParameter("a goal is required with --json")
+    if not goal:
+        goal = typer.prompt("What would you like an app for?")
+    if not goal.strip():
+        raise typer.BadParameter("tell us what you want the app for")
+
+    api = HarnessAPI(home)
+    turn = api.create_domain(goal.strip(), test_drive=test_drive)
+    session_id = str(turn["session_id"])
+    if json_output:
+        typer.echo(json.dumps(turn, indent=2, ensure_ascii=False))
+    else:
+        _render_creation_turn(turn, details=details)
+
+    scripted = list(replies)
+    scripted_mode = bool(scripted)
+    while True:
+        if scripted:
+            text = scripted.pop(0)
+        elif json_output or scripted_mode or turn.get("state") in {"done", "failed"}:
+            break
+        else:
+            prompt = "\n> "
+            try:
+                text = typer.prompt(prompt, prompt_suffix="")
+            except (EOFError, KeyboardInterrupt):
+                typer.echo("\nYour choices are saved. You can continue this session later.")
+                break
+        turn = api.wizard_reply(session_id, text)
+        if json_output:
+            typer.echo(json.dumps(turn, indent=2, ensure_ascii=False))
+        else:
+            _render_creation_turn(turn, details=details)
+        if turn.get("state") in {"done", "failed"} and not scripted:
+            break
+
+
+@app.command("create")
+def create_cmd(
+    ctx: typer.Context,
+    goal: str | None = typer.Argument(None, help="A topic or practice, such as 'whisky'"),
+    reply: list[str] = typer.Option(
+        [],
+        "--reply",
+        "-r",
+        help="Scripted replies for automation or a recorded conversation (repeatable)",
+    ),
+    test_drive: int = typer.Option(5, "--test-drive", help="First-use note budget"),
+    json_output: bool = typer.Option(False, "--json", help="Print machine-readable turns"),
+    details: bool = typer.Option(False, "--details", help="Show technical detail below the conversation"),
+) -> None:
+    """Create a personal app through the release conversation."""
+    _run_creation(
+        ctx.obj["home"],
+        goal,
+        reply,
+        test_drive=test_drive,
+        json_output=json_output,
+        details=details,
+    )
+
+
 @app.command("new-domain")
 def new_domain_cmd(
     ctx: typer.Context,
     goal: str = typer.Argument(..., help="Plain-language goal, e.g. 'track my sourdough journey'"),
     reply: list[str] = typer.Option(
-        [], "--reply", "-r", help="Scripted wizard replies (repeatable): idea pick, skip, sample captures, edits"
+        [],
+        "--reply",
+        "-r",
+        help="Scripted wizard replies (repeatable): idea pick, skip, sample captures, edits",
     ),
     test_drive: int = typer.Option(5, "--test-drive", help="Test-drive capture budget"),
 ) -> None:
-    """Guided domain creation. First turn is an idea-atlas neighborhood.
+    """Deprecated legacy JSON wizard; use ``domain-foundry create`` instead.
 
-    With no --reply, prints the neighborhood and pauses. Pass --reply 'skip'
-    (or an idea name) to compile/install, then more --reply values to
-    test-drive or harden the domain.
+    Use ``create`` for the calm, interactive release conversation.
     """
+    typer.secho("new-domain is deprecated; use `domain-foundry create`.", err=True, fg=typer.colors.YELLOW)
     api = HarnessAPI(ctx.obj["home"])
     turn = api.new_domain(goal, test_drive=test_drive)
     typer.echo(json.dumps(turn, indent=2, ensure_ascii=False))
@@ -1611,9 +2072,7 @@ def roamboard_sync_cmd(
         "--shadow",
         help="Dry-run import accounting + write shadow/roamboard/ diff vs travel.sqlite RO.",
     ),
-    feed: Path | None = typer.Option(
-        None, "--feed", help="Roamboard feed JSON (schemaVersion 2)"
-    ),
+    feed: Path | None = typer.Option(None, "--feed", help="Roamboard feed JSON (schemaVersion 2)"),
     patch_bundle: Path | None = typer.Option(
         None, "--patch-bundle", help="Pending-patch bundle JSON (drain shape)"
     ),

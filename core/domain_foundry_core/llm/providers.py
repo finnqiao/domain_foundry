@@ -32,6 +32,7 @@ escalation policy that decides which of the two a given call gets.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from urllib.parse import urlparse
 
 # Wire dialects. "anthropic" → POST {base}/v1/messages with x-api-key.
 # "openai" → POST {base}/chat/completions with a Bearer token. Anything a user
@@ -69,11 +70,12 @@ class ProviderSpec:
         return not self.keyless
 
 
-# Ordered as setup presents them. Anthropic first because it is the only
-# provider whose model IDs and request shape this repo verifies; every other
-# row's model IDs are user-facing defaults carried over from prior config and
-# are expected to be overridden — a provider can rename a model at any time and
-# we would rather be corrected at setup than 404 at capture time.
+# Ordered as setup presents them. Every network default is checked against the
+# time-bounded official-source record in release/provider-compatibility.yaml;
+# request-contract tests cover the first-party dialect differences. A provider
+# can rename a model at any time, so the aggregate release gate expires that
+# compatibility evidence after 30 days instead of treating these aliases as
+# timeless constants.
 _PROVIDERS: tuple[ProviderSpec, ...] = (
     ProviderSpec(
         id="anthropic",
@@ -96,20 +98,20 @@ _PROVIDERS: tuple[ProviderSpec, ...] = (
         base_url="https://api.openai.com/v1",
         api_key_envs=("OPENAI_API_KEY",),
         canonical_key_env="OPENAI_API_KEY",
-        routine_model="gpt-4o-mini",
-        sota_model="gpt-4o",
+        routine_model="gpt-5.6-luna",
+        sota_model="gpt-5.6-sol",
         signup_url="https://platform.openai.com/api-keys",
-        notes="Model IDs are defaults — override if you use newer ones.",
+        notes="Luna handles high-volume work; Sol handles schema and design work.",
     ),
     ProviderSpec(
         id="deepseek",
         label="DeepSeek",
         dialect=DIALECT_OPENAI,
-        base_url="https://api.deepseek.com/v1",
+        base_url="https://api.deepseek.com",
         api_key_envs=("DOMAIN_FOUNDRY_ROUTINE_API_KEY", "DEEPSEEK_API_KEY"),
         canonical_key_env="DEEPSEEK_API_KEY",
-        routine_model="deepseek-chat",
-        sota_model="deepseek-reasoner",
+        routine_model="deepseek-v4-flash",
+        sota_model="deepseek-v4-pro",
         signup_url="https://platform.deepseek.com/api_keys",
         notes="Cheapest per capture; weaker on json_schema adherence.",
     ),
@@ -181,6 +183,20 @@ def is_anthropic_base(base_url: str | None) -> bool:
     if not base_url:
         return False
     return "anthropic" in urlparse(base_url).netloc.lower()
+
+
+def is_deepseek_base(base_url: str | None) -> bool:
+    """True only for DeepSeek's first-party OpenAI-compatible API."""
+    if not base_url:
+        return False
+    return urlparse(base_url).netloc.lower() == "api.deepseek.com"
+
+
+def is_openai_base(base_url: str | None) -> bool:
+    """True only for OpenAI's first-party API, not compatible gateways."""
+    if not base_url:
+        return False
+    return urlparse(base_url).netloc.lower() == "api.openai.com"
 
 
 # ---------------------------------------------------------------------------

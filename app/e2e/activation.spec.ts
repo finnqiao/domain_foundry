@@ -52,9 +52,11 @@ test("activation journey: install → capture → correct → review", async ({ 
     .locator("input");
   await hydration.fill("80");
   await correct.getByRole("button", { name: "Apply correction" }).click();
+  await expect(correct).not.toBeVisible();
   await expect(detail).toContainText("Revision 1");
   await expect(detail).toContainText("80");
   await page.keyboard.press("Escape"); // close the detail modal
+  await expect(detail).not.toBeVisible();
 
   // 7. Force a review item: capture a second bake, then merge it into the
   //    first — merge is review-gated by packs/sourdough/policy.yaml.

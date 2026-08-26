@@ -36,6 +36,22 @@ cd app && npm install && npm run build
 - Ship ≥8 routing examples and ≥2 negative examples; `pack validate` enforces this.
 - Cross-domain facts use explicit `links`, never a merged universal schema.
 
+## The held-out interest set is off limits
+
+`examples/heldout/interest_suite_heldout.jsonl` is twenty passions written from
+real hobbyist phrasing, protected so that the create path is measured rather
+than fitted. **If the held-out set fails, improve the compiler, not the atlas.**
+
+- Never copy a held-out `jargon`, `seed`, or `seed2` word into `atlas/*.yaml` or
+  into `examples/heldout/interest_suite.jsonl`.
+- Adding an atlas node, alias, or vocabulary entry because a held-out goal
+  missed is the behaviour the guard exists to catch, not a fix for the miss.
+- `python scripts/heldout_leakcheck.py` is a release gate and runs in `pytest`.
+  It names the leaked token, the file, and the node, so a failure is actionable.
+- The held-out *pass rate* deliberately does not gate. It is a diagnostic that
+  reads 0/20 today; pinning it would either be free or block on the gap it is
+  there to show.
+
 ## Pull requests
 
 - Keep PRs focused; one concern per PR when practical.

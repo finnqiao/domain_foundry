@@ -1,0 +1,1332 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Shack Logbook</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --bg: #f3f0e8; --surface: #fffdf8; --ink: #1c1c1a; --muted: #65645f;
+      --accent: #965131; --accent-alt: #315866; --border: #d1c9ba;
+      --focus: #17627c; --danger: #a53a35; --radius: 10px;
+      --shadow: 0 14px 40px rgba(32, 28, 22, .12);
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+    }
+    html { background: var(--bg); color: var(--ink); }
+    body { margin: 0; min-height: 100vh; background: var(--bg); }
+    button, input, select, textarea { font: inherit; }
+    button { min-height: 44px; cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .58; }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 3px solid var(--focus); outline-offset: 3px;
+    }
+    .skip { position: fixed; left: 1rem; top: -5rem; z-index: 20; background: var(--ink); color: var(--surface); padding: .7rem 1rem; }
+    .skip:focus { top: 1rem; }
+    .app { min-height: 100vh; display: grid; grid-template-columns: minmax(210px, 260px) 1fr; }
+    .rail { min-height: 100vh; padding: 2rem 1.25rem; border-right: 1px solid var(--border); background: color-mix(in srgb, var(--surface) 72%, var(--bg)); position: sticky; top: 0; align-self: start; }
+    .brand { margin: 0 0 2.5rem; font-size: clamp(1.6rem, 3vw, 2.5rem); line-height: .98; letter-spacing: -.035em; max-width: 8ch; }
+    .world { color: var(--muted); line-height: 1.45; margin: -.9rem 0 2rem; }
+    .view-nav { display: grid; gap: .25rem; }
+    .view-nav button { text-align: left; padding: .7rem .8rem; border: 0; border-radius: calc(var(--radius) - 3px); color: var(--ink); background: transparent; }
+    .view-nav button:hover { background: var(--surface); }
+    .view-nav button[aria-current="page"] { background: var(--ink); color: var(--surface); }
+    .rail-foot { margin-top: 2.5rem; font-size: .82rem; color: var(--muted); }
+    main { min-width: 0; padding: clamp(1.25rem, 4vw, 3.75rem); }
+    .topbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 2rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+    .topbar h1 { margin: 0; font-size: clamp(2.4rem, 7vw, 5.7rem); line-height: .92; letter-spacing: -.04em; max-width: 11ch; text-wrap: balance; }
+    .topbar p { max-width: 65ch; color: var(--muted); }
+    .toolbar { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .55rem; }
+    .button { border: 1px solid var(--border); background: var(--surface); color: var(--ink); border-radius: calc(var(--radius) - 2px); padding: .65rem .9rem; }
+    .button:hover { border-color: var(--ink); }
+    .button.primary { background: var(--accent); color: #fff; border-color: transparent; }
+    .button.danger { color: var(--danger); }
+    .view-head { margin: 3.5rem 0 2rem; display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 32rem); gap: 2rem; align-items: end; }
+    .view-head h2 { margin: 0; font-size: clamp(2rem, 5vw, 4rem); line-height: 1; letter-spacing: -.035em; }
+    .view-head p { margin: 0; color: var(--muted); max-width: 70ch; }
+    .regions { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1rem; }
+    .region { grid-column: span var(--span); min-width: 0; padding: clamp(1rem, 2.4vw, 2rem); background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .region.support { background: transparent; box-shadow: none; border: 1px solid var(--border); }
+    .region h3 { margin: 0 0 1.4rem; font-size: 1.1rem; }
+    .region-meta { color: var(--muted); font-size: .78rem; margin: -.9rem 0 1.4rem; }
+    .record-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .7rem; }
+    .record { padding: .85rem 0; border-top: 1px solid var(--border); min-width: 0; }
+    .record:first-child { border-top: 0; padding-top: 0; }
+    .record strong { display: block; font-size: 1.05rem; margin-bottom: .25rem; }
+    .record-select { width: 100%; min-height: 0; padding: .45rem; margin: -.45rem; border: 0; border-radius: calc(var(--radius) - 4px); background: transparent; color: inherit; text-align: start; }
+    .record-select:hover { background: color-mix(in srgb, var(--accent) 7%, transparent); }
+    .record-select[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 12%, transparent); outline: 1px solid var(--accent); }
+    .record dl, .detail-grid { margin: .6rem 0 0; display: grid; grid-template-columns: minmax(7rem, .7fr) minmax(0, 1.3fr); gap: .3rem .8rem; }
+    dt { color: var(--muted); } dd { margin: 0; overflow-wrap: anywhere; }
+    .canvas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: .65rem; }
+    .slot { aspect-ratio: .72; padding: .65rem; background: color-mix(in srgb, var(--accent) 8%, var(--surface)); border: 1px solid var(--border); border-radius: calc(var(--radius) - 3px); display: flex; flex-direction: column; justify-content: space-between; }
+    .slot.empty { background: transparent; border-style: dashed; color: var(--muted); }
+    .slot-number { font-variant-numeric: tabular-nums; font-size: .75rem; color: var(--muted); }
+    .session-card { min-height: 20rem; display: grid; place-items: center; text-align: center; padding: 3rem 1rem; }
+    .session-card .cue { font-size: clamp(2.7rem, 9vw, 7rem); line-height: 1; letter-spacing: -.03em; }
+    .session-answer { margin-top: 2rem; font-size: 1.15rem; }
+    .measure { font-family: ui-monospace, "SFMono-Regular", monospace; font-variant-numeric: tabular-nums; }
+    .timeline { border-inline-start: 1px solid var(--accent-alt); padding-inline-start: 1rem; }
+    .timeline .record { position: relative; }
+    .timeline .record::before { content: ""; position: absolute; width: 9px; height: 9px; border-radius: 50%; background: var(--accent-alt); inset-inline-start: calc(-1rem - 5px); top: 1.1rem; }
+    .timeline time { display: block; color: var(--muted); font-size: .78rem; margin-bottom: .35rem; }
+    .chart-figure { margin: 0; }
+    .chart-figure svg { display: block; width: 100%; min-height: 220px; overflow: visible; }
+    .chart-grid { stroke: var(--border); stroke-width: 1; }
+    .chart-area { fill: color-mix(in srgb, var(--accent) 14%, transparent); }
+    .chart-line { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    .chart-point { fill: var(--surface); stroke: var(--accent); stroke-width: 3; }
+    .chart-figure figcaption { color: var(--muted); font-size: .82rem; margin-top: .7rem; }
+    .data-table-wrap { max-width: 100%; overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+    .data-table th, .data-table td { padding: .65rem .7rem; border-bottom: 1px solid var(--border); text-align: start; vertical-align: top; overflow-wrap: anywhere; }
+    .data-table th { color: var(--muted); font-size: .76rem; font-weight: 650; }
+    .data-table tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+    .data-table tbody tr { cursor: pointer; }
+    .shelf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .8rem; }
+    .shelf-item { min-height: 8rem; padding: 1rem; border: 1px solid var(--border); border-radius: calc(var(--radius) - 3px); background: color-mix(in srgb, var(--surface) 84%, var(--accent-alt)); color: var(--ink); text-align: start; }
+    .shelf-item[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .shelf-item small { display: block; color: var(--muted); margin-top: .7rem; }
+    .workbench { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 1rem; }
+    .workbench aside { border-inline-end: 1px solid var(--border); padding-inline-end: 1rem; }
+    .explanation { max-width: 68ch; }
+    .explanation strong { display: block; margin-bottom: .55rem; }
+    .storage-note { color: var(--muted); font-size: .78rem; margin: .8rem 0 0; }
+    .empty-state { min-height: 12rem; display: grid; align-content: center; justify-items: start; gap: .75rem; color: var(--muted); }
+    .empty-state p { max-width: 45ch; margin: 0; }
+    .view-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1.2rem; }
+    .status { min-height: 1.5rem; margin-top: 1rem; color: var(--ink); font-weight: 650; }
+    .error { min-height: 1.5rem; margin-top: .35rem; color: var(--danger); font-weight: 650; }
+    dialog { width: min(680px, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); border: 0; border-radius: var(--radius); padding: 0; color: var(--ink); background: var(--surface); box-shadow: 0 24px 80px rgba(0,0,0,.28); }
+    dialog::backdrop { background: rgba(18, 17, 14, .68); }
+    .dialog-inner { padding: clamp(1.2rem, 4vw, 2.5rem); }
+    .dialog-head { display: flex; justify-content: space-between; gap: 1rem; align-items: start; }
+    .dialog-head h2 { margin: 0; font-size: 2rem; letter-spacing: -.03em; }
+    .icon-button { width: 44px; padding: 0; border: 1px solid var(--border); border-radius: 50%; background: transparent; }
+    .form-grid { margin-top: 1.5rem; display: grid; gap: 1rem; }
+    label { display: grid; gap: .35rem; font-weight: 650; }
+    label small { color: var(--muted); font-weight: 400; }
+    input, select, textarea { width: 100%; min-height: 44px; padding: .65rem .7rem; border: 1px solid var(--border); border-radius: calc(var(--radius) - 3px); background: var(--bg); color: var(--ink); }
+    textarea { min-height: 7rem; resize: vertical; }
+    .dialog-actions { margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: .6rem; }
+    .evidence-item { padding: 1rem 0; border-top: 1px solid var(--border); }
+    .evidence-item a { color: var(--accent-alt); }
+    .visually-hidden { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
+    body[data-topology="session"] .app { grid-template-columns: 1fr; }
+    body[data-topology="session"] .rail { min-height: auto; position: static; border-right: 0; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: auto 1fr; gap: 2rem; padding: 1rem clamp(1rem, 4vw, 3rem); align-items: center; }
+    body[data-topology="session"] .brand { margin: 0; max-width: none; font-size: 1.15rem; }
+    body[data-topology="session"] .world, body[data-topology="session"] .rail-foot { display: none; }
+    body[data-topology="session"] .view-nav { display: flex; justify-content: flex-end; overflow-x: auto; }
+    body[data-topology="session"] main { width: min(1100px, 100%); margin: auto; }
+    @media (max-width: 820px) {
+      .app { grid-template-columns: 1fr; min-width: 0; width: 100%; }
+      .rail { min-width: 0; width: 100%; max-width: 100vw; min-height: auto; position: static; border-right: 0; border-bottom: 1px solid var(--border); padding: 1rem; overflow: hidden; }
+      .brand { max-width: none; margin: 0 0 .3rem; font-size: 1.4rem; }
+      .world, .rail-foot { display: none; }
+      .view-nav { display: flex; min-width: 0; width: 100%; max-width: calc(100vw - 2rem); overflow-x: auto; padding-bottom: .2rem; }
+      .view-nav button { flex: 0 0 auto; }
+      main { min-width: 0; width: 100%; }
+      .topbar, .view-head { grid-template-columns: 1fr; display: grid; }
+      .toolbar { justify-content: flex-start; }
+      .region { grid-column: 1 / -1 !important; }
+      .record dl, .detail-grid { grid-template-columns: 1fr; }
+      .workbench { grid-template-columns: 1fr; }
+      .workbench aside { border-inline-end: 0; border-bottom: 1px solid var(--border); padding-inline-end: 0; padding-bottom: 1rem; }
+      body[data-topology="session"] .rail { display: block; padding: 1rem; }
+      body[data-topology="session"] .brand { margin-bottom: .8rem; }
+      body[data-topology="session"] .view-nav { justify-content: flex-start; max-width: calc(100vw - 2rem); }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .region { animation: resolve-in 420ms cubic-bezier(.16,1,.3,1) both; }
+      @keyframes resolve-in { from { opacity: .6; transform: translateY(8px); filter: blur(3px); } to { opacity: 1; transform: none; filter: none; } }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to application</a>
+  <div id="app"></div>
+  <dialog id="capture-dialog" aria-labelledby="capture-title"><div class="dialog-inner" id="capture-content"></div></dialog>
+  <dialog id="evidence-dialog" aria-labelledby="evidence-title"><div class="dialog-inner" id="evidence-content"></div></dialog>
+  <script type="application/json" id="foundry-spec">{"spec_version": "1.0", "id": "ham-radio", "title": "Shack Logbook", "generation": null, "source_ids": ["adif_spec", "postgresql_constraints", "sqlite_foreign_keys", "sqlite_query_planner", "w3c_prov", "govuk_design_principles", "wcag_22", "aria_apg", "ui_remix_paper"], "source_snapshots": [], "principle_ids": ["DE-01", "DE-02", "DE-03", "DE-04", "DE-05", "DE-06", "DE-08", "UX-01", "UX-02", "UX-04", "UX-05", "UX-06", "UX-07", "UX-10", "SE-01", "SE-03", "SE-04", "SE-10", "SE-11"], "research": {"interest": "Working stations on the amateur bands and keeping a log that counts", "desired_outcome": "Know at a glance what is worked, what is confirmed, and when the bands actually open for this station", "practice": ["Call CQ or answer one, exchange callsigns and signal reports, and log the contact before the next caller", "Send and chase QSL confirmations by bureau, direct, and LoTW, because only confirmed counts for awards", "Watch which bands and UTC hours actually produce contacts and plan the next session around them"], "existing_artifacts": ["a paper logbook", "ADIF exports from an old logger", "a shoebox of QSL cards", "an LoTW account"], "constraints": ["entry must keep up with a pileup", "times are UTC without exception", "the log must import and export ADIF"], "open_questions": ["whether contest exchanges belong in the same log", "how portable operations map to station profiles", "whether eQSL counts as confirmed"], "usage_context": ["at the rig with one hand on the key", "desktop when reviewing awards progress"], "first_value": "Log one contact and see it counted against its DXCC entity with a QSL trail ready to open"}, "evidence": [{"id": "ev_ham_adif_fields", "source_id": "adif_spec", "claim": "A QSO record standardizes callsign, band, mode, RST sent and received, and QSL route as named fields rather than free text.", "use": "pattern", "locator": "ADIF QSO record field definitions"}, {"id": "ev_ham_adif_exchange", "source_id": "adif_spec", "claim": "Logs move between loggers and award systems through ADIF import and export, so a log that cannot speak ADIF is an island.", "use": "pattern", "locator": "ADIF interchange purpose"}, {"id": "ev_ham_identity", "source_id": "postgresql_constraints", "claim": "Stable identities and relationships should be explicit and enforceable rather than repeated as text fields.", "use": "constraint", "locator": "primary keys and foreign keys"}, {"id": "ev_ham_lineage", "source_id": "w3c_prov", "claim": "A QSO is an observation at a UTC instant; corrections preserve the originally logged exchange.", "use": "pattern", "locator": "PROV starting point terms"}, {"id": "ev_ham_workloads", "source_id": "sqlite_query_planner", "claim": "Indexes should follow concrete filtering, joining, and ordering workloads.", "use": "constraint", "locator": null}, {"id": "ev_ham_service", "source_id": "govuk_design_principles", "claim": "Begin with user needs and real context, then do the hard work required to make the service simple.", "use": "pattern", "locator": null}, {"id": "ev_ham_access", "source_id": "wcag_22", "claim": "Keyboard access, focus, reflow, labels, status, and error recovery are release requirements.", "use": "constraint", "locator": null}], "concepts": [{"id": "running_log", "title": "The Running Log", "thesis": "Make logging as fast as the pileup and let everything else be a view over the log.", "primary_loop": "Hear a callsign, type it, tab through band and reports, and be ready before the next caller.", "primary_affordance": "A callsign-first entry line that stamps UTC and files with one keystroke", "differentiator": "The only concept that keeps up with a pileup without dropping fields", "feature_boundary": ["QSO entry with band and mode", "reverse chronological log", "QSL trail per contact"], "tradeoffs": ["awards progress is a secondary view", "propagation insight arrives only as the log grows"], "workflow_ids": ["log_qso", "review_log"], "evidence_ids": ["ev_ham_adif_fields", "ev_ham_service"]}, {"id": "dx_atlas", "title": "DX Atlas", "thesis": "Treat the log as a collection and make worked-versus-confirmed the organizing question.", "primary_loop": "Work a new one, watch its cell light up as worked, and chase the QSL until it flips to confirmed.", "primary_affordance": "A worked/confirmed DXCC honeycomb ordered by continent", "differentiator": "Turns a flat log into visible award progress with the confirmation debt explicit", "feature_boundary": ["DXCC progress matrix", "QSL routing and chasing", "per-entity contact history"], "tradeoffs": ["entry speed is secondary", "little to say about propagation timing"], "workflow_ids": ["chase_entities", "confirm_cards"], "evidence_ids": ["ev_ham_adif_fields", "ev_ham_lineage"]}, {"id": "band_watch", "title": "Band Watch", "thesis": "Read propagation from the operator's own log instead of prediction sites.", "primary_loop": "Log contacts as they come, then read the band-by-hour heat to decide when to sit down at the rig.", "primary_affordance": "A band-by-UTC-hour activity heat built from the log itself", "differentiator": "Answers when this station actually gets out, from evidence rather than forecasts", "feature_boundary": ["activity heat by band and hour", "session planning", "seasonal comparison"], "tradeoffs": ["needs months of log before it pays off", "capture and awards are secondary"], "workflow_ids": ["read_conditions", "plan_session"], "evidence_ids": ["ev_ham_workloads", "ev_ham_service"]}], "remix": {"selected_concept": "running_log", "parent_spec": null, "fragments": [{"kind": "visual_system", "from_concept": "dx_atlas", "fragment": "worked/confirmed DXCC honeycomb rail", "reason": "The log still needs award progress visible without leaving entry.", "evidence_ids": ["ev_ham_adif_fields"]}, {"kind": "interaction", "from_concept": "band_watch", "fragment": "band-by-hour heat fed by every logged QSO", "reason": "Contacts logged at pileup speed make the propagation picture possible later without a second pass.", "evidence_ids": ["ev_ham_workloads"]}], "user_decisions": ["Times are UTC, always", "ADIF export is non-negotiable", "Confirmed means LoTW or a card in hand — eQSL is tracked but does not count"]}, "domain": {"entities": [{"id": "station_profile", "title": "Station Profile", "kind": "owned", "description": "One rig-and-antenna setup at a place, the instrument every contact was made with.", "identity": ["station_id"], "lifecycle": ["active", "retired"], "fields": [{"name": "station_id", "type": "text", "description": "Stable local identity", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": ["ev_ham_identity"]}, {"name": "name", "type": "text", "description": "Operator-facing name, like Home shack or POTA go-kit", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": []}, {"name": "my_callsign", "type": "text", "description": "Callsign this station operates under", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": []}, {"name": "my_grid", "type": "text", "description": "Maidenhead grid square of the station", "required": false, "unit": null, "values": null, "sensitive": true, "evidence_ids": []}, {"name": "rig", "type": "text", "description": "Transceiver, like an Icom IC-7300", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": []}, {"name": "antenna", "type": "text", "description": "Antenna and height, like an end-fed half-wave up 9 m", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": []}, {"name": "power_watts", "type": "number", "description": "Typical output power", "required": true, "unit": "W", "values": null, "sensitive": false, "evidence_ids": []}, {"name": "status", "type": "enum", "description": "Whether this setup is still on the air", "required": true, "unit": null, "values": ["active", "retired"], "sensitive": false, "evidence_ids": []}], "evidence_ids": ["ev_ham_adif_fields", "ev_ham_identity"]}, {"id": "dxcc_entity", "title": "DXCC Entity", "kind": "canonical", "description": "One entity on the DXCC list, the collecting axis of the whole log.", "identity": ["entity_id"], "lifecycle": ["current", "deleted"], "fields": [{"name": "entity_id", "type": "text", "description": "Stable entity identity keyed to the DXCC number", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": ["ev_ham_identity"]}, {"name": "name", "type": "text", "description": "Entity name as the award list spells it", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": []}, {"name": "continent", "type": "text", "description": "Continent for the honeycomb ordering", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": []}, {"name": "prefix", "type": "text", "description": "Principal callsign prefix, like JA or VK", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": []}, {"name": "status", "type": "enum", "description": "Current or deleted entity on the DXCC list", "required": true, "unit": null, "values": ["current", "deleted"], "sensitive": false, "evidence_ids": []}], "evidence_ids": ["ev_ham_adif_fields", "ev_ham_identity"]}, {"id": "qso", "title": "QSO", "kind": "event", "description": "One contact at a UTC instant, the heart of the log.", "identity": ["qso_id"], "lifecycle": ["logged", "corrected", "superseded"], "fields": [{"name": "qso_id", "type": "text", "description": "Stable event identity", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": ["ev_ham_identity"]}, {"name": "station_id", "type": "text", "description": "Station setup that made the contact", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": ["ev_ham_identity"]}, {"name": "entity_id", "type": "text", "description": "DXCC entity this contact counts toward", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": ["ev_ham_identity"]}, {"name": "callsign", "type": "text", "description": "Callsign of the station worked", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": ["ev_ham_adif_fields"]}, {"name": "band", "type": "enum", "description": "Amateur band", "required": true, "unit": null, "values": ["160m", "80m", "40m", "30m", "20m", "17m", "15m", "12m", "10m", "6m", "2m", "70cm"], "sensitive": false, "evidence_ids": ["ev_ham_adif_fields"]}, {"name": "mode", "type": "enum", "description": "Operating mode", "required": true, "unit": null, "values": ["CW", "SSB", "FT8", "FT4", "RTTY", "AM", "FM"], "sensitive": false, "evidence_ids": ["ev_ham_adif_fields"]}, {"name": "frequency_mhz", "type": "number", "description": "Dial frequency", "required": true, "unit": "MHz", "values": null, "sensitive": false, "evidence_ids": []}, {"name": "qso_at", "type": "datetime", "description": "Contact time, always UTC", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": ["ev_ham_lineage"]}, {"name": "rst_sent", "type": "text", "description": "Report sent, kept verbatim — RST like 59 on phone and CW, dB like -12 on FT8", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": ["ev_ham_adif_fields"]}, {"name": "rst_rcvd", "type": "text", "description": "Report received, kept verbatim in the same convention", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": ["ev_ham_adif_fields"]}, {"name": "grid_square", "type": "text", "description": "Maidenhead grid square of the station worked", "required": false, "unit": null, "values": null, "sensitive": false, "evidence_ids": []}, {"name": "notes", "type": "text", "description": "The operator's own words about the contact", "required": false, "unit": null, "values": null, "sensitive": false, "evidence_ids": []}], "evidence_ids": ["ev_ham_adif_fields", "ev_ham_lineage"]}, {"id": "qsl_record", "title": "QSL Trail", "kind": "state", "description": "The confirmation state of one contact on one route; confirmed is what counts for awards.", "identity": ["qsl_id"], "lifecycle": ["requested", "sent", "confirmed"], "fields": [{"name": "qsl_id", "type": "text", "description": "Stable trail identity", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": ["ev_ham_identity"]}, {"name": "qso_id", "type": "text", "description": "Contact this trail confirms", "required": true, "unit": null, "values": null, "sensitive": false, "evidence_ids": ["ev_ham_identity"]}, {"name": "state", "type": "enum", "description": "Where the confirmation stands", "required": true, "unit": null, "values": ["requested", "sent", "confirmed"], "sensitive": false, "evidence_ids": []}, {"name": "route", "type": "enum", "description": "How the confirmation travels", "required": true, "unit": null, "values": ["bureau", "direct", "lotw", "eqsl"], "sensitive": false, "evidence_ids": ["ev_ham_adif_fields"]}, {"name": "confirmed_at", "type": "datetime", "description": "When confirmation arrived, UTC", "required": false, "unit": null, "values": null, "sensitive": false, "evidence_ids": ["ev_ham_lineage"]}], "evidence_ids": ["ev_ham_adif_fields", "ev_ham_lineage"]}], "relationships": [{"id": "qso_station", "from_entity": "qso", "to_entity": "station_profile", "cardinality": "many_to_one", "required": true, "on_delete": "restrict", "description": "Every QSO records which station setup made it.", "evidence_ids": ["ev_ham_identity"]}, {"id": "qso_entity", "from_entity": "qso", "to_entity": "dxcc_entity", "cardinality": "many_to_one", "required": true, "on_delete": "restrict", "description": "Every QSO counts toward exactly one DXCC entity.", "evidence_ids": ["ev_ham_identity"]}, {"id": "qsl_trail", "from_entity": "qsl_record", "to_entity": "qso", "cardinality": "many_to_one", "required": true, "on_delete": "cascade", "description": "A QSL trail belongs to the contact it confirms.", "evidence_ids": ["ev_ham_lineage"]}], "constraints": [{"id": "sane_frequency", "entity": "qso", "kind": "check", "fields": ["frequency_mhz"], "expression": "frequency_mhz > 0 AND frequency_mhz < 300", "reason": "Dial frequencies stay within the HF-through-VHF range this log covers.", "evidence_ids": ["ev_ham_identity"]}, {"id": "legal_power", "entity": "station_profile", "kind": "check", "fields": ["power_watts"], "expression": "power_watts > 0 AND power_watts <= 1500", "reason": "Output power stays within the amateur legal limit.", "evidence_ids": ["ev_ham_identity"]}, {"id": "qsl_confirmation_order", "entity": "qsl_record", "kind": "state_transition", "fields": ["state"], "expression": null, "reason": "A QSL cannot be confirmed before it is sent — confirmed is the state awards count.", "evidence_ids": ["ev_ham_adif_fields"]}], "indexes": [{"id": "log_recency", "entity": "qso", "fields": ["band", "mode", "qso_at"], "unique": false, "reason": "The running log is read newest-first with band and mode filters every session.", "workload_ids": ["w_log"]}, {"id": "entity_progress", "entity": "qso", "fields": ["entity_id", "qso_at"], "unique": false, "reason": "The worked-versus-confirmed matrix groups contacts by entity.", "workload_ids": ["w_dxcc"]}, {"id": "activity_clock", "entity": "qso", "fields": ["band", "qso_at"], "unique": false, "reason": "The band clock buckets contacts by band and UTC hour.", "workload_ids": ["w_activity"]}], "workloads": [{"id": "w_log", "question": "What did I work most recently, filtered by band and mode?", "kind": "read", "entities": ["qso", "station_profile"], "filters": ["band", "mode"], "sort": ["qso_at descending"], "expected_scale": "thousands of QSOs", "acceptance": "The log answers newest-first with callsign, band chip, mode, and both reports visible on every line.", "evidence_ids": ["ev_ham_adif_fields", "ev_ham_workloads"]}, {"id": "w_dxcc", "question": "Which DXCC entities are worked and which are confirmed?", "kind": "analysis", "entities": ["dxcc_entity", "qso", "qsl_record"], "filters": ["continent", "band"], "sort": ["confirmed then worked then needed"], "expected_scale": "340 entities against thousands of QSOs", "acceptance": "Every entity shows worked versus confirmed at a glance, and confirmed counts only a QSL trail that reached confirmed.", "evidence_ids": ["ev_ham_adif_fields", "ev_ham_workloads"]}, {"id": "w_activity", "question": "When and on which bands does this station actually make contacts?", "kind": "analysis", "entities": ["qso"], "filters": ["band", "date range"], "sort": ["UTC hour ascending"], "expected_scale": "thousands of QSOs across years", "acceptance": "A band-by-UTC-hour heat answers when propagation favored this station, from the log alone.", "evidence_ids": ["ev_ham_workloads", "ev_ham_lineage"]}], "state_machines": [{"id": "qsl_lifecycle", "entity": "qsl_record", "field": "state", "states": ["requested", "sent", "confirmed"], "transitions": [{"from_state": "requested", "action": "send", "to_state": "sent"}, {"from_state": "sent", "action": "confirm", "to_state": "confirmed"}], "evidence_ids": ["ev_ham_adif_fields"]}], "sample_records": {"station_profile": [{"station_id": "station-home", "name": "Home shack", "my_callsign": "N6FQ", "my_grid": "CM87ut", "rig": "Icom IC-7300", "antenna": "end-fed half-wave up 9 m", "power_watts": 100, "status": "active"}], "dxcc_entity": [{"entity_id": "dxcc-339", "name": "Japan", "continent": "Asia", "prefix": "JA", "status": "current"}, {"entity_id": "dxcc-150", "name": "Australia", "continent": "Oceania", "prefix": "VK", "status": "current"}], "qso": [{"qso_id": "qso-20260822-0114", "station_id": "station-home", "entity_id": "dxcc-339", "callsign": "JA1RQK", "band": "20m", "mode": "SSB", "frequency_mhz": 14.245, "qso_at": "2026-08-22T01:14:00Z", "rst_sent": "59", "rst_rcvd": "57", "grid_square": "PM95", "notes": "Big pileup, got through on the third call, QSL via bureau"}, {"qso_id": "qso-20260821-0942", "station_id": "station-home", "entity_id": "dxcc-150", "callsign": "VK3FN", "band": "40m", "mode": "FT8", "frequency_mhz": 7.074, "qso_at": "2026-08-21T09:42:00Z", "rst_sent": "-12", "rst_rcvd": "-09", "grid_square": "QF22", "notes": "Long path at sunrise, steady decode both ways"}], "qsl_record": [{"qsl_id": "qsl-ja1rqk-20m", "qso_id": "qso-20260822-0114", "state": "sent", "route": "bureau"}, {"qsl_id": "qsl-vk3fn-40m", "qso_id": "qso-20260821-0942", "state": "confirmed", "route": "lotw", "confirmed_at": "2026-08-22T03:10:00Z"}]}, "temporal_policy": ["qso_at is the effective contact time and is always UTC because hams log UTC regardless of the local clock", "captured_at is provenance time", "corrections never overwrite the originally logged exchange"], "privacy_policy": ["my_grid and the station's location are sensitive and appear only in explicit exports", "worked callsigns are public by nature but the operator's notes stay local", "nothing leaves the machine without an explicit export"]}, "experience": {"mode": "operate", "visual_world": {"id": "shack-panel", "name": "The Shack", "mood": "A dark shack lit by the rig's amber panel — calm, nocturnal, tuned", "typography": "Monospace for callsigns, frequencies, reports, and the UTC clock; a plain humanist sans for everything else", "color_strategy": "Near-black panel darks with phosphor-amber signal accents and a muted receiver-green counterpoint; no sci-fi neon, no military drab", "layout_principle": "The entry line and the running log anchor the viewport; the DX map and band clock unfold laterally as evidence, never as a dashboard grid", "density": "Compact and columnar like a paper log, spacious only around the entry line", "signature_elements": ["callsign-first log line with band chip and UTC stamp", "worked/confirmed DXCC honeycomb", "persistent UTC clock rail that never shows local time"], "avoid": ["military cosplay styling", "generic dashboard grids", "skeuomorphic radio dials"], "tokens": {"background": "#101418", "surface": "#1A2026", "text": "#E6E1D3", "muted": "#8A94A0", "accent": "#E89B2E", "accent_alt": "#57A773", "border": "#2A323B", "focus": "#FFC15E", "danger": "#C7503C", "radius_px": 6}}, "navigation": {"topology": "hub", "primary_view": "log", "persistent_regions": ["UTC clock rail", "station profile switcher", "log affordance"]}, "views": [{"id": "log", "title": "The Running Log", "purpose": "File a contact in seconds mid-pileup and see it join the log with its QSL trail ready.", "layout": "The callsign-first entry line sits above the reverse chronological ledger; band and mode filters ride the ledger's header.", "entities": ["qso", "station_profile", "qsl_record"], "workload_ids": ["w_log"], "states": ["first_use", "populated", "loading", "empty", "error", "offline", "correction"], "regions": [{"id": "qso_entry", "kind": "form", "title": "Log a contact", "entity": "qso", "workload_id": "w_log", "emphasis": "primary", "span": 7}, {"id": "log_ledger", "kind": "ledger", "title": "The running log", "entity": "qso", "workload_id": "w_log", "emphasis": "support", "span": 5}], "actions": [{"id": "log_contact", "label": "Log it", "operation": "create", "entity": "qso", "consequence": "Files the contact with a UTC stamp and counts it toward its DXCC entity."}, {"id": "open_qsl", "label": "Start a QSL trail", "operation": "create", "entity": "qsl_record", "consequence": "Opens a confirmation trail on the chosen route for this contact."}, {"id": "correct_qso", "label": "Correct the exchange", "operation": "correct", "entity": "qso", "consequence": "Preserves the originally logged exchange and records the correction beside it."}], "evidence_ids": ["ev_ham_adif_fields", "ev_ham_access"]}, {"id": "dx_map", "title": "DX Atlas", "purpose": "Answer what is worked, what is confirmed, and which QSLs still owe a card.", "layout": "The worked/confirmed honeycomb leads ordered by continent; the selected entity's contacts sit in an inspector margin.", "entities": ["dxcc_entity", "qso", "qsl_record"], "workload_ids": ["w_dxcc"], "states": ["first_use", "populated", "empty", "error"], "regions": [{"id": "honeycomb", "kind": "chart", "title": "Worked and confirmed", "entity": "dxcc_entity", "workload_id": "w_dxcc", "emphasis": "primary", "span": 8}, {"id": "entity_contacts", "kind": "inspector", "title": "Contacts behind this entity", "entity": "qso", "workload_id": "w_dxcc", "emphasis": "support", "span": 4}], "actions": [{"id": "confirm_qsl", "label": "Advance the QSL", "operation": "update", "entity": "qsl_record", "consequence": "Moves the trail toward confirmed; only confirmed flips the entity's cell."}, {"id": "reveal_contacts", "label": "Show the QSOs behind this", "operation": "reveal", "entity": "qso", "consequence": "Opens the exact contacts that earned the selected entity's status."}], "evidence_ids": ["ev_ham_adif_fields", "ev_ham_access"]}, {"id": "band_clock", "title": "Band Clock", "purpose": "See when and where this station actually gets out and plan the next session.", "layout": "The band-by-UTC-hour heat fills the stage; a band-by-band comparison rail sits beside it.", "entities": ["qso"], "workload_ids": ["w_activity"], "states": ["first_use", "populated", "empty", "partial", "error"], "regions": [{"id": "activity_heat", "kind": "chart", "title": "When the bands open", "entity": "qso", "workload_id": "w_activity", "emphasis": "primary", "span": 8}, {"id": "band_compare", "kind": "comparison", "title": "Band by band", "entity": "qso", "workload_id": "w_activity", "emphasis": "secondary", "span": 4}], "actions": [{"id": "reveal_session", "label": "Show the contacts behind this hour", "operation": "reveal", "entity": "qso", "consequence": "Opens the exact QSOs that lit the selected cell."}], "evidence_ids": ["ev_ham_workloads", "ev_ham_access"]}], "flows": [{"id": "first_contact", "title": "Log the first real contact", "trigger": "User approves the Running Log concept.", "steps": [{"view": "log", "action": "Type the callsign, pick band and mode, and enter both reports.", "result": "A QSO receipt appears with the UTC stamp and the entity it counts toward."}, {"view": "log", "action": "Confirm or correct the interpreted band and reports.", "result": "The canonical QSO and its provenance are visible at the top of the running log."}], "success": "The user can point at tonight's contact in the log and the UTC stamp, reports, and DXCC entity are all theirs."}, {"id": "confirm_entity", "title": "Chase a QSL to confirmed", "trigger": "An entity is worked but not yet confirmed.", "steps": [{"view": "dx_map", "action": "Open the worked-but-unconfirmed entity and start a QSL trail on a route.", "result": "The trail shows requested with bureau or LoTW recorded."}, {"view": "dx_map", "action": "Mark the card sent, then confirmed when LoTW or the bureau answers.", "result": "The entity's cell flips from worked to confirmed without touching the QSO."}], "success": "Confirmed status is traceable to the exact QSO and QSL trail that earned it."}], "responsive_strategy": ["On phones the entry line stays fixed in reach with the running log beneath it and the honeycomb becomes a swipeable continent rail.", "On desktop the log keeps entry and ledger side by side and the band clock gains hover detail with a full data table alternative."], "accessibility": {"target": "WCAG-2.2-AA", "patterns": ["native dialog for QSO entry", "data table with caption and row headers behind the honeycomb and the heat", "text alternative for every band chip and heat cell"], "keyboard_model": ["logical order follows entry line then running log then DX map", "honeycomb and heat cells are reachable through an adjacent data table", "correction returns focus to the corrected QSO"], "manual_checks": ["VoiceOver first-contact journey", "200 percent zoom and reflow", "focus and error identification in the dark theme"]}}, "implementation": {"targets": ["foundry_runtime", "standalone_react"], "capabilities": ["event_capture", "derived_metrics", "comparison", "provenance", "correction"], "imports": ["ADIF log file", "CSV contact list", "DXCC entity list"], "exports": ["ADIF export for LoTW and eQSL upload", "complete JSON with receipts", "CSV per entity", "standalone source repository"], "migrations": ["versioned schema migrations", "QSO records append-only with corrections as revisions", "DXCC entity list updates without renumbering"], "permissions": ["local file import"], "adapter_seams": ["capture adapter", "ADIF import adapter", "ADIF export adapter", "DXCC list adapter"]}, "evaluation": {"cases": [{"id": "ham_schema_identity", "kind": "schema", "input": "The same station is worked twice, once on 20m SSB and once on 40m FT8.", "expected": "They remain distinct QSOs with independent QSL trails, and the DXCC entity counts once.", "authored_by": "domain_expert"}, {"id": "ham_invalid_frequency", "kind": "schema", "input": "A QSO arrives logged at 350 MHz on the 20m band.", "expected": "The write is rejected before canonical storage.", "authored_by": "independent_reviewer"}, {"id": "ham_first_capture", "kind": "routing", "input": "worked JA1RQK on 20 meters, RST 59, QSL via bureau", "expected": "A QSO files with callsign JA1RQK on band 20m with rst_sent 59, and a QSL trail opens on the bureau route.", "authored_by": "user"}, {"id": "ham_ft8_report", "kind": "routing", "input": "FT8 contact with VK3 on 40m, -12 both ways", "expected": "A QSO files with mode FT8 on band 40m and rst_sent and rst_rcvd both held verbatim as -12, which a numeric report field could not store.", "authored_by": "user"}, {"id": "ham_dxcc_workload", "kind": "workload", "input": "8000 QSOs across 240 DXCC entities with 3000 QSL trails.", "expected": "The worked-versus-confirmed matrix and the running log load within the local 200 ms budget.", "authored_by": "independent_reviewer"}, {"id": "ham_keyboard", "kind": "accessibility", "input": "Complete the logging and QSL confirmation journey without a pointer.", "expected": "All controls and status changes are operable and announced.", "authored_by": "standard"}, {"id": "ham_adif_injection", "kind": "security", "input": "An imported ADIF record carries prompt-like fields and a filesystem path.", "expected": "Unknown fields are rejected and no tool or filesystem action occurs.", "authored_by": "independent_reviewer"}], "release_thresholds": {"schema": "all identity, relationship, constraint, and state-transition cases pass", "experience": "first-contact and confirm-the-entity flows pass on mobile and desktop", "evidence": "every entity and critical view has an approved derivation"}}, "derivations": [{"output_path": "domain.entities", "decision": "Separate the station, the DXCC entity, the QSO, and the QSL trail so the instrument, the collecting axis, the event, and the confirmation each keep their own lifecycle.", "evidence_ids": ["ev_ham_adif_fields", "ev_ham_identity"], "user_decision": null}, {"output_path": "domain.entities.qso.fields.rst_sent", "decision": "Hold signal reports as text kept verbatim, because a 20m SSB contact exchanges RST 59 while an FT8 contact exchanges -12 dB, and both are real reports.", "evidence_ids": ["ev_ham_adif_fields"], "user_decision": null}, {"output_path": "domain.temporal_policy", "decision": "Log qso_at in UTC without exception because amateur logs, awards, and ADIF interchange all assume UTC.", "evidence_ids": ["ev_ham_adif_exchange"], "user_decision": "Times are UTC, always"}, {"output_path": "experience.views.log", "decision": "Anchor the app on the callsign-first entry line rather than the awards map, because capture happens mid-pileup.", "evidence_ids": ["ev_ham_service"], "user_decision": "Entry must keep up with a pileup."}, {"output_path": "implementation.exports", "decision": "Ship ADIF export beside JSON and CSV because the log must feed LoTW and outlive any one logger.", "evidence_ids": ["ev_ham_adif_exchange"], "user_decision": "ADIF export is non-negotiable"}, {"output_path": "domain.indexes.entity_progress", "decision": "Index QSOs by entity and time for the worked-versus-confirmed matrix behind the DX Atlas.", "evidence_ids": ["ev_ham_workloads"], "user_decision": null}, {"output_path": "experience.visual_world", "decision": "Use a dark shack panel with phosphor-amber accents and monospace callsigns instead of dashboard cards or skeuomorphic radio dials.", "evidence_ids": ["ev_ham_service"], "user_decision": "Confirmed means LoTW or a card in hand — eQSL is tracked but does not count"}], "_source_records": [{"id": "postgresql_constraints", "title": "PostgreSQL — Constraints", "publisher": "PostgreSQL Global Development Group", "url": "https://www.postgresql.org/docs/current/ddl-constraints.html", "kind": "official_documentation", "tier": "authoritative", "license": "PostgreSQL", "allowed_uses": ["reference_facts", "paraphrase"], "status": "approved", "retrieved_at": "2026-08-19", "freshness_days": 180, "topics": ["data_modeling", "constraints", "identity", "relationships"]}, {"id": "sqlite_foreign_keys", "title": "SQLite Foreign Key Support", "publisher": "SQLite", "url": "https://www.sqlite.org/foreignkeys.html", "kind": "official_documentation", "tier": "authoritative", "license": "reference-only", "allowed_uses": ["reference_facts", "paraphrase"], "status": "approved", "retrieved_at": "2026-08-19", "freshness_days": 365, "topics": ["sqlite", "constraints", "relationships"]}, {"id": "sqlite_query_planner", "title": "SQLite Query Planning", "publisher": "SQLite", "url": "https://www.sqlite.org/queryplanner.html", "kind": "official_documentation", "tier": "authoritative", "license": "reference-only", "allowed_uses": ["reference_facts", "paraphrase"], "status": "approved", "retrieved_at": "2026-08-19", "freshness_days": 365, "topics": ["sqlite", "indexes", "workloads"]}, {"id": "w3c_prov", "title": "PROV-O — The PROV Ontology", "publisher": "W3C", "url": "https://www.w3.org/TR/prov-o/", "kind": "standard", "tier": "authoritative", "license": "W3C-Document", "allowed_uses": ["reference_facts", "paraphrase"], "status": "approved", "retrieved_at": "2026-08-19", "freshness_days": 1825, "topics": ["provenance", "lineage", "reproducibility"]}, {"id": "govuk_design_principles", "title": "Government Design Principles", "publisher": "UK Government Digital Service", "url": "https://www.gov.uk/guidance/government-design-principles", "kind": "public_design_standard", "tier": "authoritative", "license": "OGL-3.0", "allowed_uses": ["reference_facts", "paraphrase"], "status": "approved", "retrieved_at": "2026-08-19", "freshness_days": 365, "topics": ["user_needs", "service_design", "iteration", "inclusion"]}, {"id": "wcag_22", "title": "Web Content Accessibility Guidelines 2.2", "publisher": "W3C", "url": "https://www.w3.org/TR/WCAG22/", "kind": "standard", "tier": "authoritative", "license": "W3C-Document", "allowed_uses": ["reference_facts", "paraphrase"], "status": "approved", "retrieved_at": "2026-08-19", "freshness_days": 365, "topics": ["accessibility", "interaction", "responsive_design"]}, {"id": "aria_apg", "title": "ARIA Authoring Practices Guide", "publisher": "W3C Web Accessibility Initiative", "url": "https://www.w3.org/WAI/ARIA/apg/", "kind": "public_design_standard", "tier": "authoritative", "license": "W3C-Document", "allowed_uses": ["reference_facts", "paraphrase", "inspect_examples"], "status": "approved", "retrieved_at": "2026-08-19", "freshness_days": 365, "topics": ["accessibility", "semantics", "keyboard", "interaction_patterns"]}, {"id": "ui_remix_paper", "title": "UI Remix — Example-Driven UI Design with Multimodal Retrieval", "publisher": "arXiv authors", "url": "https://arxiv.org/abs/2601.18759", "kind": "research_paper", "tier": "research", "license": "reference-only", "allowed_uses": ["reference_facts", "paraphrase"], "status": "approved", "retrieved_at": "2026-08-19", "freshness_days": 730, "topics": ["remix", "retrieval", "provenance", "concept_exploration"]}, {"id": "adif_spec", "title": "ADIF — Amateur Data Interchange Format specification", "publisher": "ADIF Developers Group", "url": "https://www.adif.org", "kind": "specification", "tier": "domain_exemplar", "license": "open-specification", "allowed_uses": ["reference_facts", "paraphrase", "inspect_schema"], "status": "reference_only", "retrieved_at": "2026-08-23", "freshness_days": 365, "topics": ["ham_radio", "qso_logging", "contacts", "bands_modes", "qsl"]}]}</script>
+  <script>
+(() => {
+  "use strict";
+
+  const RUNTIME_SCHEMA_VERSION = 2;
+  const MAX_RECORDS = 10000;
+  const MAX_VISIBLE = 100;
+  const MAX_BACKUP_BYTES = 10 * 1024 * 1024;
+  const spec = JSON.parse(document.getElementById("foundry-spec").textContent);
+  const sources = new Map((spec._source_records || []).map((item) => [item.id, item]));
+  const entityIds = new Set(spec.domain.entities.map((item) => item.id));
+  const storageKey = `foundry-app:${spec.id}:v2`;
+  const legacyStorageKey = `domain-foundry:${spec.id}:v1`;
+  const selected = Object.create(null);
+  let activeViewId = spec.experience.navigation.primary_view;
+  let statusMessage = "";
+  let errorMessage = "";
+
+  const uid = () =>
+    globalThis.crypto?.randomUUID?.() ||
+    `local-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const object = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+  const esc = (value) =>
+    String(value ?? "").replace(
+      /[&<>"]/g,
+      (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[char],
+    );
+  const label = (name) =>
+    String(name).replaceAll("_", " ").replace(/\b\w/g, (char) => char.toUpperCase());
+  const entity = (id) => spec.domain.entities.find((item) => item.id === id);
+  const view = () => spec.experience.views.find((item) => item.id === activeViewId);
+  const clone = (value) => JSON.parse(JSON.stringify(value));
+  const clean = (value) =>
+    object(value)
+      ? Object.fromEntries(
+          Object.entries(value).filter(
+            ([key]) => !["__proto__", "constructor", "prototype"].includes(key),
+          ),
+        )
+      : {};
+
+  function sanitizeRecord(entityId, value) {
+    const allowed = new Set([
+      ...entity(entityId).fields.map((field) => field.name),
+      "object_uid",
+      "captured_at",
+      "updated_at",
+      "_record_uid",
+      "_version",
+      "_supersedes",
+      "_superseded_by",
+    ]);
+    return Object.fromEntries(
+      Object.entries(clean(value)).filter(([key]) => allowed.has(key)),
+    );
+  }
+
+  function sanitizeStore(value, strict = false) {
+    const candidate = clean(value);
+    if (strict && (!object(candidate.records) || !Array.isArray(candidate.receipts))) {
+      throw new Error("Backup does not contain records and receipts.");
+    }
+    const records = Object.create(null);
+    for (const entityId of entityIds) {
+      const raw = candidate.records?.[entityId];
+      if (raw === undefined) continue;
+      if (!Array.isArray(raw)) {
+        if (strict) throw new Error(`Records for ${entityId} must be an array.`);
+        continue;
+      }
+      if (raw.length > MAX_RECORDS) {
+        throw new Error(`Records for ${entityId} exceed the ${MAX_RECORDS} limit.`);
+      }
+      records[entityId] = raw.filter(object).map((item) => sanitizeRecord(entityId, item));
+    }
+    return {
+      runtime_schema_version: RUNTIME_SCHEMA_VERSION,
+      records,
+      receipts: Array.isArray(candidate.receipts)
+        ? candidate.receipts.slice(0, MAX_RECORDS * entityIds.size).map(clean)
+        : [],
+      sample_overrides: Object.fromEntries(
+        Object.entries(clean(candidate.sample_overrides)).filter(
+          ([key, target]) =>
+            key.startsWith("sample:") && typeof target === "string" && target.length <= 240,
+        ),
+      ),
+    };
+  }
+
+  const emptyStore = () =>
+    sanitizeStore({ records: {}, receipts: [], sample_overrides: {} });
+  let store = emptyStore();
+  try {
+    const current = localStorage.getItem(storageKey);
+    const legacy = current === null ? localStorage.getItem(legacyStorageKey) : null;
+    if (current || legacy) {
+      store = sanitizeStore(JSON.parse(current || legacy));
+      if (legacy) {
+        statusMessage = "Earlier local records loaded; they migrate on the next save.";
+      }
+    }
+  } catch {
+    errorMessage =
+      "Stored data could not be read. The app opened safely without changing that backup.";
+  }
+
+  const tokens = spec.experience.visual_world.tokens;
+  const tokenMap = {
+    background: "--bg",
+    surface: "--surface",
+    text: "--ink",
+    muted: "--muted",
+    accent: "--accent",
+    accent_alt: "--accent-alt",
+    border: "--border",
+    focus: "--focus",
+    danger: "--danger",
+  };
+  Object.entries(tokenMap).forEach(([name, property]) =>
+    document.documentElement.style.setProperty(property, tokens[name]),
+  );
+  document.documentElement.style.setProperty("--radius", `${tokens.radius_px}px`);
+  document.body.dataset.topology = spec.experience.navigation.topology;
+
+  function sampleKey(entityId, record) {
+    const identity = entity(entityId).identity.map((field) => record[field] ?? "").join("|");
+    return `sample:${entityId}:${identity}`;
+  }
+
+  function recordKey(entityId, record, origin = "local") {
+    return origin === "sample"
+      ? sampleKey(entityId, record)
+      : String(record._record_uid || record.object_uid || sampleKey(entityId, record));
+  }
+
+  function records(entityId, includeSuperseded = false) {
+    const samples = (spec.domain.sample_records[entityId] || []).map((record) => ({
+      ...record,
+      __origin: "sample",
+      __record_key: sampleKey(entityId, record),
+    }));
+    const local = (store.records[entityId] || []).map((record) => ({
+      ...record,
+      __origin: "local",
+      __record_key: recordKey(entityId, record),
+    }));
+    if (includeSuperseded) return [...samples, ...local];
+    return [
+      ...samples.filter((record) => !store.sample_overrides[record.__record_key]),
+      ...local.filter((record) => !record._superseded_by),
+    ];
+  }
+
+  const stripContext = (record) =>
+    Object.fromEntries(Object.entries(record).filter(([key]) => !key.startsWith("__")));
+  const selectedRecord = (entityId) => {
+    const items = records(entityId);
+    return (
+      items.find((item) => item.__record_key === selected[entityId]) ||
+      items.at(-1) ||
+      null
+    );
+  };
+  const primaryValue = (record, entitySpec) => {
+    const field = [
+      "name",
+      "title",
+      "expression",
+      "cue",
+      "kind",
+      ...entitySpec.identity,
+    ].find((name) => record[name] !== undefined);
+    return field ? record[field] : entitySpec.title;
+  };
+  const valueText = (value) =>
+    value === null || value === undefined || value === ""
+      ? "—"
+      : typeof value === "object"
+        ? JSON.stringify(value)
+        : String(value);
+  const fieldsFor = (record, entitySpec, limit = 5) =>
+    entitySpec.fields
+      .filter((field) => record[field.name] !== undefined)
+      .slice(0, limit);
+
+  function details(record, entitySpec, limit = 8) {
+    return `<dl class="detail-grid">${fieldsFor(record, entitySpec, limit)
+      .map(
+        (field) =>
+          `<dt>${esc(label(field.name))}<\/dt><dd>${esc(valueText(record[field.name]))}${
+            field.unit ? ` <span class="measure">${esc(field.unit)}<\/span>` : ""
+          }<\/dd>`,
+      )
+      .join("")}<\/dl>`;
+  }
+
+  function recordItem(record, entitySpec) {
+    const isSelected = selected[entitySpec.id] === record.__record_key;
+    return `<li class="record"><button class="record-select" type="button" data-record="${esc(
+      record.__record_key,
+    )}" data-entity="${esc(entitySpec.id)}" aria-pressed="${isSelected}"><strong>${esc(
+      primaryValue(record, entitySpec),
+    )}<\/strong><\/button>${details(record, entitySpec)}<\/li>`;
+  }
+
+  const empty = (entitySpec) =>
+    `<div class="empty-state"><strong>No ${esc(
+      entitySpec.title.toLowerCase(),
+    )} yet<\/strong><p>${esc(entitySpec.description)}<\/p><\/div>`;
+  const temporalField = (entitySpec) =>
+    entitySpec.fields.find((field) => ["datetime", "date"].includes(field.type)) ||
+    entitySpec.fields.find((field) => /(?:_at|_on|date|time)$/.test(field.name));
+  const formattedDate = (value) => {
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.valueOf())) return valueText(value);
+    return new Intl.DateTimeFormat(undefined, {
+      dateStyle: "medium",
+      timeStyle: String(value).includes("T") ? "short" : undefined,
+    }).format(parsed);
+  };
+
+  function timeline(items, entitySpec) {
+    const temporal = temporalField(entitySpec);
+    const ordered = [...items].sort((left, right) => {
+      const a = Date.parse(left[temporal?.name] || left.captured_at || "") || 0;
+      const b = Date.parse(right[temporal?.name] || right.captured_at || "") || 0;
+      return b - a;
+    });
+    return `<ol class="record-list timeline">${ordered
+      .slice(0, MAX_VISIBLE)
+      .map((record) => {
+        const raw = temporal ? record[temporal.name] : record.captured_at;
+        const time = raw
+          ? `<time datetime="${esc(raw)}">${esc(formattedDate(raw))}<\/time>`
+          : "";
+        return recordItem(record, entitySpec).replace(
+          '<li class="record">',
+          `<li class="record">${time}`,
+        );
+      })
+      .join("")}<\/ol>`;
+  }
+
+  function chart(items, entitySpec, region) {
+    const numeric = entitySpec.fields.find((field) =>
+      ["integer", "number", "duration"].includes(field.type),
+    );
+    if (!numeric) {
+      return `<div class="explanation"><strong>${esc(
+        region.title,
+      )}<\/strong><p>No numeric measure is declared. Records remain visible without fabricating a metric.<\/p><\/div>`;
+    }
+    const points = items
+      .map((record) => ({ record, value: Number(record[numeric.name]) }))
+      .filter((point) => Number.isFinite(point.value))
+      .slice(-MAX_VISIBLE);
+    if (!points.length) return empty(entitySpec);
+    const width = 640;
+    const height = 250;
+    const pad = 32;
+    const minimum = Math.min(...points.map((point) => point.value));
+    const maximum = Math.max(...points.map((point) => point.value));
+    const range = maximum - minimum || 1;
+    const positioned = points.map((point, index) => ({
+      ...point,
+      x:
+        points.length === 1
+          ? width / 2
+          : pad + (index / (points.length - 1)) * (width - pad * 2),
+      y: height - pad - ((point.value - minimum) / range) * (height - pad * 2),
+    }));
+    const path = positioned
+      .map((point, index) => `${index ? "L" : "M"} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`)
+      .join(" ");
+    const area = `${path} L ${positioned.at(-1).x.toFixed(1)} ${height - pad} L ${positioned[0].x.toFixed(1)} ${height - pad} Z`;
+    const titleId = `chart-title-${region.id}`;
+    return `<figure class="chart-figure"><svg viewBox="0 0 ${width} ${height}" role="img" aria-labelledby="${esc(
+      titleId,
+    )}"><title id="${esc(titleId)}">${esc(region.title)}: ${esc(
+      label(numeric.name),
+    )} from ${esc(minimum)} to ${esc(maximum)}<\/title><line class="chart-grid" x1="${pad}" y1="${
+      height - pad
+    }" x2="${width - pad}" y2="${height - pad}"><\/line><path class="chart-area" d="${area}"><\/path><path class="chart-line" d="${path}"><\/path>${positioned
+      .map(
+        (point) =>
+          `<circle class="chart-point" cx="${point.x}" cy="${point.y}" r="5"><title>${esc(
+            primaryValue(point.record, entitySpec),
+          )}: ${esc(point.value)}${numeric.unit ? ` ${esc(numeric.unit)}` : ""}<\/title><\/circle>`,
+      )
+      .join("")}<\/svg><figcaption>${esc(label(numeric.name))}${
+      numeric.unit ? ` in ${esc(numeric.unit)}` : ""
+    } · ${points.length} observed ${points.length === 1 ? "record" : "records"}; no invented interpolation.<\/figcaption><\/figure>`;
+  }
+
+  function table(items, entitySpec) {
+    const fields = entitySpec.fields
+      .filter((field) => items.some((record) => record[field.name] !== undefined))
+      .slice(0, 5);
+    if (!items.length || !fields.length) return empty(entitySpec);
+    return `<div class="data-table-wrap"><table class="data-table"><thead><tr>${fields
+      .map((field) => `<th scope="col">${esc(label(field.name))}<\/th>`)
+      .join("")}<\/tr><\/thead><tbody>${items
+      .slice(0, MAX_VISIBLE)
+      .map((record) => {
+        const isSelected = selected[entitySpec.id] === record.__record_key;
+        return `<tr aria-selected="${isSelected}">${fields
+          .map((field, index) => {
+            const content = `${esc(valueText(record[field.name]))}${
+              field.unit ? ` <span class="measure">${esc(field.unit)}<\/span>` : ""
+            }`;
+            return index === 0
+              ? `<td><button class="record-select" type="button" data-record="${esc(
+                  record.__record_key,
+                )}" data-entity="${esc(
+                  entitySpec.id,
+                )}" aria-pressed="${isSelected}">${content}<\/button><\/td>`
+              : `<td>${content}<\/td>`;
+          })
+          .join("")}<\/tr>`;
+      })
+      .join("")}<\/tbody><\/table><\/div>`;
+  }
+
+  function canvas(items, entitySpec) {
+    const slots = items.slice(0, MAX_VISIBLE).map((record, index) => {
+      const isSelected = selected[entitySpec.id] === record.__record_key;
+      return `<button class="slot" type="button" data-record="${esc(
+        record.__record_key,
+      )}" data-entity="${esc(entitySpec.id)}" aria-pressed="${isSelected}"><span class="slot-number">${esc(
+        record.collector_number || String(index + 1).padStart(3, "0"),
+      )}<\/span><strong>${esc(primaryValue(record, entitySpec))}<\/strong><\/button>`;
+    });
+    while (slots.length < 8) {
+      slots.push(
+        `<div class="slot empty"><span class="slot-number">${String(
+          slots.length + 1,
+        ).padStart(3, "0")}<\/span><span>Open position<\/span><\/div>`,
+      );
+    }
+    return `<div class="canvas-grid">${slots.join("")}<\/div>`;
+  }
+
+  function shelf(items, entitySpec) {
+    if (!items.length) return empty(entitySpec);
+    return `<div class="shelf-grid">${items
+      .slice(0, MAX_VISIBLE)
+      .map((record) => {
+        const isSelected = selected[entitySpec.id] === record.__record_key;
+        const secondary = fieldsFor(record, entitySpec, 3)
+          .slice(1)
+          .map((field) => valueText(record[field.name]))
+          .filter((value) => value !== "—")
+          .join(" · ");
+        return `<button class="shelf-item" type="button" data-record="${esc(
+          record.__record_key,
+        )}" data-entity="${esc(entitySpec.id)}" aria-pressed="${isSelected}"><strong>${esc(
+          primaryValue(record, entitySpec),
+        )}<\/strong>${secondary ? `<small>${esc(secondary)}<\/small>` : ""}<\/button>`;
+      })
+      .join("")}<\/div>`;
+  }
+
+  function inspector(items, entitySpec) {
+    const record = selectedRecord(entitySpec.id) || items[0];
+    if (!record) return empty(entitySpec);
+    return `<div class="explanation"><strong>${esc(
+      primaryValue(record, entitySpec),
+    )}<\/strong>${details(
+      record,
+      entitySpec,
+      12,
+    )}<p class="storage-note">Select a record before using an update or correction action.<\/p><\/div>`;
+  }
+
+  function workbench(items, entitySpec) {
+    if (!items.length) return empty(entitySpec);
+    const current = selectedRecord(entitySpec.id) || items[0];
+    return `<div class="workbench"><aside><ul class="record-list">${items
+      .slice(0, 12)
+      .map((record) => recordItem(record, entitySpec))
+      .join("")}<\/ul><\/aside><div><strong>${esc(
+      primaryValue(current, entitySpec),
+    )}<\/strong>${details(
+      current,
+      entitySpec,
+      12,
+    )}<p class="storage-note">Choose a record, then use the view action to create an immutable revision.<\/p><\/div><\/div>`;
+  }
+
+  function session(items, entitySpec, region) {
+    const record = selectedRecord(entitySpec.id) || items[0];
+    if (!record) return empty(entitySpec);
+    const answerId = `session-answer-${region.id}`;
+    return `<div class="session-card"><div><div class="cue">${esc(
+      record.cue || primaryValue(record, entitySpec),
+    )}<\/div><button class="button" data-reveal="${esc(
+      answerId,
+    )}" type="button">Reveal answer<\/button><p class="session-answer" id="${esc(
+      answerId,
+    )}" hidden>${esc(record.answer || "Review the source context")}<\/p><\/div><\/div>`;
+  }
+
+  function explanation(region) {
+    const workload = spec.domain.workloads.find((item) => item.id === region.workload_id);
+    return `<div class="explanation"><strong>${esc(
+      workload?.question || region.title,
+    )}<\/strong><p>${esc(
+      workload?.acceptance || "This region is derived from a declared user workload.",
+    )}<\/p><p class="storage-note">Expected scale: ${esc(
+      workload?.expected_scale || "not specified",
+    )} · ${esc(label(workload?.kind || "read"))}<\/p><\/div>`;
+  }
+
+  function region(regionSpec) {
+    const entitySpec = entity(regionSpec.entity);
+    const items = records(regionSpec.entity);
+    let content;
+    switch (regionSpec.kind) {
+      case "canvas":
+        content = canvas(items, entitySpec);
+        break;
+      case "session":
+        content = session(items, entitySpec, regionSpec);
+        break;
+      case "chart":
+        content = chart(items, entitySpec, regionSpec);
+        break;
+      case "timeline":
+        content = items.length ? timeline(items, entitySpec) : empty(entitySpec);
+        break;
+      case "comparison":
+      case "table":
+      case "ledger":
+        content = table(items, entitySpec);
+        break;
+      case "shelf":
+      case "catalog":
+      case "media":
+        content = shelf(items, entitySpec);
+        break;
+      case "inspector":
+        content = inspector(items, entitySpec);
+        break;
+      case "workbench":
+        content = workbench(items, entitySpec);
+        break;
+      case "explanation":
+        content = explanation(regionSpec);
+        break;
+      default:
+        content = items.length
+          ? `<ul class="record-list">${items
+              .slice(0, MAX_VISIBLE)
+              .map((record) => recordItem(record, entitySpec))
+              .join("")}<\/ul>`
+          : empty(entitySpec);
+    }
+    const clipped =
+      items.length > MAX_VISIBLE
+        ? `<p class="storage-note">Showing ${MAX_VISIBLE} of ${items.length} records. Complete history remains in export.<\/p>`
+        : "";
+    return `<section class="region ${esc(regionSpec.emphasis)} kind-${esc(
+      regionSpec.kind,
+    )}" style="--span:${regionSpec.span}" aria-labelledby="region-${esc(
+      regionSpec.id,
+    )}"><h3 id="region-${esc(regionSpec.id)}">${esc(
+      regionSpec.title,
+    )}<\/h3><p class="region-meta">${esc(label(regionSpec.kind))} · ${esc(
+      entitySpec.title,
+    )}<\/p>${content}${clipped}<\/section>`;
+  }
+
+  function announce(message, isError = false) {
+    statusMessage = isError ? "" : message;
+    errorMessage = isError ? message : "";
+    const status = document.getElementById("status");
+    const error = document.getElementById("runtime-error");
+    if (status) status.textContent = statusMessage;
+    if (error) error.textContent = errorMessage;
+  }
+
+  function reveal(button) {
+    const answer = document.getElementById(button.dataset.reveal);
+    if (!answer) {
+      announce("This view has no revealable answer.", true);
+      return;
+    }
+    answer.hidden = false;
+    button.disabled = true;
+    announce("Answer revealed. No review outcome was recorded.");
+  }
+
+  function render() {
+    const current = view();
+    const primary = current.actions[0];
+    const stored = Object.values(store.records).reduce(
+      (total, items) => total + items.length,
+      0,
+    );
+    document.getElementById("app").innerHTML = `<div class="app"><aside class="rail"><div><h2 class="brand">${esc(
+      spec.title,
+    )}<\/h2><p class="world">${esc(spec.experience.visual_world.name)}<br>${esc(
+      spec.experience.visual_world.mood,
+    )}<\/p><\/div><nav class="view-nav" aria-label="Application views">${spec.experience.views
+      .map(
+        (item) =>
+          `<button type="button" data-view="${esc(item.id)}" ${
+            item.id === current.id ? 'aria-current="page"' : ""
+          }>${esc(item.title)}<\/button>`,
+      )
+      .join("")}<\/nav><p class="rail-foot">Local application<br>Spec ${esc(
+      spec.spec_version,
+    )} · runtime ${RUNTIME_SCHEMA_VERSION}<br>${stored} owned ${
+      stored === 1 ? "version" : "versions"
+    }<\/p><\/aside><main id="main" tabindex="-1"><header class="topbar"><div><h1>${esc(
+      spec.title,
+    )}<\/h1><p>${esc(
+      spec.research.desired_outcome,
+    )}<\/p><\/div><div class="toolbar"><button class="button" id="evidence" type="button">Why this app<\/button><button class="button" id="export" type="button">Export backup<\/button><button class="button" id="restore" type="button">Restore backup<\/button><input class="visually-hidden" id="restore-file" type="file" accept="application/json,.json" aria-label="Choose JSON backup">${
+      primary
+        ? `<button class="button primary" id="primary-action" type="button" data-operation="${esc(
+            primary.operation,
+          )}">${esc(primary.label)}<\/button>`
+        : ""
+    }<\/div><\/header><section class="view-head" aria-labelledby="view-title"><h2 id="view-title">${esc(
+      current.title,
+    )}<\/h2><p>${esc(current.purpose)} ${esc(
+      current.layout,
+    )}<\/p><\/section><div class="regions">${current.regions
+      .map(region)
+      .join("")}<\/div><div class="view-actions">${current.actions
+      .slice(1)
+      .map(
+        (action) =>
+          `<button class="button" type="button" data-action="${esc(
+            action.id,
+          )}" data-operation="${esc(action.operation)}">${esc(action.label)}<\/button>`,
+      )
+      .join("")}<\/div><p class="status" id="status" role="status" aria-live="polite">${esc(
+      statusMessage,
+    )}<\/p><p class="error" id="runtime-error" role="alert">${esc(
+      errorMessage,
+    )}<\/p><\/main><\/div>`;
+
+    document.querySelectorAll("[data-view]").forEach((button) =>
+      button.addEventListener("click", () => {
+        activeViewId = button.dataset.view;
+        render();
+        document.getElementById("main").focus();
+      }),
+    );
+    document.querySelectorAll("[data-record]").forEach((button) =>
+      button.addEventListener("click", () => {
+        const entityId = button.dataset.entity;
+        const recordId = button.dataset.record;
+        selected[entityId] = recordId;
+        render();
+        [...document.querySelectorAll("[data-record]")]
+          .find(
+            (candidate) =>
+              candidate.dataset.entity === entityId &&
+              candidate.dataset.record === recordId,
+          )
+          ?.focus();
+      }),
+    );
+    document.querySelectorAll("[data-reveal]").forEach((button) =>
+      button.addEventListener("click", () => reveal(button)),
+    );
+    document
+      .getElementById("primary-action")
+      ?.addEventListener("click", () => runAction(primary));
+    document.querySelectorAll("[data-action]").forEach((button) =>
+      button.addEventListener("click", () =>
+        runAction(current.actions.find((action) => action.id === button.dataset.action)),
+      ),
+    );
+    document.getElementById("evidence").addEventListener("click", openEvidence);
+    document.getElementById("export").addEventListener("click", exportData);
+    document
+      .getElementById("restore")
+      .addEventListener("click", () => document.getElementById("restore-file").click());
+    document.getElementById("restore-file").addEventListener("change", restoreData);
+  }
+
+  function runAction(action) {
+    if (!action) return;
+    if (action.operation === "reveal") {
+      const button = document.querySelector("[data-reveal]");
+      if (button) reveal(button);
+      else announce("This action has no revealable content in the current view.", true);
+      return;
+    }
+    const revising = ["update", "correct"].includes(action.operation);
+    const current = revising ? selectedRecord(action.entity) : null;
+    if (revising && !current) {
+      announce(
+        `Add or select ${entity(action.entity).title.toLowerCase()} before ${action.label.toLowerCase()}.`,
+        true,
+      );
+      return;
+    }
+    openCapture(action.entity, action, current);
+  }
+
+  function relationshipForField(entityId, fieldName) {
+    return spec.domain.relationships.find((relationship) => {
+      if (relationship.from_entity !== entityId) return false;
+      const target = entity(relationship.to_entity);
+      return [`${target.id}_id`, target.identity[0]].includes(fieldName);
+    });
+  }
+
+  function controlValue(field, record) {
+    const value = record?.[field.name];
+    if (value === null || value === undefined) return "";
+    if (field.type === "json") return JSON.stringify(value, null, 2);
+    if (field.type === "datetime") return String(value).slice(0, 16);
+    return String(value);
+  }
+
+  function inputFor(field, entitySpec, current) {
+    const id = `field-${field.name}`;
+    const helpId = `${id}-help`;
+    const value = controlValue(field, current);
+    const required = field.required ? " required" : "";
+    const sensitive = field.sensitive ? ' autocomplete="off"' : "";
+    const help = `<small id="${esc(helpId)}">${esc(field.description)}${
+      field.unit ? ` · ${esc(field.unit)}` : ""
+    }<\/small>`;
+    const relationship = relationshipForField(entitySpec.id, field.name);
+    if (relationship) {
+      const target = entity(relationship.to_entity);
+      const options = records(target.id)
+        .map((record) => ({
+          value: record[target.identity[0]],
+          title: primaryValue(record, target),
+        }))
+        .filter((option) => option.value !== undefined);
+      if (value && !options.some((option) => String(option.value) === value)) {
+        options.unshift({ value, title: value });
+      }
+      return `<label for="${esc(id)}">${esc(label(field.name))}${help}<select id="${esc(
+        id,
+      )}" name="${esc(field.name)}" aria-describedby="${esc(helpId)}"${required}><option value="">Choose…<\/option>${options
+        .map(
+          (option) =>
+            `<option value="${esc(option.value)}" ${
+              String(option.value) === value ? "selected" : ""
+            }>${esc(option.title)}<\/option>`,
+        )
+        .join("")}<\/select><\/label>`;
+    }
+    if (field.type === "enum") {
+      return `<label for="${esc(id)}">${esc(label(field.name))}${help}<select id="${esc(
+        id,
+      )}" name="${esc(field.name)}" aria-describedby="${esc(helpId)}"${required}><option value="">Choose…<\/option>${(
+        field.values || []
+      )
+        .map(
+          (option) =>
+            `<option value="${esc(option)}" ${
+              String(option) === value ? "selected" : ""
+            }>${esc(label(option))}<\/option>`,
+        )
+        .join("")}<\/select><\/label>`;
+    }
+    if (field.type === "boolean") {
+      return `<label for="${esc(id)}">${esc(label(field.name))}${help}<select id="${esc(
+        id,
+      )}" name="${esc(field.name)}" aria-describedby="${esc(helpId)}"${required}><option value="">Not set<\/option><option value="true" ${
+        value === "true" ? "selected" : ""
+      }>Yes<\/option><option value="false" ${
+        value === "false" ? "selected" : ""
+      }>No<\/option><\/select><\/label>`;
+    }
+    const type = ["integer", "number", "duration"].includes(field.type)
+      ? "number"
+      : field.type === "date"
+        ? "date"
+        : field.type === "datetime"
+          ? "datetime-local"
+          : "text";
+    const long =
+      field.type === "json" ||
+      /notes|method|context|answer|meaning|hypothesis|conclusion|description/.test(
+        field.name,
+      );
+    const control = long
+      ? `<textarea id="${esc(id)}" name="${esc(
+          field.name,
+        )}" aria-describedby="${esc(helpId)}" maxlength="2000"${required}${sensitive}>${esc(
+          value,
+        )}<\/textarea>`
+      : `<input id="${esc(id)}" name="${esc(field.name)}" type="${type}" aria-describedby="${esc(
+          helpId,
+        )}"${type === "text" ? ' maxlength="2000"' : ""} value="${esc(
+          value,
+        )}"${required}${sensitive}${type === "number" ? ' step="any"' : ""}>`;
+    return `<label for="${esc(id)}">${esc(label(field.name))}${help}${control}<\/label>`;
+  }
+
+  function parseField(field, raw) {
+    if (raw === null || raw === "") return undefined;
+    if (["integer", "number", "duration"].includes(field.type)) {
+      const value = Number(raw);
+      if (!Number.isFinite(value)) throw new Error(`${label(field.name)} must be a number.`);
+      if (field.type === "integer" && !Number.isInteger(value)) {
+        throw new Error(`${label(field.name)} must be a whole number.`);
+      }
+      return value;
+    }
+    if (field.type === "boolean") return raw === "true";
+    if (field.type === "json") {
+      try {
+        return JSON.parse(raw);
+      } catch {
+        throw new Error(`${label(field.name)} must be valid JSON.`);
+      }
+    }
+    return raw;
+  }
+
+  function comparison(left, operator, right) {
+    if (operator === ">") return left > right;
+    if (operator === ">=") return left >= right;
+    if (operator === "<") return left < right;
+    if (operator === "<=") return left <= right;
+    if (["=", "=="].includes(operator)) return left === right;
+    if (operator === "!=") return left !== right;
+    return false;
+  }
+
+  function expressionValue(raw) {
+    if (/^-?\d+(?:\.\d+)?$/.test(raw)) return Number(raw);
+    if (/^'.*'$|^".*"$/.test(raw)) return raw.slice(1, -1);
+    if (raw.toUpperCase() === "NULL") return null;
+    throw new Error("unsupported comparison value");
+  }
+
+  function evaluateCheck(expression, record) {
+    return expression.split(/\s+OR\s+/i).some((group) =>
+      group.split(/\s+AND\s+/i).every((clause) => {
+        const match = clause
+          .trim()
+          .match(
+            /^([A-Za-z_][A-Za-z0-9_]*)\s*(>=|<=|!=|==|=|>|<)\s*(-?\d+(?:\.\d+)?|'.*'|".*"|NULL)$/i,
+          );
+        if (!match) throw new Error("unsupported check expression");
+        return comparison(record[match[1]], match[2], expressionValue(match[3]));
+      }),
+    );
+  }
+
+  function validateRecord(entitySpec, record, current) {
+    const missing = entitySpec.fields
+      .filter(
+        (field) =>
+          field.required &&
+          (record[field.name] === undefined || record[field.name] === ""),
+      )
+      .map((field) => label(field.name));
+    if (missing.length) {
+      throw new Error(`Complete the required fields: ${missing.join(", ")}.`);
+    }
+    const uniqueSets = [
+      entitySpec.identity,
+      ...spec.domain.constraints
+        .filter(
+          (constraint) =>
+            constraint.entity === entitySpec.id && constraint.kind === "unique",
+        )
+        .map((constraint) => constraint.fields),
+    ];
+    const peers = records(entitySpec.id).filter(
+      (candidate) => candidate.__record_key !== current?.__record_key,
+    );
+    for (const fields of uniqueSets) {
+      const duplicate = peers.some((candidate) =>
+        fields.every(
+          (field) =>
+            candidate[field] !== undefined &&
+            record[field] !== undefined &&
+            String(candidate[field]) === String(record[field]),
+        ),
+      );
+      if (duplicate) {
+        throw new Error(
+          `A ${entitySpec.title.toLowerCase()} with the same ${fields
+            .map(label)
+            .join(" and ")} already exists.`,
+        );
+      }
+    }
+    for (const constraint of spec.domain.constraints.filter(
+      (item) =>
+        item.entity === entitySpec.id && item.kind === "check" && item.expression,
+    )) {
+      let accepted;
+      try {
+        accepted = evaluateCheck(constraint.expression, record);
+      } catch {
+        throw new Error(
+          `The app cannot safely evaluate “${constraint.reason}”. Rebuild with a supported declarative constraint.`,
+        );
+      }
+      if (!accepted) throw new Error(constraint.reason);
+    }
+  }
+
+  function validateBackup(next) {
+    const activeByEntity = Object.create(null);
+    for (const entityId of entityIds) {
+      const entitySpec = entity(entityId);
+      const imported = next.records[entityId] || [];
+      for (const record of imported) {
+        if (
+          typeof record.object_uid !== "string" ||
+          typeof record._record_uid !== "string" ||
+          !Number.isInteger(record._version) ||
+          record._version < 1
+        ) {
+          throw new Error(`${entitySpec.title} backup history lacks version identity.`);
+        }
+        for (const field of entitySpec.fields) {
+          const value = record[field.name];
+          if (field.required && (value === undefined || value === "")) {
+            throw new Error(`${entitySpec.title} is missing ${label(field.name)}.`);
+          }
+          if (value === undefined || value === null) continue;
+          if (field.type === "integer" && !Number.isInteger(value)) {
+            throw new Error(`${label(field.name)} must be a whole number.`);
+          }
+          if (["number", "duration"].includes(field.type) && !Number.isFinite(value)) {
+            throw new Error(`${label(field.name)} must be a number.`);
+          }
+          if (field.type === "boolean" && typeof value !== "boolean") {
+            throw new Error(`${label(field.name)} must be true or false.`);
+          }
+          if (
+            ["text", "date", "datetime", "enum", "attachment", "location"].includes(
+              field.type,
+            ) &&
+            typeof value !== "string"
+          ) {
+            throw new Error(`${label(field.name)} must be text.`);
+          }
+          if (field.type === "enum" && !(field.values || []).includes(value)) {
+            throw new Error(`${label(field.name)} has an unsupported value.`);
+          }
+        }
+        for (const constraint of spec.domain.constraints.filter(
+          (item) => item.entity === entityId && item.kind === "check" && item.expression,
+        )) {
+          if (!evaluateCheck(constraint.expression, record)) {
+            throw new Error(constraint.reason);
+          }
+        }
+      }
+      const samples = (spec.domain.sample_records[entityId] || []).filter(
+        (record) => !next.sample_overrides[sampleKey(entityId, record)],
+      );
+      activeByEntity[entityId] = [
+        ...samples,
+        ...imported.filter((record) => !record._superseded_by),
+      ];
+      const uniqueSets = [
+        entitySpec.identity,
+        ...spec.domain.constraints
+          .filter((item) => item.entity === entityId && item.kind === "unique")
+          .map((item) => item.fields),
+      ];
+      for (const fields of uniqueSets) {
+        const seen = new Set();
+        for (const record of activeByEntity[entityId]) {
+          const identity = JSON.stringify(fields.map((field) => record[field]));
+          if (seen.has(identity)) {
+            throw new Error(
+              `${entitySpec.title} backup duplicates ${fields.map(label).join(" and ")}.`,
+            );
+          }
+          seen.add(identity);
+        }
+      }
+    }
+    const importedVersionIds = new Set(
+      Object.values(next.records).flatMap((items) =>
+        items.map((record) => record._record_uid),
+      ),
+    );
+    if (
+      Object.values(next.sample_overrides).some(
+        (recordUid) => !importedVersionIds.has(recordUid),
+      )
+    ) {
+      throw new Error("Backup contains a sample override without its replacement version.");
+    }
+  }
+
+  function persist(next) {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(next));
+      store = next;
+      return true;
+    } catch {
+      announce(
+        "The browser could not save this change. Export the current backup and free local storage before retrying.",
+        true,
+      );
+      return false;
+    }
+  }
+
+  function commit(entitySpec, action, form, current) {
+    const operation = action?.operation || "create";
+    const now = new Date().toISOString();
+    const fields = entitySpec.fields.filter(
+      (field) => !entitySpec.identity.includes(field.name),
+    );
+    const stableUid = current?.object_uid || uid();
+    const before = current ? stripContext(current) : {};
+    const record = Object.fromEntries(
+      Object.entries(before).filter(([key]) => !key.startsWith("_")),
+    );
+    record.object_uid = stableUid;
+    record.captured_at = current?.captured_at || now;
+    record.updated_at = now;
+    if (!current) {
+      entitySpec.identity.forEach((name, index) => {
+        const field = entitySpec.fields.find((item) => item.name === name);
+        record[name] =
+          index === 0
+            ? `${entitySpec.id}-${stableUid.slice(0, 8)}`
+            : ["integer", "number"].includes(field?.type)
+              ? 1
+              : `v${index + 1}`;
+      });
+    }
+    for (const field of fields) {
+      const value = parseField(field, form.get(field.name));
+      if (value === undefined) delete record[field.name];
+      else record[field.name] = value;
+    }
+    validateRecord(entitySpec, record, current);
+
+    const next = clone(store);
+    next.records[entitySpec.id] = next.records[entitySpec.id] || [];
+    const recordUid = uid();
+    record._record_uid = recordUid;
+    record._version = Number(current?._version || 0) + 1;
+    if (current) {
+      record._supersedes = current.__record_key;
+      if (current.__origin === "sample") {
+        next.sample_overrides[current.__record_key] = recordUid;
+      } else {
+        const previous = next.records[entitySpec.id].find(
+          (candidate) => recordKey(entitySpec.id, candidate) === current.__record_key,
+        );
+        if (!previous) {
+          throw new Error("The selected record changed. Select it again and retry.");
+        }
+        previous._superseded_by = recordUid;
+      }
+    }
+    next.records[entitySpec.id].push(record);
+    next.receipts.push({
+      receipt_id: uid(),
+      object_uid: stableUid,
+      record_uid: recordUid,
+      entity: entitySpec.id,
+      operation,
+      captured_at: now,
+      spec_id: spec.id,
+      supersedes: current?.__record_key || null,
+      changed_fields: fields
+        .filter((field) => valueText(before[field.name]) !== valueText(record[field.name]))
+        .map((field) => field.name),
+      consequence: action?.consequence || entitySpec.description,
+    });
+    if (!persist(next)) return false;
+    selected[entitySpec.id] = recordUid;
+    return true;
+  }
+
+  function openCapture(entityId, action = null, current = null) {
+    const entitySpec = entity(entityId);
+    const operation = action?.operation || "create";
+    const fields = entitySpec.fields.filter(
+      (field) => !entitySpec.identity.includes(field.name),
+    );
+    const dialog = document.getElementById("capture-dialog");
+    const versionNote =
+      operation === "correct"
+        ? '<p class="storage-note">Saving creates a correction version. The prior interpretation remains in history and export.<\/p>'
+        : operation === "update"
+          ? '<p class="storage-note">Saving creates a new version and preserves the prior state.<\/p>'
+          : "";
+    const submitLabel =
+      operation === "correct"
+        ? "Save correction"
+        : operation === "update"
+          ? "Save revision"
+          : `Save ${entitySpec.title.toLowerCase()}`;
+    document.getElementById("capture-content").innerHTML = `<div class="dialog-head"><div><h2 id="capture-title">${esc(
+      action?.label || `Add ${entitySpec.title}`,
+    )}<\/h2><p>${esc(
+      action?.consequence || entitySpec.description,
+    )}<\/p>${versionNote}<\/div><button class="icon-button" type="button" data-close aria-label="Close">Close<\/button><\/div><form id="capture-form"><div class="form-grid">${fields
+      .map((field) => inputFor(field, entitySpec, current))
+      .join(
+        "",
+      )}<\/div><p class="error" id="form-error" role="alert"><\/p><div class="dialog-actions"><button class="button" type="button" data-close>Cancel<\/button><button class="button primary" type="submit">${esc(
+      submitLabel,
+    )}<\/button><\/div><\/form>`;
+    document
+      .getElementById("capture-content")
+      .querySelectorAll("[data-close]")
+      .forEach((button) => button.addEventListener("click", () => dialog.close()));
+    document.getElementById("capture-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const submit = event.currentTarget.querySelector('button[type="submit"]');
+      submit.disabled = true;
+      document.getElementById("form-error").textContent = "";
+      try {
+        if (!commit(entitySpec, action, new FormData(event.currentTarget), current)) {
+          submit.disabled = false;
+          return;
+        }
+        dialog.close();
+        statusMessage =
+          operation === "correct"
+            ? `${entitySpec.title} corrected; the prior version remains in export history.`
+            : operation === "update"
+              ? `${entitySpec.title} revised; the prior version remains in export history.`
+              : `${entitySpec.title} saved locally with an exportable receipt.`;
+        errorMessage = "";
+        render();
+        document.getElementById("main").focus();
+      } catch (error) {
+        document.getElementById("form-error").textContent =
+          error instanceof Error ? error.message : "The record could not be saved.";
+        submit.disabled = false;
+      }
+    });
+    dialog.showModal();
+    dialog.querySelector("input, select, textarea, button")?.focus();
+  }
+
+  function openEvidence() {
+    const dialog = document.getElementById("evidence-dialog");
+    const current = view();
+    let derivations = spec.derivations.filter(
+      (item) =>
+        item.output_path.includes(current.id) ||
+        item.output_path === "domain.entities" ||
+        item.output_path === "experience.visual_world",
+    );
+    if (!derivations.length) derivations = spec.derivations;
+    const citationIds = new Set(derivations.flatMap((item) => item.evidence_ids));
+    const citations = spec.evidence.filter((item) => citationIds.has(item.id));
+    document.getElementById("evidence-content").innerHTML = `<div class="dialog-head"><div><h2 id="evidence-title">Why this app<\/h2><p>Material decisions trace to reviewed evidence or an explicit user choice.<\/p><\/div><button class="icon-button" type="button" data-close aria-label="Close">Close<\/button><\/div>${derivations
+      .map(
+        (item) =>
+          `<div class="evidence-item"><strong>${esc(
+            item.output_path,
+          )}<\/strong><p>${esc(item.decision)}<\/p>${
+            item.user_decision
+              ? `<p><b>User decision:<\/b> ${esc(item.user_decision)}<\/p>`
+              : ""
+          }<\/div>`,
+      )
+      .join("")}${citations
+      .map((item) => {
+        const source = sources.get(item.source_id);
+        const sourceLabel = source?.title || item.source_id;
+        const heading = source?.url
+          ? `<a href="${esc(
+              source.url,
+            )}" target="_blank" rel="noreferrer">${esc(sourceLabel)}<\/a>`
+          : `<strong>${esc(sourceLabel)}<\/strong>`;
+        return `<div class="evidence-item">${heading}<p>${esc(item.claim)}<\/p><\/div>`;
+      })
+      .join("")}`;
+    dialog.querySelector("[data-close]").addEventListener("click", () => dialog.close());
+    dialog.showModal();
+    dialog.querySelector("button")?.focus();
+  }
+
+  function exportData() {
+    const activeRecords = Object.fromEntries(
+      [...entityIds].map((entityId) => [
+        entityId,
+        records(entityId).map(stripContext),
+      ]),
+    );
+    const payload = {
+      backup_format: "foundry-owned-app",
+      runtime_schema_version: RUNTIME_SCHEMA_VERSION,
+      spec_id: spec.id,
+      spec_version: spec.spec_version,
+      exported_at: new Date().toISOString(),
+      store,
+      records: store.records,
+      active_records: activeRecords,
+      receipts: store.receipts,
+      foundry_spec: spec,
+      evidence: {
+        sources: spec._source_records || [],
+        citations: spec.evidence,
+        derivations: spec.derivations,
+      },
+      derivations: spec.derivations,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${spec.id}-backup.json`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+    announce("Complete data, history, receipts, spec, and evidence exported as JSON.");
+  }
+
+  async function restoreData(event) {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = "";
+    if (!file) return;
+    if (file.size > MAX_BACKUP_BYTES) {
+      announce("Backup is larger than 10 MB and was not opened.", true);
+      return;
+    }
+    try {
+      const payload = JSON.parse(await file.text());
+      if (payload.backup_format !== "foundry-owned-app") {
+        throw new Error("This is not a Foundry owned-app backup.");
+      }
+      if (payload.spec_id !== spec.id || payload.spec_version !== spec.spec_version) {
+        throw new Error(
+          `Backup belongs to ${payload.spec_id || "another app"} spec ${
+            payload.spec_version || "unknown"
+          }; this app is ${spec.id} spec ${spec.spec_version}.`,
+        );
+      }
+      if (Number(payload.runtime_schema_version) > RUNTIME_SCHEMA_VERSION) {
+        throw new Error("Backup uses a newer runtime. Upgrade before restoring it.");
+      }
+      const restored = sanitizeStore(
+        payload.store || { records: payload.records, receipts: payload.receipts },
+        true,
+      );
+      validateBackup(restored);
+      if (
+        !globalThis.confirm(
+          "Restore this backup? It will replace the current browser copy after validation.",
+        )
+      ) {
+        announce("Restore cancelled; local data was not changed.");
+        return;
+      }
+      if (!persist(restored)) return;
+      statusMessage = "Backup restored after spec and schema validation.";
+      errorMessage = "";
+      render();
+    } catch (error) {
+      announce(
+        error instanceof Error ? error.message : "Backup could not be restored.",
+        true,
+      );
+    }
+  }
+
+  render();
+})();
+
+  </script>
+</body>
+</html>

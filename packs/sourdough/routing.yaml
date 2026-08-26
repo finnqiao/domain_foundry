@@ -15,6 +15,15 @@ rules:
     object: bake
     confidence_boost: 0.05
 
+  # Discard is the other half of keeping a starter: what you pour off, and
+  # what you make with it. Both belong to the starter it came from.
+  - match: "\\bdiscard\\b"
+    object: starter
+    confidence_boost: 0.08
+  - match: "discard\\s+(?:pancake|waffle|cracker|biscuit|muffin|scone|focaccia|brownie)"
+    object: bake
+    confidence_boost: 0.1
+
 examples:
   - text: "baked a 75% hydration country loaf, bulk 5h, came out great"
     expect: {object: bake, operation: create, fields: {hydration: 75, bulk_hours: 5, result: great}}
@@ -36,6 +45,10 @@ examples:
     expect: {object: starter, operation: update}
   - text: "crumb was open and glossy — great bake"
     expect: {object: bake, operation: create, fields: {result: great}}
+  - text: "discard pancakes this morning, tangy, used 100g discard"
+    expect: {object: bake, operation: create}
+  - text: "poured off 100g of discard before the feed"
+    expect: {object: starter, operation: update}
 
 negative_examples:
   - text: "the app build is toast"
@@ -44,4 +57,5 @@ negative_examples:
 
 llm_hints: >
   Hydration is baker's percentage. "Doubled in 4h" describes the starter, not bulk.
-  Prefer starter when the message is about feeding or levain activity.
+  Prefer starter when the message is about feeding, discard, or levain activity;
+  prefer bake when the discard became something you ate.

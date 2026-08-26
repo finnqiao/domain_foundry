@@ -3,7 +3,8 @@
 Drives the exact ``Tool`` objects hermes-agent invokes (``build_tools`` bound to
 the in-process ``LocalHarnessClient``) through the full loop:
 
-    new_domain -> wizard_reply(skip) -> capture -> query -> correct -> review
+    new_domain -> wizard_reply(looks) -> wizard_reply(build it) -> capture
+    -> query -> correct -> review
 
 Offline and deterministic (heuristic router). Run standalone to print the
 transcript used as the tutorial's Hermes proof snapshot:
@@ -22,6 +23,21 @@ os.environ.setdefault("DOMAIN_FOUNDRY_LLM", "heuristic")
 from domain_foundry_hermes_agent import LocalHarnessClient  # noqa: E402
 from domain_foundry_hermes_agent.plugin import build_tools  # noqa: E402
 
+GOAL = "i collect pokemon cards"
+PICK = "a dex of the cards i own with photos"
+BUILD = "build it"
+CAP = "pulled a holographic Charizard from a 151 booster, NM"
+CORR = "that Charizard was LP not NM"
+
+
+def _is_cards_domain(name: str | None) -> bool:
+    token = (name or "").lower()
+    return "pokemon" in token or "card" in token
+
+
+def _looks_have_html(turn: dict) -> bool:
+    return any("html" in (item or {}) for item in (turn.get("looks") or []))
+
 
 def _run(echo: bool = False):
     home = tempfile.mkdtemp(prefix="df_hermes_")
@@ -36,30 +52,52 @@ def _run(echo: bool = False):
             print(f"\n### {name}({kw})\n{json.dumps(out, indent=2)[:600]}")
         return out
 
-    turn = call("domain_foundry_new_domain", goal_text="track my bouldering climbing sessions")
+    turn = call("domain_foundry_new_domain", goal_text=GOAL)
     sid = turn["session_id"]
-    # wizard_reply is exposed as a tool on the adapter; fall back to the client.
     if "domain_foundry_wizard_reply" in tools:
-        activated = call("domain_foundry_wizard_reply", session_id=sid, text="skip")
+        looks = call("domain_foundry_wizard_reply", session_id=sid, text=PICK)
+        activated = call("domain_foundry_wizard_reply", session_id=sid, text=BUILD)
     else:
-        activated = client.wizard_reply(sid, "skip")
-    cap = call("domain_foundry_capture", text="good bouldering session at the gym, felt strong")
-    q = call("domain_foundry_query", domain="bouldering")
-    asked = call("domain_foundry_ask", question="what did I log?", domain="bouldering")
-    # Offline (no model), corrections resolve through the deterministic
-    # "<field> was <x> not <y>" form. A vaguer phrasing needs L2 — asserting on
-    # one here would pass on an *empty* amend rather than a real one.
-    corr = call("domain_foundry_correct", text="actually the rating was moderate not hard")
+        looks = client.wizard_reply(sid, PICK)
+        activated = client.wizard_reply(sid, BUILD)
+    domain = activated.get("domain") or ((activated.get("pack") or {}).get("name"))
+    cap = call("domain_foundry_capture", text=CAP)
+    routed = (cap.get("routed") or [{}])[0]
+    routed_domain = routed.get("domain") or domain
+    q = call("domain_foundry_query", domain=routed_domain)
+    asked = call("domain_foundry_ask", question="what did I log?", domain=routed_domain)
+    corr = call("domain_foundry_correct", text=CORR)
     rev = call("domain_foundry_review_list")
-    return {"new_domain": turn, "activated": activated, "capture": cap,
-            "query": q, "ask": asked, "correct": corr, "review": rev, "client": client}
+    return {
+        "new_domain": turn,
+        "looks": looks,
+        "activated": activated,
+        "capture": cap,
+        "query": q,
+        "ask": asked,
+        "correct": corr,
+        "review": rev,
+        "client": client,
+    }
 
 
 def test_hermes_adapter_end_to_end():
     r = _run()
-    assert r["activated"]["domain"] == "bouldering"
+    ideas = " ".join(
+        i.get("title") or ""
+        for i in ((r["new_domain"].get("neighborhood") or {}).get("ideas") or [])
+    ).lower()
+    assert r["new_domain"].get("state") == "fork"
+    assert "card dex" in ideas
+    assert r["looks"].get("state") == "looks"
+    assert _looks_have_html(r["looks"]) is False
+    assert r["looks"].get("looks")
+    assert all("html" not in item for item in r["looks"]["looks"])
+    domain = r["activated"].get("domain") or ((r["activated"].get("pack") or {}).get("name"))
+    assert _is_cards_domain(domain)
+    assert r["activated"].get("state") in {"test_drive", "repair"}
     routed = (r["capture"].get("routed") or [{}])[0]
-    assert routed["domain"] == "bouldering"
+    assert _is_cards_domain(routed.get("domain"))
     assert r["capture"]["status"] == "applied"
     assert len(r["query"]["rows"]) >= 1
     assert r["ask"].get("answer")
@@ -67,7 +105,7 @@ def test_hermes_adapter_end_to_end():
     assert bool(r["correct"].get("eval_case_id")) is True
     # The amend must actually change the canonical record — an empty field set
     # used to report applied=true while changing nothing.
-    assert r["correct"]["details"]["fields"] == {"rating": "moderate"}
+    assert r["correct"]["details"]["fields"] == {"notes": "LP"}
 
 
 if __name__ == "__main__":

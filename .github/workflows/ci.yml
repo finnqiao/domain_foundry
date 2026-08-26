@@ -1,5 +1,8 @@
 name: ci
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [main]
@@ -50,8 +53,32 @@ jobs:
           export DOMAIN_FOUNDRY_HOME="$(mktemp -d)"
           domain-foundry init
           domain-foundry eval --full --min-accuracy 0.9
+      - name: Interest suite (create-path ratchet)
+        # Scores creation rather than an existing pack: fork a goal, build the
+        # offered idea, then say one real domain sentence and check it lands.
+        # Offline and deterministic (heuristic provider, one workspace per case).
+        # Per-case ratchet against the committed baseline, because aggregate
+        # counts hide trades where a fix for one goal breaks another.
+        run: |
+          export DOMAIN_FOUNDRY_HOME="$(mktemp -d)"
+          export DOMAIN_FOUNDRY_LLM=heuristic
+          domain-foundry init
+          domain-foundry eval interest-suite --min-pass 50
       - name: Leakscan
         run: python scripts/leakscan.py
+      - name: Python dependency vulnerabilities
+        run: |
+          export UV_CACHE_DIR="$(mktemp -d)"
+          uv export --frozen --no-dev --no-emit-project --format requirements-txt --output-file /tmp/domain-foundry-requirements.txt
+          pip-audit --strict --no-deps --disable-pip -r /tmp/domain-foundry-requirements.txt
+      - name: Foundry knowledge, compiler, and SBOM gates
+        run: |
+          python scripts/knowledge_audit.py
+          python scripts/dependency_license_audit.py
+          python scripts/provider_compatibility_audit.py
+          python scripts/foundry_audit.py
+          python scripts/foundry_heldout_audit.py
+          python scripts/generate_sbom.py --output /tmp/domain-foundry.spdx.json
 
   app:
     runs-on: ubuntu-latest
@@ -74,7 +101,16 @@ jobs:
           # reason to skip (the old guard silently green-lit exactly that).
           test -f package.json
           npm ci
+          python ../scripts/dependency_license_audit.py --verify-source-texts
           npm run build
+      - name: Lint and unit-test SPA
+        working-directory: app
+        run: |
+          npm run lint
+          npm test
+      - name: Production dependency vulnerabilities
+        working-directory: app
+        run: npm audit --omit=dev --audit-level=high
       - name: Install Playwright (chromium)
         working-directory: app
         run: npx playwright install --with-deps chromium
@@ -95,6 +131,10 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -113,3 +153,8 @@ jobs:
         with:
           name: dist
           path: dist/
+      - name: Attest release build provenance
+        if: matrix.os == 'ubuntu-latest' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: dist/*

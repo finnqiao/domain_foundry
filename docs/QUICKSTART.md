@@ -1,20 +1,27 @@
 # Quickstart
 
-Get from a clean machine to a working, captured-into domain in a few minutes,
-using only this repo. Target: **under 15 minutes** on a fresh VM (the P8
-clean-machine gate). An automated version of the pack-install + capture path is
-in [`scripts/quickstart_gate.sh`](../scripts/quickstart_gate.sh).
+Get from a clean machine to a working foundry in a few minutes, using only this
+repo. Target: **under 15 minutes** on a fresh VM (the P8 clean-machine gate).
 
-## 1. Install the core
+The public story is the same three weekends — bake log, dive notebook, card
+binder. Click-through: **[Bring the log. Pick a look.](tutorial/end-to-end.html)**.
+This page is the terminal version, then builder extras.
+
+## 1. Install from this checkout
+
+Packages are not on PyPI yet. From the repo:
 
 ```bash
-pipx install domain-foundry-core          # isolated CLI install
-# — or, from a checkout —
 python3.11 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
 This puts a `domain-foundry` command on your PATH.
+
+!!! note "Once it is on PyPI"
+    An isolated install will be `pipx install` of the core package. Until
+    publish, the checkout above is the install. Do not treat a PyPI command as
+    the default.
 
 ## 2. Initialize the workspace
 
@@ -33,7 +40,56 @@ domain-foundry init
 Creates `~/.domain_foundry/` with the two SQLite databases (`ledger.sqlite`,
 `domains.sqlite`) and applies substrate migrations.
 
-### Bring your own key
+## 3. The weekend (wizard)
+
+`new-domain` prints options. Nothing is live until you accept a look.
+
+```bash
+domain-foundry new-domain "i have a log of sourdough bakes"
+# copy session_id from the JSON
+domain-foundry wizard reply <session> "i want to data visualize all my bakes"
+domain-foundry wizard reply <session> "the scatter one"
+domain-foundry capture "baked a 75% hydration country loaf, came out great"
+domain-foundry ask "which hydrations actually sprang?"
+domain-foundry correct "that sunday batard was 78 not 72"
+```
+
+“the scatter one” accepts the look and builds it. Faster path when you already
+want the suggestion:
+
+```bash
+domain-foundry new-domain "i have a log of sourdough bakes" --reply skip --reply "build it"
+```
+
+`skip` alone is **not** install — it only shows a look.
+
+Same shape for the other weekends:
+
+```bash
+domain-foundry new-domain "I want to remember the animals I see underwater"
+domain-foundry wizard reply <session> "the field-guide look"
+domain-foundry wizard reply <session> "build it"
+
+domain-foundry new-domain "i collect pokemon cards"
+domain-foundry wizard reply <session> "a dex of the cards i own with photos"
+domain-foundry wizard reply <session> "make the gallery denser"
+domain-foundry wizard reply <session> "build it"
+domain-foundry wizard reply <session> "pulled a holographic Charizard from a 151 booster, NM"
+```
+
+## 4. Serve the app
+
+```bash
+domain-foundry serve
+# open http://127.0.0.1:8787
+```
+
+Capture from the web box, browse the interest you just built, and fix a number
+from there.
+
+---
+
+## Appendix: bring your own key
 
 Nothing ships with a model. `setup` asks which provider you have a key for
 (Anthropic, OpenAI, DeepSeek, OpenRouter, anything OpenAI-compatible you host
@@ -83,26 +139,21 @@ domain-foundry setup --provider anthropic --sota claude-opus-5 -y --no-probe
 ```
 
 DeepSeek is the cheapest path that still designs a passion (routine
-`deepseek-chat`, sota `deepseek-reasoner`). OpenRouter is one key for many
-models. Export `DEEPSEEK_API_KEY` or `OPENROUTER_API_KEY` and `setup` will see
-it.
+`deepseek-v4-flash`, sota `deepseek-v4-pro`). OpenAI defaults to
+`gpt-5.6-luna` for routine work and `gpt-5.6-sol` for design. OpenRouter is one
+key for many models. Export `DEEPSEEK_API_KEY` or `OPENROUTER_API_KEY` and
+`setup` will see it.
 
-## 3. Add a demonstration pack
+## Appendix: add a demonstration pack (ramen / travel)
 
-Packs are **data** — no code. Two showcase packs ship in `packs/`:
+Packs are **data** — no code. Two showcase packs ship in `packs/`. This is the
+old “install everything” analog, not the weekend wizard:
 
 ```bash
 domain-foundry pack add packs/food     # cooking ideas → recipes → cooks → dining → learnings
 domain-foundry pack add packs/travel   # trips → timeline items → bookings (+ dining↔trip links)
 domain-foundry pack validate food
 domain-foundry pack validate travel
-```
-
-(You can also start with `packs/plants` or `packs/sourdough`.)
-
-## 4. Capture
-
-```bash
 domain-foundry capture "cooked a batch of shoyu ramen, came out great"
 domain-foundry capture "dinner at River Station Grill and heading to Port City in March"
 domain-foundry query --domain food
@@ -111,18 +162,16 @@ domain-foundry query --domain food
 The first routes to `food.cook`; the second fans out into a `food.dining` record
 **and** a `travel.trip`, linked across domains.
 
-## 5. Serve the app
+(You can also start with `packs/plants` or `packs/sourdough`.)
 
-```bash
-domain-foundry serve
-# open http://127.0.0.1:8787
-```
+An automated version of this pack-install + capture path is in
+[`scripts/quickstart_gate.sh`](https://github.com/finnqiao/domain_foundry/blob/main/scripts/quickstart_gate.sh).
 
-Capture from the web box, browse the domain tabs (Cooks / Recipes / Ideas /
-Dining / Trips / Timeline / Bookings), open a detail view for the provenance
-chain, and correct from there.
+Browse the app after `domain-foundry serve`: Cooks / Recipes / Ideas / Dining /
+Trips / Timeline / Bookings, open a detail view for the provenance chain, and
+correct from there.
 
-## 6. (Optional) Hook up hermes-agent
+## Appendix: hook up hermes-agent
 
 Let an agent capture on your behalf with capture-first discipline. Prefer an
 **isolated Hermes profile** so this never touches your default gateway:
@@ -148,9 +197,9 @@ hermes -p domainfoundry -z "baked a 75% hydration country loaf" --yolo
 Or run the automated smoke: `scripts/hermes_e2e_smoke.sh`.
 
 Supported hermes-agent range: **`>=0.4,<1`**. See the
-[adapter README](../adapters/hermes_agent/README.md) for details.
+[adapter README](https://github.com/finnqiao/domain_foundry/blob/main/adapters/hermes_agent/README.md) for details.
 
-## 7. (Optional) Private pack overlay
+## Appendix: private pack overlay
 
 Personal packs do not belong in this checkout. Point Domain Foundry at a private
 catalog (see [Private overlay](PRIVATE_OVERLAY.md)):
@@ -166,7 +215,8 @@ domain-foundry pack list   # includes overlay packs; same-named overlay wins
 scripts/quickstart_gate.sh
 ```
 
-Runs steps 2–4 against a throwaway `--home`, activates the food + travel packs,
-captures a single-domain and a cross-domain message, and asserts both routed —
-the automatable core of the 15-minute gate. The manual slice (browser app +
-hermes-agent capture) is steps 5–6 above.
+Runs the pack-add + capture path against a throwaway `--home`, activates the food
++ travel packs, captures a single-domain and a cross-domain message, and asserts
+both routed — the automatable core of the 15-minute gate. The manual slice
+(browser app + hermes-agent capture) is the serve / hermes appendices above.
+The wizard weekend is §3.

@@ -32,6 +32,16 @@ export function DetailModal({
     correctingRef.current = correcting;
   }, [correcting]);
 
+  const openCorrection = useCallback(() => {
+    correctingRef.current = true;
+    setCorrecting(true);
+  }, []);
+
+  const closeCorrection = useCallback(() => {
+    correctingRef.current = false;
+    setCorrecting(false);
+  }, []);
+
   const load = useCallback(async () => {
     setErr(null);
     try {
@@ -84,7 +94,7 @@ export function DetailModal({
           <h2>{detail ? fmtFieldName(detail.object_type) : "Detail"}</h2>
           <div className="modal-head-actions">
             {detail && (
-              <button className="btn-secondary" onClick={() => setCorrecting(true)}>
+              <button className="btn-secondary" onClick={openCorrection}>
                 Correct
               </button>
             )}
@@ -190,9 +200,9 @@ export function DetailModal({
             currentFields: detail.fields,
           }}
           packs={packs}
-          onClose={() => setCorrecting(false)}
+          onClose={closeCorrection}
           onDone={() => {
-            setCorrecting(false);
+            closeCorrection();
             void load();
             onChanged();
           }}

@@ -1,6 +1,6 @@
 """Per-model token pricing for cost metering (Phase 1).
 
-Rates are USD per 1M tokens, snapshotted from provider docs (2026-07).
+Rates are USD per 1M tokens, snapshotted from provider docs (2026-08).
 """
 
 from __future__ import annotations
@@ -28,7 +28,10 @@ _MODEL_PRICING: dict[str, tuple[float, float]] = {
     "claude-opus-4-5": (5.00, 25.00),
     "claude-fable-5": (10.00, 50.00),
     "claude-mythos-5": (10.00, 50.00),
-    # OpenAI fallbacks (legacy OpenAICompatibleProvider)
+    # OpenAI current defaults plus legacy receipt support.
+    "gpt-5.6-luna": (0.20, 1.20),
+    "gpt-5.6-terra": (2.00, 12.00),
+    "gpt-5.6-sol": (5.00, 30.00),
     "gpt-4o-mini": (0.15, 0.60),
     "gpt-4o": (2.50, 10.00),
     # Z.ai GLM (routine tier via OpenRouter) — openrouter.ai pricing

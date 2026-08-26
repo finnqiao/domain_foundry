@@ -1,0 +1,46 @@
+{
+  "spec_id": "lego-builds",
+  "spec_version": "1.0",
+  "generated_at": "2026-08-24T04:38:30.936169Z",
+  "compiler": "domain-foundry-core/foundry-spec-1.1",
+  "artifacts": {
+    "foundry-spec.json": "890160d315f5fd668de3c70233df4c599cde95fed401c6ffc1ec5837d966ba85",
+    "schema.sql": "0d7ebf629fdba3f7a10f6d4a476e1ef6f7b2832c4b592e29ddef0d83e1a2bf70",
+    "app.html": "35d64fd7102b940523f9c2a534fc5fc478728f995b649878c5cb921d8e6bed36",
+    "evidence.json": "60e6a9c673aa96400e93fa13e1c5e7338b65698878201f07c41d5674317fbcb7",
+    "README.md": "fc36f69c5d5970339522c11f569fdb0f9e913c333063feb99957f080d312ac5b"
+  },
+  "sources": [
+    "rebrickable_api",
+    "postgresql_constraints",
+    "sqlite_foreign_keys",
+    "sqlite_query_planner",
+    "w3c_prov",
+    "govuk_design_principles",
+    "wcag_22",
+    "aria_apg",
+    "ui_remix_paper"
+  ],
+  "principles": [
+    "DE-01",
+    "DE-02",
+    "DE-03",
+    "DE-04",
+    "DE-05",
+    "DE-06",
+    "DE-08",
+    "UX-01",
+    "UX-02",
+    "UX-04",
+    "UX-05",
+    "UX-06",
+    "UX-07",
+    "UX-10",
+    "SE-01",
+    "SE-03",
+    "SE-04",
+    "SE-10",
+    "SE-11"
+  ],
+  "generation": null
+}

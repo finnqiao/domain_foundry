@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -34,10 +35,43 @@ _AMEND_SCHEMA: dict[str, Any] = {
     "required": ["fields"],
 }
 
+_CONDITION_FIELDS = (
+    "condition",
+    "grade",
+    "status",
+    "rating",
+    "quality",
+    "finish",
+)
+
 
 def _explicit_fields(fields: dict[str, Any] | None) -> dict[str, Any]:
     """Fields the caller/regex parser actually resolved (``_`` keys are hints)."""
     return {k: v for k, v in (fields or {}).items() if not k.startswith("_")}
+
+
+def _amend_dest_field(field_names: dict[str, Any]) -> str | None:
+    for name in _CONDITION_FIELDS:
+        if name in field_names:
+            return name
+    if "notes" in field_names:
+        return "notes"
+    return None
+
+
+def _row_mentions_identity(current: dict[str, Any], mention: str) -> bool:
+    needle = (mention or "").strip()
+    if not needle:
+        return False
+    for value in current.values():
+        if value is None:
+            continue
+        text = str(value)
+        if text.strip().lower() == needle.lower():
+            return True
+        if re.search(rf"\b{re.escape(needle)}\b", text, re.I):
+            return True
+    return False
 
 
 @dataclass
@@ -125,6 +159,7 @@ class CorrectionService:
             # (hydration, bulk hours, …). On a generated domain it returns
             # nothing, so ask the model which field the user meant — otherwise a
             # correction on your own domain silently amends nothing.
+            fields = self._materialize_amend_fields(target, fields, text)
             if not _explicit_fields(fields) and text:
                 fields = {**fields, **self._llm_amend_fields(target, text)}
             return self._amend(
@@ -257,6 +292,22 @@ class CorrectionService:
             field_keys = [
                 key for key in (parsed.fields or {}) if not key.startswith("_")
             ] if parsed else []
+            identity_mention = (parsed.fields or {}).get("_identity") if parsed else None
+            if identity_mention:
+                for row in rows:
+                    link = conn.execute(
+                        """
+                        SELECT source_id FROM source_link
+                        WHERE target_type = 'canonical_object' AND target_id = ?
+                          AND source_type = 'entry'
+                        ORDER BY id DESC LIMIT 1
+                        """,
+                        (row["uid"],),
+                    ).fetchone()
+                    candidate = _as_target(row, link["source_id"] if link else None)
+                    current = self._current_fields(candidate)
+                    if _row_mentions_identity(current, str(identity_mention)):
+                        return candidate
             if wrong is not None and field_keys:
                 for row in rows:
                     link = conn.execute(
@@ -906,6 +957,55 @@ class CorrectionService:
             return {}
         skip = {"id", "object_uid", "entry_id", "created_at", "updated_at", "tombstoned"}
         return {k: v for k, v in row.items() if k not in skip and v is not None}
+
+    def _materialize_amend_fields(
+        self,
+        target: dict[str, Any] | None,
+        fields: dict[str, Any] | None,
+        text: str | None,
+    ) -> dict[str, Any]:
+        """Map free-text patches onto *existing* schema fields.
+
+        A proper noun like Charizard is an identity value, never a new field.
+        Bind the new value to notes or a condition-like field on that row.
+        """
+        fields = dict(fields or {})
+        if not target or not target.get("domain"):
+            return {k: v for k, v in fields.items() if not k.startswith("_")}
+        pack = self.registry.get(str(target["domain"]))
+        obj = pack.objects.get(str(target["object_type"])) if pack else None
+        if obj is None:
+            return {k: v for k, v in fields.items() if not k.startswith("_")}
+
+        known = {k: v for k, v in fields.items() if k in obj.fields}
+        if known:
+            return known
+
+        mention = fields.get("_identity")
+        value = fields.get("_value")
+        for key, raw in fields.items():
+            if key.startswith("_"):
+                continue
+            mention = mention or key
+            if value is None:
+                value = raw
+        if mention is None and text:
+            parsed = parse_correction_text(text)
+            mention = parsed.fields.get("_identity")
+            if value is None:
+                value = parsed.fields.get("_value")
+        if value is None:
+            return {}
+        dest = _amend_dest_field(obj.fields)
+        if dest is None:
+            return {}
+        if dest == "notes":
+            current = self._current_fields(target)
+            existing = current.get("notes")
+            wrong = fields.get("_wrong")
+            if existing and wrong and str(wrong) in str(existing):
+                return {dest: str(existing).replace(str(wrong), str(value), 1)}
+        return {dest: value}
 
     def _insert_change_request(
         self,

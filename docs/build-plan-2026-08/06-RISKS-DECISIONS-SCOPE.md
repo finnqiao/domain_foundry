@@ -43,11 +43,12 @@ not-in-scope list on purpose.
 
 ## Human gates (the user's, not the implementer's)
 
-From [`../../LAUNCH_CHECKLIST.md`](../../LAUNCH_CHECKLIST.md) and
+From [`LAUNCH_CHECKLIST.md`](https://github.com/finnqiao/domain_foundry/blob/main/LAUNCH_CHECKLIST.md) and
 [`../OPEN_GATES.md`](../OPEN_GATES.md) — the plan builds *to* these, never
 executes them:
 
-1. Name availability final call + claiming `domain-foundry-*` on PyPI.
+1. Final name/coordinate approval + attempting the permitted `domain-foundry-*`
+   PyPI claims; current 404 evidence is not a reservation.
 2. TestPyPI / PyPI publish, git tag, GitHub release (scripts prepared in S1.7).
 3. Demo recording (storyboard prepared in S1.10).
 4. Launch posts (`docs/launch/` drafts exist).

@@ -28,6 +28,7 @@ _STOPWORDS = {
     "day", "daily", "weekly", "help", "me", "please", "some", "how", "when",
     "journey", "progress", "history", "over", "time", "each", "every", "this",
     "that", "new", "build", "create", "make", "started", "starting", "start",
+    "collect", "collects", "collected", "collecting", "collector", "collectors",
 }
 
 # Safe negative examples — dev/admin chatter that must not match any pack rule.

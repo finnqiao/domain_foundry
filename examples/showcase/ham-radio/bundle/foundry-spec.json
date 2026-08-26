@@ -1,0 +1,1417 @@
+{
+  "spec_version": "1.0",
+  "id": "ham-radio",
+  "title": "Shack Logbook",
+  "generation": null,
+  "source_ids": [
+    "adif_spec",
+    "postgresql_constraints",
+    "sqlite_foreign_keys",
+    "sqlite_query_planner",
+    "w3c_prov",
+    "govuk_design_principles",
+    "wcag_22",
+    "aria_apg",
+    "ui_remix_paper"
+  ],
+  "source_snapshots": [],
+  "principle_ids": [
+    "DE-01",
+    "DE-02",
+    "DE-03",
+    "DE-04",
+    "DE-05",
+    "DE-06",
+    "DE-08",
+    "UX-01",
+    "UX-02",
+    "UX-04",
+    "UX-05",
+    "UX-06",
+    "UX-07",
+    "UX-10",
+    "SE-01",
+    "SE-03",
+    "SE-04",
+    "SE-10",
+    "SE-11"
+  ],
+  "research": {
+    "interest": "Working stations on the amateur bands and keeping a log that counts",
+    "desired_outcome": "Know at a glance what is worked, what is confirmed, and when the bands actually open for this station",
+    "practice": [
+      "Call CQ or answer one, exchange callsigns and signal reports, and log the contact before the next caller",
+      "Send and chase QSL confirmations by bureau, direct, and LoTW, because only confirmed counts for awards",
+      "Watch which bands and UTC hours actually produce contacts and plan the next session around them"
+    ],
+    "existing_artifacts": [
+      "a paper logbook",
+      "ADIF exports from an old logger",
+      "a shoebox of QSL cards",
+      "an LoTW account"
+    ],
+    "constraints": [
+      "entry must keep up with a pileup",
+      "times are UTC without exception",
+      "the log must import and export ADIF"
+    ],
+    "open_questions": [
+      "whether contest exchanges belong in the same log",
+      "how portable operations map to station profiles",
+      "whether eQSL counts as confirmed"
+    ],
+    "usage_context": [
+      "at the rig with one hand on the key",
+      "desktop when reviewing awards progress"
+    ],
+    "first_value": "Log one contact and see it counted against its DXCC entity with a QSL trail ready to open"
+  },
+  "evidence": [
+    {
+      "id": "ev_ham_adif_fields",
+      "source_id": "adif_spec",
+      "claim": "A QSO record standardizes callsign, band, mode, RST sent and received, and QSL route as named fields rather than free text.",
+      "use": "pattern",
+      "locator": "ADIF QSO record field definitions"
+    },
+    {
+      "id": "ev_ham_adif_exchange",
+      "source_id": "adif_spec",
+      "claim": "Logs move between loggers and award systems through ADIF import and export, so a log that cannot speak ADIF is an island.",
+      "use": "pattern",
+      "locator": "ADIF interchange purpose"
+    },
+    {
+      "id": "ev_ham_identity",
+      "source_id": "postgresql_constraints",
+      "claim": "Stable identities and relationships should be explicit and enforceable rather than repeated as text fields.",
+      "use": "constraint",
+      "locator": "primary keys and foreign keys"
+    },
+    {
+      "id": "ev_ham_lineage",
+      "source_id": "w3c_prov",
+      "claim": "A QSO is an observation at a UTC instant; corrections preserve the originally logged exchange.",
+      "use": "pattern",
+      "locator": "PROV starting point terms"
+    },
+    {
+      "id": "ev_ham_workloads",
+      "source_id": "sqlite_query_planner",
+      "claim": "Indexes should follow concrete filtering, joining, and ordering workloads.",
+      "use": "constraint",
+      "locator": null
+    },
+    {
+      "id": "ev_ham_service",
+      "source_id": "govuk_design_principles",
+      "claim": "Begin with user needs and real context, then do the hard work required to make the service simple.",
+      "use": "pattern",
+      "locator": null
+    },
+    {
+      "id": "ev_ham_access",
+      "source_id": "wcag_22",
+      "claim": "Keyboard access, focus, reflow, labels, status, and error recovery are release requirements.",
+      "use": "constraint",
+      "locator": null
+    }
+  ],
+  "concepts": [
+    {
+      "id": "running_log",
+      "title": "The Running Log",
+      "thesis": "Make logging as fast as the pileup and let everything else be a view over the log.",
+      "primary_loop": "Hear a callsign, type it, tab through band and reports, and be ready before the next caller.",
+      "primary_affordance": "A callsign-first entry line that stamps UTC and files with one keystroke",
+      "differentiator": "The only concept that keeps up with a pileup without dropping fields",
+      "feature_boundary": [
+        "QSO entry with band and mode",
+        "reverse chronological log",
+        "QSL trail per contact"
+      ],
+      "tradeoffs": [
+        "awards progress is a secondary view",
+        "propagation insight arrives only as the log grows"
+      ],
+      "workflow_ids": [
+        "log_qso",
+        "review_log"
+      ],
+      "evidence_ids": [
+        "ev_ham_adif_fields",
+        "ev_ham_service"
+      ]
+    },
+    {
+      "id": "dx_atlas",
+      "title": "DX Atlas",
+      "thesis": "Treat the log as a collection and make worked-versus-confirmed the organizing question.",
+      "primary_loop": "Work a new one, watch its cell light up as worked, and chase the QSL until it flips to confirmed.",
+      "primary_affordance": "A worked/confirmed DXCC honeycomb ordered by continent",
+      "differentiator": "Turns a flat log into visible award progress with the confirmation debt explicit",
+      "feature_boundary": [
+        "DXCC progress matrix",
+        "QSL routing and chasing",
+        "per-entity contact history"
+      ],
+      "tradeoffs": [
+        "entry speed is secondary",
+        "little to say about propagation timing"
+      ],
+      "workflow_ids": [
+        "chase_entities",
+        "confirm_cards"
+      ],
+      "evidence_ids": [
+        "ev_ham_adif_fields",
+        "ev_ham_lineage"
+      ]
+    },
+    {
+      "id": "band_watch",
+      "title": "Band Watch",
+      "thesis": "Read propagation from the operator's own log instead of prediction sites.",
+      "primary_loop": "Log contacts as they come, then read the band-by-hour heat to decide when to sit down at the rig.",
+      "primary_affordance": "A band-by-UTC-hour activity heat built from the log itself",
+      "differentiator": "Answers when this station actually gets out, from evidence rather than forecasts",
+      "feature_boundary": [
+        "activity heat by band and hour",
+        "session planning",
+        "seasonal comparison"
+      ],
+      "tradeoffs": [
+        "needs months of log before it pays off",
+        "capture and awards are secondary"
+      ],
+      "workflow_ids": [
+        "read_conditions",
+        "plan_session"
+      ],
+      "evidence_ids": [
+        "ev_ham_workloads",
+        "ev_ham_service"
+      ]
+    }
+  ],
+  "remix": {
+    "selected_concept": "running_log",
+    "parent_spec": null,
+    "fragments": [
+      {
+        "kind": "visual_system",
+        "from_concept": "dx_atlas",
+        "fragment": "worked/confirmed DXCC honeycomb rail",
+        "reason": "The log still needs award progress visible without leaving entry.",
+        "evidence_ids": [
+          "ev_ham_adif_fields"
+        ]
+      },
+      {
+        "kind": "interaction",
+        "from_concept": "band_watch",
+        "fragment": "band-by-hour heat fed by every logged QSO",
+        "reason": "Contacts logged at pileup speed make the propagation picture possible later without a second pass.",
+        "evidence_ids": [
+          "ev_ham_workloads"
+        ]
+      }
+    ],
+    "user_decisions": [
+      "Times are UTC, always",
+      "ADIF export is non-negotiable",
+      "Confirmed means LoTW or a card in hand — eQSL is tracked but does not count"
+    ]
+  },
+  "domain": {
+    "entities": [
+      {
+        "id": "station_profile",
+        "title": "Station Profile",
+        "kind": "owned",
+        "description": "One rig-and-antenna setup at a place, the instrument every contact was made with.",
+        "identity": [
+          "station_id"
+        ],
+        "lifecycle": [
+          "active",
+          "retired"
+        ],
+        "fields": [
+          {
+            "name": "station_id",
+            "type": "text",
+            "description": "Stable local identity",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_ham_identity"
+            ]
+          },
+          {
+            "name": "name",
+            "type": "text",
+            "description": "Operator-facing name, like Home shack or POTA go-kit",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "my_callsign",
+            "type": "text",
+            "description": "Callsign this station operates under",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "my_grid",
+            "type": "text",
+            "description": "Maidenhead grid square of the station",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": true,
+            "evidence_ids": []
+          },
+          {
+            "name": "rig",
+            "type": "text",
+            "description": "Transceiver, like an Icom IC-7300",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "antenna",
+            "type": "text",
+            "description": "Antenna and height, like an end-fed half-wave up 9 m",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "power_watts",
+            "type": "number",
+            "description": "Typical output power",
+            "required": true,
+            "unit": "W",
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "status",
+            "type": "enum",
+            "description": "Whether this setup is still on the air",
+            "required": true,
+            "unit": null,
+            "values": [
+              "active",
+              "retired"
+            ],
+            "sensitive": false,
+            "evidence_ids": []
+          }
+        ],
+        "evidence_ids": [
+          "ev_ham_adif_fields",
+          "ev_ham_identity"
+        ]
+      },
+      {
+        "id": "dxcc_entity",
+        "title": "DXCC Entity",
+        "kind": "canonical",
+        "description": "One entity on the DXCC list, the collecting axis of the whole log.",
+        "identity": [
+          "entity_id"
+        ],
+        "lifecycle": [
+          "current",
+          "deleted"
+        ],
+        "fields": [
+          {
+            "name": "entity_id",
+            "type": "text",
+            "description": "Stable entity identity keyed to the DXCC number",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_ham_identity"
+            ]
+          },
+          {
+            "name": "name",
+            "type": "text",
+            "description": "Entity name as the award list spells it",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "continent",
+            "type": "text",
+            "description": "Continent for the honeycomb ordering",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "prefix",
+            "type": "text",
+            "description": "Principal callsign prefix, like JA or VK",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "status",
+            "type": "enum",
+            "description": "Current or deleted entity on the DXCC list",
+            "required": true,
+            "unit": null,
+            "values": [
+              "current",
+              "deleted"
+            ],
+            "sensitive": false,
+            "evidence_ids": []
+          }
+        ],
+        "evidence_ids": [
+          "ev_ham_adif_fields",
+          "ev_ham_identity"
+        ]
+      },
+      {
+        "id": "qso",
+        "title": "QSO",
+        "kind": "event",
+        "description": "One contact at a UTC instant, the heart of the log.",
+        "identity": [
+          "qso_id"
+        ],
+        "lifecycle": [
+          "logged",
+          "corrected",
+          "superseded"
+        ],
+        "fields": [
+          {
+            "name": "qso_id",
+            "type": "text",
+            "description": "Stable event identity",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_ham_identity"
+            ]
+          },
+          {
+            "name": "station_id",
+            "type": "text",
+            "description": "Station setup that made the contact",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_ham_identity"
+            ]
+          },
+          {
+            "name": "entity_id",
+            "type": "text",
+            "description": "DXCC entity this contact counts toward",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_ham_identity"
+            ]
+          },
+          {
+            "name": "callsign",
+            "type": "text",
+            "description": "Callsign of the station worked",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_ham_adif_fields"
+            ]
+          },
+          {
+            "name": "band",
+            "type": "enum",
+            "description": "Amateur band",
+            "required": true,
+            "unit": null,
+            "values": [
+              "160m",
+              "80m",
+              "40m",
+              "30m",
+              "20m",
+              "17m",
+              "15m",
+              "12m",
+              "10m",
+              "6m",
+              "2m",
+              "70cm"
+            ],
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_ham_adif_fields"
+            ]
+          },
+          {
+            "name": "mode",
+            "type": "enum",
+            "description": "Operating mode",
+            "required": true,
+            "unit": null,
+            "values": [
+              "CW",
+              "SSB",
+              "FT8",
+              "FT4",
+              "RTTY",
+              "AM",
+              "FM"
+            ],
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_ham_adif_fields"
+            ]
+          },
+          {
+            "name": "frequency_mhz",
+            "type": "number",
+            "description": "Dial frequency",
+            "required": true,
+            "unit": "MHz",
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "qso_at",
+            "type": "datetime",
+            "description": "Contact time, always UTC",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_ham_lineage"
+            ]
+          },
+          {
+            "name": "rst_sent",
+            "type": "text",
+            "description": "Report sent, kept verbatim — RST like 59 on phone and CW, dB like -12 on FT8",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_ham_adif_fields"
+            ]
+          },
+          {
+            "name": "rst_rcvd",
+            "type": "text",
+            "description": "Report received, kept verbatim in the same convention",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_ham_adif_fields"
+            ]
+          },
+          {
+            "name": "grid_square",
+            "type": "text",
+            "description": "Maidenhead grid square of the station worked",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "notes",
+            "type": "text",
+            "description": "The operator's own words about the contact",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          }
+        ],
+        "evidence_ids": [
+          "ev_ham_adif_fields",
+          "ev_ham_lineage"
+        ]
+      },
+      {
+        "id": "qsl_record",
+        "title": "QSL Trail",
+        "kind": "state",
+        "description": "The confirmation state of one contact on one route; confirmed is what counts for awards.",
+        "identity": [
+          "qsl_id"
+        ],
+        "lifecycle": [
+          "requested",
+          "sent",
+          "confirmed"
+        ],
+        "fields": [
+          {
+            "name": "qsl_id",
+            "type": "text",
+            "description": "Stable trail identity",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_ham_identity"
+            ]
+          },
+          {
+            "name": "qso_id",
+            "type": "text",
+            "description": "Contact this trail confirms",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_ham_identity"
+            ]
+          },
+          {
+            "name": "state",
+            "type": "enum",
+            "description": "Where the confirmation stands",
+            "required": true,
+            "unit": null,
+            "values": [
+              "requested",
+              "sent",
+              "confirmed"
+            ],
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "route",
+            "type": "enum",
+            "description": "How the confirmation travels",
+            "required": true,
+            "unit": null,
+            "values": [
+              "bureau",
+              "direct",
+              "lotw",
+              "eqsl"
+            ],
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_ham_adif_fields"
+            ]
+          },
+          {
+            "name": "confirmed_at",
+            "type": "datetime",
+            "description": "When confirmation arrived, UTC",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_ham_lineage"
+            ]
+          }
+        ],
+        "evidence_ids": [
+          "ev_ham_adif_fields",
+          "ev_ham_lineage"
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "qso_station",
+        "from_entity": "qso",
+        "to_entity": "station_profile",
+        "cardinality": "many_to_one",
+        "required": true,
+        "on_delete": "restrict",
+        "description": "Every QSO records which station setup made it.",
+        "evidence_ids": [
+          "ev_ham_identity"
+        ]
+      },
+      {
+        "id": "qso_entity",
+        "from_entity": "qso",
+        "to_entity": "dxcc_entity",
+        "cardinality": "many_to_one",
+        "required": true,
+        "on_delete": "restrict",
+        "description": "Every QSO counts toward exactly one DXCC entity.",
+        "evidence_ids": [
+          "ev_ham_identity"
+        ]
+      },
+      {
+        "id": "qsl_trail",
+        "from_entity": "qsl_record",
+        "to_entity": "qso",
+        "cardinality": "many_to_one",
+        "required": true,
+        "on_delete": "cascade",
+        "description": "A QSL trail belongs to the contact it confirms.",
+        "evidence_ids": [
+          "ev_ham_lineage"
+        ]
+      }
+    ],
+    "constraints": [
+      {
+        "id": "sane_frequency",
+        "entity": "qso",
+        "kind": "check",
+        "fields": [
+          "frequency_mhz"
+        ],
+        "expression": "frequency_mhz > 0 AND frequency_mhz < 300",
+        "reason": "Dial frequencies stay within the HF-through-VHF range this log covers.",
+        "evidence_ids": [
+          "ev_ham_identity"
+        ]
+      },
+      {
+        "id": "legal_power",
+        "entity": "station_profile",
+        "kind": "check",
+        "fields": [
+          "power_watts"
+        ],
+        "expression": "power_watts > 0 AND power_watts <= 1500",
+        "reason": "Output power stays within the amateur legal limit.",
+        "evidence_ids": [
+          "ev_ham_identity"
+        ]
+      },
+      {
+        "id": "qsl_confirmation_order",
+        "entity": "qsl_record",
+        "kind": "state_transition",
+        "fields": [
+          "state"
+        ],
+        "expression": null,
+        "reason": "A QSL cannot be confirmed before it is sent — confirmed is the state awards count.",
+        "evidence_ids": [
+          "ev_ham_adif_fields"
+        ]
+      }
+    ],
+    "indexes": [
+      {
+        "id": "log_recency",
+        "entity": "qso",
+        "fields": [
+          "band",
+          "mode",
+          "qso_at"
+        ],
+        "unique": false,
+        "reason": "The running log is read newest-first with band and mode filters every session.",
+        "workload_ids": [
+          "w_log"
+        ]
+      },
+      {
+        "id": "entity_progress",
+        "entity": "qso",
+        "fields": [
+          "entity_id",
+          "qso_at"
+        ],
+        "unique": false,
+        "reason": "The worked-versus-confirmed matrix groups contacts by entity.",
+        "workload_ids": [
+          "w_dxcc"
+        ]
+      },
+      {
+        "id": "activity_clock",
+        "entity": "qso",
+        "fields": [
+          "band",
+          "qso_at"
+        ],
+        "unique": false,
+        "reason": "The band clock buckets contacts by band and UTC hour.",
+        "workload_ids": [
+          "w_activity"
+        ]
+      }
+    ],
+    "workloads": [
+      {
+        "id": "w_log",
+        "question": "What did I work most recently, filtered by band and mode?",
+        "kind": "read",
+        "entities": [
+          "qso",
+          "station_profile"
+        ],
+        "filters": [
+          "band",
+          "mode"
+        ],
+        "sort": [
+          "qso_at descending"
+        ],
+        "expected_scale": "thousands of QSOs",
+        "acceptance": "The log answers newest-first with callsign, band chip, mode, and both reports visible on every line.",
+        "evidence_ids": [
+          "ev_ham_adif_fields",
+          "ev_ham_workloads"
+        ]
+      },
+      {
+        "id": "w_dxcc",
+        "question": "Which DXCC entities are worked and which are confirmed?",
+        "kind": "analysis",
+        "entities": [
+          "dxcc_entity",
+          "qso",
+          "qsl_record"
+        ],
+        "filters": [
+          "continent",
+          "band"
+        ],
+        "sort": [
+          "confirmed then worked then needed"
+        ],
+        "expected_scale": "340 entities against thousands of QSOs",
+        "acceptance": "Every entity shows worked versus confirmed at a glance, and confirmed counts only a QSL trail that reached confirmed.",
+        "evidence_ids": [
+          "ev_ham_adif_fields",
+          "ev_ham_workloads"
+        ]
+      },
+      {
+        "id": "w_activity",
+        "question": "When and on which bands does this station actually make contacts?",
+        "kind": "analysis",
+        "entities": [
+          "qso"
+        ],
+        "filters": [
+          "band",
+          "date range"
+        ],
+        "sort": [
+          "UTC hour ascending"
+        ],
+        "expected_scale": "thousands of QSOs across years",
+        "acceptance": "A band-by-UTC-hour heat answers when propagation favored this station, from the log alone.",
+        "evidence_ids": [
+          "ev_ham_workloads",
+          "ev_ham_lineage"
+        ]
+      }
+    ],
+    "state_machines": [
+      {
+        "id": "qsl_lifecycle",
+        "entity": "qsl_record",
+        "field": "state",
+        "states": [
+          "requested",
+          "sent",
+          "confirmed"
+        ],
+        "transitions": [
+          {
+            "from_state": "requested",
+            "action": "send",
+            "to_state": "sent"
+          },
+          {
+            "from_state": "sent",
+            "action": "confirm",
+            "to_state": "confirmed"
+          }
+        ],
+        "evidence_ids": [
+          "ev_ham_adif_fields"
+        ]
+      }
+    ],
+    "sample_records": {
+      "station_profile": [
+        {
+          "station_id": "station-home",
+          "name": "Home shack",
+          "my_callsign": "N6FQ",
+          "my_grid": "CM87ut",
+          "rig": "Icom IC-7300",
+          "antenna": "end-fed half-wave up 9 m",
+          "power_watts": 100,
+          "status": "active"
+        }
+      ],
+      "dxcc_entity": [
+        {
+          "entity_id": "dxcc-339",
+          "name": "Japan",
+          "continent": "Asia",
+          "prefix": "JA",
+          "status": "current"
+        },
+        {
+          "entity_id": "dxcc-150",
+          "name": "Australia",
+          "continent": "Oceania",
+          "prefix": "VK",
+          "status": "current"
+        }
+      ],
+      "qso": [
+        {
+          "qso_id": "qso-20260822-0114",
+          "station_id": "station-home",
+          "entity_id": "dxcc-339",
+          "callsign": "JA1RQK",
+          "band": "20m",
+          "mode": "SSB",
+          "frequency_mhz": 14.245,
+          "qso_at": "2026-08-22T01:14:00Z",
+          "rst_sent": "59",
+          "rst_rcvd": "57",
+          "grid_square": "PM95",
+          "notes": "Big pileup, got through on the third call, QSL via bureau"
+        },
+        {
+          "qso_id": "qso-20260821-0942",
+          "station_id": "station-home",
+          "entity_id": "dxcc-150",
+          "callsign": "VK3FN",
+          "band": "40m",
+          "mode": "FT8",
+          "frequency_mhz": 7.074,
+          "qso_at": "2026-08-21T09:42:00Z",
+          "rst_sent": "-12",
+          "rst_rcvd": "-09",
+          "grid_square": "QF22",
+          "notes": "Long path at sunrise, steady decode both ways"
+        }
+      ],
+      "qsl_record": [
+        {
+          "qsl_id": "qsl-ja1rqk-20m",
+          "qso_id": "qso-20260822-0114",
+          "state": "sent",
+          "route": "bureau"
+        },
+        {
+          "qsl_id": "qsl-vk3fn-40m",
+          "qso_id": "qso-20260821-0942",
+          "state": "confirmed",
+          "route": "lotw",
+          "confirmed_at": "2026-08-22T03:10:00Z"
+        }
+      ]
+    },
+    "temporal_policy": [
+      "qso_at is the effective contact time and is always UTC because hams log UTC regardless of the local clock",
+      "captured_at is provenance time",
+      "corrections never overwrite the originally logged exchange"
+    ],
+    "privacy_policy": [
+      "my_grid and the station's location are sensitive and appear only in explicit exports",
+      "worked callsigns are public by nature but the operator's notes stay local",
+      "nothing leaves the machine without an explicit export"
+    ]
+  },
+  "experience": {
+    "mode": "operate",
+    "visual_world": {
+      "id": "shack-panel",
+      "name": "The Shack",
+      "mood": "A dark shack lit by the rig's amber panel — calm, nocturnal, tuned",
+      "typography": "Monospace for callsigns, frequencies, reports, and the UTC clock; a plain humanist sans for everything else",
+      "color_strategy": "Near-black panel darks with phosphor-amber signal accents and a muted receiver-green counterpoint; no sci-fi neon, no military drab",
+      "layout_principle": "The entry line and the running log anchor the viewport; the DX map and band clock unfold laterally as evidence, never as a dashboard grid",
+      "density": "Compact and columnar like a paper log, spacious only around the entry line",
+      "signature_elements": [
+        "callsign-first log line with band chip and UTC stamp",
+        "worked/confirmed DXCC honeycomb",
+        "persistent UTC clock rail that never shows local time"
+      ],
+      "avoid": [
+        "military cosplay styling",
+        "generic dashboard grids",
+        "skeuomorphic radio dials"
+      ],
+      "tokens": {
+        "background": "#101418",
+        "surface": "#1A2026",
+        "text": "#E6E1D3",
+        "muted": "#8A94A0",
+        "accent": "#E89B2E",
+        "accent_alt": "#57A773",
+        "border": "#2A323B",
+        "focus": "#FFC15E",
+        "danger": "#C7503C",
+        "radius_px": 6
+      }
+    },
+    "navigation": {
+      "topology": "hub",
+      "primary_view": "log",
+      "persistent_regions": [
+        "UTC clock rail",
+        "station profile switcher",
+        "log affordance"
+      ]
+    },
+    "views": [
+      {
+        "id": "log",
+        "title": "The Running Log",
+        "purpose": "File a contact in seconds mid-pileup and see it join the log with its QSL trail ready.",
+        "layout": "The callsign-first entry line sits above the reverse chronological ledger; band and mode filters ride the ledger's header.",
+        "entities": [
+          "qso",
+          "station_profile",
+          "qsl_record"
+        ],
+        "workload_ids": [
+          "w_log"
+        ],
+        "states": [
+          "first_use",
+          "populated",
+          "loading",
+          "empty",
+          "error",
+          "offline",
+          "correction"
+        ],
+        "regions": [
+          {
+            "id": "qso_entry",
+            "kind": "form",
+            "title": "Log a contact",
+            "entity": "qso",
+            "workload_id": "w_log",
+            "emphasis": "primary",
+            "span": 7
+          },
+          {
+            "id": "log_ledger",
+            "kind": "ledger",
+            "title": "The running log",
+            "entity": "qso",
+            "workload_id": "w_log",
+            "emphasis": "support",
+            "span": 5
+          }
+        ],
+        "actions": [
+          {
+            "id": "log_contact",
+            "label": "Log it",
+            "operation": "create",
+            "entity": "qso",
+            "consequence": "Files the contact with a UTC stamp and counts it toward its DXCC entity."
+          },
+          {
+            "id": "open_qsl",
+            "label": "Start a QSL trail",
+            "operation": "create",
+            "entity": "qsl_record",
+            "consequence": "Opens a confirmation trail on the chosen route for this contact."
+          },
+          {
+            "id": "correct_qso",
+            "label": "Correct the exchange",
+            "operation": "correct",
+            "entity": "qso",
+            "consequence": "Preserves the originally logged exchange and records the correction beside it."
+          }
+        ],
+        "evidence_ids": [
+          "ev_ham_adif_fields",
+          "ev_ham_access"
+        ]
+      },
+      {
+        "id": "dx_map",
+        "title": "DX Atlas",
+        "purpose": "Answer what is worked, what is confirmed, and which QSLs still owe a card.",
+        "layout": "The worked/confirmed honeycomb leads ordered by continent; the selected entity's contacts sit in an inspector margin.",
+        "entities": [
+          "dxcc_entity",
+          "qso",
+          "qsl_record"
+        ],
+        "workload_ids": [
+          "w_dxcc"
+        ],
+        "states": [
+          "first_use",
+          "populated",
+          "empty",
+          "error"
+        ],
+        "regions": [
+          {
+            "id": "honeycomb",
+            "kind": "chart",
+            "title": "Worked and confirmed",
+            "entity": "dxcc_entity",
+            "workload_id": "w_dxcc",
+            "emphasis": "primary",
+            "span": 8
+          },
+          {
+            "id": "entity_contacts",
+            "kind": "inspector",
+            "title": "Contacts behind this entity",
+            "entity": "qso",
+            "workload_id": "w_dxcc",
+            "emphasis": "support",
+            "span": 4
+          }
+        ],
+        "actions": [
+          {
+            "id": "confirm_qsl",
+            "label": "Advance the QSL",
+            "operation": "update",
+            "entity": "qsl_record",
+            "consequence": "Moves the trail toward confirmed; only confirmed flips the entity's cell."
+          },
+          {
+            "id": "reveal_contacts",
+            "label": "Show the QSOs behind this",
+            "operation": "reveal",
+            "entity": "qso",
+            "consequence": "Opens the exact contacts that earned the selected entity's status."
+          }
+        ],
+        "evidence_ids": [
+          "ev_ham_adif_fields",
+          "ev_ham_access"
+        ]
+      },
+      {
+        "id": "band_clock",
+        "title": "Band Clock",
+        "purpose": "See when and where this station actually gets out and plan the next session.",
+        "layout": "The band-by-UTC-hour heat fills the stage; a band-by-band comparison rail sits beside it.",
+        "entities": [
+          "qso"
+        ],
+        "workload_ids": [
+          "w_activity"
+        ],
+        "states": [
+          "first_use",
+          "populated",
+          "empty",
+          "partial",
+          "error"
+        ],
+        "regions": [
+          {
+            "id": "activity_heat",
+            "kind": "chart",
+            "title": "When the bands open",
+            "entity": "qso",
+            "workload_id": "w_activity",
+            "emphasis": "primary",
+            "span": 8
+          },
+          {
+            "id": "band_compare",
+            "kind": "comparison",
+            "title": "Band by band",
+            "entity": "qso",
+            "workload_id": "w_activity",
+            "emphasis": "secondary",
+            "span": 4
+          }
+        ],
+        "actions": [
+          {
+            "id": "reveal_session",
+            "label": "Show the contacts behind this hour",
+            "operation": "reveal",
+            "entity": "qso",
+            "consequence": "Opens the exact QSOs that lit the selected cell."
+          }
+        ],
+        "evidence_ids": [
+          "ev_ham_workloads",
+          "ev_ham_access"
+        ]
+      }
+    ],
+    "flows": [
+      {
+        "id": "first_contact",
+        "title": "Log the first real contact",
+        "trigger": "User approves the Running Log concept.",
+        "steps": [
+          {
+            "view": "log",
+            "action": "Type the callsign, pick band and mode, and enter both reports.",
+            "result": "A QSO receipt appears with the UTC stamp and the entity it counts toward."
+          },
+          {
+            "view": "log",
+            "action": "Confirm or correct the interpreted band and reports.",
+            "result": "The canonical QSO and its provenance are visible at the top of the running log."
+          }
+        ],
+        "success": "The user can point at tonight's contact in the log and the UTC stamp, reports, and DXCC entity are all theirs."
+      },
+      {
+        "id": "confirm_entity",
+        "title": "Chase a QSL to confirmed",
+        "trigger": "An entity is worked but not yet confirmed.",
+        "steps": [
+          {
+            "view": "dx_map",
+            "action": "Open the worked-but-unconfirmed entity and start a QSL trail on a route.",
+            "result": "The trail shows requested with bureau or LoTW recorded."
+          },
+          {
+            "view": "dx_map",
+            "action": "Mark the card sent, then confirmed when LoTW or the bureau answers.",
+            "result": "The entity's cell flips from worked to confirmed without touching the QSO."
+          }
+        ],
+        "success": "Confirmed status is traceable to the exact QSO and QSL trail that earned it."
+      }
+    ],
+    "responsive_strategy": [
+      "On phones the entry line stays fixed in reach with the running log beneath it and the honeycomb becomes a swipeable continent rail.",
+      "On desktop the log keeps entry and ledger side by side and the band clock gains hover detail with a full data table alternative."
+    ],
+    "accessibility": {
+      "target": "WCAG-2.2-AA",
+      "patterns": [
+        "native dialog for QSO entry",
+        "data table with caption and row headers behind the honeycomb and the heat",
+        "text alternative for every band chip and heat cell"
+      ],
+      "keyboard_model": [
+        "logical order follows entry line then running log then DX map",
+        "honeycomb and heat cells are reachable through an adjacent data table",
+        "correction returns focus to the corrected QSO"
+      ],
+      "manual_checks": [
+        "VoiceOver first-contact journey",
+        "200 percent zoom and reflow",
+        "focus and error identification in the dark theme"
+      ]
+    }
+  },
+  "implementation": {
+    "targets": [
+      "foundry_runtime",
+      "standalone_react"
+    ],
+    "capabilities": [
+      "event_capture",
+      "derived_metrics",
+      "comparison",
+      "provenance",
+      "correction"
+    ],
+    "imports": [
+      "ADIF log file",
+      "CSV contact list",
+      "DXCC entity list"
+    ],
+    "exports": [
+      "ADIF export for LoTW and eQSL upload",
+      "complete JSON with receipts",
+      "CSV per entity",
+      "standalone source repository"
+    ],
+    "migrations": [
+      "versioned schema migrations",
+      "QSO records append-only with corrections as revisions",
+      "DXCC entity list updates without renumbering"
+    ],
+    "permissions": [
+      "local file import"
+    ],
+    "adapter_seams": [
+      "capture adapter",
+      "ADIF import adapter",
+      "ADIF export adapter",
+      "DXCC list adapter"
+    ]
+  },
+  "evaluation": {
+    "cases": [
+      {
+        "id": "ham_schema_identity",
+        "kind": "schema",
+        "input": "The same station is worked twice, once on 20m SSB and once on 40m FT8.",
+        "expected": "They remain distinct QSOs with independent QSL trails, and the DXCC entity counts once.",
+        "authored_by": "domain_expert"
+      },
+      {
+        "id": "ham_invalid_frequency",
+        "kind": "schema",
+        "input": "A QSO arrives logged at 350 MHz on the 20m band.",
+        "expected": "The write is rejected before canonical storage.",
+        "authored_by": "independent_reviewer"
+      },
+      {
+        "id": "ham_first_capture",
+        "kind": "routing",
+        "input": "worked JA1RQK on 20 meters, RST 59, QSL via bureau",
+        "expected": "A QSO files with callsign JA1RQK on band 20m with rst_sent 59, and a QSL trail opens on the bureau route.",
+        "authored_by": "user"
+      },
+      {
+        "id": "ham_ft8_report",
+        "kind": "routing",
+        "input": "FT8 contact with VK3 on 40m, -12 both ways",
+        "expected": "A QSO files with mode FT8 on band 40m and rst_sent and rst_rcvd both held verbatim as -12, which a numeric report field could not store.",
+        "authored_by": "user"
+      },
+      {
+        "id": "ham_dxcc_workload",
+        "kind": "workload",
+        "input": "8000 QSOs across 240 DXCC entities with 3000 QSL trails.",
+        "expected": "The worked-versus-confirmed matrix and the running log load within the local 200 ms budget.",
+        "authored_by": "independent_reviewer"
+      },
+      {
+        "id": "ham_keyboard",
+        "kind": "accessibility",
+        "input": "Complete the logging and QSL confirmation journey without a pointer.",
+        "expected": "All controls and status changes are operable and announced.",
+        "authored_by": "standard"
+      },
+      {
+        "id": "ham_adif_injection",
+        "kind": "security",
+        "input": "An imported ADIF record carries prompt-like fields and a filesystem path.",
+        "expected": "Unknown fields are rejected and no tool or filesystem action occurs.",
+        "authored_by": "independent_reviewer"
+      }
+    ],
+    "release_thresholds": {
+      "schema": "all identity, relationship, constraint, and state-transition cases pass",
+      "experience": "first-contact and confirm-the-entity flows pass on mobile and desktop",
+      "evidence": "every entity and critical view has an approved derivation"
+    }
+  },
+  "derivations": [
+    {
+      "output_path": "domain.entities",
+      "decision": "Separate the station, the DXCC entity, the QSO, and the QSL trail so the instrument, the collecting axis, the event, and the confirmation each keep their own lifecycle.",
+      "evidence_ids": [
+        "ev_ham_adif_fields",
+        "ev_ham_identity"
+      ],
+      "user_decision": null
+    },
+    {
+      "output_path": "domain.entities.qso.fields.rst_sent",
+      "decision": "Hold signal reports as text kept verbatim, because a 20m SSB contact exchanges RST 59 while an FT8 contact exchanges -12 dB, and both are real reports.",
+      "evidence_ids": [
+        "ev_ham_adif_fields"
+      ],
+      "user_decision": null
+    },
+    {
+      "output_path": "domain.temporal_policy",
+      "decision": "Log qso_at in UTC without exception because amateur logs, awards, and ADIF interchange all assume UTC.",
+      "evidence_ids": [
+        "ev_ham_adif_exchange"
+      ],
+      "user_decision": "Times are UTC, always"
+    },
+    {
+      "output_path": "experience.views.log",
+      "decision": "Anchor the app on the callsign-first entry line rather than the awards map, because capture happens mid-pileup.",
+      "evidence_ids": [
+        "ev_ham_service"
+      ],
+      "user_decision": "Entry must keep up with a pileup."
+    },
+    {
+      "output_path": "implementation.exports",
+      "decision": "Ship ADIF export beside JSON and CSV because the log must feed LoTW and outlive any one logger.",
+      "evidence_ids": [
+        "ev_ham_adif_exchange"
+      ],
+      "user_decision": "ADIF export is non-negotiable"
+    },
+    {
+      "output_path": "domain.indexes.entity_progress",
+      "decision": "Index QSOs by entity and time for the worked-versus-confirmed matrix behind the DX Atlas.",
+      "evidence_ids": [
+        "ev_ham_workloads"
+      ],
+      "user_decision": null
+    },
+    {
+      "output_path": "experience.visual_world",
+      "decision": "Use a dark shack panel with phosphor-amber accents and monospace callsigns instead of dashboard cards or skeuomorphic radio dials.",
+      "evidence_ids": [
+        "ev_ham_service"
+      ],
+      "user_decision": "Confirmed means LoTW or a card in hand — eQSL is tracked but does not count"
+    }
+  ]
+}

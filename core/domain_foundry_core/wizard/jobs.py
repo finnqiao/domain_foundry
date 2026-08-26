@@ -5,18 +5,28 @@ Pattern cards live on atlas idea nodes. This module is the compiler.
 
 from __future__ import annotations
 
-import copy
+import re
 from typing import Any
 
 from domain_foundry_core.atlas.models import JOBS, AtlasNode
 from domain_foundry_core.wizard import blueprint as bp
 from domain_foundry_core.wizard.models import validate_blueprint
 from domain_foundry_core.wizard.shortlist import (
+    IDLE_CHATTER,
+    ROUTING_STOP,
     ShortlistExample,
     ShortlistField,
     ShortlistModel,
     compile_shortlist,
+    seed_terms,
+)
+from domain_foundry_core.wizard.shortlist import (
     analog_few_shots as _legacy_analog_few_shots,
+)
+
+_CATALOG_HINT = re.compile(
+    r"\b(added|add|new|acquired|bought|shelf|binder|catalog|dex|collection|list)\b",
+    re.I,
 )
 
 _CATALOG_EVENT_JOBS = frozenset({"catalog", "event_log"})
@@ -26,8 +36,16 @@ def shortlist_for_ideas(
     ideas: list[AtlasNode] | list[dict[str, Any]],
     *,
     goal: str,
+    seed: str = "",
 ) -> ShortlistModel:
-    """Deterministic shortlist from chosen idea jobs (no-key / fallback path)."""
+    """Deterministic shortlist from chosen idea jobs (no-key / fallback path).
+
+    ``seed`` is the first sentence the user said they would log, verbatim. It is
+    the only source of real domain vocabulary available offline for an interest
+    the atlas does not cover, so it goes in as a routing example, as jargon, and
+    as identity values. The *second* elicited sentence never reaches here — that
+    is what makes replaying it after activation an honest check.
+    """
     jobs = _union_jobs(ideas)
     identity = _identity_hint(ideas, goal)
     domain = _domain_slug(ideas, goal)
@@ -98,8 +116,15 @@ def shortlist_for_ideas(
             )
         )
 
-    jargon = _jargon(ideas, goal)
-    examples = _examples(ideas, objects, identity, goal)
+    jargon = _jargon(ideas, goal, seed=seed)
+    examples = _examples(ideas, objects, identity, goal, seed=seed)
+    negatives = [
+        # Near-miss lines from the atlas first: they are the ones a generic
+        # negative pool would never think of. Idle chatter stays ahead of the
+        # dev-admin filler so the bounded list always keeps one.
+        *_negative_examples(ideas)[:2],
+        *IDLE_CHATTER,
+    ]
     return ShortlistModel(
         domain=domain,
         title=title,
@@ -107,12 +132,10 @@ def shortlist_for_ideas(
         objects=objects,
         fields=fields,
         jargon=jargon,
+        vocabulary=_vocabulary(ideas),
+        llm_hints=_atlas_hints(ideas),
         examples=examples,
-        negatives=[
-            "deploy the release candidate tonight",
-            "please review the pull request",
-            "schedule a standup meeting",
-        ],
+        negatives=list(dict.fromkeys(negatives)),
     )
 
 
@@ -134,12 +157,44 @@ def compile_jobs(
         agent = blueprint.get("agent")
         if isinstance(agent, dict):
             agent["name"] = blueprint["domain"]
+        # The rules were built from the shortlist's slug. Renaming the pack
+        # without teaching it its own new name leaves "cocktail" unroutable in
+        # a pack called cocktail.
+        _teach_domain_term(blueprint, domain_hint)
     blueprint = _apply_job_requirements(blueprint, jobs)
     blueprint["meta"] = {
         **(blueprint.get("meta") or {}),
         "jobs": jobs,
     }
     return validate_blueprint(blueprint)
+
+
+def _teach_domain_term(blueprint: dict[str, Any], domain_hint: str) -> None:
+    """Add the renamed pack's own word to its primary rule."""
+    from domain_foundry_core.wizard.shortlist import _is_filler_term, term_pattern
+
+    rules = blueprint.get("rules") or []
+    objects = list(blueprint.get("objects") or {})
+    if not rules or not objects:
+        return
+    term = str(domain_hint).strip()
+    if not term or _is_filler_term(term):
+        return
+    pattern = term_pattern(term)
+    if not pattern:
+        return
+    primary = objects[0]
+    for rule in rules:
+        if rule.get("object") != primary:
+            continue
+        match = str(rule.get("match") or "")
+        if pattern in match:
+            return
+        if match.startswith("(") and match.endswith(")"):
+            rule["match"] = f"({pattern}|{match[1:-1]})"
+        else:
+            rule["match"] = f"({pattern}|{match})"
+        return
 
 
 def analog_few_shots(goal: str) -> list[dict[str, Any]]:
@@ -251,7 +306,71 @@ def _object_names(jobs: list[str], identity: str) -> tuple[str, str]:
     return catalog, catalog
 
 
+def _node_attr(idea: Any, name: str) -> Any:
+    if isinstance(idea, AtlasNode):
+        return getattr(idea, name, None)
+    return (idea or {}).get(name)
+
+
+def _vocabulary(ideas: list[Any]) -> list[str]:
+    """The atlas's own words for this interest, best node first."""
+    out: list[str] = []
+    for idea in ideas:
+        for term in _node_attr(idea, "vocabulary") or []:
+            text = str(term).strip()
+            if text and not _filler_phrase(text):
+                out.append(text)
+    return list(dict.fromkeys(out))[:24]
+
+
+def _routing_examples(ideas: list[Any]) -> list[tuple[str, str]]:
+    """``(text, placeholder)`` pairs; placeholder is ``catalog`` or ``event``."""
+    out: list[tuple[str, str]] = []
+    for idea in ideas:
+        for item in _node_attr(idea, "routing_examples") or []:
+            if isinstance(item, dict):
+                text, slot = str(item.get("text") or ""), str(item.get("object") or "event")
+            else:
+                text, slot = str(getattr(item, "text", "")), str(getattr(item, "object", "event"))
+            text = text.strip()
+            if text:
+                out.append((text, "catalog" if slot == "catalog" else "event"))
+    return out
+
+
+def _negative_examples(ideas: list[Any]) -> list[str]:
+    out: list[str] = []
+    for idea in ideas:
+        for item in _node_attr(idea, "negative_examples") or []:
+            text = str(item).strip()
+            if text:
+                out.append(text)
+    return list(dict.fromkeys(out))
+
+
+def _atlas_hints(ideas: list[Any]) -> str:
+    parts = [str(_node_attr(i, "llm_hints") or "").strip() for i in ideas]
+    return " ".join(p for p in parts if p)
+
+
+def _atlas_measure(ideas: list[Any]) -> tuple[str, str] | None:
+    for idea in ideas:
+        measure = _node_attr(idea, "measure")
+        if not measure:
+            continue
+        if isinstance(measure, dict):
+            name, unit = str(measure.get("name") or ""), str(measure.get("unit") or "")
+        else:
+            name, unit = str(getattr(measure, "name", "")), str(getattr(measure, "unit", ""))
+        if name:
+            return name, unit
+    return None
+
+
 def _measure_name(ideas: list[Any]) -> str:
+    atlas = _atlas_measure(ideas)
+    if atlas:
+        return bp.slugify(atlas[0])
     blob = " ".join(
         str(ideas[i].title if isinstance(ideas[i], AtlasNode) else ideas[i].get("title") or "")
         for i in range(len(ideas))
@@ -270,6 +389,9 @@ def _measure_name(ideas: list[Any]) -> str:
 
 
 def _measure_unit(ideas: list[Any]) -> str:
+    atlas = _atlas_measure(ideas)
+    if atlas:
+        return atlas[1]
     name = _measure_name(ideas)
     return {
         "sac": "L/min",
@@ -280,18 +402,165 @@ def _measure_unit(ideas: list[Any]) -> str:
     }.get(name, "count")
 
 
-def _jargon(ideas: list[Any], goal: str) -> list[str]:
-    out: list[str] = []
+
+_TRAILING_NOISE = frozenset(
+    {
+        "to",
+        "from",
+        "with",
+        "on",
+        "at",
+        "in",
+        "of",
+        "for",
+        "and",
+        "or",
+        "the",
+        "a",
+        "an",
+        "was",
+        "were",
+        "is",
+        "it",
+        "as",
+        "by",
+    }
+)
+
+
+def _jargon(ideas: list[Any], goal: str, *, seed: str = "") -> list[str]:
+    # The user's own words come first: for an interest the atlas does not
+    # cover they are the only real vocabulary in the room, and the bounded
+    # list must not spend its slots on "shelf" and "photos" before reaching
+    # them.
+    out: list[str] = list(seed_terms(seed))
     for idea in ideas:
         extra = idea.jargon if isinstance(idea, AtlasNode) else idea.get("jargon") or []
         out.extend(str(j) for j in extra)
         aliases = idea.aliases if isinstance(idea, AtlasNode) else idea.get("aliases") or []
         out.extend(str(a) for a in aliases)
+        example = idea.example if isinstance(idea, AtlasNode) else idea.get("example")
+        if example:
+            for tok in re.findall(r"\b[A-Z][A-Za-z0-9_-]{2,}\b", str(example)):
+                if tok.lower() not in ROUTING_STOP and tok.lower() not in bp._STOPWORDS:
+                    out.append(tok)
     if len(out) < 3:
         out.extend(bp.keywords(goal)[:4])
-    # Ensure some terms survive lint (not just the domain name).
-    out.extend(["session", "notes", "logged"])
-    return list(dict.fromkeys(j for j in out if j))[:12]
+    return list(dict.fromkeys(j for j in out if j and not _filler_phrase(j)))[:12]
+
+
+def _filler_phrase(term: str) -> bool:
+    parts = re.findall(r"[a-z0-9]+", (term or "").lower())
+    if not parts:
+        return True
+    return all(p in ROUTING_STOP or p in bp._STOPWORDS or len(p) < 3 for p in parts)
+
+
+def _hobby_tokens(goal: str, objects: list[str]) -> set[str]:
+    hobby = {w.lower() for w in bp.keywords(goal) if len(w) >= 3}
+    hobby.update(o.replace("_", " ").lower() for o in objects)
+    hobby.update(o.lower() for o in objects)
+    return hobby
+
+
+def _lacks_hobby(text: str, hobby: set[str]) -> bool:
+    low = (text or "").lower()
+    return not any(re.search(rf"\b{re.escape(h)}\b", low) for h in hobby if h)
+
+
+def _sample_lines(ideas: list[Any], *, seed: str = "") -> list[str]:
+    # The elicited sentence first: it is the only line here a real person
+    # actually typed, so it anchors both the examples and the identity values.
+    # Routing examples next: they are written to be routed, the single
+    # ``example`` string is written to be read.
+    samples: list[str] = [seed.strip()] if seed.strip() else []
+    samples.extend(text for text, _ in _routing_examples(ideas))
+    for idea in ideas:
+        ex = idea.example if isinstance(idea, AtlasNode) else idea.get("example")
+        if not ex:
+            continue
+        for line in str(ex).splitlines():
+            for part in line.split(";"):
+                part = part.strip()
+                if part:
+                    samples.append(part)
+    return list(dict.fromkeys(samples))
+
+
+def _identity_values(samples: list[str], identity: str, jargon: list[str]) -> list[str]:
+    found: list[str] = []
+    noise = ROUTING_STOP | bp._STOPWORDS | _TRAILING_NOISE | {"alpha", "beta", "gamma"}
+    for sample in samples:
+        for word in re.findall(r"\b[A-Z][a-zA-Z0-9]{2,}\b", sample):
+            if word.lower() not in noise:
+                found.append(word)
+        for match in re.finditer(r"\b(?:a|an|the)\s+([a-z][a-z]+)\b", sample):
+            noun = match.group(1)
+            if noun not in noise:
+                found.append(noun)
+    values: list[str] = []
+    for item in found:
+        if item not in values:
+            values.append(item)
+    if values:
+        return values
+    for term in jargon:
+        if not _filler_phrase(term) and term.lower() not in noise:
+            return [term]
+    label = identity.replace("_", " ")
+    return [label] if label.lower() not in {"alpha", "beta", "gamma"} else ["entry"]
+
+
+def _spare_terms(samples: list[str], jargon: list[str], hobby: set[str]) -> list[str]:
+    """Hobby language that does not include the interest name (lint + idle-safe)."""
+    out: list[str] = []
+    for term in jargon:
+        if _filler_phrase(term):
+            continue
+        if not _lacks_hobby(term, hobby):
+            continue
+        out.append(term)
+    for sample in samples:
+        for tok in re.findall(r"[A-Za-z][A-Za-z0-9_-]{3,}", sample):
+            low = tok.lower()
+            if low in hobby or low in ROUTING_STOP or low in bp._STOPWORDS:
+                continue
+            out.append(tok)
+    return list(dict.fromkeys(out))
+
+
+def _fallback_samples(identity: str, jargon: list[str], goal: str) -> list[str]:
+    label = identity.replace("_", " ")
+    terms = [j for j in jargon if not _filler_phrase(j)]
+    if not terms:
+        terms = [k for k in bp.keywords(goal) if k not in ROUTING_STOP][:4]
+    if not terms:
+        terms = [label]
+    out: list[str] = []
+    for term in terms[:8]:
+        if term.lower() == label.lower():
+            out.append(term)
+        elif " " in term:
+            out.append(f"{label} — {term}")
+        else:
+            out.append(f"{term} {label}".strip())
+    return out or [label]
+
+
+def _pick_object(text: str, objects: list[str], index: int, catalog_taken: bool) -> str:
+    if len(objects) == 1:
+        return objects[0]
+    if not catalog_taken and (index == 0 or _CATALOG_HINT.search(text or "")):
+        return objects[0]
+    return objects[-1]
+
+
+def _tautology(text: str) -> bool:
+    parts = re.findall(r"[a-z0-9]+", (text or "").lower())
+    n = len(parts)
+    if n >= 2 and n % 2 == 0 and parts[: n // 2] == parts[n // 2 :]:
+        return True
+    return False
 
 
 def _examples(
@@ -299,47 +568,161 @@ def _examples(
     objects: list[str],
     identity: str,
     goal: str,
+    *,
+    seed: str = "",
 ) -> list[ShortlistExample]:
-    examples: list[ShortlistExample] = []
-    event_obj = objects[-1]
     catalog_obj = objects[0]
-    samples = []
-    for idea in ideas:
-        ex = idea.example if isinstance(idea, AtlasNode) else idea.get("example")
-        if ex:
-            samples.append(str(ex))
-    if not samples:
-        samples = [
-            f"logged a new {identity.replace('_', ' ')} today",
-            "tried again this morning and it went better",
-            "same place as last time, felt smoother",
-        ]
-    fillers = [
-        "tried the usual method again",
-        "noted it after the session",
-        "kept a short note for next time",
-        "repeated the same setup",
-        "compared it to last week",
-        "marked it as worth repeating",
-        "skipped the extra step this round",
-        "captured a quick photo of the result",
+    event_obj = objects[-1]
+    hobby = _hobby_tokens(goal, objects)
+    jargon = _jargon(ideas, goal, seed=seed)
+    samples = _sample_lines(ideas, seed=seed) or _fallback_samples(identity, jargon, goal)
+    values = _identity_values(samples, identity, jargon)
+    spare = _spare_terms(samples, jargon, hobby)
+    rows: list[tuple[str, str, str]] = []
+    seen: set[str] = set()
+
+    def add(text: str, obj: str, val: str) -> None:
+        cleaned = re.sub(r"\s+", " ", (text or "").strip())
+        key = cleaned.lower()
+        if not cleaned or key in seen or _tautology(cleaned):
+            return
+        seen.add(key)
+        rows.append((cleaned, obj, val))
+
+    # The atlas says where its own routing examples belong; guessing from a
+    # keyword ("added") sends "added a super to hive 2" to the wrong object.
+    placed = {
+        text.strip().lower(): (catalog_obj if slot == "catalog" else event_obj)
+        for text, slot in _routing_examples(ideas)
+    }
+    # The elicited sentence sits at index 0, where the generic rule would post
+    # it to the catalog whatever it says. Its own verb knows better: "added a
+    # 1948 airmail" is a catalog line, "threw three bowls" is an event.
+    if seed.strip():
+        placed[seed.strip().lower()] = catalog_obj if _CATALOG_HINT.search(seed) else event_obj
+    catalog_taken = False
+    for i, sample in enumerate(samples):
+        obj = placed.get(sample.strip().lower()) or _pick_object(sample, objects, i, catalog_taken)
+        if obj == catalog_obj:
+            catalog_taken = True
+        add(sample, obj, values[min(i, len(values) - 1)])
+
+    catalog_val = values[0]
+    event_val = values[-1]
+    catalog_blob = " ".join(text for text, obj, _ in rows if obj == catalog_obj).lower()
+    event_spare = [t for t in spare if t.lower() not in catalog_blob]
+
+    def _shown(val: str, fallback: str) -> str:
+        if _lacks_hobby(str(val), hobby) and str(val).lower() not in catalog_blob:
+            return str(val)
+        if _lacks_hobby(fallback, hobby):
+            return fallback
+        return fallback
+
+    for i in range(0, max(len(event_spare), 1)):
+        if not event_spare:
+            break
+        if i + 1 < len(event_spare):
+            add(f"{event_spare[i]} {event_spare[i + 1]}", event_obj, event_val)
+        else:
+            add(event_spare[i], event_obj, event_val)
+        if sum(1 for text, _, _ in rows if _lacks_hobby(text, hobby)) >= 3:
+            break
+
+    for i, term in enumerate(event_spare):
+        obj = catalog_obj if len(objects) > 1 and i == 0 and not catalog_taken else event_obj
+        if obj == catalog_obj:
+            catalog_taken = True
+        val = catalog_val if obj == catalog_obj else event_val
+        shown = _shown(val, term)
+        if " " in term:
+            add(f"{shown} {term}", obj, val)
+        elif term.lower() == shown.lower():
+            add(term, obj, val)
+        else:
+            add(f"{term} {shown}", obj, val)
+        if len(rows) >= 10:
+            break
+
+    n = 0
+    while sum(1 for text, _, _ in rows if _lacks_hobby(text, hobby)) < 3 and event_spare:
+        a = event_spare[n % len(event_spare)]
+        b = event_spare[(n + 1) % len(event_spare)]
+        n += 1
+        if a.lower() == b.lower():
+            add(a, event_obj, event_val)
+        else:
+            add(f"{a} {b}", event_obj, event_val)
+        if n > 12:
+            break
+
+    catalog_blob = " ".join(text for text, obj, _ in rows if obj == catalog_obj).lower()
+    event_terms = [
+        j
+        for j in jargon
+        if " " not in j
+        and not _filler_phrase(j)
+        and j.lower() not in catalog_blob
+        and j.lower() not in hobby
     ]
-    # Fillers must not contain the domain slug or goal keywords (lint).
-    texts = fillers[:8]
-    if samples:
-        texts = samples[:2] + fillers[:8]
-    for i, text in enumerate(texts[:10]):
-        obj = event_obj if i or len(objects) == 1 else catalog_obj
-        fields: dict[str, Any] = {identity: "alpha"}
-        examples.append(ShortlistExample(text=text, object=obj, fields=fields))
+    if not event_terms:
+        event_terms = [t for t in event_spare if t.lower() not in catalog_blob]
+    for term in event_terms:
+        shown = _shown(event_val, term)
+        if term.lower() == shown.lower():
+            add(term, event_obj, event_val)
+        else:
+            add(f"{term} {shown}", event_obj, event_val)
+        if len(rows) >= 10:
+            break
+
+    pad = [
+        j
+        for j in (*event_spare, *spare, *jargon)
+        if not _filler_phrase(j) and j.lower() not in hobby
+    ]
+    if len(objects) > 1:
+        pad = [j for j in pad if j.lower() not in catalog_blob]
+    pad = list(dict.fromkeys(pad))
+    for i, a in enumerate(pad):
+        for b in pad[i + 1 :]:
+            add(f"{a} {b}", event_obj, event_val)
+            if len(rows) >= 10:
+                break
+        if len(rows) >= 10:
+            break
+    for term in pad:
+        add(term, event_obj, event_val)
+        if len(rows) >= 10:
+            break
+
+    if len(objects) > 1 and not any(obj == catalog_obj for _, obj, _ in rows):
+        add(f"added {catalog_val} to the catalog", catalog_obj, catalog_val)
+
+    examples = [
+        ShortlistExample(text=text, object=obj, fields={identity: val})
+        for text, obj, val in rows[:10]
+    ]
     if len(objects) > 1 and not any(ex.object == catalog_obj for ex in examples):
         examples.append(
             ShortlistExample(
-                text="added another one to the shelf",
+                text=f"added {catalog_val} to the catalog",
                 object=catalog_obj,
-                fields={identity: "beta"},
+                fields={identity: catalog_val},
             )
         )
+    if len(examples) < 8 and pad:
+        extra = 0
+        while len(examples) < 8 and extra < len(pad):
+            term = pad[extra]
+            extra += 1
+            examples.append(
+                ShortlistExample(
+                    text=term,
+                    object=event_obj,
+                    fields={identity: event_val},
+                )
+            )
     return examples
 
 
@@ -391,11 +774,21 @@ def _ensure_object_pattern(
             if ex.get("object") not in data["objects"]:
                 ex["object"] = event
         if not any(ex.get("object") == catalog for ex in data["examples"]):
+            seed = next(
+                (
+                    (ex.get("fields") or {}).get(identity)
+                    for ex in data["examples"]
+                    if (ex.get("fields") or {}).get(identity)
+                    and str((ex.get("fields") or {}).get(identity)).lower()
+                    not in {"alpha", "beta", "gamma"}
+                ),
+                identity.replace("_", " "),
+            )
             data["examples"].append(
                 {
-                    "text": f"added a new {identity.replace('_', ' ')} to the list",
+                    "text": f"added {seed} to the catalog",
                     "object": catalog,
-                    "fields": {identity: identity.replace("_", " ")},
+                    "fields": {identity: seed},
                 }
             )
         data = ShortlistModel.model_validate(data).model_dump()
@@ -586,4 +979,3 @@ def _apply_job_requirements(blueprint: dict[str, Any], jobs: list[str]) -> dict[
 
 # Re-export for tests that patch analog_few_shots via wizard.jobs.
 legacy_analog_few_shots = _legacy_analog_few_shots
-copy.copy  # keep import used if we later clone templates

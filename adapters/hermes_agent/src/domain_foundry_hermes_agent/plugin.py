@@ -46,10 +46,11 @@ You have a domain_foundry harness attached. Follow capture-first discipline:
 5. Surface pending approvals with `domain_foundry_review_list`; only resolve one
    after the user explicitly approves or rejects it.
 6. To stand up a brand-new tracking domain from a plain-language goal, call
-   `domain_foundry_new_domain` and relay the idea-atlas neighborhood (refine /
-   expand / idea cards). Do not pick an idea for the user. Continue with
-   `domain_foundry_wizard_reply`. Use `domain_foundry_atlas_search` to browse
-   without installing.
+   `domain_foundry_new_domain` and relay the idea options and HTML looks. Do
+   not pick an idea or a look for the user. Continue with
+   `domain_foundry_wizard_reply` until they accept a look. If they have photos,
+   OCR them yourself and send the text; Foundry ingests text folders, not
+   images. Use `domain_foundry_atlas_search` to browse without installing.
 
 The harness is local-first and authoritative. You are a courier for the user's
 words, not the source of truth.
@@ -78,6 +79,17 @@ class Tool:
                 "parameters": self.parameters,
             },
         }
+
+
+def _without_look_html(payload: dict[str, Any]) -> dict[str, Any]:
+    """Copy a wizard payload and drop look HTML so the tool context stays small."""
+    from domain_foundry_core.wizard.engine import looks_public
+
+    if not isinstance(payload, dict) or "looks" not in payload:
+        return payload
+    out = dict(payload)
+    out["looks"] = looks_public(payload.get("looks"), include_html=False)
+    return out
 
 
 def _string(desc: str) -> dict[str, Any]:
@@ -212,9 +224,10 @@ def build_tools(client: Any) -> list[Tool]:
         Tool(
             name="domain_foundry_new_domain",
             description=(
-                "Start the idea-atlas wizard from a plain-language goal. Returns a "
-                "neighborhood (refine / expand / ideas) and a session id — not an "
-                "installed pack. Relay it; do not pick an idea for the user."
+                "Start the idea-atlas wizard from a plain-language goal. Returns "
+                "idea options (and later HTML looks) and a session id — not an "
+                "installed pack. Relay options and looks; do not pick for the user. "
+                "OCR photos yourself and send text. Foundry ingests text folders."
             ),
             parameters={
                 "type": "object",
@@ -224,13 +237,18 @@ def build_tools(client: Any) -> list[Tool]:
                 },
                 "required": ["goal_text"],
             },
-            handler=lambda goal_text, test_drive=5: client.new_domain(
-                goal_text, test_drive=test_drive
+            handler=lambda goal_text, test_drive=5: _without_look_html(
+                client.new_domain(goal_text, test_drive=test_drive)
             ),
         ),
         Tool(
             name="domain_foundry_wizard_reply",
-            description="Send one reply (interview answer / sample capture / edit) to a wizard session.",
+            description=(
+                "Send one reply to a wizard session (pick an idea, describe a look, "
+                "critique HTML, paste a notes folder path, or 'build it'). Wait for "
+                "an accepted look before treating the domain as live. Do not pick "
+                "for the user."
+            ),
             parameters={
                 "type": "object",
                 "properties": {
@@ -239,7 +257,9 @@ def build_tools(client: Any) -> list[Tool]:
                 },
                 "required": ["session_id", "text"],
             },
-            handler=lambda session_id, text: client.wizard_reply(session_id, text),
+            handler=lambda session_id, text: _without_look_html(
+                client.wizard_reply(session_id, text)
+            ),
         ),
         Tool(
             name="domain_foundry_atlas_search",

@@ -32,6 +32,103 @@ _IDENT_RE = re.compile(r"^[a-z][a-z0-9_]{0,62}$")
 _GENERIC_OBJECTS = frozenset({"entry", "log", "item"})
 _GENERIC_FIELDS = frozenset({"title", "logged_at", "rating", "amount", "notes"})
 
+# Field names that describe the act of logging rather than the thing logged.
+# They match nothing a person types and each one costs a slot in the bounded
+# rule, so they are excluded from routing vocabulary outright.
+GENERIC_RULE_TERMS = frozenset(
+    {
+        "session name",
+        "noted at",
+        "logged at",
+        "value",
+        "count",
+        "notes",
+        "note",
+        "title",
+        "rating",
+        "amount",
+        "record name",
+        "record event",
+        "entry",
+        "entry name",
+        "name",
+        "item name",
+    }
+)
+
+# The bounded rule budget. Wider than it was because generic field names no
+# longer spend any of it.
+RULE_TERM_CAP = 32
+
+# Every pack ships these as negative examples: lines it must never file. One
+# list, so the guard below cannot drift away from what is actually shipped.
+IDLE_CHATTER = (
+    "nice afternoon, weather was good",
+    "deploy the release candidate tonight",
+    "please review the pull request",
+    "schedule a standup meeting",
+)
+
+# The words those lines are written in. A pack must never route on one of them:
+# doing so files the very chatter it declares it will not file. "afternoon" is
+# the one that bites, because ROUTING_STOP only covers the bare "after".
+#
+# This matters most for elicited sentences. A real person's log line arrives
+# with their small talk attached, and elicitation exists to widen a pack's
+# vocabulary — which is exactly how over-capture starts.
+NEGATIVE_TERMS = frozenset(
+    token for line in IDLE_CHATTER for token in re.findall(r"[a-z]{3,}", line.lower())
+)
+
+# Tokens that leak into L1 rules from filler examples / idle chatter.
+# "after" must not match "afternoon"; "nice"/"weather"/"good" are small talk.
+ROUTING_STOP = frozenset(
+    {
+        "after",
+        "from",
+        "kept",
+        "short",
+        "notes",
+        "session",
+        "logged",
+        "today",
+        "this",
+        "that",
+        "with",
+        "were",
+        "was",
+        "good",
+        "nice",
+        "weather",
+        "item",
+        "alpha",
+        "beta",
+        "gamma",
+        "worth",
+        "repeating",
+        "next",
+        "time",
+        "usual",
+        "method",
+        "again",
+        "morning",
+        "place",
+        "last",
+        "felt",
+        "smoother",
+        "skipped",
+        "extra",
+        "step",
+        "round",
+        "captured",
+        "quick",
+        "photo",
+        "result",
+        "tried",
+        "marked",
+    }
+)
+
 
 class _Strict(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -78,6 +175,10 @@ class ShortlistModel(_Strict):
     objects: list[str] = Field(min_length=1, max_length=3)
     fields: list[ShortlistField] = Field(min_length=3, max_length=16)
     jargon: list[str] = Field(default_factory=list)
+    # Words the interest is written in, from the atlas. Ranked ahead of jargon
+    # and field names when the bounded routing rule is built.
+    vocabulary: list[str] = Field(default_factory=list)
+    llm_hints: str = ""
     examples: list[ShortlistExample] = Field(min_length=8)
     negatives: list[str] = Field(default_factory=list)
 
@@ -124,13 +225,71 @@ class DesignLintError(ValueError):
     """Shortlist or compiled blueprint failed the anti-template lint."""
 
 
-def lint_shortlist(shortlist: ShortlistModel | dict[str, Any], *, goal: str = "") -> list[str]:
-    """Return lint error strings (empty = ok)."""
+def _is_skeleton_term(term: str, skeleton: set[str]) -> bool:
+    """True when a term says nothing beyond the object's own name."""
+    words = re.findall(r"[a-z0-9]+", term.lower())
+    return bool(words) and all(w in skeleton for w in words)
+
+
+def generic_shape_warnings(shortlist: ShortlistModel) -> list[str]:
+    """Signs a pack was compiled from the shape of the wizard, not of the interest.
+
+    None of these can block a build — a thin pack still beats no pack — but each
+    one predicts the same failure: the owner's first real sentence will not
+    route, because the pack knows no word they would use.
+    """
+    warnings: list[str] = []
+    primary = shortlist.objects[0]
+    examples_by_obj: dict[str, list[str]] = {o: [] for o in shortlist.objects}
+    fields_by_obj: dict[str, list[Any]] = {o: [] for o in shortlist.objects}
+    for ex in shortlist.examples:
+        examples_by_obj.setdefault(ex.object, []).append(ex.text)
+        for value in (ex.fields or {}).values():
+            if isinstance(value, str) and value.strip():
+                fields_by_obj.setdefault(ex.object, []).append(value.strip())
+
+    for obj_name in shortlist.objects:
+        terms = rule_terms_for_object(
+            shortlist,
+            obj_name,
+            primary=primary,
+            examples_by_obj=examples_by_obj,
+            fields_by_obj=fields_by_obj,
+        )
+        skeleton = set(re.findall(r"[a-z0-9]+", obj_name.lower()))
+        skeleton.update(re.findall(r"[a-z0-9]+", shortlist.domain.lower()))
+        skeleton.add("name")
+        if not [t for t in terms if not _is_skeleton_term(t, skeleton)]:
+            warnings.append(
+                f"{obj_name}: routing rule is only the object/domain name — no interest vocabulary"
+            )
+
+    for f in shortlist.fields:
+        if f.role == "measure" and f.name in {"value", "count"}:
+            warnings.append(
+                f"{f.object}.{f.name}: measure fell through to a generic name — "
+                "the atlas node needs a measure"
+            )
+        if f.role == "identity" and f.name in {"record_name", "entry_name", "item_name", "name"}:
+            warnings.append(f"{f.object}: identity is the generic {f.name!r}")
+    return warnings
+
+
+def lint_shortlist(
+    shortlist: ShortlistModel | dict[str, Any],
+    *,
+    goal: str = "",
+    warnings: list[str] | None = None,
+) -> list[str]:
+    """Return lint error strings (empty = ok); append soft warnings to *warnings*."""
     if isinstance(shortlist, dict):
         try:
             shortlist = ShortlistModel.model_validate(shortlist)
         except Exception as exc:
             return [str(exc)]
+
+    if warnings is not None:
+        warnings.extend(generic_shape_warnings(shortlist))
 
     errors: list[str] = []
     goal_words = set(bp.keywords(goal)) | {shortlist.domain}
@@ -197,7 +356,8 @@ def compile_shortlist(
     if isinstance(shortlist, dict):
         shortlist = ShortlistModel.model_validate(shortlist)
 
-    errors = lint_shortlist(shortlist, goal=goal)
+    warnings: list[str] = []
+    errors = lint_shortlist(shortlist, goal=goal, warnings=warnings)
     if errors:
         raise DesignLintError("; ".join(errors))
 
@@ -268,8 +428,9 @@ def compile_shortlist(
         "examples": examples,
         "negatives": negatives[:5],
         "llm_hints": (
-            f"Key fields: {', '.join(f.name for f in shortlist.fields)}. "
-            f"Jargon: {', '.join(shortlist.jargon[:8])}."
+            (shortlist.llm_hints.strip() + " " if shortlist.llm_hints.strip() else "")
+            + f"Key fields: {', '.join(f.name for f in shortlist.fields)}. "
+            + f"Jargon: {', '.join((shortlist.vocabulary + shortlist.jargon)[:10])}."
         ),
         "views": views,
         "unit_options": {},
@@ -285,18 +446,172 @@ def compile_shortlist(
         },
         "meta": {
             "shortlist": [f.model_dump(exclude_none=True) for f in shortlist.fields],
+            "design_warnings": warnings,
         },
     }
     blueprint["agent"] = bp.build_agent_spec(blueprint)
     return validate_blueprint(blueprint)
 
 
+# Dimensioned words are how people actually write a log line: "5x5", "100kg",
+# "18m", "75%", "1948". A letter-led tokenizer cannot see any of them, so they
+# can never become routing vocabulary and "squat 5x5 at 100kg" matches nothing.
+_TOKEN_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9x×'./%_-]*")
+_SETS_REPS_RE = re.compile(r"^\d+\s*[x×]\s*\d+$")
+_DIMENSION_RE = re.compile(r"^\d+(?:\.\d+)?\s*[a-z]{1,3}$")
+_PERCENT_RE = re.compile(r"^\d+(?:\.\d+)?%$")
+_YEAR_RE = re.compile(r"^\d{4,}$")
+
+
+def _keep_token(token: str) -> bool:
+    """Keep words and dimensioned numbers; drop bare small integers and ratios.
+
+    "3" and "20" match every log line ever written, so they must never become
+    a rule. "1948", "5x5", "100kg" and "75%" name something.
+    """
+    if _SETS_REPS_RE.match(token) or _DIMENSION_RE.match(token) or _PERCENT_RE.match(token):
+        return True
+    if _YEAR_RE.match(token):
+        return True
+    if not re.search(r"[a-z]", token):
+        return False
+    return len(token) >= 3
+
+
 def _tokens(text: str) -> list[str]:
-    return [
-        w.lower()
-        for w in re.findall(r"[a-zA-Z][a-zA-Z0-9_-]{2,}", text or "")
-        if w.lower() not in bp._STOPWORDS
-    ]
+    out: list[str] = []
+    for raw in _TOKEN_RE.findall(text or ""):
+        token = raw.rstrip("-_./'").lower()
+        if not token or not _keep_token(token):
+            continue
+        if token in bp._STOPWORDS or token in ROUTING_STOP:
+            continue
+        out.append(token)
+    return out
+
+
+def seed_terms(text: str, *, limit: int = 10) -> list[str]:
+    """Routing vocabulary from a sentence the user typed themselves.
+
+    ``_tokens`` already drops stopwords, filler and bare small integers, and it
+    already admits the dimensioned words a log line is actually written in
+    ("5x5", "100kg", "1948"). ``NEGATIVE_TERMS`` removes the words the shipped
+    negative examples are written in, so an elicited sentence can only widen a
+    pack towards its interest, never towards small talk.
+    """
+    out: list[str] = []
+    for token in _tokens(text):
+        if token in NEGATIVE_TERMS or is_generic_rule_term(token):
+            continue
+        if token not in out:
+            out.append(token)
+    return out[:limit]
+
+
+def is_dimensioned(term: str) -> bool:
+    """``5x5``, ``100kg``, ``18m``, ``75%``, ``1948`` — short but not vague."""
+    low = (term or "").strip().lower()
+    return bool(
+        _SETS_REPS_RE.match(low)
+        or _DIMENSION_RE.match(low)
+        or _PERCENT_RE.match(low)
+        or _YEAR_RE.match(low)
+    )
+
+
+def _is_filler_term(term: str) -> bool:
+    if is_dimensioned(term):
+        return False
+    parts = re.findall(r"[a-z0-9]+", (term or "").lower())
+    if not parts:
+        return True
+    return all(p in ROUTING_STOP or p in bp._STOPWORDS or len(p) < 3 for p in parts)
+
+
+def term_pattern(term: str) -> str:
+    """Single tokens need word boundaries so ``after`` does not match ``afternoon``.
+
+    Multi-word jargon (``tasting menu``, ``151 booster``) stays a substring match.
+    A term that ends in punctuation (``75%``) takes no trailing ``\\b``: there is
+    no word boundary after ``%``, so one would make the rule unmatchable.
+    """
+    term = (term or "").strip()
+    if not term:
+        return ""
+    escaped = re.escape(term)
+    if re.search(r"\s", term):
+        return escaped
+    head = r"\b" if (term[0].isalnum() or term[0] == "_") else ""
+    tail = r"\b" if (term[-1].isalnum() or term[-1] == "_") else ""
+    return f"{head}{escaped}{tail}"
+
+
+def is_generic_rule_term(term: str) -> bool:
+    return (term or "").strip().lower().replace("_", " ") in GENERIC_RULE_TERMS
+
+
+def _unique_routing_terms(terms: list[str]) -> list[str]:
+    out: list[str] = []
+    seen: set[str] = set()
+    for raw in terms:
+        term = (raw or "").strip()
+        if not term or _is_filler_term(term) or is_generic_rule_term(term):
+            continue
+        key = term.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(term)
+    return out
+
+
+def rule_terms_for_object(
+    shortlist: ShortlistModel,
+    obj_name: str,
+    *,
+    primary: str,
+    examples_by_obj: dict[str, list[str]],
+    fields_by_obj: dict[str, list[Any]],
+) -> list[str]:
+    """Ordered routing vocabulary for one object, best first.
+
+    Order is the whole point: the cap is a budget, and a generic field name
+    spends a slot on a word nobody types. Object name, then the domain, then
+    the atlas's own words for the interest, then jargon, then what the examples
+    actually say — field names come last and only when they mean something.
+    """
+    shared = obj_name == primary or len(shortlist.objects) == 1
+    blob = " ".join(examples_by_obj.get(obj_name) or []).lower()
+
+    def _for_this_object(term: str) -> bool:
+        return shared or term.lower() in blob
+
+    terms: list[str] = [obj_name.replace("_", " "), obj_name]
+    if shared:
+        # The domain term is the strongest safe catch-all for its primary
+        # object. Keep it ahead of the bounded jargon/field list so a long
+        # shortlist cannot silently evict it.
+        terms.append(shortlist.domain)
+    # Atlas vocabulary: the words this interest is actually written in.
+    terms.extend(v for v in shortlist.vocabulary if v and _for_this_object(v))
+    jargon_for_obj = [j for j in shortlist.jargon if j and _for_this_object(j)]
+    # Multi-word jargon first so the cap keeps "151 booster" over filler.
+    terms.extend(sorted(jargon_for_obj, key=lambda j: (" " not in j, -len(j))))
+    terms.extend(fields_by_obj.get(obj_name) or [])
+    field_names: list[str] = []
+    for f in shortlist.fields:
+        if f.object != obj_name:
+            continue
+        field_names.append(f.name.replace("_", " "))
+        field_names.extend((f.values or [])[:6])
+    terms.extend(field_names)
+    for text in examples_by_obj.get(obj_name) or []:
+        terms.extend(
+            tok
+            for tok in _tokens(text)
+            if (len(tok) >= 4 or is_dimensioned(tok)) and tok not in NEGATIVE_TERMS
+        )
+    return _unique_routing_terms(terms)
 
 
 def _rules_for_objects(shortlist: ShortlistModel) -> list[dict[str, Any]]:
@@ -305,38 +620,36 @@ def _rules_for_objects(shortlist: ShortlistModel) -> list[dict[str, Any]]:
     Stamping the domain (and all jargon) onto every object makes every example
     match every object. Dry-run then fails at ~50% because the heuristic picks
     the first object. Keep shared jargon on a single primary object.
+
+    Prefer atlas jargon, object/field names, domain slug, and distinctive
+    example tokens — never filler small-talk harvested from padding lines.
     """
     rules: list[dict[str, Any]] = []
     primary = shortlist.objects[0]
     examples_by_obj: dict[str, list[str]] = {o: [] for o in shortlist.objects}
+    fields_by_obj: dict[str, list[Any]] = {o: [] for o in shortlist.objects}
     for ex in shortlist.examples:
         examples_by_obj.setdefault(ex.object, []).append(ex.text)
+        for value in (ex.fields or {}).values():
+            if isinstance(value, str) and value.strip():
+                fields_by_obj.setdefault(ex.object, []).append(value.strip())
 
     for obj_name in shortlist.objects:
-        terms: list[str] = [
-            obj_name.replace("_", " "),
+        terms = rule_terms_for_object(
+            shortlist,
             obj_name,
-        ]
-        for f in shortlist.fields:
-            if f.object != obj_name:
-                continue
-            terms.append(f.name.replace("_", " "))
-            terms.extend((f.values or [])[:6])
-        blob = " ".join(examples_by_obj.get(obj_name) or []).lower()
-        for j in shortlist.jargon:
-            if j and j.lower() in blob:
-                terms.append(j)
-        for text in examples_by_obj.get(obj_name) or []:
-            terms.extend(tok for tok in _tokens(text) if len(tok) >= 4)
-        if obj_name == primary or len(shortlist.objects) == 1:
-            terms.append(shortlist.domain)
-            terms.extend(j for j in shortlist.jargon if j)
-        unique = list(dict.fromkeys(t.strip() for t in terms if t and t.strip()))
-        if not unique:
-            unique = [shortlist.domain]
+            primary=primary,
+            examples_by_obj=examples_by_obj,
+            fields_by_obj=fields_by_obj,
+        )
+        unique = terms or [shortlist.domain]
+        patterns = [term_pattern(t) for t in unique[:RULE_TERM_CAP] if term_pattern(t)]
+        if not patterns:
+            fallback = term_pattern(shortlist.domain) or re.escape(shortlist.domain)
+            patterns = [fallback]
         rules.append(
             {
-                "match": "(" + "|".join(re.escape(t) for t in unique[:24]) + ")",
+                "match": "(" + "|".join(patterns) + ")",
                 "object": obj_name,
                 "confidence_boost": 0.12 if obj_name == primary else 0.1,
                 "operation": "create",
@@ -368,7 +681,7 @@ def _anchor_examples(
             continue
         extra.append(
             {
-                "match": re.escape(anchor),
+                "match": term_pattern(anchor),
                 "object": obj,
                 "confidence_boost": 0.25,
                 "operation": "create",
@@ -389,14 +702,19 @@ def _matching_objects(rules: list[dict[str, Any]], text: str) -> set[str]:
 
 
 def _example_anchor(text: str, obj: str, blobs: dict[str, str]) -> str | None:
-    tokens = [t for t in _tokens(text) if len(t) >= 4]
+    tokens = [t for t in _tokens(text) if len(t) >= 4 and not _is_filler_term(t)]
+    elsewhere = " ".join(v for k, v in blobs.items() if k != obj)
     for tok in sorted(tokens, key=len, reverse=True):
-        elsewhere = " ".join(v for k, v in blobs.items() if k != obj)
         if tok not in elsewhere:
             return tok
-    if tokens:
-        return max(tokens, key=len)
-    words = re.findall(r"[A-Za-z]{3,}", text)
+    # Shared tokens must not become high-boost rules — they steal the other object.
+    words = [
+        w
+        for w in re.findall(r"[A-Za-z]{3,}", text)
+        if w.lower() not in ROUTING_STOP
+        and w.lower() not in bp._STOPWORDS
+        and w.lower() not in elsewhere
+    ]
     if len(words) >= 2:
         return f"{words[0]} {words[1]}"
     return words[0] if words else None
@@ -636,11 +954,16 @@ def analog_few_shots(goal: str) -> list[dict[str, Any]]:
 
 
 __all__ = [
+    "IDLE_CHATTER",
     "DesignLintError",
+    "ROUTING_STOP",
+    "NEGATIVE_TERMS",
     "ShortlistField",
     "ShortlistModel",
     "analog_few_shots",
     "compile_shortlist",
     "lint_shortlist",
+    "seed_terms",
     "shortlist_schema",
+    "term_pattern",
 ]

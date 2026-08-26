@@ -5,12 +5,12 @@ build-backend = "hatchling.build"
 [project]
 name = "domain-foundry-core"
 version = "0.1.0"
-description = "Local-first personal agent harness: capture → structured domain data → remixable apps"
+description = "Evidence-backed interest-to-schema-to-owned-app compiler"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
 authors = [{ name = "Domain Foundry contributors" }]
-keywords = ["agent", "capture", "local-first", "sqlite", "domain-packs"]
+keywords = ["app-generator", "data-modeling", "local-first", "sqlite", "product-design"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "License :: OSI Approved :: MIT License",
@@ -38,6 +38,8 @@ dev = [
   "pytest-cov>=5.0.0",
   "ruff>=0.6.0",
   "pyright>=1.1.380",
+  "pip-audit>=2.10.0,<3",
+  "uv>=0.8.0,<1",
 ]
 docs = [
   "mkdocs>=1.6.0",
@@ -67,6 +69,8 @@ artifacts = ["core/domain_foundry_core/_webapp/**"]
 # Keep it in the wheel so installed `new-domain` can run the held-out gate.
 "examples/heldout" = "domain_foundry_core/examples/heldout"
 "atlas" = "domain_foundry_core/atlas/_bundled"
+"knowledge" = "domain_foundry_core/foundry/_knowledge"
+"examples/golden" = "domain_foundry_core/foundry/_golden"
 
 [tool.hatch.build.targets.sdist]
 include = [
@@ -74,6 +78,8 @@ include = [
   "packs",
   "examples",
   "atlas",
+  "knowledge",
+  "uv.lock",
   "LICENSE",
   "README.md",
 ]

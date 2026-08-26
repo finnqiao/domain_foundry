@@ -30,3 +30,9 @@ def redact_secrets(text: str | None) -> str:
     for pat in _SECRET_PATTERNS:
         out = pat.sub("[REDACTED]", out)
     return out
+
+
+def contains_potential_secret(text: str | None) -> bool:
+    """Return whether text matches a credential shape without exposing the match."""
+
+    return bool(text) and any(pattern.search(text) for pattern in _SECRET_PATTERNS)

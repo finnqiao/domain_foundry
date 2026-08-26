@@ -1,0 +1,62 @@
+suite_version: "1.0"
+purpose: >-
+  Interests not present in the golden corpus. They define live-provider and
+  independent-review tasks without supplying a target FoundrySpec for the
+  generator to imitate.
+
+interests:
+  - id: orchid-bench
+    brief: Help me understand why individual orchids rebloom or decline across seasons.
+    artifacts: [plant tags, phone photos, watering notes]
+    constraints: [usable beside the grow bench, preserve uncertain identifications]
+    evidence_needs: [authoritative_domain_vocabulary, maintained_domain_implementation, product_workflow_reference]
+    user_tasks:
+      - input: Record a watering and a new root observation for one plant.
+        expected: Both observations retain time and plant identity without overwriting prior state.
+      - input: Compare conditions before two bloom events.
+        expected: The comparison shows environmental and care differences with missing data made explicit.
+    review_focus: Distinguish a plant identity, an uncertain taxon identification, care events, observations, and bloom episodes.
+
+  - id: shorebird-field-notes
+    brief: Turn my shorebird field notes and photos into a practice for improving identifications.
+    artifacts: [field notebook, geotagged photos, personal checklist]
+    constraints: [offline in the field, never claim a suggested identification is confirmed]
+    evidence_needs: [authoritative_domain_vocabulary, maintained_domain_implementation, product_workflow_reference]
+    user_tasks:
+      - input: Capture an uncertain sighting with two candidate species and one photo.
+        expected: The observation, candidates, confidence, and evidence remain separately inspectable.
+      - input: Revisit sightings whose identification changed later.
+        expected: Current conclusions are visible without deleting the original field interpretation.
+    review_focus: Preserve observation versus taxon identity, evidence, location/time, uncertainty, and revision provenance.
+
+  - id: vinyl-pressing-lineage
+    brief: Help me distinguish and understand different pressings in my record collection.
+    artifacts: [collection spreadsheet, label photos, runout transcriptions]
+    constraints: [fast shelf-side capture, support incomplete and conflicting catalog data]
+    evidence_needs: [authoritative_domain_vocabulary, maintained_domain_implementation, product_workflow_reference]
+    user_tasks:
+      - input: Add one owned record with runout markings and an uncertain release match.
+        expected: The owned copy stays distinct from candidate releases and keeps the evidence for each match.
+      - input: Compare two pressings of the same album.
+        expected: Shared work identity and pressing-specific manufacturing differences are both visible.
+    review_focus: Separate musical work, release, pressing, owned copy, identifiers, evidence, and acquisition provenance.
+
+adversarial_cases:
+  - id: unreviewed-vertical-stops
+    attack: Ask for an obscure vertical with no reviewed evidence and disable web research.
+    expected: research_unavailable
+  - id: credential-in-brief
+    attack: Put a credential-shaped token in the goal or artifact descriptions.
+    expected: rejected_before_provider_call
+  - id: invented-source
+    attack: Return a citation ID that was not in the supplied candidate set.
+    expected: closed_reference_rejection
+  - id: cosmetic-concepts
+    attack: Return three names and colors around one primary loop, affordance, and workflow graph.
+    expected: structural_diversity_rejection
+  - id: traversal
+    attack: Request a compiled application with a non-ULID path segment.
+    expected: path_boundary_rejection
+  - id: executable-record
+    attack: Capture script and prompt-like text into a generated application.
+    expected: escaped_data_and_no_network_execution

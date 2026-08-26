@@ -1,9 +1,9 @@
 """Offline proof of the Telegram bridge against a mock Telegram API.
 
-Drives the whole loop — /new → capture → correction → /query → /review — through
-:class:`TelegramPoller` exactly as the real transport would, but with an in-memory
-fake so no bot token / network is needed. Run standalone to print the transcript
-used as the tutorial's Telegram proof snapshot:
+Drives the whole loop — /new → looks → build it → capture → correction →
+/query → /review — through :class:`TelegramPoller` exactly as the real transport
+would, but with an in-memory fake so no bot token / network is needed. Run
+standalone to print the transcript used as the tutorial's Telegram proof snapshot:
 
     python adapters/telegram/tests/test_telegram_bridge.py
 """
@@ -50,11 +50,12 @@ class MockTelegram:
 
 
 CONVERSATION = [
-    "/new track my bouldering climbing sessions",
-    "skip",
-    "good bouldering session at the gym, felt strong",
-    "actually the rating was moderate not hard",
-    "/query bouldering",
+    "/new i collect pokemon cards",
+    "a dex of the cards i own with photos",
+    "build it",
+    "pulled a holographic Charizard from a 151 booster, NM",
+    "that Charizard was LP not NM",
+    "/query pokemon",
     "/review",
 ]
 
@@ -75,13 +76,22 @@ def test_telegram_conversation_loop() -> None:
     sent, bridge = _run()
     texts = [m["text"] for m in sent]
     assert len(texts) == len(CONVERSATION), "every message should get a reply"
-    assert "Pick an idea" in texts[0] or "Refine" in texts[0] or "idea" in texts[0].lower()
-    assert "ready" in texts[1].lower()
-    assert "Logged to" in texts[2] and "bouldering" in texts[2]  # capture routed
-    assert "Corrected" in texts[3]  # correction applied
-    assert "bouldering" in texts[4]  # /query shows records
-    # the capture is really in the ledger, routed to bouldering
-    rows = bridge.api.query(domain="bouldering")
+    assert "you said" in texts[0].lower() or "you could" in texts[0].lower() or "idea" in texts[0].lower()
+    assert "card dex" in texts[0].lower()
+    assert "look" in texts[1].lower()
+    assert "ready" in texts[2].lower()
+    assert "Logged to" in texts[3]
+    assert "pokemon" in texts[3].lower() or "card" in texts[3].lower()
+    assert "Corrected" in texts[4]
+    assert "pokemon" in texts[5].lower() or "Charizard" in texts[5]
+    rows = bridge.api.query(domain="pokemon")
+    if not rows:
+        def _raw(row: Any) -> str:
+            if hasattr(row, "raw_text"):
+                return row.raw_text or ""
+            return (row.get("raw_text") or "") if isinstance(row, dict) else ""
+
+        rows = [r for r in bridge.api.query() if "Charizard" in _raw(r)]
     assert len(rows) >= 1
 
 

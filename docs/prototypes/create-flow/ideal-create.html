@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ideal — the keyed create flow, end to end</title>
+<style>
+  :root {
+    --night: #12120f;
+    --night-2: #1b1b17;
+    --night-3: #23231d;
+    --paper: #f1eee4;
+    --paper-2: #e5decf;
+    --paper-3: #e8e4da;
+    --ink: #1c1c18;
+    --ink-2: #5e5b53;
+    --line: #383832;
+    --rule: #c8c0b2;
+    --muted: #aaa79c;
+    --cool: #9bb8bc;
+    --slate: #526e73;
+    --amber: #efa853;
+    --amber-ink: #8a531a;
+    --green: #6f8f6a;
+    --danger: #c4553e;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --serif: Georgia, "Times New Roman", serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--night);
+    color: var(--paper);
+    font: 16px/1.65 -apple-system, "Segoe UI", system-ui, sans-serif;
+  }
+  .mock-banner {
+    position: sticky; top: 0; z-index: 20;
+    display: flex; gap: 1rem; align-items: baseline; flex-wrap: wrap;
+    padding: 0.65rem clamp(1.2rem, 4vw, 4rem);
+    background: var(--amber); color: var(--ink);
+    font-family: var(--mono); font-size: 0.72rem;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .mock-banner a { color: inherit; }
+  header.mast {
+    padding: clamp(2rem, 5vw, 5rem) clamp(1.3rem, 4vw, 4rem);
+    border-bottom: 1px solid var(--line);
+    display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
+    gap: 3rem; align-items: end;
+  }
+  .kicker {
+    margin: 0 0 0.6rem; color: var(--cool);
+    font-family: var(--mono); font-size: 0.7rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  h1 {
+    margin: 0; max-width: 15ch;
+    font-family: var(--serif); font-weight: 400;
+    font-size: clamp(2.6rem, 6.5vw, 6rem);
+    letter-spacing: -0.04em; line-height: 0.96;
+  }
+  .lede { margin: 0; max-width: 48ch; color: var(--muted); }
+  .lede strong { color: var(--paper); font-weight: 650; }
+  .rail {
+    position: sticky; top: 2.4rem; z-index: 12;
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    background: rgba(18, 18, 15, 0.97);
+    border-bottom: 1px solid var(--line);
+  }
+  .rail a {
+    min-height: 64px; padding: 0.7rem 0.9rem;
+    display: grid; gap: 0.15rem; align-content: center;
+    color: var(--muted); text-decoration: none;
+    border-right: 1px solid var(--line);
+  }
+  .rail a:last-child { border-right: 0; }
+  .rail a:hover { color: var(--paper); }
+  .rail .n { font-family: var(--mono); font-size: 0.68rem; color: var(--amber); }
+  .rail .t { font-size: 0.82rem; }
+  main { padding: 0 clamp(1.3rem, 4vw, 4rem) 4rem; }
+  .stage { padding: clamp(2rem, 4.5vw, 4rem) 0; border-top: 1px solid var(--line); }
+  .stage:first-of-type { border-top: 0; }
+  .stage-head {
+    display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(260px, 0.7fr);
+    gap: clamp(1rem, 3vw, 3rem); align-items: end; margin-bottom: 1.8rem;
+  }
+  .stage-head h2 {
+    margin: 0; max-width: 14ch;
+    font-family: var(--serif); font-weight: 400;
+    font-size: clamp(2rem, 4.5vw, 4rem);
+    letter-spacing: -0.045em; line-height: 0.94;
+  }
+  .stage-head p { margin: 0; max-width: 56ch; color: var(--muted); }
+  .paper {
+    padding: clamp(1.1rem, 2.5vw, 2rem);
+    background: var(--paper); color: var(--ink);
+    box-shadow: 0 18px 56px rgba(0, 0, 0, 0.35);
+  }
+  .paper h3 { margin: 0 0 0.9rem; font-size: 1.25rem; }
+  .paper p { margin: 0 0 0.8rem; }
+  .paper p:last-child { margin-bottom: 0; }
+  .said {
+    margin: 0 0 1rem; font-family: var(--mono);
+    font-size: 1.02rem; color: var(--paper);
+  }
+  .said::before { content: "you › "; color: var(--cool); }
+  .said.app::before { content: "app › "; color: var(--amber); }
+  .two { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(240px, 0.85fr); gap: clamp(1rem, 2.5vw, 2.5rem); }
+  .margin h4 {
+    margin: 0 0 0.5rem; color: var(--cool);
+    font-family: var(--mono); font-weight: 400; font-size: 0.7rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .margin p { margin: 0 0 0.8rem; color: var(--muted); font-size: 0.88rem; }
+  .margin code, .paper code {
+    font-family: var(--mono); font-size: 0.82em;
+  }
+  .margin code { color: var(--paper-2); background: var(--night-2); padding: 0.1rem 0.3rem; }
+  .paper code { color: var(--amber-ink); }
+
+  /* research receipt */
+  .sources { display: grid; gap: 0; margin-top: 1rem; }
+  .source {
+    display: grid; grid-template-columns: 1fr auto;
+    gap: 0.6rem 1rem; align-items: baseline;
+    padding: 0.7rem 0; border-top: 1px solid var(--rule);
+  }
+  .source strong { font-weight: 650; }
+  .source .claim { grid-column: 1 / -1; margin: 0; color: var(--ink-2); font-size: 0.92rem; }
+  .tier {
+    font-family: var(--mono); font-size: 0.66rem;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 0.15rem 0.45rem; border: 1px solid var(--slate); color: var(--slate);
+    white-space: nowrap;
+  }
+  .tier.exemplar { border-color: var(--amber-ink); color: var(--amber-ink); }
+  .receipt-strip {
+    display: flex; flex-wrap: wrap; gap: 0 1.6rem;
+    margin-top: 1.1rem; padding-top: 0.9rem; border-top: 1px solid var(--rule);
+    font-family: var(--mono); font-size: 0.75rem; color: var(--ink-2);
+  }
+  .receipt-strip b { color: var(--ink); font-weight: 650; }
+
+  /* concepts */
+  .concepts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+  .concept {
+    padding: 1.2rem; display: grid; gap: 0.7rem; align-content: start;
+    background: var(--paper); color: var(--ink);
+    border: 2px solid transparent;
+  }
+  .concept.picked { border-color: var(--amber); }
+  .concept > strong { font-family: var(--serif); font-size: 1.6rem; font-weight: 400; letter-spacing: -0.02em; }
+  .concept dl { margin: 0; display: grid; grid-template-columns: 5.5rem 1fr; gap: 0.3rem 0.6rem; font-size: 0.9rem; }
+  .concept dt { color: #6d6a61; }
+  .concept dd { margin: 0; }
+  .concept .trade { margin: 0; color: var(--ink-2); font-size: 0.88rem; }
+  .concept .pick {
+    margin-top: 0.2rem; font-family: var(--mono); font-size: 0.7rem;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--amber-ink);
+  }
+
+  /* look preview */
+  .look {
+    background: #1E1A16; color: #EDE4D6;
+    border: 1px solid #453B30; padding: 1.4rem;
+    font-family: var(--serif);
+  }
+  .look .lk-top { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; border-bottom: 1px solid #453B30; padding-bottom: 0.7rem; }
+  .look .lk-top strong { font-size: 1.5rem; font-weight: 400; letter-spacing: -0.02em; }
+  .look .lk-top span { font-family: var(--mono); font-size: 0.68rem; color: #9C8D7A; letter-spacing: 0.08em; text-transform: uppercase; }
+  .look .panels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.9rem; margin-top: 1rem; }
+  .look .panel { border-top: 2px solid #C97B2D; padding-top: 0.6rem; }
+  .look .panel h5 { margin: 0 0 0.35rem; font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9C8D7A; font-weight: 400; }
+  .look .panel p { margin: 0; font-size: 0.95rem; line-height: 1.5; }
+  .look .shelf { display: flex; gap: 0.5rem; margin-top: 1.2rem; padding-top: 0.9rem; border-top: 1px solid #453B30; }
+  .look .bottle { flex: 1; display: grid; gap: 0.3rem; }
+  .look .bottle .fill { height: 46px; background: #2A241E; border: 1px solid #453B30; position: relative; }
+  .look .bottle .fill i { position: absolute; left: 0; right: 0; bottom: 0; background: #C97B2D; display: block; }
+  .look .bottle small { font-family: var(--mono); font-size: 0.62rem; color: #9C8D7A; }
+  .tokens { display: flex; height: 40px; margin-top: 1.1rem; border: 1px solid #453B30; }
+  .tokens span { flex: 1; }
+
+  /* filing receipt */
+  .filed {
+    border-top: 3px solid var(--green); padding: 0.9rem 1rem;
+    background: var(--paper-3); color: var(--ink);
+  }
+  .filed .head { display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; flex-wrap: wrap; }
+  .filed strong { font-weight: 650; }
+  .filed .conf { font-family: var(--mono); font-size: 0.78rem; color: #3f6238; }
+  .filed dl { margin: 0.7rem 0 0; display: grid; grid-template-columns: 8rem 1fr; gap: 0.25rem 0.8rem; font-size: 0.92rem; }
+  .filed dt { color: #6d6a61; font-family: var(--mono); font-size: 0.78rem; }
+  .filed dd { margin: 0; }
+  .verbatim { font-style: italic; }
+  .callout {
+    margin-top: 1rem; padding: 0.85rem 1rem;
+    border: 1px solid var(--line); color: var(--muted); font-size: 0.9rem;
+  }
+  .callout strong { color: var(--paper); }
+
+  .close {
+    margin-top: 3rem; padding: clamp(1.4rem, 3vw, 2.4rem);
+    border: 1px solid var(--amber);
+  }
+  .close h2 { margin: 0 0 0.8rem; font-family: var(--serif); font-weight: 400; font-size: clamp(1.7rem, 3.5vw, 2.6rem); letter-spacing: -0.03em; }
+  .close p { margin: 0 0 0.7rem; max-width: 72ch; color: var(--muted); }
+  .close p strong { color: var(--paper); }
+  .links { margin-top: 1.6rem; display: flex; gap: 1rem; flex-wrap: wrap; }
+  .links a {
+    min-height: 44px; display: inline-flex; align-items: center;
+    padding: 0.7rem 1.1rem; text-decoration: none; font-weight: 700;
+    background: var(--amber); color: var(--ink);
+  }
+  .links a.quiet { background: transparent; color: var(--paper); border: 1px solid var(--line); }
+  a:focus-visible, button:focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; }
+  footer { padding: 2rem clamp(1.3rem, 4vw, 4rem) 4rem; color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--line); }
+  @media (max-width: 900px) {
+    .concepts { grid-template-columns: 1fr; }
+    .look .panels { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 760px) {
+    header.mast, .stage-head, .two { grid-template-columns: 1fr; gap: 1.2rem; }
+    .rail { grid-template-columns: repeat(2, 1fr); }
+    .rail a:nth-child(2n) { border-right: 0; }
+  }
+</style>
+</head>
+<body>
+<!--
+THESIS: the ideal create flow is a chain of receipts, not a chat; this page shows every stage the user actually sees with its evidence and cost visible, refusing the "magic wand + spinner" template that hides where the answer came from.
+OWN-WORLD: Domain Foundry's documentary edit bench — near-black night ground, warm paper decision surfaces with deep soft shadows, Georgia serif at negative tracking, cool-cyan mono stage labels, amber for what the user committed to, slate for evidence, green only for a genuine filing.
+STORY: the visitor watches "whisky tasting notes" become a researched, cited, domain-specific app whose very first capture files at 86%, and understands that the user's own two sentences were the acceptance test.
+FIRST VIEWPORT: honest mockup banner, serif headline "Nobody had to know what a dram is.", lede naming the keyed path, sticky five-stage rail beneath.
+FORM: annotated production sequence — the incumbent FoundryStudio stage rail and paper/night grammar carried into a scrollable narrative; direction inherited from DESIGN.md, no concept roll (established world).
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+-->
+<p class="mock-banner"><strong>Hand-authored mockup</strong><span>the Phase-0 bar for the keyed create path · not product output</span><a href="../../gallery.md">gallery</a></p>
+<header class="mast">
+  <div>
+    <p class="kicker">Create flow · ideal, with a reasoning model configured</p>
+    <h1>Nobody had to know what a dram&nbsp;is.</h1>
+  </div>
+  <p class="lede">The same goal that <a href="before.html" style="color:var(--amber)">gets filed under Dev Notes today</a>. Here the system admits it doesn't know whisky, <strong>researches it against cited sources</strong>, asks the user for two sentences, and builds an app whose first capture lands.</p>
+</header>
+<nav class="rail" aria-label="Stages">
+  <a href="#s1"><span class="n">01</span><span class="t">Describe</span></a>
+  <a href="#s2"><span class="n">02</span><span class="t">Your words</span></a>
+  <a href="#s3"><span class="n">03</span><span class="t">Research</span></a>
+  <a href="#s4"><span class="n">04</span><span class="t">Three cuts</span></a>
+  <a href="#s5"><span class="n">05</span><span class="t">Live and filing</span></a>
+</nav>
+<main>
+
+  <section class="stage" id="s1">
+    <div class="stage-head">
+      <div><p class="kicker">Stage 01</p><h2>It says what it doesn't know.</h2></div>
+      <p>No atlas node scores, so nothing is invented to cover the silence. The offer names the cost and the wait before anything is spent.</p>
+    </div>
+    <div class="two">
+      <div>
+        <p class="said">whisky tasting notes</p>
+        <div class="paper">
+          <h3>I don't have whisky in my reviewed atlas.</h3>
+          <p>I'd rather research it than guess. That means reading my source registry for tasting-and-collection practice, then designing the model from what I find. About <code>40 seconds</code> and <code>~$0.18</code> of your configured model.</p>
+          <p>Or I can build you a basic tracker right now from your own words, offline, and you can rebuild it with research later.</p>
+          <div class="receipt-strip"><span><b>Research it</b> — recommended</span><span>Build the basic one</span></div>
+        </div>
+      </div>
+      <aside class="margin">
+        <h4>What changed</h4>
+        <p>The fork matcher now needs real evidence: an exact vocabulary token or an alias hit. A stray <code>notes</code> inside a Dev&nbsp;Notes alias no longer clears the bar, so “unindexed” wins and the bridge is offered.</p>
+        <p>The estimate is a real pre-flight against the daily cost cap, not decoration.</p>
+      </aside>
+    </div>
+  </section>
+
+  <section class="stage" id="s2">
+    <div class="stage-head">
+      <div><p class="kicker">Stage 02</p><h2>Two sentences, and one is the test.</h2></div>
+      <p>This is how a non-technical user supplies acceptance evidence without ever being asked to write an acceptance case.</p>
+    </div>
+    <div class="two">
+      <div>
+        <p class="said app">Say one thing you'd log — exactly how you'd type it. That becomes the first test of the app.</p>
+        <p class="said">peated dram, iodine and orchard fruit, 12 year, neat</p>
+        <p class="said app">And one more, a different kind of thing.</p>
+        <p class="said">opened the Ardbeg 10 tonight, about two-thirds left</p>
+        <div class="paper">
+          <p>Good. The first one shapes the design. <strong>The second I'm holding back.</strong> I'll replay it after the app is built, and tell you honestly whether it filed.</p>
+        </div>
+      </div>
+      <aside class="margin">
+        <h4>Why hold one back</h4>
+        <p>The repository rule is that the generator cannot author its own judge. Both sentences are the user's; only one informs the design, so the other is a genuine held-out check.</p>
+        <p>It also supplies the two acceptance tasks the Foundry pipeline requires, without the research-methods form the target user would abandon.</p>
+      </aside>
+    </div>
+  </section>
+
+  <section class="stage" id="s3">
+    <div class="stage-head">
+      <div><p class="kicker">Stage 03</p><h2>Cited, tiered, and priced.</h2></div>
+      <p>Every claim the design rests on names its source and how far that source can be trusted. Nothing here is the model's unlabeled recall.</p>
+    </div>
+    <div class="two">
+      <div class="paper">
+        <h3>What I read about whisky</h3>
+        <div class="sources">
+          <div class="source">
+            <strong>Whiskybase — community whisky database</strong><span class="tier exemplar">domain exemplar</span>
+            <p class="claim">Serious whisky tracking separates the distillery, the bottling, and the individual bottle, each with stable identity. Tasting notes are structured nose / palate / finish with a score, not one free-text blob.</p>
+          </div>
+          <div class="source">
+            <strong>W3C PROV</strong><span class="tier">authoritative</span>
+            <p class="claim">A dram is an observation of a bottle at a time; a correction preserves the original record rather than overwriting it.</p>
+          </div>
+          <div class="source">
+            <strong>PostgreSQL — Constraints</strong><span class="tier">authoritative</span>
+            <p class="claim">Stable identities and relationships are explicit and enforceable, not repeated text fields.</p>
+          </div>
+          <div class="source">
+            <strong>WCAG 2.2</strong><span class="tier">authoritative</span>
+            <p class="claim">Keyboard access, focus, reflow, labels, status and error recovery are release requirements.</p>
+          </div>
+        </div>
+        <div class="receipt-strip">
+          <span>evidence tier <b>reviewed corpus</b></span>
+          <span>6 stages · <b>claude-opus-5</b></span>
+          <span>38.2s</span>
+          <span><b>$0.17</b> · ledgered</span>
+        </div>
+      </div>
+      <aside class="margin">
+        <h4>The honest ladder</h4>
+        <p><b style="color:var(--paper)">reviewed corpus</b> — a source that passed authority, license and freshness review. Best case, shown here.</p>
+        <p><b style="color:var(--paper)">live search</b> — fetched now, labeled <code>reference_only</code>.</p>
+        <p><b style="color:var(--paper)">model knowledge</b> — the model's own recall, and the receipt says exactly that: <em>not verified sources</em>.</p>
+        <p>The tier is stamped into the pack and the build receipt, so a user can always see which one paid for their app.</p>
+      </aside>
+    </div>
+  </section>
+
+  <section class="stage" id="s4">
+    <div class="stage-head">
+      <div><p class="kicker">Stage 04</p><h2>Three real alternatives.</h2></div>
+      <p>Structurally different: different primary loop, different affordance, different workflows. Not three colorways of one idea.</p>
+    </div>
+    <div class="concepts">
+      <article class="concept">
+        <strong>The Shelf Wall</strong>
+        <dl>
+          <dt>Loop</dt><dd>Add a bottle, watch fill levels drop, browse by region.</dd>
+          <dt>Leads with</dt><dd>A photographic shelf of bottle silhouettes.</dd>
+        </dl>
+        <p class="trade">Fastest answer to “what's open”. Tasting detail stays shallow.</p>
+      </article>
+      <article class="concept picked">
+        <strong>Tasting Bench</strong>
+        <dl>
+          <dt>Loop</dt><dd>Pour, note nose then palate then finish, score, close the app.</dd>
+          <dt>Leads with</dt><dd>A tri-panel dram card with descriptor chips.</dd>
+        </dl>
+        <p class="trade">The only one that works one-handed mid-dram. Collection management is secondary.</p>
+        <p class="pick">Suggested — matches your sentence</p>
+      </article>
+      <article class="concept">
+        <strong>Palate Atlas</strong>
+        <dl>
+          <dt>Loop</dt><dd>Tag descriptors, watch the constellation form, pick from a gap.</dd>
+          <dt>Leads with</dt><dd>A descriptor constellation linked back to bottles.</dd>
+        </dl>
+        <p class="trade">Turns notes into a flavor map. Needs disciplined tagging first.</p>
+      </article>
+    </div>
+    <div class="callout">
+      <strong>Remix stays visible.</strong> Choosing Tasting Bench borrows the shelf's live fill-level rail and the atlas's descriptor chips. Each fragment is recorded with the reason it was taken, so the lineage survives into the spec.
+    </div>
+  </section>
+
+  <section class="stage" id="s5">
+    <div class="stage-head">
+      <div><p class="kicker">Stage 05</p><h2>It looks like whisky, and it files.</h2></div>
+      <p>The look is compiled from the same spec as the app, because a preview is a promise. Then the sentence that died at 0.2 lands.</p>
+    </div>
+    <div class="two">
+      <div>
+        <div class="look" aria-label="Look preview: Dunnage Bench">
+          <div class="lk-top"><strong>Tonight's dram</strong><span>Dunnage Bench</span></div>
+          <div class="panels">
+            <div class="panel"><h5>Nose</h5><p>peat smoke, iodine, orchard fruit</p></div>
+            <div class="panel"><h5>Palate</h5><p>ash, smoked pear, black pepper</p></div>
+            <div class="panel"><h5>Finish</h5><p>long, tarry, a little sweet</p></div>
+          </div>
+          <div class="shelf">
+            <div class="bottle"><div class="fill"><i style="height:60%"></i></div><small>Ardbeg 10</small></div>
+            <div class="bottle"><div class="fill"><i style="height:35%"></i></div><small>Springbank</small></div>
+            <div class="bottle"><div class="fill"><i style="height:80%"></i></div><small>Redbreast</small></div>
+            <div class="bottle"><div class="fill"><i style="height:15%"></i></div><small>Lagavulin</small></div>
+          </div>
+          <div class="tokens" aria-hidden="true">
+            <span style="background:#1E1A16"></span><span style="background:#2A241E"></span><span style="background:#453B30"></span>
+            <span style="background:#9C8D7A"></span><span style="background:#C97B2D"></span><span style="background:#E3A857"></span>
+            <span style="background:#5E7C6F"></span><span style="background:#EDE4D6"></span>
+          </div>
+        </div>
+
+        <p class="said" style="margin-top:2rem">peated dram, iodine and orchard fruit, 12 year, neat</p>
+        <div class="filed">
+          <div class="head"><strong>Filed to Tasting Bench as a dram</strong><span class="conf">86% · auto-applied</span></div>
+          <dl>
+            <dt>bottle</dt><dd>Ardbeg 10 <em style="color:#6d6a61">(open, 60% left)</em></dd>
+            <dt>serving</dt><dd>neat</dd>
+            <dt>nose</dt><dd class="verbatim">“iodine and orchard fruit”</dd>
+            <dt>age</dt><dd>12 years</dd>
+            <dt>descriptors</dt><dd>iodine · orchard fruit · peat</dd>
+          </dl>
+        </div>
+
+        <div class="callout">
+          <strong>Held-out check.</strong> Your second sentence — <em>“opened the Ardbeg 10 tonight, about two-thirds left”</em> — replayed through the same router and updated that bottle to <strong>open, 66% left</strong>. Both of your sentences work. If one hadn't, this is where it would say so plainly.
+        </div>
+      </div>
+      <aside class="margin">
+        <h4>Why it files now</h4>
+        <p>The pack's routing rule is built from researched vocabulary (<code>dram</code>, <code>peated</code>, <code>neat</code>, <code>iodine</code>, <code>cask</code>), not from field labels like <code>session name</code>.</p>
+        <p>The tokenizer reads dimensioned terms, so <code>12 year</code> and <code>46%</code> are visible where <code>5x5</code> and <code>100kg</code> once weren't.</p>
+        <h4 style="margin-top:1.4rem">And it stays correctable</h4>
+        <p>“actually it was the 12, not the 10” amends the dram and keeps the original interpretation as a revision, so the correction becomes regression evidence.</p>
+      </aside>
+    </div>
+  </section>
+
+  <div class="close">
+    <h2>Every promise on this page is auditable.</h2>
+    <p><strong>The sources are real registry entries.</strong> Whiskybase sits in <code>knowledge/source-registry.yaml</code> as a domain exemplar, tiered and license-labeled. <strong>The spec is real:</strong> <code>examples/showcase/whisky-tasting/spec.yaml</code> validates and compiles today. <strong>The visual world is real</strong>, because those eight swatches are the spec's own tokens rather than a palette invented for this page.</p>
+    <p>What is <em>not</em> yet real is the bridge that produces the spec unaided from the user's sentence. That is the work the plan phases in, and this page is the bar it must reach.</p>
+    <p class="links">
+      <a href="fallback-create.html">The honest no-key mode →</a>
+      <a class="quiet" href="before.html">← What it does today</a>
+    </p>
+  </div>
+</main>
+<footer>
+  <p>Hand-authored mockup — the Phase-0 bar for the create-path plan. Conversation copy is illustrative; the cited sources, the FoundrySpec, the visual-world tokens, and the compiled bundle it previews are real artifacts in this repository. Cost, latency, and confidence figures are illustrative placeholders pending a live keyed run. Not generated output.</p>
+</footer>
+</body>
+</html>

@@ -5,13 +5,13 @@ from __future__ import annotations
 from pathlib import Path
 
 import yaml
+from tests.conftest import land_wizard
 
 from domain_foundry_core.api.harness import HarnessAPI
 from domain_foundry_core.mesh.supervisor import Supervisor
 from domain_foundry_core.packs.loader import load_pack
 from domain_foundry_core.packs.models import AgentSpec
 from domain_foundry_core.wizard.blueprint import build_agent_spec, build_blueprint, write_pack
-from tests.conftest import land_wizard
 
 REPO = Path(__file__).resolve().parents[2]
 

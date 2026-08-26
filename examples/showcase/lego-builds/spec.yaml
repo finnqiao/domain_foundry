@@ -1,0 +1,389 @@
+# TARGET ARTIFACT — hand-authored showcase bar (Phase 0 of the create-path plan).
+# This spec defines what the live Foundry pipeline SHOULD produce for the goal
+# "tracking my LEGO builds". The spec is hand-authored; the bundle beside it is
+# compiled from this spec by the real deterministic FoundryCompiler. The live
+# pipeline's acceptance test is producing a spec of this caliber unaided.
+spec_version: "1.0"
+id: lego-builds
+title: Build Bench
+source_ids:
+  - rebrickable_api
+  - postgresql_constraints
+  - sqlite_foreign_keys
+  - sqlite_query_planner
+  - w3c_prov
+  - govuk_design_principles
+  - wcag_22
+  - aria_apg
+  - ui_remix_paper
+principle_ids: [DE-01, DE-02, DE-03, DE-04, DE-05, DE-06, DE-08, UX-01, UX-02, UX-04, UX-05, UX-06, UX-07, UX-10, SE-01, SE-03, SE-04, SE-10, SE-11]
+research:
+  interest: Tracking the sets and MOCs I build bag by bag and what happens to each one afterwards
+  desired_outcome: Always know which build is on the bench, which bag I stopped on, and which parts I am short before I sit down again
+  practice:
+    - Open a set and work through its numbered bags over several sittings, stopping mid-step when the evening runs out
+    - Build a MOC that has no set number, no numbered bags, and no official piece count, only a designer and a count I trust
+    - Decide what happens to a finished build — it goes on the display shelf, stays boxed, or gets parted out into the bins
+    - Notice a missing or lost piece mid-build and keep it on a list until an order is worth placing
+  existing_artifacts: [a spreadsheet of sets owned, Rebrickable and BrickLink wishlists, photos of finished builds, a binder of instruction booklets, a shoebox of unsorted parts]
+  constraints: [capture happens at the mat with parts in both hands, a MOC must be as first-class as an official set, part numbers and piece counts keep the catalogue's own values]
+  open_questions: [whether minifigs are tracked apart from their sets, whether parted-out sets stay in the collection, how much of the loose parts library is worth cataloguing]
+  usage_context: [phone beside the build mat mid-sitting, desktop when planning an order or rearranging the shelf]
+  first_value: Log one sitting against one set and see the bag you stopped on waiting for you next time
+evidence:
+  - id: ev_lego_catalog
+    source_id: rebrickable_api
+    claim: Serious LEGO tracking keeps the official set as canonical identity addressed by set number, separate from the builder's own copy of it.
+    use: pattern
+    locator: sets endpoint and set numbers
+  - id: ev_lego_parts
+    source_id: rebrickable_api
+    claim: Parts and colours are first-class records addressed by part number and colour rather than free text on a set, and MOCs are catalogued beside official sets.
+    use: pattern
+    locator: parts, colors, and MOC endpoints
+  - id: ev_lego_identity
+    source_id: postgresql_constraints
+    claim: Stable identities and relationships should be explicit and enforceable rather than repeated as text fields.
+    use: constraint
+    locator: primary keys and foreign keys
+  - id: ev_lego_lineage
+    source_id: w3c_prov
+    claim: A build sitting is an activity against a project; corrections preserve the original log rather than overwriting it.
+    use: pattern
+    locator: PROV starting point terms
+  - id: ev_lego_workloads
+    source_id: sqlite_query_planner
+    claim: Indexes should follow concrete filtering, joining, and ordering workloads.
+    use: constraint
+  - id: ev_lego_concepts
+    source_id: ui_remix_paper
+    claim: Global and local example-driven alternatives support meaningful concept exploration and remix.
+    use: pattern
+  - id: ev_lego_service
+    source_id: govuk_design_principles
+    claim: Begin with user needs and real context, then do the hard work required to make the service simple.
+    use: pattern
+  - id: ev_lego_access
+    source_id: wcag_22
+    claim: Keyboard access, focus, reflow, labels, status, and error recovery are release requirements.
+    use: constraint
+concepts:
+  - id: brick_shelf
+    title: The Shelf Run
+    thesis: Make the finished collection the interface and keep building a light annotation on top of it.
+    primary_loop: Add a set to the collection, mark it finished, and browse the shelf by theme and year.
+    primary_affordance: A stud-grid shelf run where every finished build takes the width of its own footprint
+    differentiator: Fastest way to answer what is already built and what the collection is missing
+    feature_boundary: [set catalogue and ownership, theme and year browsing, display slots and footprints]
+    tradeoffs: [work in progress is invisible between sittings, missing parts have nowhere to live]
+    workflow_ids: [browse_shelf, log_acquisition]
+    evidence_ids: [ev_lego_catalog, ev_lego_service]
+  - id: build_bench
+    title: Build Bench
+    thesis: Anchor the app on the build that is open right now and make resuming it the cheapest thing you can do.
+    primary_loop: Open tonight's build, finish a couple of bags, and log the step you stopped on before the parts go away.
+    primary_affordance: An instruction-step progress strip above the open build's sitting log
+    differentiator: The only concept that answers which bag am I on without a search
+    feature_boundary: [sitting capture with bags and steps, per-build log, work-in-progress bench, resume cues]
+    tradeoffs: [collection browsing is secondary, parts analysis arrives only after sittings accumulate]
+    workflow_ids: [resume_build, run_sitting]
+    evidence_ids: [ev_lego_lineage, ev_lego_service, ev_lego_concepts]
+  - id: parts_ledger
+    title: Parts Ledger
+    thesis: Treat every missing and spare element as inventory and let completion be a number rather than a feeling.
+    primary_loop: Record what is short or spare, watch completion percentages move, and export one order list.
+    primary_affordance: A parts-bin drawer wall with a completion meter on every build
+    differentiator: Turns scattered missing-piece notes into a single order and a real inventory
+    feature_boundary: [part and colour vocabulary, shortage and spare tracking, completion percentages, order export]
+    tradeoffs: [needs disciplined part numbering before it pays off, capture is heavier at the mat]
+    workflow_ids: [log_shortage, order_parts]
+    evidence_ids: [ev_lego_parts, ev_lego_workloads]
+remix:
+  selected_concept: build_bench
+  fragments:
+    - kind: visual_system
+      from_concept: brick_shelf
+      fragment: stud-grid shelf run of finished builds
+      reason: The bench still needs to show what the work is heading towards without leaving the sitting.
+      evidence_ids: [ev_lego_catalog]
+    - kind: interaction
+      from_concept: parts_ledger
+      fragment: flag a part short without leaving the step you are on
+      reason: Shortages are noticed mid-bag and are lost entirely if capture waits for a separate pass.
+      evidence_ids: [ev_lego_parts]
+  user_decisions: [A MOC is a first-class project — it has no set number but it still has a build log, Parting a set out is a normal end of life and not a deletion, Logging where I stopped has to take one action with parts in both hands]
+domain:
+  entities:
+    - id: lego_set
+      title: Official Set
+      kind: canonical
+      description: A catalogued set as the world knows it, addressed by set number and shared by everyone who owns a copy.
+      identity: [set_num]
+      lifecycle: [catalogued, retired]
+      evidence_ids: [ev_lego_catalog, ev_lego_identity]
+      fields:
+        - {name: set_num, type: text, description: "Official set number as the catalogue prints it, like 75192", required: true, evidence_ids: [ev_lego_catalog]}
+        - {name: name, type: text, description: Set name as printed on the box, required: true}
+        - {name: theme, type: text, description: "Theme and subtheme the set belongs to, like Star Wars UCS or Icons Space", required: true, evidence_ids: [ev_lego_catalog]}
+        - {name: piece_count, type: integer, description: Piece count the catalogue records for this set, required: true, unit: pieces}
+        - {name: minifig_count, type: integer, description: Minifigs included in the box, required: true, unit: minifigs}
+        - {name: year_released, type: integer, description: Year the set was released}
+        - {name: availability, type: enum, description: Whether the set is still in production, required: true, values: [current, retired]}
+    - id: build_project
+      title: Build Project
+      kind: owned
+      description: The builder's own copy of a set or a MOC of their own, with the lifecycle that copy actually goes through.
+      identity: [project_id]
+      lifecycle: [sealed, wip, built, displayed, parted_out]
+      evidence_ids: [ev_lego_catalog, ev_lego_identity]
+      fields:
+        - {name: project_id, type: text, description: Stable identity for this build project, required: true, evidence_ids: [ev_lego_identity]}
+        - {name: origin, type: enum, description: Whether this build follows an official set or is a MOC of the builder's own design, required: true, values: [official_set, moc], evidence_ids: [ev_lego_catalog]}
+        - {name: set_num, type: text, description: "Official set number when this project copies a set, empty when it is a MOC", evidence_ids: [ev_lego_identity]}
+        - {name: title, type: text, description: "Shelf label for this build — the set's name or the MOC's own name", required: true}
+        - {name: designer, type: text, description: "Who designed it, recorded for a MOC or an alternate build", evidence_ids: [ev_lego_parts]}
+        - {name: piece_count_claimed, type: integer, description: "Piece count claimed by the MOC designer or counted by hand, used when no canonical set record exists", unit: pieces}
+        - {name: footprint_studs, type: integer, description: "Display footprint in studs, measured across the widest baseplate edge", unit: studs}
+        - {name: status, type: enum, description: Where this build sits in its life, required: true, values: [sealed, wip, built, displayed, parted_out], evidence_ids: [ev_lego_catalog]}
+        - {name: storage_slot_id, type: text, description: Physical place this build lives in right now}
+        - {name: instructions_location, type: text, description: "Where the instruction booklet or PDF lives, such as the binder or the box"}
+        - {name: bags_total, type: integer, description: Numbered bags in the box when the set uses them}
+        - {name: started_at, type: date, description: Day the box was opened or the MOC was begun}
+        - {name: completed_at, type: date, description: Day the last piece went on}
+        - {name: notes, type: text, description: Durable notes about this particular copy}
+    - id: build_session
+      title: Build Sitting
+      kind: event
+      description: One sitting at the mat with the bags finished and the step it stopped on kept in the builder's own words.
+      identity: [session_id]
+      lifecycle: [recorded, corrected, superseded]
+      evidence_ids: [ev_lego_lineage, ev_lego_service]
+      fields:
+        - {name: session_id, type: text, description: Stable identity for one sitting at the mat, required: true, evidence_ids: [ev_lego_identity]}
+        - {name: project_id, type: text, description: Build project this sitting worked on, required: true, evidence_ids: [ev_lego_identity]}
+        - {name: worked_at, type: datetime, description: When the sitting happened, required: true, evidence_ids: [ev_lego_lineage]}
+        - {name: duration_min, type: integer, description: Minutes actually spent at the mat, unit: minutes}
+        - {name: bags_completed, type: text, description: "Numbered bags finished in this sitting, like bags 12 to 14"}
+        - {name: step_reached, type: integer, description: Instruction step the build stopped on}
+        - {name: pieces_placed, type: integer, description: Rough count of pieces placed in this sitting, unit: pieces}
+        - {name: notes, type: text, description: What happened at the mat in the builder's own words}
+    - id: part_shortage
+      title: Part Shortage
+      kind: observation
+      description: One element that came up short mid-build, recorded by part number and colour so it can join an order later.
+      identity: [shortage_id]
+      lifecycle: [observed, resolved, retracted]
+      evidence_ids: [ev_lego_parts, ev_lego_lineage]
+      fields:
+        - {name: shortage_id, type: text, description: Stable identity for one missing-part observation, required: true}
+        - {name: project_id, type: text, description: Build that came up short, required: true, evidence_ids: [ev_lego_identity]}
+        - {name: part_num, type: text, description: "Part number as the catalogue prints it, like 3069b", required: true, evidence_ids: [ev_lego_parts]}
+        - {name: part_name, type: text, description: "Plain name of the element, like 1x2 tile or 2x4 plate"}
+        - {name: element_kind, type: enum, description: Family of element the shortage belongs to, required: true, values: [tile, plate, brick, slope, technic, minifig_part, other], evidence_ids: [ev_lego_parts]}
+        - {name: color_name, type: text, description: "Colour as the catalogue names it, like dark bluish gray", evidence_ids: [ev_lego_parts]}
+        - {name: quantity_missing, type: integer, description: How many of this part in this colour are short, required: true, unit: pieces}
+        - {name: noticed_at, type: datetime, description: When the shortage was noticed at the mat, required: true, evidence_ids: [ev_lego_lineage]}
+        - {name: status, type: enum, description: What has happened to this shortage since it was noticed, required: true, values: [open, ordered, received, substituted, waived]}
+        - {name: notes, type: text, description: What the build is doing while it waits}
+    - id: storage_slot
+      title: Storage Place
+      kind: reference
+      description: A named physical place a build or its bricks can live — a display shelf, a parts bin, a sealed stack, or the instruction binder.
+      identity: [slot_id]
+      lifecycle: [in_use, retired]
+      evidence_ids: [ev_lego_identity, ev_lego_service]
+      fields:
+        - {name: slot_id, type: text, description: Stable identity for one physical place, required: true}
+        - {name: label, type: text, description: What the builder actually calls this place, required: true}
+        - {name: slot_kind, type: enum, description: What kind of place it is, required: true, values: [display_shelf, parts_bin, sealed_stack, instruction_binder]}
+        - {name: room, type: text, description: Room the place sits in}
+        - {name: capacity_note, type: text, description: "How much it holds, in the builder's own terms"}
+  relationships:
+    - {id: project_source_set, from_entity: build_project, to_entity: lego_set, cardinality: many_to_one, required: false, on_delete: restrict, description: "A project that follows an official set names it once by set number; a MOC names none.", evidence_ids: [ev_lego_catalog, ev_lego_identity]}
+    - {id: project_sittings, from_entity: build_session, to_entity: build_project, cardinality: many_to_one, required: true, on_delete: restrict, description: Every sitting belongs to exactly one build project., evidence_ids: [ev_lego_identity]}
+    - {id: project_shortages, from_entity: part_shortage, to_entity: build_project, cardinality: many_to_one, required: true, on_delete: cascade, description: A shortage is always short for one particular build., evidence_ids: [ev_lego_lineage]}
+    - {id: project_storage, from_entity: build_project, to_entity: storage_slot, cardinality: many_to_one, required: false, on_delete: set_null, description: A build lives in one physical place at a time., evidence_ids: [ev_lego_identity]}
+  constraints:
+    - {id: real_piece_count, entity: lego_set, kind: check, fields: [piece_count, minifig_count], expression: "piece_count > 0 AND minifig_count >= 0", reason: A catalogued set has pieces and never a negative minifig count., evidence_ids: [ev_lego_catalog]}
+    - {id: short_by_something, entity: part_shortage, kind: check, fields: [quantity_missing], expression: "quantity_missing > 0 AND quantity_missing <= 9999", reason: A shortage records at least one missing piece and stays within a plausible order., evidence_ids: [ev_lego_parts]}
+    - {id: real_sitting, entity: build_session, kind: check, fields: [duration_min, step_reached], expression: "duration_min > 0 AND step_reached >= 0", reason: A sitting that took no time at the mat did not happen., evidence_ids: [ev_lego_lineage]}
+    - {id: unique_slot_label, entity: storage_slot, kind: unique, fields: [label], reason: One label per physical place so bins and shelves cannot quietly drift apart., evidence_ids: [ev_lego_identity]}
+    - {id: project_life, entity: build_project, kind: state_transition, fields: [status], reason: A build cannot be displayed before it is built and cannot be un-parted once its bricks are in the bins., evidence_ids: [ev_lego_catalog]}
+  indexes:
+    - {id: wip_bench, entity: build_project, fields: [status, started_at], unique: false, reason: The bench filters to work in progress in the order each build was started., workload_ids: [w_wip_bench]}
+    - {id: project_sitting_order, entity: build_session, fields: [project_id, worked_at], unique: false, reason: A build's sittings are read in order every time it is resumed., workload_ids: [w_wip_bench, w_build_pace]}
+    - {id: open_shortages, entity: part_shortage, fields: [status, part_num], unique: false, reason: One order list groups open shortages by part number across every build at once., workload_ids: [w_missing_parts]}
+    - {id: shelf_by_theme, entity: lego_set, fields: [theme, year_released], unique: false, reason: The shelf run is browsed by theme and then by release year., workload_ids: [w_shelf_theme]}
+  workloads:
+    - {id: w_wip_bench, question: "What is on the bench right now and which bag am I on?", kind: read, entities: [build_project, build_session], filters: [status is wip], sort: [worked_at descending], expected_scale: fewer than ten builds open at once, acceptance: "Every open build shows its last bag, its step, and how long ago it was touched without a query.", evidence_ids: [ev_lego_catalog, ev_lego_service]}
+    - {id: w_shelf_theme, question: "What is on the display shelf and how does the collection group by theme and year?", kind: read, entities: [build_project, lego_set, storage_slot], filters: [status is displayed], sort: [theme ascending], expected_scale: hundreds of builds across a decade, acceptance: "Displayed builds group by theme with piece count and stud footprint visible beside each one.", evidence_ids: [ev_lego_catalog, ev_lego_workloads]}
+    - {id: w_missing_parts, question: "Which parts am I short across every build and what should the next order contain?", kind: analysis, entities: [part_shortage, build_project], filters: [status is open], sort: [part_num ascending], expected_scale: hundreds of shortages over the collection's life, acceptance: "Open shortages group by part number and colour with the build each one belongs to and no build is double-counted.", evidence_ids: [ev_lego_parts, ev_lego_workloads]}
+    - {id: w_build_pace, question: "How many sittings and hours did this build take compared with the last one of its size?", kind: analysis, entities: [build_session, build_project, lego_set], filters: [project_id], sort: [worked_at ascending], expected_scale: dozens of sittings for a large set, acceptance: "Sittings line up chronologically with minutes and bags so pace is comparable between builds of similar piece counts.", evidence_ids: [ev_lego_lineage, ev_lego_workloads]}
+  state_machines:
+    - id: project_lifecycle
+      entity: build_project
+      field: status
+      states: [sealed, wip, built, displayed, parted_out]
+      transitions:
+        - {from_state: sealed, action: start_build, to_state: wip}
+        - {from_state: wip, action: finish_build, to_state: built}
+        - {from_state: built, action: shelve, to_state: displayed}
+        - {from_state: displayed, action: take_down, to_state: built}
+        - {from_state: built, action: part_out, to_state: parted_out}
+        - {from_state: wip, action: abandon_and_part_out, to_state: parted_out}
+      evidence_ids: [ev_lego_catalog, ev_lego_lineage]
+  sample_records:
+    lego_set:
+      - {set_num: "75192", name: Millennium Falcon, theme: Star Wars UCS, piece_count: 7541, minifig_count: 4, year_released: 2017, availability: retired}
+      - {set_num: "10497", name: Galaxy Explorer, theme: Icons Space, piece_count: 1254, minifig_count: 3, year_released: 2022, availability: retired}
+    build_project:
+      - {project_id: proj-falcon-75192, origin: official_set, set_num: "75192", title: Millennium Falcon (UCS), footprint_studs: 84, status: wip, storage_slot_id: slot-bench-crate, instructions_location: booklet open on the mat, bags_total: 17, started_at: "2026-07-05", notes: "Bag 12 is the upper hull, so it stalls until the tiles arrive."}
+      - {project_id: proj-galaxy-10497, origin: official_set, set_num: "10497", title: Galaxy Explorer, footprint_studs: 48, status: displayed, storage_slot_id: slot-shelf-top, instructions_location: "binder, tab 2", bags_total: 9, started_at: "2026-04-12", completed_at: "2026-04-19", notes: Built in four evenings with no parts missing.}
+      - {project_id: proj-moc-harbour, origin: moc, title: Harbour crane MOC, designer: my own design, piece_count_claimed: 1180, footprint_studs: 32, status: built, storage_slot_id: slot-shelf-top, instructions_location: no booklet — built from a sketch, started_at: "2026-05-30", completed_at: "2026-06-21", notes: "No set number exists for this one, so the piece count is my own count."}
+    build_session:
+      - {session_id: sitting-20260815-falcon, project_id: proj-falcon-75192, worked_at: "2026-08-15T21:05:00+09:00", duration_min: 95, bags_completed: bags 9 to 11, step_reached: 264, pieces_placed: 410, notes: Mandible framing went fast once the greebling pattern made sense.}
+      - {session_id: sitting-20260821-falcon, project_id: proj-falcon-75192, worked_at: "2026-08-21T20:40:00+09:00", duration_min: 70, bags_completed: bag 12, step_reached: 312, pieces_placed: 260, notes: "Two 1x2 tiles short in dark bluish gray, so the upper hull panel is left open."}
+      - {session_id: sitting-20260419-galaxy, project_id: proj-galaxy-10497, worked_at: "2026-04-19T15:20:00+09:00", duration_min: 55, bags_completed: bags 8 to 9, step_reached: 188, pieces_placed: 190, notes: Finished the classic space minifigs and the rover in one afternoon.}
+    part_shortage:
+      - {shortage_id: short-20260821-tile, project_id: proj-falcon-75192, part_num: "3069b", part_name: 1x2 tile, element_kind: tile, color_name: dark bluish gray, quantity_missing: 2, noticed_at: "2026-08-21T21:20:00+09:00", status: open, notes: Upper hull panel stays open until these land.}
+      - {shortage_id: short-20260716-slope, project_id: proj-galaxy-10497, part_num: "3040", part_name: 1x2 slope, element_kind: slope, color_name: trans-light blue, quantity_missing: 1, noticed_at: "2026-07-16T19:10:00+09:00", status: received, notes: Arrived in the July order and went straight onto the build.}
+    storage_slot:
+      - {slot_id: slot-shelf-top, label: Top display shelf, slot_kind: display_shelf, room: study, capacity_note: Four large builds with room to walk around them.}
+      - {slot_id: slot-bench-crate, label: Build bench crate, slot_kind: sealed_stack, room: study, capacity_note: Holds the open box and its numbered bags between sittings.}
+      - {slot_id: slot-bin-gray, label: Bin 4 for bluish grays, slot_kind: parts_bin, room: study, capacity_note: "Sorted by element rather than by set, so parted-out sets end here."}
+      - {slot_id: slot-binder, label: Instruction binder, slot_kind: instruction_binder, room: study, capacity_note: One tab per set whose booklet outlived the build.}
+  temporal_policy: [worked_at is the effective build time, captured_at is provenance time, a corrected sitting never overwrites the original log]
+  privacy_policy: [what a set cost and where it was bought stay local unless explicitly exported, photographs of the build room remain on the device, no location is collected]
+experience:
+  mode: operate
+  visual_world:
+    id: instruction-bench
+    name: Instruction Bench
+    mood: Bright and precise and unhurried — an instruction booklet open on a clean grey mat
+    typography: A geometric sans for set names and step numbers with a monospaced face for part numbers and piece counts
+    color_strategy: Mat grey and page white with a technical callout blue for the step in progress and a moss green counterpoint for finished work; no primary-colour brand cosplay and no toy-aisle saturation
+    layout_principle: The open build holds the top of the page and the shelf and the bins unfold beneath it as evidence rather than as a dashboard grid
+    density: Spacious while a sitting is being logged and tight and aligned when scanning part numbers
+    signature_elements: [a stud-grid rail that measures a build's progress in studs rather than a percentage bar, an instruction-step progress strip showing the bag you are on and the bags still sealed, parts-bin drawer cards that open into the shortages they hold, a shelf run where each finished build takes the width of its own stud footprint]
+    avoid: [toy-store gaudiness, generic kanban board, brick clip-art]
+    tokens: {background: "#E7E3D9", surface: "#FAF8F3", text: "#1B1F24", muted: "#5F6670", accent: "#1F5F8B", accent_alt: "#4E7A4A", border: "#CBC5B7", focus: "#0F4C75", danger: "#A2372C", radius_px: 6}
+  navigation:
+    topology: workflow
+    primary_view: bench
+    persistent_regions: [open build switcher, log-a-sitting affordance, provenance status]
+  views:
+    - id: bench
+      title: The Build Bench
+      purpose: Show what is open right now and log where this sitting stopped before the parts are put away.
+      layout: The open build holds the stage with its sitting log beside it; anything flagged short this evening lands underneath.
+      entities: [build_project, build_session, part_shortage]
+      workload_ids: [w_wip_bench, w_missing_parts]
+      states: [first_use, populated, loading, empty, error, offline, correction]
+      regions:
+        - {id: open_builds, kind: workbench, title: On the bench, entity: build_project, workload_id: w_wip_bench, emphasis: primary, span: 7}
+        - {id: sitting_log, kind: timeline, title: Sittings so far, entity: build_session, workload_id: w_wip_bench, emphasis: support, span: 5}
+        - {id: flagged_short, kind: ledger, title: Flagged short tonight, entity: part_shortage, workload_id: w_missing_parts, emphasis: secondary, span: 12}
+      actions:
+        - {id: log_sitting, label: Log this sitting, operation: create, entity: build_session, consequence: "Records the bags finished, the step reached, and the minutes spent at the mat."}
+        - {id: flag_short, label: Flag a part short, operation: create, entity: part_shortage, consequence: "Files the part number, the colour, and the count short without leaving the step."}
+        - {id: mark_built, label: Mark it built, operation: update, entity: build_project, consequence: Moves the build off the bench so it can be shelved or parted out.}
+        - {id: correct_sitting, label: Correct a sitting, operation: correct, entity: build_session, consequence: Keeps the original log and records the correction beside it.}
+      evidence_ids: [ev_lego_lineage, ev_lego_service, ev_lego_access]
+    - id: shelf
+      title: Shelf Run
+      purpose: See what is finished and on display and how the collection reads by theme.
+      layout: Finished builds run across the shelf at their own stud footprints with the selected set's catalogue facts in an inspector margin.
+      entities: [build_project, lego_set, storage_slot]
+      workload_ids: [w_shelf_theme]
+      states: [first_use, populated, empty, error]
+      regions:
+        - {id: shelf_run, kind: catalog, title: On display, entity: build_project, workload_id: w_shelf_theme, emphasis: primary, span: 8}
+        - {id: set_facts, kind: inspector, title: Set facts, entity: lego_set, workload_id: w_shelf_theme, emphasis: support, span: 4}
+      actions:
+        - {id: add_project, label: Add a build, operation: create, entity: build_project, consequence: "Puts a sealed set or a new MOC on the bench with its origin, set number, and designer recorded honestly."}
+        - {id: shelve_build, label: Put it on the shelf, operation: update, entity: build_project, consequence: Moves a finished build into a display slot and records its stud footprint.}
+        - {id: rename_slot, label: Rename a place, operation: update, entity: storage_slot, consequence: Renames a shelf or a bin without breaking the builds that point at it.}
+      evidence_ids: [ev_lego_catalog, ev_lego_access]
+    - id: parts
+      title: Parts Ledger
+      purpose: Turn every part flagged short into one order and remember which bin the parted-out bricks went into.
+      layout: The order list leads as a dense table; the bins that already hold sorted parts sit beside it as drawer cards.
+      entities: [part_shortage, storage_slot]
+      workload_ids: [w_missing_parts]
+      states: [first_use, populated, empty, partial, error]
+      regions:
+        - {id: order_list, kind: ledger, title: What to order, entity: part_shortage, workload_id: w_missing_parts, emphasis: primary, span: 8}
+        - {id: bin_wall, kind: catalog, title: Parts bins, entity: storage_slot, workload_id: w_missing_parts, emphasis: secondary, span: 4}
+      actions:
+        - {id: mark_ordered, label: Mark ordered, operation: update, entity: part_shortage, consequence: Moves the shortage out of the next order without deleting the observation.}
+        - {id: reveal_shortage_source, label: Show the build behind this, operation: reveal, entity: part_shortage, consequence: Opens the build and the sitting where the part came up short.}
+      evidence_ids: [ev_lego_parts, ev_lego_access]
+    - id: pace
+      title: Build Pace
+      purpose: Compare how long a build actually took against the last one of its size.
+      layout: Minutes per sitting draw the pace across the stage with a comparison of builds aligned beneath it.
+      entities: [build_session, build_project]
+      workload_ids: [w_build_pace]
+      states: [first_use, populated, empty, partial, error]
+      regions:
+        - {id: pace_curve, kind: chart, title: Minutes per sitting, entity: build_session, workload_id: w_build_pace, emphasis: primary, span: 8}
+        - {id: pace_compare, kind: comparison, title: Against other builds, entity: build_project, workload_id: w_build_pace, emphasis: secondary, span: 4}
+      actions:
+        - {id: reveal_sittings, label: Show the sittings behind this, operation: reveal, entity: build_session, consequence: Opens the exact sittings that produced this pace.}
+      evidence_ids: [ev_lego_workloads, ev_lego_access]
+  flows:
+    - id: first_sitting
+      title: Log the first real sitting
+      trigger: User approves the Build Bench concept.
+      steps:
+        - {view: bench, action: "Name the set or the MOC, then say which bags were finished and which step it stopped on.", result: A sitting receipt appears against that build with the bag and the step preserved.}
+        - {view: bench, action: Confirm or correct the interpreted bags and minutes., result: The canonical sitting and its provenance are visible in the build's log.}
+      success: The builder can point at tonight's sitting and see exactly where to resume next time.
+    - id: finish_and_shelve
+      title: Take a build from the last bag to the shelf
+      trigger: The final numbered bag of a set is finished.
+      steps:
+        - {view: bench, action: Mark the build built., result: It leaves the bench and waits for a place to live.}
+        - {view: shelf, action: Choose a display slot and record the stud footprint., result: The build joins the shelf run under its own theme.}
+      success: The finished build is on the shelf and the bench shows only work that is still open.
+    - id: order_the_gaps
+      title: Turn flagged shortages into one order
+      trigger: Two or more builds are waiting on missing parts.
+      steps:
+        - {view: parts, action: Group open shortages by part number and colour., result: One order list covers every waiting build at once.}
+        - {view: parts, action: Mark the ordered rows., result: The observations stay intact while the order is out.}
+      success: Nothing is ordered twice and no build is quietly forgotten while it waits for two tiles.
+  responsive_strategy: [On phones the open build and its Log a sitting action take the first screen and the shelf run becomes a swipeable rail with the parts ledger paged horizontally., On desktop the bench keeps the open build and its sittings side by side and the parts ledger gains a full sortable table with part numbers aligned.]
+  accessibility:
+    target: WCAG-2.2-AA
+    patterns: [native dialog for logging a sitting, data table with caption and row headers behind the shelf run, text alternative for every stud-grid progress rail]
+    keyboard_model: [logical order follows the open build then its sittings then the shortage flag, shelf cards are reachable as a list with an adjacent data table, correcting a sitting returns focus to the corrected value]
+    manual_checks: [VoiceOver first-sitting journey, 200 percent zoom and reflow, focus and error identification against the mat-grey background]
+implementation:
+  targets: [foundry_runtime, standalone_react]
+  capabilities: [event_capture, attachments, derived_metrics, comparison, provenance, correction]
+  imports: [CSV set list, Rebrickable collection export, BrickLink wanted list, build photographs]
+  exports: [complete JSON with receipts, CSV per entity, parts order list as CSV, standalone source repository]
+  migrations: [versioned schema migrations, sittings append-only with corrections as revisions, storage places can be renamed without breaking the builds that point at them]
+  permissions: [local file import, local photo access]
+  adapter_seams: [capture adapter, set catalogue lookup adapter, parts order export adapter, export adapter]
+evaluation:
+  cases:
+    - {id: lego_schema_two_copies, kind: schema, input: Two copies of set 75192 are owned and built at once., expected: "They remain distinct build projects with independent statuses, sittings, and shortages while sharing one canonical set record.", authored_by: domain_expert}
+    - {id: lego_schema_moc_identity, kind: schema, input: A MOC is created with no set number and a hand-counted 3800 pieces., expected: "The project is accepted with its designer and claimed piece count, and no canonical set is invented to hold it.", authored_by: independent_reviewer}
+    - {id: lego_routing_falcon, kind: routing, input: "finished the Millennium Falcon MOC, 3800 pieces, missing 2 tiles", expected: "A MOC build project named Millennium Falcon files as built with 3800 claimed pieces and no set number, and a shortage of 2 missing tiles files against it rather than against official set 75192.", authored_by: user}
+    - {id: lego_routing_sort, kind: routing, input: "sorted set 75192 into the parts bins, instructions in the binder", expected: "The official set 75192 build project moves to parted_out, with storage slots recorded for the parts bins and the instruction binder.", authored_by: user}
+    - {id: lego_workload_bench, kind: workload, input: 40 builds with 900 sittings and 300 shortages., expected: The bench and the missing-parts order list load within the local 200 ms budget., authored_by: independent_reviewer}
+    - {id: lego_keyboard, kind: accessibility, input: Complete the sitting log and correction journey without a pointer., expected: All controls and status changes are operable and announced., authored_by: standard}
+    - {id: lego_import_injection, kind: security, input: An imported parts CSV row carries prompt-like fields and a filesystem path., expected: Unknown fields are rejected and no tool or filesystem action occurs., authored_by: independent_reviewer}
+  release_thresholds:
+    schema: all identity, relationship, constraint, and state-transition cases pass
+    experience: first sitting and finish-and-shelve flows pass on mobile and desktop
+    evidence: every entity and critical view has an approved derivation
+derivations:
+  - {output_path: domain.entities, decision: "Separate the catalogued set, the builder's copy, the sitting, the shortage, and the place it lives so identity, ownership, activity, observation, and storage each keep their own lifecycle.", evidence_ids: [ev_lego_catalog, ev_lego_identity]}
+  - {output_path: domain.entities.build_project.fields.origin, decision: "Make origin an explicit enum so a MOC is a first-class project with a designer and a claimed piece count instead of an official set number that does not exist.", evidence_ids: [ev_lego_catalog, ev_lego_parts], user_decision: "A MOC is a first-class project — it has no set number but it still has a build log."}
+  - {output_path: domain.state_machines.project_lifecycle, decision: "Model parting out as a legal end state rather than a deletion, because a parted-out set still explains where its bricks went.", evidence_ids: [ev_lego_catalog, ev_lego_lineage], user_decision: Parting a set out is a normal end of life and not a deletion.}
+  - {output_path: experience.views.bench, decision: "Anchor the app on the build in progress and the bag it stopped on rather than on the finished collection, because capture happens at the mat with parts in both hands.", evidence_ids: [ev_lego_service, ev_lego_lineage], user_decision: Logging where I stopped has to take one action with parts in both hands.}
+  - {output_path: domain.indexes.open_shortages, decision: Index shortages by status and part number so one order list can cover every waiting build at once., evidence_ids: [ev_lego_workloads, ev_lego_parts]}
+  - {output_path: experience.visual_world, decision: "Use an instruction-booklet world with a stud-grid progress rail instead of a kanban board or toy-aisle colour, so the app reads as documentation of a build rather than a shop.", evidence_ids: [ev_lego_concepts, ev_lego_service]}

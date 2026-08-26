@@ -23,6 +23,8 @@ from domain_foundry_core.paths import Workspace
 # persisted transition from the caller's point of view.
 STATES = (
     "fork",              # atlas neighborhood; pick/refine/expand/commit
+    "looks",             # HTML sketch per idea; critique then accept
+    "elicit",            # unindexed/invented: two sentences in the user's words
     "schema_preview",    # optional YAML/schema look before activate
     "model_confirm",     # live keys present: confirm the design model first
     "interview",         # proposal made, questions pending
@@ -65,6 +67,27 @@ class WizardSession:
     selected_jobs: list[str] = field(default_factory=list)
     neighborhood: dict[str, Any] = field(default_factory=dict)
     schema_preview: dict[str, Any] = field(default_factory=dict)
+    looks: list[dict[str, Any]] = field(default_factory=list)
+    selected_look_id: str | None = None
+    look_job_hints: list[str] = field(default_factory=list)
+    ingest_blob: str = ""
+    # Sentences the user said they would log, verbatim and in order. The first
+    # shapes the design; the second is held out of the shortlist, the examples
+    # and the compiled rules, then replayed through the real router after
+    # activation. Empty means elicitation was skipped or never offered.
+    elicited_samples: list[str] = field(default_factory=list)
+    elicit_prompts: int = 0             # elicitation turns already spoken
+    # ADR-010 bridge. ``bridge_tier`` is how this pack's research was sourced —
+    # one of reviewed_corpus / live_search / model_knowledge / fallback_demo —
+    # and is stamped into the pack's own metadata. ``bridge_fallback_reason``
+    # is set whenever the bridge was eligible and did not deliver, so a
+    # misconfigured provider can never look identical to having no key.
+    bridge_tier: str | None = None
+    bridge_spec_id: str | None = None
+    bridge_fallback_reason: str | None = None
+    # The release path has a softer renderer and a stricter first-use gate.
+    # Legacy ``new-domain`` sessions keep their existing contract.
+    release_mode: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -85,6 +108,9 @@ class WizardSessionStore:
 
     def draft_dir(self, session_id: str) -> Path:
         return self.root / session_id / "draft"
+
+    def looks_dir(self, session_id: str) -> Path:
+        return self.root / session_id / "looks"
 
     def new(self, goal: str, *, test_drive: int = 5) -> WizardSession:
         self.root.mkdir(parents=True, exist_ok=True)

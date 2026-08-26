@@ -1,0 +1,367 @@
+spec_version: "1.0"
+id: card-collector
+title: Card Collector
+source_ids:
+  - pokemon_tcg_api
+  - tcgdex_cards
+  - postgresql_constraints
+  - sqlite_foreign_keys
+  - sqlite_query_planner
+  - w3c_prov
+  - govuk_design_principles
+  - wcag_22
+  - aria_apg
+  - ui_remix_paper
+principle_ids: [DE-01, DE-02, DE-03, DE-04, DE-05, DE-06, DE-08, DE-10, UX-01, UX-02, UX-03, UX-04, UX-05, UX-06, UX-07, UX-08, UX-10, SE-01, SE-03, SE-04, SE-08, SE-10, SE-11]
+research:
+  interest: Collecting Pokémon cards across sets, languages, conditions, and acquisition channels
+  desired_outcome: Know exactly what is owned, what completes a collecting goal, and why each copy matters
+  practice:
+    - Identify card printings from set, collector number, language, and visual evidence
+    - Track distinct physical copies with condition, grade, provenance, acquisition, and disposition
+    - Pursue set or theme goals while monitoring gaps, duplicates, and optional market context
+  existing_artifacts: [binder photographs, marketplace exports, grading records, purchase spreadsheets, want lists]
+  constraints: [canonical card metadata may come from several sources, prices are observations not truth, private cost basis stays local]
+  open_questions: [primary collecting goal, desired pricing depth, whether graded and raw copies share a workflow]
+  usage_context: [phone at shops and events, desktop for binder review and collection planning]
+  first_value: Scan or identify one owned copy and immediately see its set position and effect on the active goal
+evidence:
+  - id: ev_card_schema
+    source_id: pokemon_tcg_api
+    claim: A card printing has canonical identity and metadata including set, number, artist, rarity, images, legality, and price observations.
+    use: fact
+    locator: Card object fields
+  - id: ev_card_localization
+    source_id: tcgdex_cards
+    claim: Canonical card data spans languages and set releases and should not be collapsed into a user's physical copy.
+    use: pattern
+    locator: cards database and multilingual API
+  - id: ev_card_integrity
+    source_id: postgresql_constraints
+    claim: Composite identity, uniqueness, and foreign keys enforce distinctions that labels alone cannot preserve.
+    use: constraint
+  - id: ev_card_lineage
+    source_id: w3c_prov
+    claim: Imported metadata, user observations, transactions, and corrections need independent provenance.
+    use: pattern
+  - id: ev_card_workloads
+    source_id: sqlite_query_planner
+    claim: Set gaps, collection search, and copy history require workload-derived indexes.
+    use: constraint
+  - id: ev_card_remix
+    source_id: ui_remix_paper
+    claim: Users benefit from comparing and locally remixing structurally different interface examples with transparent sources.
+    use: pattern
+  - id: ev_card_access
+    source_id: aria_apg
+    claim: Grid-like collection views need explicit semantics, focus movement, labels, and non-visual alternatives.
+    use: constraint
+  - id: ev_card_service
+    source_id: govuk_design_principles
+    claim: The product begins with the collector's actual goal and context rather than an exhaustive feature inventory.
+    use: pattern
+concepts:
+  - id: vault
+    title: Personal Vault
+    thesis: Make every physical copy richly inspectable and provable.
+    primary_loop: Add a copy, attach condition evidence, and follow its personal history.
+    primary_affordance: A visual library centered on the owned copy rather than the canonical catalog
+    differentiator: Best for provenance, grading, duplicates, and sentimental notes
+    feature_boundary: [copy capture, condition and grade, acquisition history, attachments]
+    tradeoffs: [set completion is a secondary lens]
+    workflow_ids: [identify_printing, add_copy, inspect_copy_history]
+    evidence_ids: [ev_card_schema, ev_card_lineage]
+  - id: set_quest
+    title: Set Quest
+    thesis: Turn a binder goal into a spatial progress surface where the next useful acquisition is obvious.
+    primary_loop: Fill a set position, inspect a gap, update the want list, and celebrate completion.
+    primary_affordance: A numbered binder canvas with owned, missing, duplicate, and desired states
+    differentiator: Makes collection structure and progress tangible without reducing copies to checkmarks
+    feature_boundary: [canonical set catalog, owned copies, goals, gaps, duplicates]
+    tradeoffs: [market analysis remains contextual rather than dominant]
+    workflow_ids: [choose_goal, add_copy, inspect_gap, update_goal]
+    evidence_ids: [ev_card_schema, ev_card_localization, ev_card_service]
+  - id: market_desk
+    title: Collector Market Desk
+    thesis: Relate purchase decisions to collection value and observed markets without pretending a price is certain.
+    primary_loop: Review a candidate copy, compare observed prices, record a transaction, and monitor exposure.
+    primary_affordance: A comparison ledger joining copy condition to timestamped price observations
+    differentiator: Strongest support for buying, selling, and cost-basis questions
+    feature_boundary: [copies, transactions, price observations, valuation ranges]
+    tradeoffs: [more financial density and less binder delight]
+    workflow_ids: [compare_copy, record_transaction, inspect_value_history]
+    evidence_ids: [ev_card_schema, ev_card_lineage, ev_card_workloads]
+remix:
+  selected_concept: set_quest
+  fragments:
+    - kind: workflow
+      from_concept: vault
+      fragment: copy condition and provenance capture
+      reason: A filled binder position must still preserve the identity and evidence of each physical copy.
+      evidence_ids: [ev_card_lineage]
+    - kind: schema
+      from_concept: market_desk
+      fragment: timestamped price observations and transactions
+      reason: Optional market context should remain factual and separate from canonical card metadata.
+      evidence_ids: [ev_card_schema, ev_card_lineage]
+  user_decisions: [Set completion is the primary payoff, distinguish every physical copy, treat price as optional timestamped context]
+domain:
+  entities:
+    - id: set
+      title: Card Set
+      kind: reference
+      description: A canonical released set with a stable identifier and ordered checklist.
+      identity: [set_id]
+      lifecycle: [announced, released, archived]
+      evidence_ids: [ev_card_schema, ev_card_localization]
+      fields:
+        - {name: set_id, type: text, description: Source-stable set identity, required: true, evidence_ids: [ev_card_schema]}
+        - {name: name, type: text, description: Localized set name, required: true}
+        - {name: series, type: text, description: Series or era grouping}
+        - {name: release_date, type: date, description: Official release date}
+        - {name: printed_total, type: integer, description: Numbered set total}
+        - {name: source_updated_at, type: datetime, description: Metadata source version time, evidence_ids: [ev_card_lineage]}
+    - id: card_printing
+      title: Card Printing
+      kind: canonical
+      description: One canonical printing in a set and language, independent of ownership.
+      identity: [printing_id]
+      lifecycle: [active, corrected, deprecated]
+      evidence_ids: [ev_card_schema, ev_card_localization]
+      fields:
+        - {name: printing_id, type: text, description: Stable provider-independent printing identity, required: true, evidence_ids: [ev_card_integrity]}
+        - {name: set_id, type: text, description: Canonical set identity, required: true}
+        - {name: collector_number, type: text, description: Printed number within the set, required: true}
+        - {name: language, type: text, description: Printing language, required: true}
+        - {name: name, type: text, description: Localized card name, required: true}
+        - {name: rarity, type: text, description: Source-declared rarity}
+        - {name: artist, type: text, description: Credited illustrator}
+        - {name: image_url, type: text, description: Canonical reference image URL}
+    - id: owned_copy
+      title: Owned Copy
+      kind: owned
+      description: One distinct physical copy owned or formerly owned by the collector.
+      identity: [copy_id]
+      lifecycle: [owned, listed, traded, sold, lost, archived]
+      evidence_ids: [ev_card_schema, ev_card_integrity, ev_card_lineage]
+      fields:
+        - {name: copy_id, type: text, description: Stable local copy identity, required: true}
+        - {name: printing_id, type: text, description: Canonical printing represented by this copy, required: true}
+        - {name: status, type: enum, description: Ownership lifecycle, required: true, values: [owned, listed, traded, sold, lost, archived]}
+        - {name: condition, type: enum, description: Collector-observed raw condition, values: [mint, near_mint, lightly_played, moderately_played, heavily_played, damaged, unknown]}
+        - {name: grading_company, type: text, description: Optional grading authority}
+        - {name: grade, type: text, description: Grade exactly as issued}
+        - {name: acquired_at, type: date, description: Effective acquisition date, evidence_ids: [ev_card_lineage]}
+        - {name: photos, type: attachment, description: "Front, back, and condition evidence"}
+        - {name: notes, type: text, description: Personal provenance or significance}
+    - id: transaction
+      title: Transaction
+      kind: event
+      description: Acquisition, sale, trade, gift, or correction affecting one or more copies.
+      identity: [transaction_id]
+      lifecycle: [recorded, corrected, voided]
+      evidence_ids: [ev_card_lineage]
+      fields:
+        - {name: transaction_id, type: text, description: Stable transaction identity, required: true}
+        - {name: occurred_at, type: datetime, description: Effective transaction time, required: true}
+        - {name: kind, type: enum, description: Transaction kind, required: true, values: [purchase, sale, trade, gift, correction]}
+        - {name: amount, type: number, description: Money exchanged when applicable, sensitive: true}
+        - {name: currency, type: text, description: ISO currency for amount}
+        - {name: counterparty, type: text, description: Optional private counterparty note, sensitive: true}
+        - {name: receipt, type: attachment, description: Optional transaction evidence, sensitive: true}
+    - id: price_observation
+      title: Price Observation
+      kind: observation
+      description: A timestamped market observation for a printing and condition context, never a canonical value.
+      identity: [observation_id]
+      lifecycle: [observed, invalidated, stale]
+      evidence_ids: [ev_card_schema, ev_card_lineage]
+      fields:
+        - {name: observation_id, type: text, description: Stable observation identity, required: true}
+        - {name: printing_id, type: text, description: Observed printing, required: true}
+        - {name: observed_at, type: datetime, description: Observation time, required: true}
+        - {name: source, type: text, description: Market or user-provided source, required: true}
+        - {name: condition_context, type: text, description: Raw or graded condition represented}
+        - {name: amount, type: number, description: Observed amount, required: true}
+        - {name: currency, type: text, description: ISO currency, required: true}
+    - id: collection_goal
+      title: Collection Goal
+      kind: state
+      description: A declared set, artist, character, rarity, or custom target evaluated against owned copies.
+      identity: [goal_id]
+      lifecycle: [active, paused, completed, archived]
+      evidence_ids: [ev_card_service, ev_card_schema]
+      fields:
+        - {name: goal_id, type: text, description: Stable local goal identity, required: true}
+        - {name: title, type: text, description: Collector-facing goal name, required: true}
+        - {name: status, type: enum, description: Goal lifecycle, required: true, values: [active, paused, completed, archived]}
+        - {name: rule, type: json, description: Declarative criteria over canonical printings, required: true}
+        - {name: preferred_condition, type: text, description: Optional minimum condition preference}
+        - {name: created_at, type: datetime, description: Goal creation time, required: true}
+  relationships:
+    - {id: printing_set, from_entity: card_printing, to_entity: set, cardinality: many_to_one, required: true, on_delete: restrict, description: Every printing occupies one canonical set., evidence_ids: [ev_card_integrity]}
+    - {id: copy_printing, from_entity: owned_copy, to_entity: card_printing, cardinality: many_to_one, required: true, on_delete: restrict, description: Many physical copies may represent one canonical printing., evidence_ids: [ev_card_integrity]}
+    - {id: transaction_copies, from_entity: transaction, to_entity: owned_copy, cardinality: many_to_many, required: true, on_delete: restrict, description: Trades and purchases can involve several copies., evidence_ids: [ev_card_lineage]}
+    - {id: observation_printing, from_entity: price_observation, to_entity: card_printing, cardinality: many_to_one, required: true, on_delete: restrict, description: Price facts attach to canonical printings with context., evidence_ids: [ev_card_schema]}
+    - {id: goal_printings, from_entity: collection_goal, to_entity: card_printing, cardinality: many_to_many, on_delete: archive, description: Goal membership is evaluated over canonical printings., evidence_ids: [ev_card_schema]}
+  constraints:
+    - {id: unique_set_position, entity: card_printing, kind: unique, fields: [set_id, collector_number, language], reason: A localized set position identifies one printing in the selected catalog., evidence_ids: [ev_card_integrity]}
+    - {id: positive_price, entity: price_observation, kind: check, fields: [amount], expression: "amount >= 0", reason: Negative market observations are invalid., evidence_ids: [ev_card_integrity]}
+    - {id: owned_copy_state, entity: owned_copy, kind: state_transition, fields: [status], reason: A sold copy cannot silently return to owned without a new acquisition event., evidence_ids: [ev_card_lineage]}
+  indexes:
+    - {id: set_positions, entity: card_printing, fields: [set_id, collector_number, language], unique: true, reason: Binder and gap workloads are ordered by set position., workload_ids: [w_set_progress, w_gap_detail]}
+    - {id: owned_printings, entity: owned_copy, fields: [printing_id, status, condition], unique: false, reason: Progress and duplicate counts join active copies to printings., workload_ids: [w_set_progress, w_collection_search]}
+    - {id: observed_prices, entity: price_observation, fields: [printing_id, observed_at], unique: false, reason: Market context is a time-ordered history., workload_ids: [w_copy_context]}
+  workloads:
+    - {id: w_set_progress, question: "Which positions in the active goal are owned, missing, duplicated, or below the preferred condition?", kind: analysis, entities: [collection_goal, card_printing, owned_copy, set], filters: [goal_id, active ownership], sort: [collector_number ascending], expected_scale: thousands of printings and copies, acceptance: Computes each set position from distinct physical copies without treating duplicates as extra completion., evidence_ids: [ev_card_schema, ev_card_workloads]}
+    - {id: w_gap_detail, question: "What exactly would satisfy this missing position?", kind: read, entities: [collection_goal, card_printing, set], filters: [goal_id, printing_id], sort: [], expected_scale: one selected gap, acceptance: "Shows canonical identity, accepted variants, evidence source, and collection preference.", evidence_ids: [ev_card_schema, ev_card_localization]}
+    - {id: w_collection_search, question: "Do I own this printing and which physical copies are they?", kind: read, entities: [card_printing, owned_copy], filters: [name, set, collector number, language, status], sort: [condition, acquired_at descending], expected_scale: tens of thousands of copies, acceptance: Returns canonical matches and every distinct copy with condition and provenance., evidence_ids: [ev_card_workloads, ev_card_integrity]}
+    - {id: w_copy_context, question: "What did this copy cost and what market observations are available?", kind: analysis, entities: [owned_copy, transaction, price_observation, card_printing], filters: [copy_id, printing_id], sort: [occurred_at descending, observed_at descending], expected_scale: hundreds of observations per printing, acceptance: Separates private cost basis from timestamped external observations and labels stale data., evidence_ids: [ev_card_schema, ev_card_lineage]}
+  state_machines:
+    - id: copy_ownership
+      entity: owned_copy
+      field: status
+      states: [owned, listed, traded, sold, lost, archived]
+      transitions:
+        - {from_state: owned, action: list, to_state: listed}
+        - {from_state: listed, action: unlist, to_state: owned}
+        - {from_state: owned, action: trade, to_state: traded}
+        - {from_state: listed, action: sell, to_state: sold}
+        - {from_state: owned, action: mark_lost, to_state: lost}
+        - {from_state: sold, action: archive, to_state: archived}
+      evidence_ids: [ev_card_lineage]
+  sample_records:
+    set:
+      - {set_id: base1, name: Base Set, series: Original, release_date: "1999-01-09", printed_total: 102, source_updated_at: "2026-08-19T00:00:00Z"}
+    card_printing:
+      - {printing_id: base1-58-en, set_id: base1, collector_number: "58", language: en, name: Pikachu, rarity: Common, artist: Ken Sugimori, image_url: "https://images.pokemontcg.io/base1/58_hires.png"}
+    owned_copy:
+      - {copy_id: copy-pikachu-001, printing_id: base1-58-en, status: owned, condition: near_mint, acquired_at: "2026-08-02", notes: Found at the Sunday card show.}
+    transaction:
+      - {transaction_id: txn-20260802-pikachu, occurred_at: "2026-08-02T11:20:00-10:00", kind: purchase, amount: 18, currency: USD, counterparty: Local card show vendor}
+    price_observation:
+      - {observation_id: price-base1-58-20260818, printing_id: base1-58-en, observed_at: "2026-08-18T16:00:00Z", source: User-entered sold listing, condition_context: near_mint raw, amount: 21, currency: USD}
+    collection_goal:
+      - {goal_id: goal-base-set, title: Complete Base Set, status: active, rule: {set_id: base1, one_copy_per_printing: true}, preferred_condition: lightly_played_or_better, created_at: "2026-08-01T09:00:00-10:00"}
+  temporal_policy: [release_date belongs to canonical metadata, occurred_at is transaction effective time, observed_at timestamps prices, captured_at remains provenance time]
+  privacy_policy: [cost basis and counterparties are private by default, exports redact private transaction fields unless selected, canonical metadata never contains user secrets]
+experience:
+  mode: operate
+  visual_world:
+    id: binder-table
+    name: Binder Table
+    mood: Precise, collectible, tactile, and quietly celebratory
+    typography: Condensed display numerals for collector positions with a neutral grotesk for metadata
+    color_strategy: Warm paper and charcoal with set-derived accent ribbons; ownership states use shape and text as well as color
+    layout_principle: A continuous numbered binder surface with a persistent copy inspector, not a dashboard of summaries
+    density: Dense enough to scan a full set while preserving large card imagery on inspection
+    signature_elements: [numbered binder slots, edge tabs derived from set identity, physical-copy stack markers]
+    avoid: [finance terminal styling, generic ecommerce cards, rarity communicated by color alone]
+    tokens: {background: "#EAE4D6", surface: "#FFFDF5", text: "#191813", muted: "#625D52", accent: "#C6492D", accent_alt: "#2C5968", border: "#C9BDA7", focus: "#1B6076", danger: "#A5312F", radius_px: 12}
+  navigation:
+    topology: split
+    primary_view: set_board
+    persistent_regions: [active goal strip, global card search, copy inspector]
+  views:
+    - id: set_board
+      title: Set Board
+      purpose: See collection progress spatially and choose the next gap or copy.
+      layout: Numbered binder canvas on the left; selected position and owned-copy stack on the right.
+      entities: [collection_goal, set, card_printing, owned_copy]
+      workload_ids: [w_set_progress, w_gap_detail]
+      states: [first_use, populated, loading, empty, error, partial, offline]
+      regions:
+        - {id: binder_canvas, kind: canvas, title: Numbered set, entity: card_printing, workload_id: w_set_progress, emphasis: primary, span: 8}
+        - {id: copy_stack, kind: inspector, title: Position and copies, entity: owned_copy, workload_id: w_gap_detail, emphasis: secondary, span: 4}
+      actions:
+        - {id: add_copy, label: Add this copy, operation: create, entity: owned_copy, consequence: Creates a distinct physical copy and updates goal progress.}
+        - {id: mark_wanted, label: Add to hunt list, operation: update, entity: collection_goal, consequence: Records a preference without fabricating ownership.}
+      evidence_ids: [ev_card_schema, ev_card_access]
+    - id: collection_search
+      title: Collection Search
+      purpose: Identify a printing and every physical copy quickly.
+      layout: Search results group by canonical printing; expanding a result reveals a copy stack and provenance.
+      entities: [card_printing, owned_copy, set]
+      workload_ids: [w_collection_search]
+      states: [first_use, populated, loading, empty, error, offline]
+      regions:
+        - {id: canonical_catalog, kind: catalog, title: Printing matches, entity: card_printing, workload_id: w_collection_search, emphasis: primary, span: 8}
+        - {id: ownership_result, kind: inspector, title: Physical copies, entity: owned_copy, workload_id: w_collection_search, emphasis: support, span: 4}
+      actions:
+        - {id: identify_and_add, label: I own this, operation: create, entity: owned_copy, consequence: Opens copy-specific condition and acquisition capture.}
+      evidence_ids: [ev_card_localization, ev_card_access]
+    - id: copy_inspector
+      title: Copy Inspector
+      purpose: Inspect and correct one physical object's condition, grade, photos, and history.
+      layout: Large front/back evidence with a chronological ownership ledger in the margin.
+      entities: [owned_copy, card_printing, transaction]
+      workload_ids: [w_collection_search, w_copy_context]
+      states: [first_use, populated, loading, empty, error, correction]
+      regions:
+        - {id: copy_media, kind: media, title: Front and back evidence, entity: owned_copy, workload_id: w_collection_search, emphasis: primary, span: 7}
+        - {id: ownership_ledger, kind: ledger, title: Ownership history, entity: transaction, workload_id: w_copy_context, emphasis: secondary, span: 5}
+      actions:
+        - {id: correct_copy, label: Correct this copy, operation: correct, entity: owned_copy, consequence: Preserves prior interpretation and recalculates goal status.}
+        - {id: record_sale, label: Record disposition, operation: create, entity: transaction, consequence: Updates ownership through an auditable event.}
+      evidence_ids: [ev_card_lineage, ev_card_access]
+    - id: value_context
+      title: Value Context
+      purpose: Compare private acquisition history with timestamped external observations.
+      layout: Copy-specific cost events above a provenance-labeled observation timeline.
+      entities: [owned_copy, transaction, price_observation, card_printing]
+      workload_ids: [w_copy_context]
+      states: [first_use, populated, loading, empty, error, partial]
+      regions:
+        - {id: cost_ledger, kind: ledger, title: Private cost events, entity: transaction, workload_id: w_copy_context, emphasis: primary, span: 5}
+        - {id: price_timeline, kind: chart, title: Sourced observations, entity: price_observation, workload_id: w_copy_context, emphasis: secondary, span: 7}
+      actions:
+        - {id: add_observation, label: Record observed price, operation: create, entity: price_observation, consequence: Adds a timestamped fact without changing canonical value.}
+      evidence_ids: [ev_card_schema, ev_card_lineage]
+  flows:
+    - id: first_copy
+      title: Add the first physical copy
+      trigger: User approves the Card Collector concept.
+      steps:
+        - {view: collection_search, action: Search or scan set and collector number., result: Canonical printing candidates show their sources.}
+        - {view: copy_inspector, action: Confirm language and record condition or grade., result: A new physical copy receives its own identity and provenance.}
+        - {view: set_board, action: Return to the active goal., result: Exactly one binder position updates and duplicates remain visible as copies.}
+      success: The collector can explain the difference between the printing, owned copy, and filled goal position.
+    - id: inspect_gap
+      title: Decide what satisfies a gap
+      trigger: User selects an unfilled binder position.
+      steps:
+        - {view: set_board, action: Open the missing position., result: The canonical printing and accepted variants appear.}
+        - {view: value_context, action: Optionally inspect sourced price observations., result: Stale and condition-mismatched observations are labeled.}
+      success: The collector can act on the gap without confusing observed price with ownership or value truth.
+  responsive_strategy: [On phones the selected binder slot becomes a full-height inspector and adjacent positions are swipeable with equivalent buttons., On desktop the numbered canvas and copy inspector remain simultaneously visible.]
+  accessibility:
+    target: WCAG-2.2-AA
+    patterns: [grid semantics only when two-dimensional keyboard navigation is implemented, list alternative for binder positions, dialog and combobox patterns from APG]
+    keyboard_model: [arrow keys move between binder positions without trapping focus, Enter opens a position, Escape returns to the originating slot, search results use standard combobox behavior]
+    manual_checks: [screen-reader set progress journey, non-color ownership states, 200 percent zoom copy inspector, touch target review]
+implementation:
+  targets: [foundry_runtime, standalone_react]
+  capabilities: [catalog, attachments, search, goals, provenance, transactions, price_observations, correction, import]
+  imports: [CSV collection export, JSON canonical catalog, image folder with confirmation queue]
+  exports: [canonical and owned JSON separated, CSV collection inventory, private transaction export, attachment manifest, standalone source repository]
+  migrations: [canonical catalog versions are additive, owned copy identity never derives from mutable condition, goal rules are versioned]
+  permissions: [local file import, optional read-only public metadata fetch]
+  adapter_seams: [canonical card source adapter, image identification adapter, price observation adapter, export adapter]
+evaluation:
+  cases:
+    - {id: card_printing_copy_split, kind: schema, input: Collector owns three English copies of the same set position in different conditions., expected: One canonical printing relates to three independently identifiable owned copies., authored_by: domain_expert}
+    - {id: card_language_identity, kind: schema, input: English and Japanese cards share artwork and collector number., expected: They remain distinct canonical printings and goal rules decide equivalence explicitly., authored_by: domain_expert}
+    - {id: card_set_progress, kind: workload, input: Goal has 200 positions with duplicates and sold copies., expected: Completion counts only qualifying currently owned positions., authored_by: independent_reviewer}
+    - {id: card_first_task, kind: task, input: User adds a near-mint English copy from a phone., expected: Copy identity and one goal position update with visible provenance., authored_by: user}
+    - {id: card_keyboard_board, kind: accessibility, input: Navigate and inspect the set without a pointer., expected: "Position, ownership state, and inspector context are announced and focus returns correctly.", authored_by: standard}
+    - {id: card_import_safety, kind: security, input: "Catalog import includes HTML, a local path, and unknown fields.", expected: "Content is rendered as data, path access is denied, and unknown fields enter review.", authored_by: independent_reviewer}
+  release_thresholds:
+    schema: printing, copy, transaction, and observation identities pass every held-out case
+    experience: set board and copy inspector journeys pass on mobile, desktop, keyboard, and screen reader smoke
+    evidence: canonical metadata and market observations always show source and freshness
+derivations:
+  - {output_path: domain.entities.card_printing, decision: Canonical printing identity is independent of physical ownership., evidence_ids: [ev_card_schema, ev_card_localization, ev_card_integrity]}
+  - {output_path: domain.entities.owned_copy, decision: "Every physical copy keeps condition, grade, attachments, and lifecycle separately.", evidence_ids: [ev_card_lineage], user_decision: Distinguish every physical copy.}
+  - {output_path: experience.views.set_board, decision: Use a numbered binder canvas as the primary goal surface., evidence_ids: [ev_card_schema, ev_card_service], user_decision: Set completion is the primary payoff.}
+  - {output_path: experience.views.value_context, decision: Separate cost events from timestamped external observations., evidence_ids: [ev_card_schema, ev_card_lineage]}
+  - {output_path: experience.visual_world, decision: Use collectible binder materiality without copying branded card artwork into the interface chrome., evidence_ids: [ev_card_remix], user_decision: The collection should feel personal rather than financial.}

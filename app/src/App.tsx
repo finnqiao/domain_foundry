@@ -11,6 +11,7 @@ import { Passions } from "./components/Passions";
 import { Inbox } from "./components/Inbox";
 import { Settings } from "./components/Settings";
 import { CreateDomain } from "./components/CreateDomain";
+import { FoundryStudio } from "./components/FoundryStudio";
 
 export function App() {
   const [{ route, detail }, setLocation] = useState(() =>
@@ -89,6 +90,9 @@ export function App() {
             <span className="logo-text">Domain Foundry</span>
           </div>
           <nav className="side-nav" aria-label="Primary">
+            <NavItem active={route.name === "foundry"} onClick={() => navigate({ name: "foundry" })}>
+              Foundry
+            </NavItem>
             <NavItem active={route.name === "today"} onClick={() => navigate({ name: "today" })}>
               Today
             </NavItem>
@@ -121,11 +125,12 @@ export function App() {
           )}
         </aside>
 
-        <main className="content" id="main" tabIndex={-1}>
+        <main className={`content${route.name === "foundry" ? " foundry-content" : ""}`} id="main" tabIndex={-1}>
           {route.name === "today" && <Today packs={packs} />}
           {route.name === "passions" && <Passions packs={packs} onInstalled={refresh} />}
           {route.name === "inbox" && <Inbox packs={packs} refreshKey={refreshKey} onChanged={refresh} />}
-          {route.name === "create" && <CreateDomain packs={packs} onDone={refresh} />}
+          {route.name === "create" && <CreateDomain onDone={refresh} />}
+          {route.name === "foundry" && <FoundryStudio />}
           {route.name === "settings" && <Settings tab={route.tab} packs={packs} refreshKey={refreshKey} />}
           {route.name === "domain" &&
             (activePack ? (

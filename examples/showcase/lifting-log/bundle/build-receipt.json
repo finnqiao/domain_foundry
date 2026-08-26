@@ -1,0 +1,46 @@
+{
+  "spec_id": "lifting-log",
+  "spec_version": "1.0",
+  "generated_at": "2026-08-23T21:16:13.915881Z",
+  "compiler": "domain-foundry-core/foundry-spec-1.1",
+  "artifacts": {
+    "foundry-spec.json": "024523f264822e9f578fc60ddc1bfbc86ff309c5f37e8b531431d9cc721d80e8",
+    "schema.sql": "7f9318138304472c46456d961f87e572ad9b7fec5e64c10d513790c858e6ce30",
+    "app.html": "0d68ee1e30cabc74b67b2de80634874e865b5b05a951ea5a21150c0e7564c557",
+    "evidence.json": "2d009a225c7fe2a494189bfe7fb1140808682dfa290fd12e5cba5c1ba8886b2f",
+    "README.md": "84f9cce5c8f5074d78ba4341ffa6c6f832be3449b5fc167ba47b2bf0cc3f8be9"
+  },
+  "sources": [
+    "wger_workout",
+    "postgresql_constraints",
+    "sqlite_foreign_keys",
+    "sqlite_query_planner",
+    "w3c_prov",
+    "govuk_design_principles",
+    "wcag_22",
+    "aria_apg",
+    "ui_remix_paper"
+  ],
+  "principles": [
+    "DE-01",
+    "DE-02",
+    "DE-03",
+    "DE-04",
+    "DE-05",
+    "DE-06",
+    "DE-08",
+    "UX-01",
+    "UX-02",
+    "UX-04",
+    "UX-05",
+    "UX-06",
+    "UX-07",
+    "UX-10",
+    "SE-01",
+    "SE-03",
+    "SE-04",
+    "SE-10",
+    "SE-11"
+  ],
+  "generation": null
+}

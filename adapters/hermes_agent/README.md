@@ -12,7 +12,7 @@ in-process embedding available when the host does not need a network hop:
 | `domain_foundry_correct` | `POST /api/correct` |
 | `domain_foundry_review_list` | `GET /api/review` |
 | `domain_foundry_review_resolve` | `POST /api/review/{id}/resolve` |
-| `domain_foundry_new_domain` | `POST /api/wizard` (atlas neighborhood, not an install) |
+| `domain_foundry_new_domain` | `POST /api/wizard` (idea options + looks, not an install) |
 | `domain_foundry_wizard_reply` | `POST /api/wizard/{id}/reply` |
 | `domain_foundry_atlas_search` | `POST /api/atlas/search` |
 | `domain_foundry_inspect_pack` | `GET /api/packs/{name}/inspect` |
@@ -78,7 +78,7 @@ from domain_foundry_hermes_agent import DomainExpertClient, build_tools
 client = DomainExpertClient("http://127.0.0.1:8787")
 tools = build_tools(client)
 capture = next(t for t in tools if t.name == "domain_foundry_capture")
-print(capture(text="baked a 75% hydration country loaf, came out great"))
+print(capture(text="pulled a holographic Charizard from a 151 booster, NM"))
 ```
 
 ## Hook up to hermes-agent

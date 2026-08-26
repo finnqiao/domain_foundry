@@ -1,0 +1,81 @@
+schema_version: 1
+checked_at: "2026-08-19"
+freshness_days: 7
+public_name: Domain Foundry
+
+pypi:
+  interpretation: >-
+    HTTP 404 means no public project exists at check time. It does not reserve
+    the name or prove that PyPI will permit a future upload.
+  distributions:
+    - name: domain-foundry
+      status: no_public_project
+      http_status: 404
+      official_source: https://pypi.org/pypi/domain-foundry/json
+    - name: domain-foundry-core
+      status: no_public_project
+      http_status: 404
+      official_source: https://pypi.org/pypi/domain-foundry-core/json
+    - name: domain-foundry-mcp
+      status: no_public_project
+      http_status: 404
+      official_source: https://pypi.org/pypi/domain-foundry-mcp/json
+    - name: domain-foundry-telegram
+      status: no_public_project
+      http_status: 404
+      official_source: https://pypi.org/pypi/domain-foundry-telegram/json
+    - name: domain-foundry-hermes-agent
+      status: no_public_project
+      http_status: 404
+      official_source: https://pypi.org/pypi/domain-foundry-hermes-agent/json
+
+github:
+  requested_organization:
+    handle: Domain-Foundry
+    status: occupied
+    ownership: unverified
+    http_status: 200
+    created_at: "2013-10-07T04:25:10Z"
+    public_repositories: 0
+    official_source: https://api.github.com/orgs/domain-foundry
+    implication: >-
+      Do not plan to create or claim this organization coordinate without a
+      verified transfer from its existing owner.
+  current_repository:
+    full_name: finnqiao/domain_foundry
+    status: active
+    http_status: 200
+    official_source: https://api.github.com/repos/finnqiao/domain_foundry
+
+trademark:
+  search_scope: preliminary exact-mark search of the US federal trademark system
+  checked_at: "2026-08-19"
+  findings:
+    - mark: DOMAIN FOUNDRY
+      jurisdiction: US
+      serial_number: "99880503"
+      owner: Semantic Foundry LLC
+      filing_date: "2026-06-11"
+      status: live_application_awaiting_examination
+      register: Principal
+      international_classes: ["042"]
+      service_overlap: direct
+      summary: >-
+        The application names SaaS for semantic/domain modeling,
+        AI-assisted software development, evidence-based code generation, and
+        compiling domain models into deployable software artifacts.
+      official_status_source: https://tsdr.uspto.gov/statusview/sn99880503
+      secondary_index_source: https://trademarks.justia.com/998/80/domain-99880503.html
+  release_risk: material_exact_mark_and_service_overlap
+  disposition: unresolved
+  release_blocking: true
+  required_resolution: >-
+    Rename before publication, obtain a documented rights agreement, or obtain
+    qualified legal clearance for the exact candidate and intended use.
+
+limitations:
+  - Package and organization names are not reserved by this check.
+  - GitHub ownership cannot be inferred from an empty public repository list.
+  - Trademark, domain-name, and jurisdiction-specific legal review remain human gates.
+  - This exact-mark search is preliminary and is not comprehensive legal clearance.
+  - The maintainer must recheck all coordinates immediately before publication.

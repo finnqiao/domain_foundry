@@ -9,11 +9,23 @@ from domain_foundry_core.clock import set_clock
 from domain_foundry_core.paths import Workspace
 
 
-def land_wizard(api, goal: str, reply: str = "skip"):
-    """Start a domain and accept the atlas pick so tests reach a live pack."""
+def land_wizard(api, goal: str, reply: str = "skip", samples: list[str] | None = None):
+    """Start a domain and accept the atlas pick so tests reach a live pack.
+
+    An unindexed goal now asks for two sentences in the user's own words before
+    it designs anything (ADR-010). ``samples`` answers them; the default answers
+    "skip", which is the honest fallback to the pre-elicitation behaviour, so
+    every existing caller keeps measuring exactly what it measured before.
+    """
     turn = api.new_domain(goal)
+    sid = turn.get("session_id")
     if turn.get("state") == "fork":
-        turn = api.wizard_reply(turn["session_id"], reply)
+        turn = api.wizard_reply(sid, reply)
+    if turn.get("state") == "looks":
+        turn = api.wizard_reply(sid, "build it")
+    pending = list(samples or [])
+    while turn.get("state") == "elicit":
+        turn = api.wizard_reply(sid, pending.pop(0) if pending else "skip")
     return turn
 
 

@@ -22,6 +22,17 @@ domain; the core supplies the shared runtime.
 - **Sessions** and **schedules** are mesh state. The Slice 3 API provides a
   small, pack-declared shell for them; a shell is not evidence of an external
   provider or a production calendar integration.
+- A **Foundry proposal** is a researched set of exactly three structurally
+  different product hypotheses plus source snapshots and generation receipts.
+- A **FoundrySpec** is the versioned contract joining research, evidence,
+  selected/remixed concept, workload-derived domain model, experience,
+  implementation boundaries, independent evaluation, and derivations.
+- The **knowledge fabric** is the reviewed source registry and operational
+  principle corpus. It is evidence substrate, not a prompt library or discovery
+  bookmark list.
+- An **owned app bundle** is the deterministic compiler output: exact spec,
+  executable SQLite DDL, self-contained offline app, evidence snapshot, README,
+  and a receipt hashing every owned artifact.
 
 ## Ownership boundaries
 
@@ -52,6 +63,13 @@ to keep these seams pack-owned is recorded in
 [`docs/adr/007-declarative-capabilities.md`](docs/adr/007-declarative-capabilities.md).
 The Slice 3 extraction rationale is in
 [`docs/concepts/comparison-memo-2026-08.md`](docs/concepts/comparison-memo-2026-08.md).
+
+The Foundry compiler boundary is recorded in
+[`docs/adr/ADR-008-foundry-spec-compiler.md`](docs/adr/ADR-008-foundry-spec-compiler.md).
+Core owns validation, reference closure, deterministic compilation, security
+primitives, and release gates. The spec owns the vertical vocabulary, schema,
+workloads, experience, and evidence. The model is an untrusted producer of
+typed candidates; it does not own source authority or the only evaluation.
 
 ## Evidence gates
 

@@ -14,9 +14,15 @@
 #   5. ruff                — lint clean
 #   6. pyright             — type-check clean (the same step CI runs)
 #   7. pytest              — full suite green
-#   8. mkdocs build        — docs site builds (skipped if mkdocs absent)
-#   9. eval corpus replay  — routing gate vs committed baseline (skipped if CLI absent)
+#   8. mkdocs build        — docs site builds; a missing tool is a failed environment
+#   9. eval corpus replay  — routing gate vs committed baseline; never skipped
 #  10. docs claims check   — no hardcoded test counts / known-false claims in public docs
+#  11. knowledge audit     — source licensing, freshness, and principle closure
+#  12. dependency licenses — shipped closure is reviewed and notices are exact
+#  13. provider audit      — live model defaults match fresh official evidence
+#  14. name audit          — public coordinates have fresh, honestly scoped evidence
+#  15. foundry audit       — three goldens, reproducible compiler, schema, owned app
+#  16. held-out leak check — the protected interest set has not been tuned into
 
 set -uo pipefail
 
@@ -40,8 +46,6 @@ trap 'rm -rf "$DOMAIN_FOUNDRY_HOME"' EXIT
 fail=0
 pass() { printf '  \033[32mPASS\033[0m  %s\n' "$1"; }
 bad()  { printf '  \033[31mFAIL\033[0m  %s\n' "$1"; fail=1; }
-skip() { printf '  \033[33mSKIP\033[0m  %s\n' "$1"; }
-
 run() { # <label> <cmd...>
   local label="$1"; shift
   if "$@" >/tmp/release_audit.$$ 2>&1; then
@@ -82,18 +86,55 @@ run "pyright"         pyright
 run "pytest"          python -m pytest -q
 
 if command -v mkdocs >/dev/null 2>&1; then
-  run "mkdocs build"  mkdocs build --quiet
+  run "mkdocs build"  mkdocs build --strict --quiet
 else
-  skip "mkdocs build (mkdocs not installed; pip install -e '.[docs]')"
+  bad "mkdocs build (mkdocs missing; install .[docs])"
 fi
 
 run "docs claims check" python scripts/docs_claims_check.py
+run "knowledge audit"   python scripts/knowledge_audit.py
+run "dependency license audit" python scripts/dependency_license_audit.py --verify-source-texts
+run "provider compatibility" python scripts/provider_compatibility_audit.py
+run "name collision evidence" python scripts/name_availability_audit.py
+run "foundry audit"     python scripts/foundry_audit.py
+run "foundry held-out"  python scripts/foundry_heldout_audit.py
+# The protected 20-interest set may not be fed back into the atlas or the
+# visible suite. A held-out miss is a compiler bug; widening the atlas to
+# cover one is the move this catches.
+run "interest held-out leak check" python scripts/heldout_leakcheck.py
+run "SPDX SBOM"         python scripts/generate_sbom.py --output "$DOMAIN_FOUNDRY_HOME/sbom.spdx.json" --created 2026-08-19T12:00:00Z
+
+if command -v uv >/dev/null 2>&1 && command -v pip-audit >/dev/null 2>&1; then
+  export UV_CACHE_DIR="$DOMAIN_FOUNDRY_HOME/uv-cache"
+  run "Python locked dependency export" uv export --frozen --no-dev --no-emit-project --format requirements-txt --output-file "$DOMAIN_FOUNDRY_HOME/requirements.txt"
+  run "Python vulnerability audit" pip-audit --strict --no-deps --disable-pip --cache-dir "$DOMAIN_FOUNDRY_HOME/pip-audit-cache" -r "$DOMAIN_FOUNDRY_HOME/requirements.txt"
+else
+  bad "Python vulnerability audit (uv or pip-audit missing; install .[dev])"
+fi
+
+if command -v npm >/dev/null 2>&1; then
+  # Do not start a login shell here. On machines with more than one Node
+  # installation, shell startup can replace the already-resolved Node with a
+  # binary for another architecture, making Rollup's locked native package
+  # appear missing even after a correct `npm ci`.
+  run "app production dependency audit" bash -c 'cd app && npm audit --omit=dev --audit-level=high'
+  run "app lint"                        bash -c 'cd app && npm run lint'
+  run "app unit tests"                  bash -c 'cd app && npm test'
+  run "app production build"            bash -c 'cd app && npm run build'
+  if [[ -x "$ROOT/app/node_modules/.bin/playwright" ]]; then
+    run "app browser E2E" bash -c 'cd app && npx playwright test'
+  else
+    bad "app browser E2E (Playwright missing; run npm ci in app/)"
+  fi
+else
+  bad "app checks (npm missing)"
+fi
 
 if command -v domain-foundry >/dev/null 2>&1; then
   run "init (hermetic home)" domain-foundry init
   run "eval corpus replay" domain-foundry eval --full --min-accuracy 0.9
 else
-  skip "eval corpus replay (domain-foundry CLI not on PATH)"
+  bad "eval corpus replay (domain-foundry CLI missing; install .[dev])"
 fi
 
 echo

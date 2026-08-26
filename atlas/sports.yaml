@@ -54,7 +54,7 @@ nodes:
     title: Session log
     aliases: [climbing log, bouldering log, sends]
     pitch: Routes, grades, and whether you sent, flashed, or worked it.
-    jobs: [event_log]
+    jobs: [event_log, media_dex]
     provenance: both
     domain_slug: climbing
     identity_hint: route_name
@@ -91,6 +91,17 @@ nodes:
     jargon: [easy, tempo, strides, splits]
     world_analogs:
       - {name: Strava, one_liner: Activity social network}
+  - id: sports.running.shoe_rotation
+    kind: idea
+    title: Shoe rotation
+    aliases: [running shoes]
+    pitch: Which pair did the miles, and when it's done.
+    jobs: [catalog, event_log]
+    provenance: foundry
+    domain_slug: shoes
+    identity_hint: shoe_name
+    example: easy 8k in the trainers, 420 km on them now
+    jargon: [trainers, carbon plate]
   - id: sports.cycling
     kind: practice
     title: Cycling
@@ -109,6 +120,17 @@ nodes:
     jargon: [ftp, cadence, gravel]
     world_analogs:
       - {name: Strava, one_liner: Ride log and segments}
+  - id: sports.cycling.bike_garage
+    kind: idea
+    title: Bike garage
+    aliases: [which bike]
+    pitch: Which bike did the ride, and what you changed on it.
+    jobs: [catalog, event_log]
+    provenance: foundry
+    domain_slug: bikes
+    identity_hint: bike_name
+    example: gravel bike for the coast loop, swapped the 38s
+    jargon: [gravel, tubeless]
   - id: sports.strength
     kind: practice
     title: Strength
@@ -122,11 +144,51 @@ nodes:
     jobs: [event_log, improvement]
     provenance: world
     domain_slug: lifting
-    identity_hint: session_name
+    identity_hint: lift_name
     example: dumbbell rows felt strong, added extra reps on the bench
-    jargon: [RPE, sets, deload]
+    jargon: [RPE, sets, deload, top set, working set]
+    vocabulary:
+      [squat, deadlift, bench, press, row, chin-up, 5x5, 3x8, AMRAP, PR,
+       deload, RPE, reps, kg, grind, tempo, superset, accessory]
+    measure: {name: top_set, unit: kg}
+    routing_examples:
+      - {text: "back squat 3x5 at 120kg, bar speed was good", object: event}
+      - {text: "deadlift single at RPE 9, then a deload week", object: event}
+      - {text: "bench press 5x5, the last rep was ugly", object: event}
+      - {text: "overhead press stalled again, dropped to 3x8", object: event}
+      - {text: "new PR on the squat, 140kg for a double", object: event}
+      - {text: "chin-ups and accessory rows after the main lift", object: event}
+    negative_examples:
+      - pressed for the deadline all afternoon
+      - the elevator is out of order again
+    llm_hints: >
+      "5x5" is sets x reps; "100kg" is the load. A grind, a miss, or an RPE
+      number describes how the top set felt. Squat, bench, deadlift and press
+      are the lift, not the session name.
     world_analogs:
       - {name: Strong, one_liner: Set-by-set lifting log}
+  - id: sports.strength.lift_catalog
+    kind: idea
+    title: Lift catalog
+    aliases: [which lifts]
+    pitch: The lifts you actually train, plus the sessions you threw at them.
+    jobs: [catalog, event_log, improvement]
+    provenance: foundry
+    domain_slug: lifts
+    identity_hint: lift_name
+    example: dumbbell rows felt strong, added extra reps on the bench
+    jargon: [RPE, sets, deload, top set, working set]
+    vocabulary:
+      [squat, deadlift, bench, press, row, 5x5, 3x8, AMRAP, PR, deload, RPE,
+       reps, kg, grind, accessory]
+    measure: {name: top_set, unit: kg}
+    routing_examples:
+      - {text: "added the front squat to the rotation", object: catalog}
+      - {text: "the low-bar back squat is the main lift this block", object: catalog}
+      - {text: "back squat 3x5 at 120kg, bar speed was good", object: event}
+      - {text: "deadlift single at RPE 9, then a deload week", object: event}
+      - {text: "bench press 5x5, the last rep was ugly", object: event}
+      - {text: "overhead press stalled again, dropped to 3x8", object: event}
 
 edges:
   - {from: sports, to: sports.soccer, rel: child}
@@ -140,8 +202,11 @@ edges:
   - {from: sports.climbing, to: sports.climbing.session_log, rel: child}
   - {from: sports.climbing, to: sports.climbing.project_board, rel: child}
   - {from: sports.running, to: sports.running.run_log, rel: child}
+  - {from: sports.running, to: sports.running.shoe_rotation, rel: child}
   - {from: sports.cycling, to: sports.cycling.ride_log, rel: child}
+  - {from: sports.cycling, to: sports.cycling.bike_garage, rel: child}
   - {from: sports.strength, to: sports.strength.session_log, rel: child}
+  - {from: sports.strength, to: sports.strength.lift_catalog, rel: child}
   - {from: sports.soccer.training_log, to: sports.soccer.pickup_map, rel: expands_to}
   - {from: sports.soccer.training_log, to: sports.soccer.tactical_notebook, rel: expands_to}
   - {from: sports.climbing.session_log, to: sports.climbing.project_board, rel: expands_to}

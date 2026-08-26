@@ -34,6 +34,32 @@ nodes:
     identity_hint: dish_name
     example: weeknight carbonara, too salty, next time less pecorino
     jargon: [weeknight, leftover, batch cook]
+  - id: food.cooking.cocktail_book
+    kind: idea
+    title: Cocktail book
+    aliases: [cocktail recipes, bar book, house cocktails]
+    pitch: The specs you actually make at home, plus the night you changed one.
+    jobs: [catalog, event_log, lab]
+    provenance: foundry
+    domain_slug: cocktails
+    identity_hint: drink_name
+    example: stirred a rye old fashioned, two dashes of bitters
+    jargon: [stirred, shaken, dashes, spirit-forward]
+    vocabulary:
+      [cocktail, stirred, shaken, rye, bitters, coupe, vermouth, amaro, gin,
+       syrup, twist, garnish, dilution, jigger, sour]
+    routing_examples:
+      - {text: "stirred a rye old fashioned, two dashes of bitters", object: event}
+      - {text: "served it up in a coupe with a lemon twist", object: event}
+      - {text: "swapped the vermouth for amaro, less sweet", object: event}
+      - {text: "gin sour with a bar spoon of syrup, good dilution", object: event}
+      - {text: "added the house negroni spec to the book", object: catalog}
+    negative_examples:
+      - stirred the soup while the pasta boiled
+      - the gin bottle is on the top shelf
+    llm_hints: >
+      A spec is the drink (ratios like 2:1:1, the garnish); a night is one time
+      you made it. "Up", "stirred" and "coupe" describe how it was served.
   - id: food.nutrition
     kind: practice
     title: Nutrition
@@ -74,12 +100,29 @@ nodes:
     title: Dining map
     aliases: [food map, restaurant map, been-to map]
     pitch: A map of places you've eaten with the dish you'd order again.
-    jobs: [event_log, atlas]
+    jobs: [event_log, atlas, media_dex]
     provenance: both
     domain_slug: dining
     identity_hint: place
     example: dinner at River Station Grill, the duck was great
     jargon: [omakase, tasting menu, hole in the wall]
+    vocabulary:
+      [ramen, tonkotsu, omakase, izakaya, sushi, taco, bistro, brunch,
+       reservation, courses, counter, corkage, walk-in, tab, waitlist, dish]
+    routing_examples:
+      - {text: "the new ramen shop on 5th, tonkotsu was rich", object: event}
+      - {text: "omakase at the counter, twelve courses", object: event}
+      - {text: "booked a reservation for the tasting menu downtown", object: event}
+      - {text: "the taco place by the park, al pastor again", object: event}
+      - {text: "dinner at the bistro, the duck was great", object: event}
+      - {text: "hole in the wall izakaya near the station, no waitlist", object: event}
+    negative_examples:
+      - the kitchen tap is dripping again
+      - fed the starter this morning
+    llm_hints: >
+      A dish name (tonkotsu, al pastor, omakase) belongs to the visit, not to
+      the place. Prefer the place a person names — "the ramen shop on 5th" —
+      over the neighbourhood.
     world_analogs:
       - {name: Google Maps saved lists, one_liner: Pins and starred places}
       - {name: Untappd, one_liner: "Check-ins with a map, for beer"}
@@ -97,12 +140,12 @@ nodes:
   - id: food.fermentation
     kind: practice
     title: Fermentation
-    aliases: [sourdough, koji, pickles, kombucha, ferment]
+    aliases: [sourdough, koji, pickles, kombucha, ferment, bake, bakes, baking]
     pitch: Starters, jars, and bakers' experiments.
   - id: food.fermentation.bake_lab
     kind: idea
     title: Sourdough / bake lab
-    aliases: [sourdough, bread lab, hydration]
+    aliases: [sourdough, bread lab, hydration, bake, bakes, loaf, discard, discard recipes]
     pitch: Hydration, bulk, crumb — compare bakes and keep the starter alive.
     jobs: [lab, event_log, improvement, media_dex]
     provenance: both
@@ -113,6 +156,54 @@ nodes:
     jargon: [levain, bulk, batard, oven spring]
     world_analogs:
       - {name: Breadboard / bakery notebooks, one_liner: Formula and bake notes}
+  - id: food.fermentation.starter_journal
+    kind: idea
+    title: Starter journal
+    aliases: [starter log, levain log, discard]
+    pitch: Feedings, discard, and whether the culture is actually lively.
+    jobs: [event_log, lab]
+    provenance: foundry
+    domain_slug: starter
+    identity_hint: starter_name
+    example: fed the rye starter, doubled in 5 hours
+    jargon: [levain, discard, peak]
+  # Whisky is a shipped product target, not eval-fitting: the repository
+  # carries a hand-authored FoundrySpec and compiled bundle for it at
+  # examples/showcase/whisky-tasting/. An atlas that pleads ignorance about
+  # whisky while the repo ships a whisky app is incoherent.
+  - id: food.drinks
+    kind: practice
+    title: Drinks
+    aliases: [whisky, whiskey, spirits, dram, bottle shelf, mixology]
+    pitch: Bottles on the shelf, pours you actually remember, and what your palate keeps returning to.
+  - id: food.drinks.tasting_notes
+    kind: idea
+    title: Tasting notes
+    aliases: [whisky notes, dram log, bottle log]
+    pitch: A bottle, a pour, and the note you'd still trust six months later — your palate, not strangers' ratings.
+    jobs: [catalog, event_log]
+    provenance: foundry
+    domain_slug: drams
+    identity_hint: bottle_name
+    example: peated Islay dram, iodine and salt, 12 year
+    jargon: [dram, peated, cask strength, sherry cask, nose palate finish]
+    vocabulary:
+      [dram, peated, neat, iodine, cask, sherry, bourbon, rye, malt, islay,
+       nose, palate, finish, abv, pour, distillery, bottling, orchard, smoky, sealed]
+    routing_examples:
+      - {text: "peated Islay dram, iodine and salt on the nose", object: event}
+      - {text: "the 12 year neat, orchard fruit and a long finish", object: event}
+      - {text: "poured a sherry cask malt, the palate was thin", object: event}
+      - {text: "smoky and sweet, better with a drop of water", object: event}
+      - {text: "added a bourbon to the shelf, cask strength, still sealed", object: catalog}
+      - {text: "the Islay bottling from that distillery is half gone", object: catalog}
+    negative_examples:
+      - the printer is out of toner again
+      - finished the last chapter on the train
+    llm_hints: >
+      A bottle is the thing owned; a dram is one pour of it. "Neat", an age
+      statement and a cask type describe the pour; nose, palate and finish are
+      the three parts of the note and should stay verbatim.
   - id: food.coffee
     kind: practice
     title: Coffee
@@ -132,6 +223,17 @@ nodes:
     jargon: [V60, bloom, pourover, ristretto]
     world_analogs:
       - {name: Beanconqueror, one_liner: Brew ratio and bean diary}
+  - id: food.coffee.bean_shelf
+    kind: idea
+    title: Bean shelf
+    aliases: [coffee beans, bag log]
+    pitch: Bags on the shelf and which ones actually got used.
+    jobs: [catalog, event_log]
+    provenance: foundry
+    domain_slug: beans
+    identity_hint: bean_name
+    example: opened the Ethiopian natural, 15 days off roast
+    jargon: [roast date, natural, washed]
 
 edges:
   - {from: food, to: food.cooking, rel: child}
@@ -139,14 +241,20 @@ edges:
   - {from: food, to: food.dining, rel: child}
   - {from: food, to: food.fermentation, rel: child}
   - {from: food, to: food.coffee, rel: child}
+  - {from: food, to: food.drinks, rel: child}
+  - {from: food.drinks, to: food.drinks.tasting_notes, rel: child}
+  - {from: food.drinks, to: food.cooking, rel: adjacent}
   - {from: food.cooking, to: food.cooking.recipe_lab, rel: child}
   - {from: food.cooking, to: food.cooking.cook_journal, rel: child}
+  - {from: food.cooking, to: food.cooking.cocktail_book, rel: child}
   - {from: food.nutrition, to: food.nutrition.nutrition_tracker, rel: child}
   - {from: food.nutrition, to: food.nutrition.habit_trend, rel: child}
   - {from: food.dining, to: food.dining.dining_atlas, rel: child}
   - {from: food.dining, to: food.dining.site_graph, rel: child}
   - {from: food.fermentation, to: food.fermentation.bake_lab, rel: child}
+  - {from: food.fermentation, to: food.fermentation.starter_journal, rel: child}
   - {from: food.coffee, to: food.coffee.brew_lab, rel: child}
+  - {from: food.coffee, to: food.coffee.bean_shelf, rel: child}
   - {from: food.cooking, to: food.dining, rel: adjacent}
   - {from: food.cooking, to: food.fermentation, rel: adjacent}
   - {from: food.cooking.recipe_lab, to: food.dining.dining_atlas, rel: expands_to}

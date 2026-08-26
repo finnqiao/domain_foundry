@@ -1,0 +1,30 @@
+schema_version: 1
+gate: accessibility_manual
+candidate_id: sha256:REPLACE_FROM_CANDIDATE_JSON
+reviewed_commit: REPLACE_WITH_40_CHARACTER_GIT_SHA
+reviewed_at: "YYYY-MM-DDTHH:MM:SS+00:00"
+outcome: pending
+reviewer:
+  identifier: REPLACE_WITH_NAME_OR_PUBLIC_HANDLE
+  relationship: independent
+  expertise: assistive technology and WCAG 2.2
+scope:
+  - first-party Foundry authoring flow
+  - exact owned application for every golden vertical
+  - critical create, correct, export, and recovery journeys
+evidence:
+  - path: release/evidence/reports/accessibility-manual-report.md
+    sha256: REPLACE_WITH_64_CHARACTER_SHA256_AFTER_REPORT_IS_FINAL
+artifacts:
+  wheel: REPLACE_WITH_64_CHARACTER_SHA256
+  sdist: REPLACE_WITH_64_CHARACTER_SHA256
+  sbom: REPLACE_WITH_64_CHARACTER_SHA256
+details:
+  goldens_reviewed: []
+  screen_readers:
+    - REPLACE_WITH_SCREEN_READER_AND_BROWSER
+  keyboard_only: false
+  zoom_200_percent: false
+  reflow_320_css_px: false
+  unresolved_blockers: -1
+attestation: REPLACE_WITH_A_SUBSTANTIVE_HUMAN_ATTESTATION_OF_THE_REVIEW_AND_RESULT

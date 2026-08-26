@@ -1,0 +1,1394 @@
+{
+  "spec_version": "1.0",
+  "id": "whisky-tasting",
+  "title": "Whisky Tasting Bench",
+  "generation": null,
+  "source_ids": [
+    "whiskybase",
+    "postgresql_constraints",
+    "sqlite_foreign_keys",
+    "sqlite_query_planner",
+    "w3c_prov",
+    "govuk_design_principles",
+    "wcag_22",
+    "aria_apg",
+    "ui_remix_paper"
+  ],
+  "source_snapshots": [],
+  "principle_ids": [
+    "DE-01",
+    "DE-02",
+    "DE-03",
+    "DE-04",
+    "DE-05",
+    "DE-06",
+    "DE-08",
+    "UX-01",
+    "UX-02",
+    "UX-04",
+    "UX-05",
+    "UX-06",
+    "UX-07",
+    "UX-10",
+    "SE-01",
+    "SE-03",
+    "SE-04",
+    "SE-10",
+    "SE-11"
+  ],
+  "research": {
+    "interest": "Tasting whisky deliberately and remembering what I actually liked",
+    "desired_outcome": "Choose the next pour and the next bottle from my own palate evidence instead of strangers' ratings",
+    "practice": [
+      "Pour a dram, nose it, taste it, and note nose, palate, and finish while the glass is still in hand",
+      "Keep a shelf of sealed, open, and finished bottles with what each cost and how full it is",
+      "Compare regions, cask types, and peat levels to learn what the palate actually returns to"
+    ],
+    "existing_artifacts": [
+      "notebook tasting notes",
+      "phone photos of labels",
+      "a bottle spreadsheet",
+      "saved ratings from review sites"
+    ],
+    "constraints": [
+      "capture works one-handed with a glass in the other",
+      "original wording of notes is kept verbatim",
+      "useful offline in a dim room"
+    ],
+    "open_questions": [
+      "preferred scoring scale",
+      "whether bar pours and samples belong on the shelf",
+      "whether bottles are shared with a club"
+    ],
+    "usage_context": [
+      "phone in hand mid-dram",
+      "desktop when planning the next purchase"
+    ],
+    "first_value": "Record one dram and see it join that bottle's story with your own words kept verbatim"
+  },
+  "evidence": [
+    {
+      "id": "ev_whisky_catalog",
+      "source_id": "whiskybase",
+      "claim": "Serious whisky tracking separates the distillery, the bottling, and the individual bottle, each with stable identity.",
+      "use": "pattern",
+      "locator": "bottle and distillery catalog structure"
+    },
+    {
+      "id": "ev_whisky_notes",
+      "source_id": "whiskybase",
+      "claim": "Community tasting notes are structured as nose, palate, and finish with an overall score, not one free-text blob.",
+      "use": "pattern",
+      "locator": "tasting note entries"
+    },
+    {
+      "id": "ev_whisky_identity",
+      "source_id": "postgresql_constraints",
+      "claim": "Stable identities and relationships should be explicit and enforceable rather than repeated as text fields.",
+      "use": "constraint",
+      "locator": "primary keys and foreign keys"
+    },
+    {
+      "id": "ev_whisky_lineage",
+      "source_id": "w3c_prov",
+      "claim": "A dram is an observation of a bottle at a time; corrections preserve the original record.",
+      "use": "pattern",
+      "locator": "PROV starting point terms"
+    },
+    {
+      "id": "ev_whisky_workloads",
+      "source_id": "sqlite_query_planner",
+      "claim": "Indexes should follow concrete filtering, joining, and ordering workloads.",
+      "use": "constraint",
+      "locator": null
+    },
+    {
+      "id": "ev_whisky_service",
+      "source_id": "govuk_design_principles",
+      "claim": "Begin with user needs and real context, then do the hard work required to make the service simple.",
+      "use": "pattern",
+      "locator": null
+    },
+    {
+      "id": "ev_whisky_access",
+      "source_id": "wcag_22",
+      "claim": "Keyboard access, focus, reflow, labels, status, and error recovery are release requirements.",
+      "use": "constraint",
+      "locator": null
+    }
+  ],
+  "concepts": [
+    {
+      "id": "shelf_wall",
+      "title": "The Shelf Wall",
+      "thesis": "Make the collection itself the interface and keep tasting a light annotation on top of it.",
+      "primary_loop": "Add a bottle, watch fill levels drop, and browse the wall by region and cask.",
+      "primary_affordance": "A photographic shelf of bottle silhouettes with live fill levels",
+      "differentiator": "Fastest way to answer what is open and what to buy next",
+      "feature_boundary": [
+        "bottle catalog and status",
+        "fill tracking",
+        "region and cask browsing"
+      ],
+      "tradeoffs": [
+        "tasting detail stays shallow",
+        "palate learning is incidental"
+      ],
+      "workflow_ids": [
+        "track_shelf",
+        "pick_pour"
+      ],
+      "evidence_ids": [
+        "ev_whisky_catalog",
+        "ev_whisky_service"
+      ]
+    },
+    {
+      "id": "tasting_bench",
+      "title": "Tasting Bench",
+      "thesis": "Capture the dram while it is in the glass and let every pour deepen one bottle's story.",
+      "primary_loop": "Pour, note nose then palate then finish, score it, and close the app before the glass is empty.",
+      "primary_affordance": "A tri-panel nose/palate/finish dram card with descriptor chips",
+      "differentiator": "The only concept that works one-handed mid-dram without losing structure",
+      "feature_boundary": [
+        "dram capture with serving style",
+        "per-bottle story",
+        "descriptor tagging",
+        "scores over time"
+      ],
+      "tradeoffs": [
+        "collection management is secondary",
+        "analysis arrives only after drams accumulate"
+      ],
+      "workflow_ids": [
+        "record_dram",
+        "revisit_bottle"
+      ],
+      "evidence_ids": [
+        "ev_whisky_notes",
+        "ev_whisky_lineage",
+        "ev_whisky_service"
+      ]
+    },
+    {
+      "id": "palate_atlas",
+      "title": "Palate Atlas",
+      "thesis": "Treat every tagged descriptor as a data point and draw the drinker's actual palate over time.",
+      "primary_loop": "Tag descriptors on each dram, watch the constellation form, and pick the next bottle from a gap in the map.",
+      "primary_affordance": "A descriptor constellation linked back to bottles and regions",
+      "differentiator": "Turns scattered notes into an explicit personal flavor map",
+      "feature_boundary": [
+        "descriptor vocabulary",
+        "recurrence analysis",
+        "next-bottle suggestions from map gaps"
+      ],
+      "tradeoffs": [
+        "needs disciplined tagging before it pays off",
+        "capture is heavier"
+      ],
+      "workflow_ids": [
+        "map_palate",
+        "choose_next"
+      ],
+      "evidence_ids": [
+        "ev_whisky_notes",
+        "ev_whisky_workloads"
+      ]
+    }
+  ],
+  "remix": {
+    "selected_concept": "tasting_bench",
+    "parent_spec": null,
+    "fragments": [
+      {
+        "kind": "visual_system",
+        "from_concept": "shelf_wall",
+        "fragment": "live fill-level shelf rail",
+        "reason": "The bench still needs tonight's answer to what is open without leaving capture.",
+        "evidence_ids": [
+          "ev_whisky_catalog"
+        ]
+      },
+      {
+        "kind": "interaction",
+        "from_concept": "palate_atlas",
+        "fragment": "descriptor chips that feed the palate map",
+        "reason": "Tags captured mid-dram make the atlas possible later without a second pass.",
+        "evidence_ids": [
+          "ev_whisky_notes"
+        ]
+      }
+    ],
+    "user_decisions": [
+      "Score on the 100-point scale I already use",
+      "capture must work one-handed with a glass in the other",
+      "serving style matters: neat, a drop of water, or a highball are different drams"
+    ]
+  },
+  "domain": {
+    "entities": [
+      {
+        "id": "distillery",
+        "title": "Distillery",
+        "kind": "canonical",
+        "description": "The producer, including silent distilleries whose bottles outlive them.",
+        "identity": [
+          "distillery_id"
+        ],
+        "lifecycle": [
+          "active",
+          "silent"
+        ],
+        "fields": [
+          {
+            "name": "distillery_id",
+            "type": "text",
+            "description": "Stable local identity",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_whisky_identity"
+            ]
+          },
+          {
+            "name": "name",
+            "type": "text",
+            "description": "Distillery name",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "region",
+            "type": "text",
+            "description": "Producing region such as Islay, Speyside, Campbeltown, or Kentucky",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "country",
+            "type": "text",
+            "description": "Country of production",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "status",
+            "type": "enum",
+            "description": "Whether stills are running or silent",
+            "required": true,
+            "unit": null,
+            "values": [
+              "active",
+              "silent"
+            ],
+            "sensitive": false,
+            "evidence_ids": []
+          }
+        ],
+        "evidence_ids": [
+          "ev_whisky_catalog",
+          "ev_whisky_identity"
+        ]
+      },
+      {
+        "id": "bottle",
+        "title": "Bottle",
+        "kind": "owned",
+        "description": "One physical bottle on the shelf with its own fill level and life.",
+        "identity": [
+          "bottle_id"
+        ],
+        "lifecycle": [
+          "sealed",
+          "open",
+          "finished",
+          "archived"
+        ],
+        "fields": [
+          {
+            "name": "bottle_id",
+            "type": "text",
+            "description": "Stable bottle identity",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_whisky_identity"
+            ]
+          },
+          {
+            "name": "distillery_id",
+            "type": "text",
+            "description": "Producer of this bottling",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_whisky_identity"
+            ]
+          },
+          {
+            "name": "expression",
+            "type": "text",
+            "description": "Named expression or bottling, like 10 Year or A'bunadh batch 78",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "age_years",
+            "type": "integer",
+            "description": "Age statement in years, empty for NAS bottlings",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "abv_pct",
+            "type": "number",
+            "description": "Bottled strength",
+            "required": true,
+            "unit": "percent",
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "cask_type",
+            "type": "text",
+            "description": "Cask influence, like ex-bourbon, oloroso sherry, or virgin oak",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "bottler",
+            "type": "enum",
+            "description": "Official bottling or independent",
+            "required": true,
+            "unit": null,
+            "values": [
+              "official",
+              "independent"
+            ],
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "peated",
+            "type": "boolean",
+            "description": "Whether the malt is peated",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "status",
+            "type": "enum",
+            "description": "Bottle lifecycle state",
+            "required": true,
+            "unit": null,
+            "values": [
+              "sealed",
+              "open",
+              "finished",
+              "archived"
+            ],
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "fill_level_pct",
+            "type": "number",
+            "description": "How much is left, by eye",
+            "required": false,
+            "unit": "percent",
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "price_paid",
+            "type": "number",
+            "description": "What this bottle cost in local currency",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "acquired_at",
+            "type": "date",
+            "description": "When it joined the shelf",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "label_photo",
+            "type": "attachment",
+            "description": "Label and box photographs",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          }
+        ],
+        "evidence_ids": [
+          "ev_whisky_catalog",
+          "ev_whisky_identity"
+        ]
+      },
+      {
+        "id": "dram",
+        "title": "Dram",
+        "kind": "event",
+        "description": "One pour tasted at a time, with the drinker's words kept verbatim.",
+        "identity": [
+          "dram_id"
+        ],
+        "lifecycle": [
+          "recorded",
+          "corrected",
+          "superseded"
+        ],
+        "fields": [
+          {
+            "name": "dram_id",
+            "type": "text",
+            "description": "Stable event identity",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_whisky_identity"
+            ]
+          },
+          {
+            "name": "bottle_id",
+            "type": "text",
+            "description": "Bottle this pour came from",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_whisky_identity"
+            ]
+          },
+          {
+            "name": "poured_at",
+            "type": "datetime",
+            "description": "When the dram was poured",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_whisky_lineage"
+            ]
+          },
+          {
+            "name": "serving",
+            "type": "enum",
+            "description": "How it was taken",
+            "required": true,
+            "unit": null,
+            "values": [
+              "neat",
+              "drop_of_water",
+              "rocks",
+              "highball"
+            ],
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "nose",
+            "type": "text",
+            "description": "Nose notes in the drinker's own words",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "palate",
+            "type": "text",
+            "description": "Palate notes in the drinker's own words",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "finish",
+            "type": "text",
+            "description": "Finish notes in the drinker's own words",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "score",
+            "type": "integer",
+            "description": "Overall score on the drinker's chosen 100-point scale",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "context",
+            "type": "text",
+            "description": "Company, occasion, or place, when it mattered",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          }
+        ],
+        "evidence_ids": [
+          "ev_whisky_notes",
+          "ev_whisky_lineage"
+        ]
+      },
+      {
+        "id": "flavor_note",
+        "title": "Flavor Note",
+        "kind": "observation",
+        "description": "One tagged descriptor on one dram, the atom of the palate map.",
+        "identity": [
+          "note_id"
+        ],
+        "lifecycle": [
+          "observed",
+          "retracted"
+        ],
+        "fields": [
+          {
+            "name": "note_id",
+            "type": "text",
+            "description": "Stable observation identity",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "dram_id",
+            "type": "text",
+            "description": "Dram this descriptor was tasted in",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": [
+              "ev_whisky_identity"
+            ]
+          },
+          {
+            "name": "descriptor",
+            "type": "text",
+            "description": "Flavor word, like peat smoke, iodine, orchard fruit, sherry, or vanilla",
+            "required": true,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "axis",
+            "type": "enum",
+            "description": "Where it appeared",
+            "required": true,
+            "unit": null,
+            "values": [
+              "nose",
+              "palate",
+              "finish"
+            ],
+            "sensitive": false,
+            "evidence_ids": []
+          },
+          {
+            "name": "intensity",
+            "type": "integer",
+            "description": "Strength of the note from 1 to 5",
+            "required": false,
+            "unit": null,
+            "values": null,
+            "sensitive": false,
+            "evidence_ids": []
+          }
+        ],
+        "evidence_ids": [
+          "ev_whisky_notes",
+          "ev_whisky_lineage"
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "bottle_producer",
+        "from_entity": "bottle",
+        "to_entity": "distillery",
+        "cardinality": "many_to_one",
+        "required": true,
+        "on_delete": "restrict",
+        "description": "Every bottle names its producer once.",
+        "evidence_ids": [
+          "ev_whisky_identity"
+        ]
+      },
+      {
+        "id": "bottle_drams",
+        "from_entity": "dram",
+        "to_entity": "bottle",
+        "cardinality": "many_to_one",
+        "required": true,
+        "on_delete": "restrict",
+        "description": "Every dram is poured from one bottle.",
+        "evidence_ids": [
+          "ev_whisky_identity"
+        ]
+      },
+      {
+        "id": "dram_notes",
+        "from_entity": "flavor_note",
+        "to_entity": "dram",
+        "cardinality": "many_to_one",
+        "required": true,
+        "on_delete": "cascade",
+        "description": "Descriptors belong to the dram they were tasted in.",
+        "evidence_ids": [
+          "ev_whisky_lineage"
+        ]
+      }
+    ],
+    "constraints": [
+      {
+        "id": "sane_strength",
+        "entity": "bottle",
+        "kind": "check",
+        "fields": [
+          "abv_pct"
+        ],
+        "expression": "abv_pct > 0 AND abv_pct <= 85",
+        "reason": "Bottled whisky strength stays within physical limits.",
+        "evidence_ids": [
+          "ev_whisky_identity"
+        ]
+      },
+      {
+        "id": "scored_scale",
+        "entity": "dram",
+        "kind": "check",
+        "fields": [
+          "score"
+        ],
+        "expression": "score >= 0 AND score <= 100",
+        "reason": "Scores stay on the drinker's declared 100-point scale.",
+        "evidence_ids": [
+          "ev_whisky_notes"
+        ]
+      },
+      {
+        "id": "bottle_life",
+        "entity": "bottle",
+        "kind": "state_transition",
+        "fields": [
+          "status"
+        ],
+        "expression": null,
+        "reason": "A bottle cannot be finished before it is opened.",
+        "evidence_ids": [
+          "ev_whisky_catalog"
+        ]
+      }
+    ],
+    "indexes": [
+      {
+        "id": "bottle_story",
+        "entity": "dram",
+        "fields": [
+          "bottle_id",
+          "poured_at"
+        ],
+        "unique": false,
+        "reason": "A bottle's drams are read in pour order every time it is revisited.",
+        "workload_ids": [
+          "w_bottle_story"
+        ]
+      },
+      {
+        "id": "palate_recurrence",
+        "entity": "flavor_note",
+        "fields": [
+          "descriptor",
+          "axis"
+        ],
+        "unique": false,
+        "reason": "The palate map groups descriptors across all drams.",
+        "workload_ids": [
+          "w_palate_map"
+        ]
+      },
+      {
+        "id": "open_shelf",
+        "entity": "bottle",
+        "fields": [
+          "status",
+          "fill_level_pct"
+        ],
+        "unique": false,
+        "reason": "Tonight's answer filters to open bottles by remaining fill.",
+        "workload_ids": [
+          "w_open_shelf"
+        ]
+      }
+    ],
+    "workloads": [
+      {
+        "id": "w_open_shelf",
+        "question": "What is open tonight and how full is each bottle?",
+        "kind": "read",
+        "entities": [
+          "bottle",
+          "distillery"
+        ],
+        "filters": [
+          "status is open"
+        ],
+        "sort": [
+          "fill_level_pct ascending"
+        ],
+        "expected_scale": "tens of bottles",
+        "acceptance": "The open shelf answers in one glance with fill levels and regions visible.",
+        "evidence_ids": [
+          "ev_whisky_catalog",
+          "ev_whisky_workloads"
+        ]
+      },
+      {
+        "id": "w_bottle_story",
+        "question": "How has this bottle tasted across its drams, and is the score drifting?",
+        "kind": "analysis",
+        "entities": [
+          "bottle",
+          "dram"
+        ],
+        "filters": [
+          "bottle_id"
+        ],
+        "sort": [
+          "poured_at ascending"
+        ],
+        "expected_scale": "dozens of drams per bottle",
+        "acceptance": "Every dram's verbatim notes and score line up chronologically with serving style visible.",
+        "evidence_ids": [
+          "ev_whisky_notes",
+          "ev_whisky_workloads"
+        ]
+      },
+      {
+        "id": "w_palate_map",
+        "question": "Which descriptors keep recurring in drams scored 85 or higher?",
+        "kind": "analysis",
+        "entities": [
+          "dram",
+          "flavor_note"
+        ],
+        "filters": [
+          "score at least 85"
+        ],
+        "sort": [
+          "recurrence descending"
+        ],
+        "expected_scale": "hundreds of notes across the shelf",
+        "acceptance": "Recurring descriptors surface with links back to the exact drams that earned them.",
+        "evidence_ids": [
+          "ev_whisky_notes",
+          "ev_whisky_workloads"
+        ]
+      },
+      {
+        "id": "w_rebuy",
+        "question": "Which finished bottles earned a rebuy at their price?",
+        "kind": "analysis",
+        "entities": [
+          "bottle",
+          "dram"
+        ],
+        "filters": [
+          "status is finished"
+        ],
+        "sort": [
+          "mean score descending"
+        ],
+        "expected_scale": "tens of finished bottles",
+        "acceptance": "Finished bottles rank by the drinker's own scores beside what each cost.",
+        "evidence_ids": [
+          "ev_whisky_catalog",
+          "ev_whisky_workloads"
+        ]
+      }
+    ],
+    "state_machines": [
+      {
+        "id": "bottle_lifecycle",
+        "entity": "bottle",
+        "field": "status",
+        "states": [
+          "sealed",
+          "open",
+          "finished",
+          "archived"
+        ],
+        "transitions": [
+          {
+            "from_state": "sealed",
+            "action": "open",
+            "to_state": "open"
+          },
+          {
+            "from_state": "open",
+            "action": "finish",
+            "to_state": "finished"
+          },
+          {
+            "from_state": "finished",
+            "action": "archive",
+            "to_state": "archived"
+          }
+        ],
+        "evidence_ids": [
+          "ev_whisky_catalog"
+        ]
+      }
+    ],
+    "sample_records": {
+      "distillery": [
+        {
+          "distillery_id": "dist-ardbeg",
+          "name": "Ardbeg",
+          "region": "Islay",
+          "country": "Scotland",
+          "status": "active"
+        }
+      ],
+      "bottle": [
+        {
+          "bottle_id": "bottle-ardbeg-10",
+          "distillery_id": "dist-ardbeg",
+          "expression": "10 Year",
+          "age_years": 10,
+          "abv_pct": 46,
+          "cask_type": "ex-bourbon",
+          "bottler": "official",
+          "peated": true,
+          "status": "open",
+          "fill_level_pct": 60,
+          "price_paid": 62,
+          "acquired_at": "2026-06-14"
+        }
+      ],
+      "dram": [
+        {
+          "dram_id": "dram-20260821",
+          "bottle_id": "bottle-ardbeg-10",
+          "poured_at": "2026-08-21T21:40:00+01:00",
+          "serving": "neat",
+          "nose": "peat smoke and iodine, then unexpected orchard fruit",
+          "palate": "ash, smoked pear, black pepper",
+          "finish": "long, tarry, a little sweet at the end",
+          "score": 88,
+          "context": "quiet Friday at home"
+        }
+      ],
+      "flavor_note": [
+        {
+          "note_id": "note-20260821-iodine",
+          "dram_id": "dram-20260821",
+          "descriptor": "iodine",
+          "axis": "nose",
+          "intensity": 4
+        },
+        {
+          "note_id": "note-20260821-orchard",
+          "dram_id": "dram-20260821",
+          "descriptor": "orchard fruit",
+          "axis": "nose",
+          "intensity": 3
+        }
+      ]
+    },
+    "temporal_policy": [
+      "poured_at is the effective tasting time",
+      "captured_at is provenance time",
+      "corrected notes never overwrite the original wording"
+    ],
+    "privacy_policy": [
+      "tasting company and context stay local unless explicitly exported",
+      "prices are never shared in exports by default",
+      "no location is collected"
+    ]
+  },
+  "experience": {
+    "mode": "operate",
+    "visual_world": {
+      "id": "dunnage-bench",
+      "name": "Dunnage Bench",
+      "mood": "Dim, warm, unhurried — a dunnage warehouse shelf lit for one glass",
+      "typography": "A quiet serif for expressions and distilleries with a humanist sans for capture and a monospaced face for ABV and scores",
+      "color_strategy": "Charred-oak darks with amber spirit accents and a cool bottle-green counterpoint; nothing neon, nothing clinical",
+      "layout_principle": "The current dram anchors the viewport; the shelf and the map unfold laterally as evidence, never as a dashboard grid",
+      "density": "Spacious during a pour, compact and aligned when comparing bottles",
+      "signature_elements": [
+        "fill-level bottle silhouettes on the shelf rail",
+        "tri-panel nose/palate/finish dram card",
+        "descriptor constellation that grows with every tagged note"
+      ],
+      "avoid": [
+        "medal and badge gamification",
+        "stock barrel photography",
+        "generic star-rating cards"
+      ],
+      "tokens": {
+        "background": "#1E1A16",
+        "surface": "#2A241E",
+        "text": "#EDE4D6",
+        "muted": "#9C8D7A",
+        "accent": "#C97B2D",
+        "accent_alt": "#5E7C6F",
+        "border": "#453B30",
+        "focus": "#E3A857",
+        "danger": "#B2432F",
+        "radius_px": 10
+      }
+    },
+    "navigation": {
+      "topology": "hub",
+      "primary_view": "bench",
+      "persistent_regions": [
+        "open-bottle switcher",
+        "pour affordance",
+        "provenance status"
+      ]
+    },
+    "views": [
+      {
+        "id": "bench",
+        "title": "The Bench",
+        "purpose": "Capture tonight's dram one-handed and see this bottle's story build.",
+        "layout": "The tri-panel dram card dominates; the bottle's previous drams run as a narrow chronological rail beside it.",
+        "entities": [
+          "bottle",
+          "dram",
+          "flavor_note"
+        ],
+        "workload_ids": [
+          "w_bottle_story"
+        ],
+        "states": [
+          "first_use",
+          "populated",
+          "loading",
+          "empty",
+          "error",
+          "offline",
+          "correction"
+        ],
+        "regions": [
+          {
+            "id": "pour_capture",
+            "kind": "form",
+            "title": "Tonight's dram",
+            "entity": "dram",
+            "workload_id": "w_bottle_story",
+            "emphasis": "primary",
+            "span": 7
+          },
+          {
+            "id": "bottle_story",
+            "kind": "timeline",
+            "title": "This bottle so far",
+            "entity": "dram",
+            "workload_id": "w_bottle_story",
+            "emphasis": "support",
+            "span": 5
+          }
+        ],
+        "actions": [
+          {
+            "id": "pour",
+            "label": "Pour a dram",
+            "operation": "create",
+            "entity": "dram",
+            "consequence": "Records the pour with serving style and starts the note panels."
+          },
+          {
+            "id": "correct_dram",
+            "label": "Correct notes",
+            "operation": "correct",
+            "entity": "dram",
+            "consequence": "Preserves the original wording and records the correction beside it."
+          }
+        ],
+        "evidence_ids": [
+          "ev_whisky_notes",
+          "ev_whisky_access"
+        ]
+      },
+      {
+        "id": "shelf",
+        "title": "Shelf Wall",
+        "purpose": "Answer what is open, what is running low, and what to buy next.",
+        "layout": "Bottle silhouettes with live fill levels lead; the selected bottle's facts sit in an inspector margin.",
+        "entities": [
+          "bottle",
+          "distillery"
+        ],
+        "workload_ids": [
+          "w_open_shelf",
+          "w_rebuy"
+        ],
+        "states": [
+          "first_use",
+          "populated",
+          "empty",
+          "error"
+        ],
+        "regions": [
+          {
+            "id": "shelf_wall",
+            "kind": "catalog",
+            "title": "The shelf",
+            "entity": "bottle",
+            "workload_id": "w_open_shelf",
+            "emphasis": "primary",
+            "span": 8
+          },
+          {
+            "id": "bottle_facts",
+            "kind": "inspector",
+            "title": "Bottle facts",
+            "entity": "bottle",
+            "workload_id": "w_open_shelf",
+            "emphasis": "support",
+            "span": 4
+          }
+        ],
+        "actions": [
+          {
+            "id": "add_bottle",
+            "label": "Add a bottle",
+            "operation": "create",
+            "entity": "bottle",
+            "consequence": "Puts a sealed bottle on the shelf with its producer and strength."
+          },
+          {
+            "id": "open_bottle",
+            "label": "Open it",
+            "operation": "update",
+            "entity": "bottle",
+            "consequence": "Marks the bottle open so it appears in tonight's answer."
+          }
+        ],
+        "evidence_ids": [
+          "ev_whisky_catalog",
+          "ev_whisky_access"
+        ]
+      },
+      {
+        "id": "palate",
+        "title": "Palate Atlas",
+        "purpose": "See which flavors the palate actually returns to and pick the next bottle from a gap.",
+        "layout": "The descriptor constellation fills the stage; high-scoring drams align in a comparison rail beneath it.",
+        "entities": [
+          "flavor_note",
+          "dram",
+          "bottle"
+        ],
+        "workload_ids": [
+          "w_palate_map",
+          "w_rebuy"
+        ],
+        "states": [
+          "first_use",
+          "populated",
+          "empty",
+          "partial",
+          "error"
+        ],
+        "regions": [
+          {
+            "id": "constellation",
+            "kind": "chart",
+            "title": "Your palate so far",
+            "entity": "flavor_note",
+            "workload_id": "w_palate_map",
+            "emphasis": "primary",
+            "span": 8
+          },
+          {
+            "id": "high_scores",
+            "kind": "comparison",
+            "title": "What earned it",
+            "entity": "dram",
+            "workload_id": "w_palate_map",
+            "emphasis": "secondary",
+            "span": 4
+          }
+        ],
+        "actions": [
+          {
+            "id": "reveal_sources",
+            "label": "Show the drams behind this",
+            "operation": "reveal",
+            "entity": "flavor_note",
+            "consequence": "Opens the exact drams and bottles that built the selected cluster."
+          }
+        ],
+        "evidence_ids": [
+          "ev_whisky_notes",
+          "ev_whisky_access"
+        ]
+      }
+    ],
+    "flows": [
+      {
+        "id": "first_dram",
+        "title": "Record the first real dram",
+        "trigger": "User approves the Tasting Bench concept.",
+        "steps": [
+          {
+            "view": "bench",
+            "action": "Name the bottle, pour, and speak or type nose, palate, and finish.",
+            "result": "A dram receipt appears with the drinker's wording verbatim."
+          },
+          {
+            "view": "bench",
+            "action": "Confirm or correct the interpreted serving and score.",
+            "result": "The canonical dram and its provenance are visible in the bottle's story."
+          }
+        ],
+        "success": "The user can point at tonight's dram in the bottle's story and every word is theirs."
+      },
+      {
+        "id": "pick_tonight",
+        "title": "Choose tonight's pour",
+        "trigger": "More than one bottle is open.",
+        "steps": [
+          {
+            "view": "shelf",
+            "action": "Scan open bottles by fill level and region.",
+            "result": "The shelf answers what is open without any query."
+          },
+          {
+            "view": "palate",
+            "action": "Check which descriptors have been missing lately.",
+            "result": "A gap in the constellation suggests the style to pour."
+          }
+        ],
+        "success": "The choice is made from the drinker's own evidence, not a ratings site."
+      }
+    ],
+    "responsive_strategy": [
+      "On phones the dram card's three panels stack in tasting order with the pour action fixed in reach; the shelf becomes a swipeable rail.",
+      "On desktop the bench keeps card and story side by side and the constellation gains hover detail with a full data table alternative."
+    ],
+    "accessibility": {
+      "target": "WCAG-2.2-AA",
+      "patterns": [
+        "native dialog for pour capture",
+        "data table with caption and row headers behind the constellation",
+        "text alternative for every fill-level silhouette"
+      ],
+      "keyboard_model": [
+        "logical order follows dram capture then story then shelf",
+        "constellation clusters are reachable through an adjacent data table",
+        "correction returns focus to the corrected note"
+      ],
+      "manual_checks": [
+        "VoiceOver first-dram journey",
+        "200 percent zoom and reflow",
+        "focus and error identification in the dim theme"
+      ]
+    }
+  },
+  "implementation": {
+    "targets": [
+      "foundry_runtime",
+      "standalone_react"
+    ],
+    "capabilities": [
+      "event_capture",
+      "attachments",
+      "derived_metrics",
+      "comparison",
+      "provenance",
+      "correction"
+    ],
+    "imports": [
+      "CSV bottle list",
+      "Whiskybase collection export",
+      "label photos"
+    ],
+    "exports": [
+      "complete JSON with receipts",
+      "CSV per entity",
+      "label photo manifest",
+      "standalone source repository"
+    ],
+    "migrations": [
+      "versioned schema migrations",
+      "dram records append-only with corrections as revisions",
+      "descriptor vocabulary grows without renames"
+    ],
+    "permissions": [
+      "local file import",
+      "local photo access"
+    ],
+    "adapter_seams": [
+      "capture adapter",
+      "label-photo import adapter",
+      "export adapter"
+    ]
+  },
+  "evaluation": {
+    "cases": [
+      {
+        "id": "whisky_schema_identity",
+        "kind": "schema",
+        "input": "Two bottles of the same expression are on the shelf at once.",
+        "expected": "They remain distinct bottles with independent fill levels and dram histories.",
+        "authored_by": "domain_expert"
+      },
+      {
+        "id": "whisky_invalid_strength",
+        "kind": "schema",
+        "input": "A bottle arrives with 120 percent ABV.",
+        "expected": "The write is rejected before canonical storage.",
+        "authored_by": "independent_reviewer"
+      },
+      {
+        "id": "whisky_first_capture",
+        "kind": "routing",
+        "input": "peated dram, iodine and orchard fruit, 12 year, neat",
+        "expected": "A dram files against the open peated bottle with serving neat and iodine and orchard fruit as nose descriptors.",
+        "authored_by": "user"
+      },
+      {
+        "id": "whisky_bottle_state",
+        "kind": "routing",
+        "input": "opened the Ardbeg 10 tonight, about two-thirds left",
+        "expected": "The Ardbeg 10 bottle moves from sealed to open with fill_level_pct near 66; this is a lifecycle change on the bottle, not a new dram.",
+        "authored_by": "user"
+      },
+      {
+        "id": "whisky_story_workload",
+        "kind": "workload",
+        "input": "40 drams across 30 bottles with 200 flavor notes.",
+        "expected": "The bottle story and palate map load within the local 200 ms budget.",
+        "authored_by": "independent_reviewer"
+      },
+      {
+        "id": "whisky_keyboard",
+        "kind": "accessibility",
+        "input": "Complete the pour and correction journey without a pointer.",
+        "expected": "All controls and status changes are operable and announced.",
+        "authored_by": "standard"
+      },
+      {
+        "id": "whisky_import_injection",
+        "kind": "security",
+        "input": "An imported CSV row carries prompt-like fields and a path.",
+        "expected": "Unknown fields are rejected and no tool or filesystem action occurs.",
+        "authored_by": "independent_reviewer"
+      }
+    ],
+    "release_thresholds": {
+      "schema": "all identity, relationship, constraint, and state-transition cases pass",
+      "experience": "first dram and tonight's-pour flows pass on mobile and desktop",
+      "evidence": "every entity and critical view has an approved derivation"
+    }
+  },
+  "derivations": [
+    {
+      "output_path": "domain.entities",
+      "decision": "Separate distillery, bottle, dram, and flavor note so the producer, the object, the event, and the observation each keep their own lifecycle.",
+      "evidence_ids": [
+        "ev_whisky_catalog",
+        "ev_whisky_identity"
+      ],
+      "user_decision": null
+    },
+    {
+      "output_path": "experience.views.bench",
+      "decision": "Anchor the app on the in-hand dram rather than the collection, because capture happens mid-pour.",
+      "evidence_ids": [
+        "ev_whisky_notes",
+        "ev_whisky_service"
+      ],
+      "user_decision": "Capture must work one-handed with a glass in the other."
+    },
+    {
+      "output_path": "domain.entities.dram.fields.serving",
+      "decision": "Record serving style as a first-class enum because neat and highball are different drams of the same bottle.",
+      "evidence_ids": [
+        "ev_whisky_notes"
+      ],
+      "user_decision": "Serving style matters — neat, a drop of water, or a highball are different drams."
+    },
+    {
+      "output_path": "domain.indexes.palate_recurrence",
+      "decision": "Index flavor notes by descriptor and axis for the recurrence workload behind the palate map.",
+      "evidence_ids": [
+        "ev_whisky_workloads"
+      ],
+      "user_decision": null
+    },
+    {
+      "output_path": "experience.visual_world",
+      "decision": "Use a dim dunnage-warehouse world with amber accents instead of ratings-site cards, matching where drams are actually tasted.",
+      "evidence_ids": [
+        "ev_whisky_notes"
+      ],
+      "user_decision": "Score on the 100-point scale I already use."
+    }
+  ]
+}

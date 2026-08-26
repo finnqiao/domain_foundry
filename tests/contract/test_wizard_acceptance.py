@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from tests.conftest import land_wizard
 
 from domain_foundry_core.api.harness import HarnessAPI
 from domain_foundry_core.llm.provider import CompletionResult, LLMProvider, TokenUsage
@@ -22,7 +23,6 @@ from domain_foundry_core.wizard.acceptance import (
     select_cases,
 )
 from domain_foundry_core.wizard.shortlist import analog_few_shots
-from tests.conftest import land_wizard
 
 SUITE = Path("examples/heldout/wizard_hobby_suite.jsonl")
 REVIEW_8 = [case for case in load_suite(SUITE) if "review-8" in (case.get("tags") or [])]

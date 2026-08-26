@@ -19,6 +19,13 @@ rules:
     operation: create
     confidence_boost: 0.1
 
+  # The words an engineering journal is actually written in. Without these a
+  # dev pack cannot file "flake in the test, repro on main".
+  - match: "(\\bflake\\b|\\bflaky\\b|\\brepro\\b|\\brepro'?d\\b|\\bregression\\b|race condition|\\bheisenbug\\b|\\btraceback\\b|stack trace)"
+    object: gotcha
+    operation: create
+    confidence_boost: 0.14
+
 examples:
   - text: "gotcha: sqlite busy_timeout must be set before WAL or writers stall"
     expect: {object: gotcha, operation: create}
@@ -40,6 +47,10 @@ examples:
     expect: {object: decision, operation: create}
   - text: "watch out: bare 'run' matched investing prose in the old classifier"
     expect: {object: gotcha, operation: create}
+  - text: "flake in the auth suite, repro only on a cold cache"
+    expect: {object: gotcha, operation: create}
+  - text: "regression: the race condition came back after the retry patch"
+    expect: {object: gotcha, operation: create}
 
 negative_examples:
   - text: "decided to order ramen tonight"
@@ -50,4 +61,6 @@ llm_hints: >
   Dev cards are engineering notes: decisions, gotchas, patterns, and work
   sessions. Prefer gotcha when the message warns about a trap; decision when
   choosing among options; pattern for reusable conventions; session for a
-  day's work summary. Do not capture food/travel/health life events here.
+  day's work summary. A flake, a repro, or a regression is a gotcha — the
+  trigger is what made it appear. Do not capture food/travel/health life
+  events here.

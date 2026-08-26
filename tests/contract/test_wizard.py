@@ -11,11 +11,11 @@ from __future__ import annotations
 import sqlite3
 
 import pytest
+from tests.conftest import land_wizard
 
 from domain_foundry_core.api.harness import HarnessAPI
 from domain_foundry_core.packs.schema_compiler import table_name
 from domain_foundry_core.wizard.blueprint import build_blueprint, write_pack
-from tests.conftest import land_wizard
 
 # ≥10 golden goal-statements (incl. "sourdough journey"): archetypes + generic.
 GOLDEN_GOALS = [
@@ -50,6 +50,13 @@ def test_golden_goal_generates_valid_routing_pack(workspace, monkeypatch, goal):
 
     turn = api.new_domain(goal)
     if turn.get("state") == "fork":
+        turn = api.wizard_reply(turn["session_id"], "skip")
+    if turn.get("state") == "looks":
+        turn = api.wizard_reply(turn["session_id"], "build it")
+    # An unindexed goal ("model rocket launches") asks for two sentences first.
+    # Declining is the honest fallback, and the golden-goal guarantee — a pack
+    # that routes its own examples ≥95% — has to survive it.
+    while turn.get("state") == "elicit":
         turn = api.wizard_reply(turn["session_id"], "skip")
     assert turn["state"] == "test_drive", turn.get("message")
     name = turn.get("pack", {}).get("name") or turn.get("domain")
@@ -218,6 +225,8 @@ def test_session_is_resumable(workspace, monkeypatch):
     # A brand-new HarnessAPI (fresh process) resumes the persisted session.
     api2 = HarnessAPI(workspace.home)
     resumed = api2.wizard_reply(sid, "skip")
+    if resumed["state"] == "looks":
+        resumed = api2.wizard_reply(sid, "build it")
     assert resumed["state"] == "test_drive"
     assert resumed["pack"]["name"] == "coffee"
 
@@ -254,6 +263,12 @@ def test_wizard_http_journey(workspace, monkeypatch):
     landed = client.post(f"/api/wizard/{fork['session_id']}/reply", json={"text": "skip"})
     assert landed.status_code == 200
     turn = landed.json()
+    if turn["state"] == "looks":
+        landed = client.post(
+            f"/api/wizard/{fork['session_id']}/reply", json={"text": "build it"}
+        )
+        assert landed.status_code == 200
+        turn = landed.json()
     assert turn["state"] == "test_drive"
     assert turn["pack"]["name"] == "running"
     assert turn["awaiting"] == "capture"
@@ -271,6 +286,8 @@ def test_activated_copy_is_scaffold_language(workspace, monkeypatch):
     first = api.new_domain("log my running")
     assert first["state"] == "fork"
     turn = api.wizard_reply(first["session_id"], "skip")
+    if turn["state"] == "looks":
+        turn = api.wizard_reply(first["session_id"], "build it")
     assert turn["state"] == "test_drive"
     assert "ready" in turn["message"].lower() or "simple log" in turn["message"].lower()
     assert "is live (v" not in turn["message"]
@@ -285,7 +302,10 @@ def test_new_domain_always_forks_and_analog_waits_for_pick(workspace, monkeypatc
     assert fork["state"] == "fork"
     assert fork.get("pack") is None
     assert fork.get("neighborhood", {}).get("ideas")
-    landed = api.wizard_reply(fork["session_id"], "skip")
+    looks = api.wizard_reply(fork["session_id"], "skip")
+    assert looks["state"] == "looks"
+    assert looks.get("pack") is None
+    landed = api.wizard_reply(fork["session_id"], "build it")
     assert landed["design_mode"] == "starter"
     assert landed["pack"]["name"] == "plants"
 
@@ -299,7 +319,9 @@ def test_picked_idea_compiles_when_analog_is_not_1_to_1(workspace, monkeypatch):
     kids = " ".join(c["title"] for c in fork["neighborhood"]["refine"]).lower()
     assert "freediving" in kids
     assert "photo" in kids
-    landed = api.wizard_reply(fork["session_id"], "dive log")
+    looks = api.wizard_reply(fork["session_id"], "dive log")
+    assert looks["state"] == "looks"
+    landed = api.wizard_reply(fork["session_id"], "build it")
     assert landed["state"] == "test_drive"
     assert landed["design_mode"] in {"atlas", "scaffold", "llm"}
     assert landed["pack"]["name"] != "plants"

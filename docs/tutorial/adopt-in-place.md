@@ -8,7 +8,7 @@ moves, edits, or cancels anything you already do.
 Three things you'll do, in any order:
 
 1. **Install alongside** — nothing existing is touched.
-2. **Point it at notes/logs you already have** — read-only, and let the models
+2. **Point it at notes/logs you already have** — read-only, and let it
    file them into the right foundry (or a particular one).
 3. **Add it to your Hermes** — an additive plugin, so new captures flow in too.
 
@@ -16,10 +16,15 @@ Three things you'll do, in any order:
 
 ## 1. Install alongside
 
+Packages are not on PyPI yet. From a checkout of this repo:
+
 ```bash
-pipx install domain-foundry-core        # isolated; nothing else on your machine changes
+pip install -e .
 domain-foundry init                     # a fresh workspace at ~/.domain_foundry
 ```
+
+Once the packages are on PyPI, an isolated pipx install of the core package will
+work. Until then, the checkout is the install.
 
 `init` creates its **own** two SQLite files. It does not read, move, or modify
 your Hermes databases, your vault, or your config. Point it somewhere else with
@@ -27,39 +32,44 @@ your Hermes databases, your vault, or your config. Point it somewhere else with
 
 ## 2. Pull in notes and logs you already have
 
-First, stand up the foundry you care about (or several):
+First, stand up the foundry you care about. `skip` only accepts the suggested
+idea and shows a look. Nothing is live until you say **build it** (or, on the
+bake log, **the scatter one**):
 
 ```bash
-domain-foundry new-domain "track my bouldering climbing sessions" --reply skip
+domain-foundry new-domain "i have a log of sourdough bakes" --reply skip --reply "build it"
 ```
+
+Same loop, spoken: options → a look → build it. Walk it as a story:
+**[Bring the log. Pick a look.](end-to-end.html)**.
 
 Then point `ingest` at an existing folder or file. **Preview first with
 `--dry-run`** — it reads your files and shows where each note *would* land,
 writing nothing:
 
 ```console
-$ domain-foundry ingest ~/Notes/climbing --dry-run
+$ domain-foundry ingest ~/Notes/baking --dry-run
 {
   "scanned": 4,
   "captured": 0,
   "dry_run": true,
-  "by_domain": { "bouldering": 3 },
+  "by_domain": { "sourdough": 3 },
   "unfiled": 1
 }
 ```
 
-Three climbing notes route to **bouldering**; the one stray note stays unfiled
+Three bake notes file to **sourdough**; the one stray note waits in Inbox
 (never dropped). Happy with it? Drop `--dry-run`:
 
 ```console
-$ domain-foundry ingest ~/Notes/climbing
-{ "scanned": 4, "captured": 4, "skipped_existing": 0, "by_domain": { "bouldering": 3 }, "unfiled": 1 }
+$ domain-foundry ingest ~/Notes/baking
+{ "scanned": 4, "captured": 4, "skipped_existing": 0, "by_domain": { "sourdough": 3 }, "unfiled": 1 }
 ```
 
 Run it again tomorrow and it only picks up what's new:
 
 ```console
-$ domain-foundry ingest ~/Notes/climbing
+$ domain-foundry ingest ~/Notes/baking
 { "scanned": 4, "captured": 0, "skipped_existing": 4, ... }
 ```
 
@@ -70,13 +80,13 @@ $ domain-foundry ingest ~/Notes/climbing
   asserts every source byte is unchanged after an ingest.)
 - **Idempotent.** Captures are keyed on `(channel, source_ref)`, so re-running is
   a safe no-op — import a folder daily on a cron without fear of duplicates.
-- **Never dropped.** A note that doesn't match any active foundry becomes an
-  unfiled card, not a deletion.
+- **Never dropped.** A note that doesn't match any active foundry waits in
+  Inbox, not a deletion.
 
-**Let the models pick, or aim at one foundry.** By default the router files each
-note into whichever active domain fits best — that's the `--dry-run` preview
+**Let it pick, or aim at one foundry.** By default each note files into
+whichever active interest fits best — that's the `--dry-run` preview
 above. Want everything in one place instead? Activate just that foundry and
-ingest; matching notes land there, the rest stay unfiled for later.
+ingest; matching notes land there, the rest wait in Inbox for later.
 
 **Logs vs notes.** `--split file` (default) makes one capture per file — right for
 notes. `--split lines` makes one per line — right for append-only journals and
@@ -86,18 +96,18 @@ logs. Narrow what's read with `--glob '*.md'` and cap a first run with `--limit`
 new (idempotency does the rest):
 
 ```console
-$ domain-foundry ingest ~/Notes/climbing --watch --interval 30
-Watching ~/Notes/climbing every 30s — Ctrl-C to stop.
-scan: +3 new, 0 unchanged, by_domain={'bouldering': 3}
+$ domain-foundry ingest ~/Notes/baking --watch --interval 30
+Watching ~/Notes/baking every 30s — Ctrl-C to stop.
+scan: +3 new, 0 unchanged, by_domain={'sourdough': 3}
 scan: +0 new, 3 unchanged, by_domain={}
-scan: +1 new, 3 unchanged, by_domain={'bouldering': 1}   ← you added a note
+scan: +1 new, 3 unchanged, by_domain={'sourdough': 1}   ← you added a note
 ```
 
 ## 3. Structured sources (a database or export)
 
-If the data already has a schema — a SQLite table, a JSON/JSONL export — use the
+If the data already has columns — a SQLite table, a JSON/JSONL export — use the
 mapping-driven importer instead of free-text ingest. A short YAML maps source
-rows to a domain's objects and fields; dry-run is the default:
+rows to a foundry's objects and fields; dry-run is the default:
 
 ```bash
 # preview: where would every row land? (writes nothing)
@@ -162,15 +172,15 @@ Prefer to keep your default gateway pristine while you try it? Clone a throwaway
 profile first (`hermes profile create domainfoundry --clone`) and enable it only
 there. Either way your existing tools, skills, and config are untouched.
 
-## 5. Reuse pack folders you already keep
+## 5. Reuse definition folders you already keep
 
-If you maintain domain packs somewhere already (a private repo, a shared folder),
-point Domain Foundry at them without moving anything — a same-named pack in your
-overlay wins over the bundled one:
+If you maintain interest definitions somewhere already (a private repo, a shared
+folder), point Domain Foundry at them without moving anything — a same-named
+folder in your overlay wins over the bundled one:
 
 ```bash
 export DOMAIN_FOUNDRY_PACKS_PATH=~/HermesWorkspace/packs
-domain-foundry pack list        # includes your overlay packs
+domain-foundry pack list        # includes your overlay
 ```
 
 ---
@@ -180,7 +190,7 @@ domain-foundry pack list        # includes your overlay packs
 - Never writes to, moves, or renames your source notes and logs.
 - Never opens your private databases anything but read-only.
 - Never edits your Hermes config, profiles, skills, or default gateway.
-- Never routes a note into a foundry above your confidence policy without a
+- Never files a note into a foundry above your confidence policy without a
   review — and never silently drops one.
 
 ## No terminal? Use "Add a source" in the app

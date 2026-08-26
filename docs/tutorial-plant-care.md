@@ -211,4 +211,4 @@ migratable forever.
   ([evaluation replay](concepts/replay.md)).
 - Contribute it: open a **pack submission** issue (see the
   [gallery](gallery.md#community-candidate-list) and
-  [Contributing](../CONTRIBUTING.md)).
+  [Contributing](https://github.com/finnqiao/domain_foundry/blob/main/CONTRIBUTING.md)).

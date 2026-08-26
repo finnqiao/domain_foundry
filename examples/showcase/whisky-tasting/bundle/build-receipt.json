@@ -1,0 +1,46 @@
+{
+  "spec_id": "whisky-tasting",
+  "spec_version": "1.0",
+  "generated_at": "2026-08-24T04:38:23.764000Z",
+  "compiler": "domain-foundry-core/foundry-spec-1.1",
+  "artifacts": {
+    "foundry-spec.json": "a66c263b8bb6884ef55a8d96a1746ee5d52e8ff4459fa58edee3b5fbc2c52771",
+    "schema.sql": "23b3ed2f59bc745eb8adc4bc0991864fed2348e24daea29dd42f421fbe874762",
+    "app.html": "65fe631651ca2734d37c1c3d76a3237d3369a9ead371fd6675fd9ee2071ef1e9",
+    "evidence.json": "eb85a2795f15de2e75b5207f22271e7c71b82c13728ce7f192f4ab68225c02b5",
+    "README.md": "803e8fed97a50cbde1df7457884d81a17939b35587e4d0d1075356886a729594"
+  },
+  "sources": [
+    "whiskybase",
+    "postgresql_constraints",
+    "sqlite_foreign_keys",
+    "sqlite_query_planner",
+    "w3c_prov",
+    "govuk_design_principles",
+    "wcag_22",
+    "aria_apg",
+    "ui_remix_paper"
+  ],
+  "principles": [
+    "DE-01",
+    "DE-02",
+    "DE-03",
+    "DE-04",
+    "DE-05",
+    "DE-06",
+    "DE-08",
+    "UX-01",
+    "UX-02",
+    "UX-04",
+    "UX-05",
+    "UX-06",
+    "UX-07",
+    "UX-10",
+    "SE-01",
+    "SE-03",
+    "SE-04",
+    "SE-10",
+    "SE-11"
+  ],
+  "generation": null
+}

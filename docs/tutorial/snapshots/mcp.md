@@ -24,29 +24,50 @@ _Driven over real stdio MCP `tools/call`, exactly as an MCP client does._
 
 ### new_domain
 {
-  "session_id": "wz_01M02EMFHKARDE4NSBP5CRB1F0",
+  "session_id": "wz_01M0CBP7GRFZZDWPCF1TT3BGDJ",
   "state": "fork",
-  "domain": null
+  "domain": null,
+  "ideas": [
+    "Set completion",
+    "Collection dex",
+    "Card dex",
+    "Pull log"
+  ]
 }
 
-### wizard_reply(skip)
+### wizard_reply(looks)
+{
+  "state": "looks",
+  "looks": [
+    {
+      "idea_id": "collecting.catalog.card_dex",
+      "title": "Card dex",
+      "hero_job": "media_dex",
+      "round": 1,
+      "pitch": "Each card you own, with a photo \u2014 binder pages you can search."
+    }
+  ],
+  "html_in_payload": false
+}
+
+### wizard_reply(build it)
 {
   "state": "test_drive",
-  "domain": "bouldering"
+  "domain": "pokemon"
 }
 
 ### capture
 {
   "status": "applied",
-  "domain": "bouldering",
-  "object_type": "entry",
-  "confidence": 0.95
+  "domain": "pokemon",
+  "object_type": "card",
+  "confidence": 0.97
 }
 
 ### query
 {
   "rows": 1,
-  "first": "good bouldering session at the gym, felt strong"
+  "first": "pulled a holographic Charizard from a 151 booster, NM"
 }
 
 ### ask
@@ -59,7 +80,10 @@ _Driven over real stdio MCP `tools/call`, exactly as an MCP client does._
 {
   "action": "amend",
   "applied": true,
-  "eval_case": true
+  "eval_case": true,
+  "fields": {
+    "notes": "LP"
+  }
 }
 
 ### review_list

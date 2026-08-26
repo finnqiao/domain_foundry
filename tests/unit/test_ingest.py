@@ -6,9 +6,10 @@ import os
 
 os.environ.setdefault("DOMAIN_FOUNDRY_LLM", "heuristic")
 
+from tests.conftest import land_wizard
+
 from domain_foundry_core.api.harness import HarnessAPI
 from domain_foundry_core.ingest import ingest, iter_records
-from tests.conftest import land_wizard
 
 
 def _notes(tmp_path):

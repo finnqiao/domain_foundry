@@ -29,6 +29,17 @@ CAPTURE_FIRST_GUIDANCE = (
 )
 
 
+def _wizard_tool_payload(turn: dict[str, Any]) -> dict[str, Any]:
+    """Copy a wizard turn and drop look HTML so tool context stays small."""
+    from domain_foundry_core.wizard.engine import looks_public
+
+    if not isinstance(turn, dict) or "looks" not in turn:
+        return turn
+    out = dict(turn)
+    out["looks"] = looks_public(turn.get("looks"), include_html=False)
+    return out
+
+
 class _Harness:
     """Thin in-process wrapper around HarnessAPI (self-contained, no HTTP)."""
 
@@ -134,17 +145,20 @@ def build_server(home: Path | str | None = None) -> FastMCP:
 
     @mcp.tool()
     def domain_foundry_new_domain(goal: str, test_drive: int = 5) -> dict[str, Any]:
-        """Start the idea-atlas wizard. Returns a neighborhood (refine / expand /
-        idea cards) and a session id — never an installed pack. Continue with
-        domain_foundry_wizard_reply until the user commits an idea. Do not pick
-        for them."""
-        return api.new_domain(goal, test_drive=test_drive)
+        """Start the idea-atlas wizard. Returns idea options (and later HTML looks)
+        plus a session id — never an installed pack. Relay the options and looks.
+        Do not pick an idea or a look for them. If they have photos, OCR them
+        yourself and send the text; Foundry ingests text folders, not images.
+        Continue with domain_foundry_wizard_reply until they accept a look."""
+        return _wizard_tool_payload(api.new_domain(goal, test_drive=test_drive))
 
     @mcp.tool()
     def domain_foundry_wizard_reply(session_id: str, text: str) -> dict[str, Any]:
-        """Send one reply to an open wizard session (pick an idea, refine a
-        topic, 'just a simple log', 'show schema', or 'skip')."""
-        return api.wizard_reply(session_id, text)
+        """Send one reply to an open wizard session (pick an idea, describe a
+        look, critique HTML, paste a notes folder path, or 'build it').
+        Wait for idea plus an accepted look before treating the domain as live.
+        Do not pick for the user."""
+        return _wizard_tool_payload(api.wizard_reply(session_id, text))
 
     @mcp.tool()
     def domain_foundry_atlas_search(goal: str, cursor_id: str | None = None) -> dict[str, Any]:

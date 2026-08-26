@@ -21,10 +21,13 @@ words, not the source of truth.
   `domain_foundry_review_list`; only call `domain_foundry_review_resolve` after the
   user explicitly approves or rejects.
 - The user wants to **track a brand-new kind of thing** → call
-  `domain_foundry_new_domain` and relay the idea-atlas neighborhood (refine /
-  expand / idea cards). Do not pick an idea for them. Continue with
-  `domain_foundry_wizard_reply`. Use `domain_foundry_atlas_search` to browse
-  without installing.
+  `domain_foundry_new_domain` and relay the idea options (pitches, not a
+  taxonomy). Do not pick an idea or a look for them. Continue with
+  `domain_foundry_wizard_reply` through **looks** until they accept one
+  (`build it` / `the scatter one`). If they have photos or a notebook scan,
+  **OCR them yourself** and send the text; Foundry files text and can ingest a
+  notes folder path. Use `domain_foundry_atlas_search` to browse without
+  installing.
 
 ## Rules
 
@@ -39,12 +42,20 @@ words, not the source of truth.
 
 ## Example
 
-> User: "baked a 75% hydration country loaf, bulk 5h, came out great"
+> User: "i collect pokemon cards"
 
-→ `domain_foundry_capture(text="baked a 75% hydration country loaf, bulk 5h, came out great")`
-   → receipt: routed to `sourdough.bake`, applied.
+→ `domain_foundry_new_domain` → relay the idea options (Card dex is one). Do not pick.
 
-> User: "oops that was 80% hydration not 75"
+> User: "a dex of the cards i own with photos"
 
-→ `domain_foundry_correct(text="that bake was 80% hydration not 75")`
-   → receipt: revision on the same bake, `hydration: 75 → 80`.
+→ `domain_foundry_wizard_reply` → looks. Wait until they accept (`build it`).
+
+> User: "pulled a holographic Charizard from a 151 booster, NM"
+
+→ `domain_foundry_capture(text="pulled a holographic Charizard from a 151 booster, NM")`
+   → receipt: routed to `pokemon.card`, applied.
+
+> User: "that Charizard was LP not NM"
+
+→ `domain_foundry_correct(text="that Charizard was LP not NM")`
+   → receipt: revision on the same card, `notes: LP`.

@@ -15,7 +15,7 @@ The web app today renders a capture box, Install buttons, correction actions, re
 - Follow the [PR sequencing](#pr-sequencing). Do not merge S0.1 without S0.2 in the same PR — the suite must stay green at every merge.
 - Line references use `L<n>` and are 1-based, matching `cat -n` / editor gutters.
 - Where this plan's source brief contradicted the code, the code won; each case is listed in [Discrepancies found while drafting](#discrepancies-found-while-drafting).
-- Run all commands from the repo root (`/Users/finn/dev/domain_foundry` on the current machine) with the repo venv active (`source .venv/bin/activate`) unless a command says otherwise.
+- Run all commands from the repository root with the repo venv active (`source .venv/bin/activate`) unless a command says otherwise.
 
 ## Locked decisions
 
