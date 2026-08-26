@@ -182,11 +182,10 @@ def progress_for(session: Any, turn: dict[str, Any] | None = None) -> list[dict[
         getattr(session, "elicited_samples", []) or []
     ) >= 2
     has_pack = bool((turn or {}).get("pack")) or bool(getattr(session, "pack_path", None))
-    real_captures = int(
-        (turn or {}).get("real_captures")
-        if (turn or {}).get("real_captures") is not None
-        else getattr(session, "real_captures", 0)
-    )
+    real_captures_value = (turn or {}).get("real_captures")
+    if real_captures_value is None:
+        real_captures_value = getattr(session, "real_captures", 0)
+    real_captures = int(str(real_captures_value or 0))
     acceptance_done = bool(acceptance.get("covered")) or has_second_note
 
     order = [

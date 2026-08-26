@@ -1726,11 +1726,12 @@ def _run_creation(
         raise typer.BadParameter("a goal is required with --json")
     if not goal:
         goal = typer.prompt("What would you like an app for?")
-    if not goal.strip():
+    goal_text = str(goal).strip()
+    if not goal_text:
         raise typer.BadParameter("tell us what you want the app for")
 
     api = HarnessAPI(home)
-    turn = api.create_domain(goal.strip(), test_drive=test_drive)
+    turn = api.create_domain(goal_text, test_drive=test_drive)
     session_id = str(turn["session_id"])
     if json_output:
         typer.echo(json.dumps(turn, indent=2, ensure_ascii=False))
