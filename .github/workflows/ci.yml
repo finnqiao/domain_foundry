@@ -16,6 +16,9 @@ jobs:
         python-version: ["3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
@@ -35,6 +38,9 @@ jobs:
           # `domain-foundry-core` requirement resolves to the editable root
           # install above without touching PyPI (where it is not published yet).
           pip install -e ./adapters/mcp -e ./adapters/telegram -e ./adapters/hermes_agent
+      - name: Install JavaScript dependencies for license tests
+        working-directory: app
+        run: npm ci
       - name: Ruff
         run: ruff check core tests scripts adapters
       - name: Pyright

@@ -7,6 +7,7 @@ import hashlib
 import json
 import sqlite3
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -147,7 +148,7 @@ def audit() -> list[str]:
     ]
     before = {path: _digest(path) if path.is_file() else None for path in prototype_paths}
     process = subprocess.run(
-        [str(ROOT / ".venv" / "bin" / "python"), "scripts/build_foundry_prototypes.py"],
+        [sys.executable, "scripts/build_foundry_prototypes.py"],
         cwd=ROOT,
         capture_output=True,
         text=True,

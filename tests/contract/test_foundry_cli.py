@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 from typer.testing import CliRunner
 
 from domain_foundry_core.cli import app
 from domain_foundry_core.foundry.loader import DEFAULT_GOLDENS
+
+
+def _plain_output(output: str) -> str:
+    """Keep CLI contracts stable when CI captures Rich's ANSI styling."""
+    return re.sub(r"\x1b\[[0-9;]*m", "", output)
 
 
 def test_foundry_lists_three_distinct_goldens() -> None:
@@ -56,7 +62,7 @@ def test_foundry_propose_requires_user_authored_acceptance_tasks(tmp_path: Path)
         ],
     )
     assert result.exit_code == 2
-    assert "repeat --task at least twice" in result.output
+    assert "repeat --task at least twice" in _plain_output(result.output)
 
 
 def test_foundry_complete_requires_an_explicit_user_decision(tmp_path: Path) -> None:
@@ -73,4 +79,4 @@ def test_foundry_complete_requires_an_explicit_user_decision(tmp_path: Path) -> 
         ],
     )
     assert result.exit_code == 2
-    assert "at least one --decision" in result.output
+    assert "at least one --decision" in _plain_output(result.output)
