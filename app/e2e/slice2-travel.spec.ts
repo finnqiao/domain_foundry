@@ -2,9 +2,6 @@ import { expect, test } from "@playwright/test";
 
 test("travel packing uses the declarative apply action and pack accent", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Your passions", exact: true }).click();
-  await page.locator(".catalog-card").filter({ hasText: "Travel Planner" }).getByRole("button", { name: "Install" }).click();
-  await expect(page).toHaveURL(/\/passions\/travel(?:\/trips)?$/);
 
   let packed = false;
   const applied: Record<string, unknown>[] = [];
@@ -34,6 +31,9 @@ test("travel packing uses the declarative apply action and pack accent", async (
     await route.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, applied: true }) });
   });
 
+  await page.getByRole("button", { name: "Your passions", exact: true }).click();
+  await page.locator(".catalog-card").filter({ hasText: "Travel Planner" }).getByRole("button", { name: "Install" }).click();
+  await expect(page).toHaveURL(/\/passions\/travel(?:\/trips)?$/);
   await page.getByRole("tab", { name: "Packing" }).click();
   await expect(page.getByRole("button", { name: "Passport", exact: true })).toBeVisible();
   await expect(page.locator(".domain-view")).toHaveAttribute("style", /--domain-accent/);

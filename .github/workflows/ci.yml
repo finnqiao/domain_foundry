@@ -43,7 +43,7 @@ jobs:
         # No bare datetime.now()/utcnow() outside the injectable clock provider.
         run: python scripts/clock_audit.py
       - name: Pytest
-        run: pytest
+        run: PYTHONPATH=. pytest
       - name: Eval corpus replay (regression gate)
         # PR gate: deterministic cassette replay of the synthetic corpus, scored
         # per pack and diffed against the committed baseline snapshot. Fails on
