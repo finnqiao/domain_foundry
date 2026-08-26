@@ -16,7 +16,7 @@ jobs:
           # leaks found in partial scan" — a secret-scanning gate that silently
           # scans nothing is worse than one that fires wrongly.
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Block sqlite / binaries / private remotes
