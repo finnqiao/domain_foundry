@@ -49,7 +49,7 @@ def suggest_neighbor(
     practice_title = practice[0].title if practice else cursor.title
     analog = ""
     if idea.world_analogs:
-        analog = f" — like {idea.world_analogs[0].name}"
+        analog = f", like {idea.world_analogs[0].name}"
     edit = _apply_edit_for(idea)
     return {
         "domain": domain,
@@ -152,7 +152,7 @@ def _neighbor_ideas(
 
 
 def _capture_blob(workspace: Workspace, domain: str) -> str:
-    """Recent capture text, including unfiled cards — residue often never routes."""
+    """Recent capture text, including unfiled cards. Residue often never routes."""
     parts: list[str] = []
     conn = connect_ro(workspace.ledger_db)
     try:

@@ -36,6 +36,12 @@ ALLOWED_BINARY_SUFFIXES = {
     ".woff2",
     ".ttf",
 }
+# Binaries allowed only inside one directory, because that directory exists to
+# hold sample inputs. An .xlsx anywhere else is still a finding: it is a zip and
+# can carry anything.
+ALLOWED_BINARY_BY_PREFIX = {
+    "examples/seed-fixtures/": {".xlsx"},
+}
 FORBIDDEN_REMOTE_RE = re.compile(
     r"(HermesWorkspace|finn.?hermes|/Users/[^/]+/Hermes)", re.IGNORECASE
 )
@@ -80,6 +86,8 @@ EMAIL_ALLOW_SUFFIXES = (
     "@example.com",
     "@example.org",
     "@example.net",
+    # RFC 6761 reserves .invalid, so an address here can never be a real one.
+    "@example.invalid",
     "@localhost",
     "@corp.io",  # sanitizer fixture domain
     "@test.local",
@@ -252,7 +260,11 @@ def scan(*, history: bool = False) -> list[str]:
         if path.suffix.lower() in BLOCKED_SUFFIXES:
             errors.append(f"blocked database file tracked: {rel}")
         if path.suffix.lower() not in ALLOWED_BINARY_SUFFIXES and _is_probably_binary(path):
-            if path.suffix.lower() not in {".lock"}:
+            allowed_here = any(
+                str(rel).startswith(prefix) and path.suffix.lower() in suffixes
+                for prefix, suffixes in ALLOWED_BINARY_BY_PREFIX.items()
+            )
+            if path.suffix.lower() not in {".lock"} and not allowed_here:
                 errors.append(f"binary file not on allowlist: {rel}")
 
     git_config = ROOT / ".git" / "config"

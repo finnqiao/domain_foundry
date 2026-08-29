@@ -87,8 +87,8 @@ class LLMBlueprintDesigner:
                 if split
                 else "Prefer ONE object unless catalog+event is clearly needed. "
             )
-            + "Pick 5–8 key fields a real person would log — identity, when, measures, "
-            "a few enums — not title/rating/amount. Every example must contain a word "
+            + "Pick 5 to 8 key fields a real person would log: identity, when, measures, "
+            "a few enums. Not title/rating/amount. Every example must contain a word "
             "unique to its object. Include jargon and ≥10 example utterances "
             "(≥3 without the interest name) with expected field maps."
         )
@@ -123,8 +123,8 @@ class LLMBlueprintDesigner:
     def _round_trip(self, blueprint: dict[str, Any]) -> None:
         """Write + validate; drop self-inconsistent routing examples once.
 
-        Models often emit example phrases that L1 cannot yet match.  Those are
-        teachable later — they must not force a silent scaffold fallback when
+        Models often emit example phrases that L1 cannot yet match. Those are
+        teachable later. They must not force a silent scaffold fallback when
         the schema itself is sound.
         """
         from domain_foundry_core.packs.loader import PackValidationError

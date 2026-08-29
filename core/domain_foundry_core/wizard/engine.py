@@ -102,12 +102,12 @@ _ELICIT_SKIP_RE = re.compile(
 ELICIT_PROMPTS = 2
 ELICIT_FIRST = (
     "I don't have this one catalogued, so I'll build it out of your words rather "
-    "than guess. Say one thing you'd log — exactly how you'd type it. That "
+    "than guess. Say one thing you'd log, exactly how you'd type it. That "
     "becomes the first test of the app. (Or say 'skip'.)"
 )
 ELICIT_SECOND = (
     "And one more, a different kind of thing. I'll hold this one back, then replay "
-    "it once the app exists — so the check is honest. (Or say 'skip'.)"
+    "it once the app exists, so the check is honest. (Or say 'skip'.)"
 )
 
 
@@ -176,8 +176,8 @@ def invent_idea_cards(goal: str, *, seed: str = "") -> list[dict[str, Any]]:
 
     Without a *seed* the only vocabulary available is the goal itself, so the
     three cards are named after its first keyword and share a fixed set of look
-    words — the same skeleton "xyzzy plugh foobar" produces, which is the honest
-    shape of knowing nothing.
+    words. That is the same skeleton "xyzzy plugh foobar" produces, which is the
+    honest shape of knowing nothing.
 
     *seed* is one sentence the user said they would log, in their own words. It
     is the single source of real domain language offline, so when it is present
@@ -225,7 +225,7 @@ def invent_idea_cards(goal: str, *, seed: str = "") -> list[dict[str, Any]]:
         }
 
     def _pitch(base: str) -> str:
-        return f"{base} — {said_phrase}." if said_phrase else f"{base}."
+        return f"{base}. It uses your words: {said_phrase}." if said_phrase else f"{base}."
 
     return [
         _card(
@@ -679,13 +679,13 @@ class WizardEngine:
         idea_block = (
             "\n".join(lines)
             if lines
-            else "No catalogued ideas here yet — describe the look you want, or say 'just a simple log'."
+            else "No known ideas here yet. Describe the look you want, or say 'just a simple log'."
         )
         goal = (session.goal or "").strip()
         message = (
             f'You said “{goal}”. You could:\n'
             f"{idea_block}\n"
-            "Which of these, or say what you want it to do — a chart, photos, a mix board. "
+            "Which of these, or say what you want it to do, like a chart, photos, or a mix board. "
             "Paste a notes folder path to ingest text. Photos: have your agent read them first, then send the text."
         )
         turn = self._turn(session, message=message, awaiting="fork")
@@ -766,7 +766,7 @@ class WizardEngine:
         turn = self._fork_turn(session)
         turn["message"] = (
             f"Read {n_files} text file(s) from {path.name}. "
-            "Photos aren't read here — have your agent OCR them and send the text. "
+            "Photos aren't read here. Have your agent read them and send the text. "
         ) + turn["message"]
         turn["ingest"] = {"path": str(path), "files": n_files}
         return turn
@@ -823,7 +823,7 @@ class WizardEngine:
         for i, look in enumerate(looks, start=1):
             mark = " (selected)" if look.get("idea_id") == session.selected_look_id else ""
             hero = look.get("hero_job") or ""
-            lines.append(f"{i}. {look.get('title')}{mark} — {hero} look (round {look.get('round', 1)})")
+            lines.append(f"{i}. {look.get('title')}{mark}, a {hero} look (round {look.get('round', 1)})")
         listing = "\n".join(lines) if lines else "No looks yet."
         message = (
             extra
@@ -919,7 +919,7 @@ class WizardEngine:
             current = next((L for L in session.looks if L.get("idea_id") == target), {})
             nxt = int(current.get("round") or 1) + 1
             if nxt > MAX_LOOK_ROUNDS:
-                return self._looks_turn(session, extra="That's enough rounds — say 'build it' or pick another. ")
+                return self._looks_turn(session, extra="That's enough rounds. Say 'build it' or pick another. ")
             look = self._make_look(
                 session,
                 idea,
@@ -948,7 +948,7 @@ class WizardEngine:
         )
 
     def _skip_idea_ids(self, session: WizardSession) -> list[str]:
-        """The first idea on screen — the one marked "(suggested)", the one "1" picks.
+        """The first idea on screen: the one marked "(suggested)", the one "1" picks.
 
         ``_order_ideas`` already resolved highlighting and the starter-pack
         preference into the display order, so "yes" has nothing left to decide.
@@ -973,7 +973,7 @@ class WizardEngine:
         else still wants the key used, and ``_looks_llm`` already treats them
         that way. But an install that set ``DOMAIN_FOUNDRY_LLM=heuristic`` asked
         for offline behaviour, and the bridge is the most expensive call in the
-        product — that is also what keeps the offline interest suite inert on a
+        product. That is also what keeps the offline interest suite inert on a
         developer machine with a key exported.
         """
         env = (os.environ.get("DOMAIN_FOUNDRY_LLM") or "").strip().lower()
@@ -1023,7 +1023,7 @@ class WizardEngine:
         """True when the design would otherwise be built out of keywords alone.
 
         An unindexed neighbourhood has no vocabulary to lend, and an invented
-        card is named after the goal's first word — the identical skeleton
+        card is named after the goal's first word, the identical skeleton
         "xyzzy plugh foobar" produces. Neither can file "finished the Millennium
         Falcon MOC, 3800 pieces". Asking is the only offline source of the words
         that could.
@@ -1043,7 +1043,7 @@ class WizardEngine:
         return self._bridge_eligible(session, ideas)
 
     def design_seed(self, session: WizardSession) -> str:
-        """The first elicited sentence — the only one design is allowed to see."""
+        """The first elicited sentence, the only one design is allowed to see."""
         samples = session.elicited_samples or []
         return samples[0] if samples else ""
 
@@ -1215,8 +1215,8 @@ class WizardEngine:
         """Install a bridged blueprint through the ordinary generate/dry-run gate.
 
         Nothing about the runtime changed, which is the point: a bridged pack has
-        to route its own examples — including the user's first sentence, which
-        ``seeded_shortlist`` put among them — before it is allowed to activate.
+        to route its own examples, including the user's first sentence, which
+        ``seeded_shortlist`` put among them, before it is allowed to activate.
         """
         blueprint["domain"] = self._unique_domain(blueprint["domain"])
         agent = blueprint.get("agent")
@@ -1268,8 +1268,8 @@ class WizardEngine:
             "artifacts_error": artifacts_error,
         }
         note = (
-            f"I researched “{session.goal}” and built this from a specification "
-            f"— {run.evidence_label}."
+            f"I researched “{session.goal}” and built this from a specification. "
+            f"{run.evidence_label}."
         )
         if artifacts:
             note += f" Every step is under {Path(artifacts).parent.name}/foundry/."
@@ -1542,7 +1542,7 @@ class WizardEngine:
         chips = " · ".join(list(dict.fromkeys(shortlist))[:6]) if shortlist else ""
         message = (
             f"{verb} {title}. Talk about it and we'll file it"
-            + (f" — {chips}." if chips else ".")
+            + (f": {chips}." if chips else ".")
         )
         turn = self._turn(session, message=message, awaiting="capture")
         turn["pack"] = {
@@ -1745,7 +1745,7 @@ class WizardEngine:
         )
         message = (
             "Designing a domain is one deliberate call to a stronger reasoning "
-            "model than your everyday chat model — domain design benefits from "
+            "model than your everyday chat model. Domain design benefits from "
             f"it. I'd use {settings.model} (your sota tier), estimated "
             f"~${estimate:.2f} for this design. Reply 'yes' to go ahead, "
             f"'use routine' to design with {routine.model} instead, or "
@@ -1831,7 +1831,7 @@ class WizardEngine:
         if design_error is not None:
             turn["message"] = (
                 "Couldn't shape this interest area with the model "
-                f"({design_error}). Using a simple log for now — add detail "
+                f"({design_error}). Using a simple log for now. You can add detail "
                 "later, or try again with a clearer description. "
             ) + turn["message"]
             turn["design_fallback"] = "scaffold"
@@ -2026,8 +2026,8 @@ class WizardEngine:
         ):
             misses = len(session.acceptance.get("failures") or [])
             turn["message"] = (
-                f"{turn['message']} Note: {misses} held-out phrase(s) missed — "
-                "you can teach them later; the place is ready to use now."
+                f"{turn['message']} Note: {misses} held-out phrase(s) missed. "
+                "You can teach them later. The place is ready to use now."
             )
             turn["needs_repair"] = True
         # Hobby install receipts omit mesh expert stub noise.
@@ -2042,8 +2042,8 @@ class WizardEngine:
     def _replay_held_out(self, session: WizardSession) -> dict[str, Any] | None:
         """Route the second elicited sentence through the real router.
 
-        The design never saw this sentence — not the shortlist, not the
-        examples, not the compiled rules — so where it lands is a measurement
+        The design never saw this sentence: not the shortlist, not the
+        examples, not the compiled rules. So where it lands is a measurement
         and not a restatement. ``route_text`` does not persist anything, so the
         check costs the user no entry they did not ask for.
         """
@@ -2081,13 +2081,13 @@ class WizardEngine:
             if session.elicit_prompts and not session.elicited_samples:
                 return (
                     " You skipped the examples, so this is built from your goal's "
-                    "keywords alone and nothing has checked it yet — log a real note "
+                    "keywords alone and nothing has checked it yet. Log a real note "
                     "and we'll see."
                 )
             if session.elicit_prompts and len(session.elicited_samples) == 1:
                 return (
-                    " No second example, so nothing independent has checked this — "
-                    "log a real note and we'll see."
+                    " No second example, so nothing independent has checked this. "
+                    "Log a real note and we'll see."
                 )
             return ""
         quoted = replay["text"] if len(replay["text"]) <= 70 else replay["text"][:69] + "…"
@@ -2096,15 +2096,15 @@ class WizardEngine:
         if replay["filed"]:
             if replay.get("disposition") == "review":
                 return (
-                    f" Your second example — “{quoted}” — went to review as a "
+                    f" Your second example, “{quoted}”, went to review as a "
                     f"{session.domain}.{replay['object_type']}; approve it and it lands."
                 )
             return (
-                f" Your second example — “{quoted}” — filed into "
+                f" Your second example, “{quoted}”, filed into "
                 f"{session.domain}.{replay['object_type']}. Good."
             )
         return (
-            f" Your second example — “{quoted}” — didn't file; it goes to the unfiled "
+            f" Your second example, “{quoted}”, didn't file; it goes to the unfiled "
             "card for review. Tell me what it should be and I'll learn it."
         )
 
@@ -2241,7 +2241,7 @@ class WizardEngine:
                 hint = f'“{first[:40]}…” is a {object_name}'
                 message = (
                     f"Honest check: {len(failures)} of {session.acceptance.get('total', 0)} "
-                    f"realistic phrases missed ({listing}). Let's repair it — reply with "
+                    f"realistic phrases missed ({listing}). Let's repair it. Reply with "
                     f'example "{hint}" to teach a phrase, describe a schema change '
                     '("add a grade field"), or say "keep it as a scaffold".'
                 )
@@ -2274,7 +2274,7 @@ class WizardEngine:
             turn = self._turn(
                 session,
                 message=(
-                    f"Kept as a scaffold — {len(session.acceptance.get('failures') or [])} "
+                    f"Kept as a scaffold. {len(session.acceptance.get('failures') or [])} "
                     "held-out phrases still miss. Corrections you make while using it "
                     "keep teaching it."
                 ),
@@ -2290,7 +2290,7 @@ class WizardEngine:
             turn = self._turn(
                 session,
                 message=(
-                    f"{MAX_REPAIR_ROUNDS} repair rounds done — keeping it as an honest "
+                    f"{MAX_REPAIR_ROUNDS} repair rounds done. Keeping it as an honest "
                     "scaffold. Use it; your corrections continue to improve routing."
                 ),
                 awaiting="capture",
@@ -2351,7 +2351,7 @@ class WizardEngine:
             turn = self._turn(
                 session,
                 message=(
-                    f"Repaired — held-out is now {session.acceptance['accuracy']:.0%}. "
+                    f"Repaired. Held-out is now {session.acceptance['accuracy']:.0%}. "
                     "One real applied capture from you and it can become live. Try it."
                 ),
                 awaiting="capture",
@@ -2365,7 +2365,7 @@ class WizardEngine:
             turn = self._turn(
                 session,
                 message=(
-                    f"{MAX_REPAIR_ROUNDS} repair rounds done — keeping it as an honest "
+                    f"{MAX_REPAIR_ROUNDS} repair rounds done. Keeping it as an honest "
                     f"scaffold. {len(session.acceptance.get('failures') or [])} "
                     "held-out phrases still miss."
                 ),
@@ -2458,7 +2458,7 @@ class WizardEngine:
         message = (
             f"Here's a {design_label} proposal for '{b['title']}' ({b['domain']}): "
             f"{len(objects)} object(s), {len(b['examples'])} example utterances. "
-            f"I have {len(session.questions)} quick question(s) — answer any, or reply 'skip' to accept defaults."
+            f"I have {len(session.questions)} quick question(s). Answer any, or reply 'skip' to accept defaults."
         )
         turn = self._turn(session, message=message, awaiting="answers")
         turn["proposal"] = {
@@ -2509,13 +2509,13 @@ class WizardEngine:
         else:
             message = (
                 f"{title} is ready to try"
-                + (f" — we'll file {chips}." if chips else ".")
+                + (f". We'll file {chips}." if chips else ".")
                 + " Log one real note and we'll file it."
             )
         if acceptance.get("covered") and acceptance.get("accuracy", 1.0) < 0.9:
             message += (
                 f" ({acceptance.get('passed', 0)}/{acceptance.get('total', 0)} "
-                "held-out phrases matched — you can teach more later.)"
+                "held-out phrases matched. You can teach more later.)"
             )
         turn = self._turn(session, message=message, awaiting="capture")
         turn["pack"] = {
@@ -2567,7 +2567,7 @@ class WizardEngine:
             "test_drive_remaining": session.test_drive_remaining,
             "correct_hint": (
                 "If that's wrong, reply e.g. \"no, that was <domain>\" or "
-                "\"actually it was 80 not 75\" — I'll correct it in one message."
+                "\"actually it was 80 not 75\", and I'll correct it in one message."
             ),
         }
         return turn
@@ -2576,7 +2576,7 @@ class WizardEngine:
         if not routed or receipt.status in {"ledger_only", "unfiled"}:
             return (
                 f"Captured (status: {receipt.status}). I couldn't confidently route that "
-                "into your new domain — it's safely stored. Try phrasing closer to your examples."
+                "into your new domain. It's safely stored. Try phrasing closer to your examples."
             )
         parts = []
         for r in routed:

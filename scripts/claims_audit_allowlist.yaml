@@ -29,18 +29,3 @@ spec_fields:
 # off-voice and names who will fix it.
 copy_files:
   docs/COPY_RULES.md: "allowed: the rules page has to name the words it bans"
-  # The wizard turn copy is a real gap, and Lane A cannot close it alone. The
-  # same sentences are pinned by wizard/release.py copy contracts and by
-  # wizard tests, and wizard/looks.py belongs to Lane C while
-  # wizard/blueprint.py belongs to Lane F. The integrator schedules this sweep
-  # with those two lanes; see the Lane A resume notes.
-  core/domain_foundry_core/wizard/engine.py: "not yet: integrator, wizard copy sweep"
-  core/domain_foundry_core/wizard/release.py: "not yet: integrator, wizard copy sweep"
-  core/domain_foundry_core/wizard/bridge.py: "not yet: integrator, wizard copy sweep"
-  core/domain_foundry_core/wizard/cobuild.py: "not yet: integrator, wizard copy sweep"
-  core/domain_foundry_core/wizard/design.py: "not yet: integrator, wizard copy sweep"
-  core/domain_foundry_core/wizard/escalation.py: "not yet: integrator, wizard copy sweep"
-  core/domain_foundry_core/wizard/hardening.py: "not yet: integrator, wizard copy sweep"
-  core/domain_foundry_core/wizard/jobs.py: "not yet: integrator, wizard copy sweep"
-  core/domain_foundry_core/wizard/shortlist.py: "not yet: integrator, wizard copy sweep"
-  core/domain_foundry_core/wizard/looks.py: "not yet: Lane C owns this file"

@@ -380,10 +380,10 @@ def test_the_tier_reaches_the_receipt_the_pack_and_the_copy() -> None:
 def test_the_model_knowledge_label_is_the_sentence_the_user_reads() -> None:
     assert (
         evidence_tier_label("model_knowledge")
-        == "from the model's own knowledge — not verified sources"
+        == "from the model's own knowledge, not from verified sources"
     )
     # An unstamped spec is never upgraded into a claim of research.
-    assert evidence_tier_label(None) == "built from your own words — no research was run"
+    assert evidence_tier_label(None) == "built from your own words, no research was run"
 
 
 def test_an_unstamped_golden_reports_no_tier() -> None:
@@ -407,10 +407,10 @@ def test_the_tier_is_readable_from_the_compiled_bundle(tmp_path: Path) -> None:
     receipt = json.loads(artifact.receipt.read_text(encoding="utf-8"))
 
     assert receipt["evidence_tier"] == "model_knowledge"
-    assert receipt["evidence_label"] == "from the model's own knowledge — not verified sources"
+    assert receipt["evidence_label"] == "from the model's own knowledge, not from verified sources"
     assert receipt["generation"]["evidence_tier"] == "model_knowledge"
     readme = (artifact.root / "README.md").read_text(encoding="utf-8")
-    assert "not verified sources" in readme
+    assert "not from verified sources" in readme
 
 
 def test_the_default_pipeline_still_fails_closed_on_an_unresearched_interest() -> None:

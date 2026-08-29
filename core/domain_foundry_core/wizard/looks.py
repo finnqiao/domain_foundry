@@ -227,9 +227,9 @@ def _sample_rows(example: str, blob: str, idea: dict[str, Any]) -> list[str]:
             break
     identity = str(idea.get("identity_hint") or "item").replace("_", " ")
     fillers = [
-        f"{identity} alpha — keeper",
-        f"{identity} beta — worth repeating",
-        f"{identity} gamma — notes for next time",
+        f"{identity} alpha, keeper",
+        f"{identity} beta, worth repeating",
+        f"{identity} gamma, notes for next time",
     ]
     for filler in fillers:
         if len(rows) >= 4:

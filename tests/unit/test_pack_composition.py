@@ -564,3 +564,48 @@ def test_the_template_pack_documents_the_new_keys_and_still_loads() -> None:
     assert pack.name == "example"
     assert pack.extends is None
     assert pack.imports == {}
+
+
+def test_the_registry_refuses_to_uninstall_a_pack_records_still_point_at(
+    workspace: Any,
+) -> None:
+    """The guard is wired into `uninstall`, not just available beside it.
+
+    `uninstall_blockers` was proved at the function level by the test above, but
+    nothing called it from the registry, so a real uninstall would still have
+    broken the references. The integrator wired it in; this pins the wiring.
+    """
+    from domain_foundry_core.packs.registry import PackRegistry
+
+    registry = PackRegistry(workspace)
+    registry.install(REPO / "packs" / "food")
+    registry.install(REPO / "packs" / "travel")
+
+    # Nothing points anywhere yet, so the pack is free to go.
+    assert uninstall_blockers("food", registry.list(), workspace.domains_db) == []
+
+    conn = sqlite3.connect(workspace.domains_db)
+    conn.execute("PRAGMA foreign_keys = ON")
+    conn.execute(
+        "INSERT INTO food__dining (object_uid, created_at, updated_at, place, dined_at) "
+        "VALUES ('food:dining:1', 'now', 'now', 'Kissa', 'now')"
+    )
+    conn.execute(
+        "INSERT INTO travel__timeline_item "
+        "(object_uid, created_at, updated_at, title, scheduled_at, dining_uid) "
+        "VALUES ('travel:item:1', 'now', 'now', 'Lunch', 'now', 'food:dining:1')"
+    )
+    conn.commit()
+    conn.close()
+
+    with pytest.raises(ValueError, match="cannot be removed yet"):
+        registry.uninstall("food")
+
+    # Refused means refused: the pack and its table are both still there.
+    assert (workspace.packs_dir / "food").exists()
+    conn = sqlite3.connect(workspace.domains_db)
+    table = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'food__dining'"
+    ).fetchone()
+    conn.close()
+    assert table is not None

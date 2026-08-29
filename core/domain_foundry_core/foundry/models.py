@@ -49,9 +49,9 @@ EvidenceTier = Literal["reviewed_corpus", "live_search", "model_knowledge", "fal
 
 EVIDENCE_TIER_LABELS: dict[str, str] = {
     "reviewed_corpus": "from reviewed sources",
-    "live_search": "from web search results — reference only, not reviewed",
-    "model_knowledge": "from the model's own knowledge — not verified sources",
-    "fallback_demo": "built from your own words — no research was run",
+    "live_search": "from web search results, for reference only, not reviewed",
+    "model_knowledge": "from the model's own knowledge, not from verified sources",
+    "fallback_demo": "built from your own words, no research was run",
 }
 
 # The remix decision the bridge records when it asks for a single concept.

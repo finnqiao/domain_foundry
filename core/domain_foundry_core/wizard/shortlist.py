@@ -234,8 +234,8 @@ def _is_skeleton_term(term: str, skeleton: set[str]) -> bool:
 def generic_shape_warnings(shortlist: ShortlistModel) -> list[str]:
     """Signs a pack was compiled from the shape of the wizard, not of the interest.
 
-    None of these can block a build — a thin pack still beats no pack — but each
-    one predicts the same failure: the owner's first real sentence will not
+    None of these can block a build, because a thin pack still beats no pack.
+    But each one predicts the same failure: the owner's first real sentence will not
     route, because the pack knows no word they would use.
     """
     warnings: list[str] = []
@@ -261,14 +261,14 @@ def generic_shape_warnings(shortlist: ShortlistModel) -> list[str]:
         skeleton.add("name")
         if not [t for t in terms if not _is_skeleton_term(t, skeleton)]:
             warnings.append(
-                f"{obj_name}: routing rule is only the object/domain name — no interest vocabulary"
+                f"{obj_name}: routing rule is only the object/domain name, no interest vocabulary"
             )
 
     for f in shortlist.fields:
         if f.role == "measure" and f.name in {"value", "count"}:
             warnings.append(
-                f"{f.object}.{f.name}: measure fell through to a generic name — "
-                "the atlas node needs a measure"
+                f"{f.object}.{f.name}: measure fell through to a generic name. "
+                "The atlas node needs a measure"
             )
         if f.role == "identity" and f.name in {"record_name", "entry_name", "item_name", "name"}:
             warnings.append(f"{f.object}: identity is the generic {f.name!r}")
@@ -509,7 +509,7 @@ def seed_terms(text: str, *, limit: int = 10) -> list[str]:
 
 
 def is_dimensioned(term: str) -> bool:
-    """``5x5``, ``100kg``, ``18m``, ``75%``, ``1948`` — short but not vague."""
+    """``5x5``, ``100kg``, ``18m``, ``75%``, ``1948``. Short but not vague."""
     low = (term or "").strip().lower()
     return bool(
         _SETS_REPS_RE.match(low)
@@ -578,7 +578,7 @@ def rule_terms_for_object(
     Order is the whole point: the cap is a budget, and a generic field name
     spends a slot on a word nobody types. Object name, then the domain, then
     the atlas's own words for the interest, then jargon, then what the examples
-    actually say — field names come last and only when they mean something.
+    actually say. Field names come last, and only when they mean something.
     """
     shared = obj_name == primary or len(shortlist.objects) == 1
     blob = " ".join(examples_by_obj.get(obj_name) or []).lower()
@@ -615,14 +615,14 @@ def rule_terms_for_object(
 
 
 def _rules_for_objects(shortlist: ShortlistModel) -> list[dict[str, Any]]:
-    """One L1 rule per object, from *that* object's vocabulary — not the domain name.
+    """One L1 rule per object, from *that* object's vocabulary, not the domain name.
 
     Stamping the domain (and all jargon) onto every object makes every example
     match every object. Dry-run then fails at ~50% because the heuristic picks
     the first object. Keep shared jargon on a single primary object.
 
     Prefer atlas jargon, object/field names, domain slug, and distinctive
-    example tokens — never filler small-talk harvested from padding lines.
+    example tokens. Never filler small-talk harvested from padding lines.
     """
     rules: list[dict[str, Any]] = []
     primary = shortlist.objects[0]
@@ -794,7 +794,7 @@ def shortlist_schema() -> dict[str, Any]:
 
 
 def analog_few_shots(goal: str) -> list[dict[str, Any]]:
-    """Pick two shortlist-shaped analogs by goal smell — never the generic log."""
+    """Pick two shortlist-shaped analogs by goal smell, never the generic log."""
     low = (goal or "").lower()
     plants = {
         "goal": "track my houseplants",

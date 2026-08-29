@@ -108,7 +108,7 @@ def test_unindexed_goal_asks_for_two_sentences_and_stores_them_verbatim(workspac
     assert turn["state"] == "elicit"
     assert turn["awaiting"] == "elicit"
     assert turn["elicit"] == {"index": 1, "of": 2, "held_out": False, "samples": []}
-    assert "Say one thing you'd log — exactly how you'd type it." in turn["message"]
+    assert "Say one thing you'd log, exactly how you'd type it." in turn["message"]
     assert "That becomes the first test of the app." in turn["message"]
 
     turn = api.wizard_reply(sid, SEED)

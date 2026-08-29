@@ -1,6 +1,6 @@
 """ADR-010: drive the Foundry pipeline from inside a conversational create.
 
-``bridge.py`` is the pure projection — ``FoundrySpec`` in, ``ShortlistModel``
+``bridge.py`` is the pure projection: ``FoundrySpec`` in, ``ShortlistModel``
 out, no I/O. This module is everything around it: turn two elicited sentences
 into acceptance tasks, hand the atlas over as a *prior* rather than an answer,
 run ``propose(concept_count=1)`` → ``complete()`` → ``spec_to_shortlist()``, and
@@ -13,7 +13,7 @@ The import direction stays one-way: ``wizard`` imports ``foundry``, never the
 reverse (``tests/unit/test_wizard_foundry_bridge.py`` asserts the second half).
 
 Nothing here calls a model on its own account. The provider is passed in, and
-the caller has already established that it has live keys — a create with no key
+the caller has already established that it has live keys. A create with no key
 never reaches this module at all.
 """
 
@@ -107,8 +107,8 @@ class BridgeRun:
 def acceptance_tasks(samples: list[str]) -> list[AcceptanceTask]:
     """The two elicited sentences, verbatim, as the run's independent judge.
 
-    ``input`` is exactly what the user typed — trimmed only of surrounding
-    whitespace, never rewritten — so the pipeline's rule that the generator
+    ``input`` is exactly what the user typed. It is trimmed only of surrounding
+    whitespace and never rewritten, so the pipeline's rule that the generator
     cannot author its own criteria still holds. Only the interface for
     collecting them changed.
     """
@@ -133,8 +133,8 @@ def atlas_prior(
 ) -> dict[str, Any]:
     """Demote the atlas to a prior: neighbourhood, cards, analogs, jargon.
 
-    Everything here is a guess the research stage is free to throw away. The
-    user's own sentences ride along because they are the one part of the payload
+    Everything here is a guess, and the research stage may throw all of it
+    away. The user's own sentences ride along because they are the one part of the payload
     that is not a guess.
     """
     neighborhood = neighborhood or {}
@@ -196,7 +196,7 @@ def run_bridge(
 ) -> BridgeRun:
     """Research ``goal`` and project the result onto the wizard's shortlist.
 
-    Raises ``BridgeUnavailable`` — and only that — for every way this can fail,
+    Raises ``BridgeUnavailable``, and only that, for every way this can fail,
     so the caller has exactly one thing to catch and exactly one sentence to
     show. Budget exhaustion, an unreachable research provider, a provider error
     and a spec that will not validate all arrive here as a stated reason.
@@ -265,7 +265,7 @@ def seeded_shortlist(spec: FoundrySpec, *, goal: str, seed: str) -> ShortlistMod
     The seed is added here because ADR-010 gives the first sentence a job the
     spec knows nothing about: it becomes a routing example, which means the
     existing dry-run gate has to route the user's own words before this pack is
-    allowed to activate. The second sentence is never added — it is the held-out
+    allowed to activate. The second sentence is never added. It is the held-out
     check, and a check the design was shown is not a check.
     """
     shortlist = spec_to_shortlist(spec, goal=goal)
@@ -285,7 +285,7 @@ def seeded_shortlist(spec: FoundrySpec, *, goal: str, seed: str) -> ShortlistMod
 
 
 def persist_artifacts(pack_root: Path, run: BridgeRun) -> Path:
-    """Write ``<pack>/foundry/`` — every step of the run, openable.
+    """Write ``<pack>/foundry/``, which is every step of the run, openable.
 
     A bridged pack claims to have been researched. This is where that claim is
     checkable: the spec it was built from, the proposal that produced it, the
@@ -341,7 +341,7 @@ def _readme(run: BridgeRun) -> str:
             "",
             f"Goal, in your words: {run.goal}",
             "",
-            f"Evidence: **{run.evidence_tier}** — {run.evidence_label}.",
+            f"Evidence: **{run.evidence_tier}**. {run.evidence_label}.",
             "",
             "| File | What it is |",
             "|---|---|",
@@ -351,7 +351,7 @@ def _readme(run: BridgeRun) -> str:
             "evaluation cases. |",
             "| `evidence.json` | Every cited claim with its source and evidence tier. |",
             "| `receipts.json` | Per-stage provider, model, and token counts. |",
-            "| `shortlist.json` | The projection of the spec onto this pack — objects, "
+            "| `shortlist.json` | The projection of the spec onto this pack: objects, "
             "fields, jargon, routing examples. |",
             "",
             "The two sentences you gave are the acceptance tasks in `receipts.json`. "

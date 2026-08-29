@@ -24,6 +24,7 @@ from domain_foundry_core.packs.models import DomainPack
 from domain_foundry_core.packs.schema_compiler import (
     apply_pack_schema,
     table_name,
+    uninstall_blockers,
     write_migration,
 )
 from domain_foundry_core.paths import Workspace, overlay_pack_dirs
@@ -334,6 +335,12 @@ class PackRegistry:
         pack = self.get_by_alias(name)
         if pack is None:
             raise KeyError(f"unknown installed pack: {name}")
+        # Lane D compiles cross-pack links to real foreign keys, so removing
+        # a pack that other records point at would break those references.
+        # Refuse while anything still points here, and say what to clear.
+        blockers = uninstall_blockers(pack.name, self.list(), self.ws.domains_db)
+        if blockers:
+            raise ValueError(f"{pack.name} cannot be removed yet. " + " ".join(blockers))
         self._workspace_pack_root(pack)
         backup = self._snapshot(pack.name)
         destination = self.ws.packs_dir / pack.name

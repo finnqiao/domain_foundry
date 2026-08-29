@@ -43,8 +43,8 @@ def shortlist_for_ideas(
     ``seed`` is the first sentence the user said they would log, verbatim. It is
     the only source of real domain vocabulary available offline for an interest
     the atlas does not cover, so it goes in as a routing example, as jargon, and
-    as identity values. The *second* elicited sentence never reaches here — that
-    is what makes replaying it after activation an honest check.
+    as identity values. The *second* elicited sentence never reaches here, and
+    that is what makes replaying it after activation an honest check.
     """
     jobs = _union_jobs(ideas)
     identity = _identity_hint(ideas, goal)
@@ -541,7 +541,7 @@ def _fallback_samples(identity: str, jargon: list[str], goal: str) -> list[str]:
         if term.lower() == label.lower():
             out.append(term)
         elif " " in term:
-            out.append(f"{label} — {term}")
+            out.append(f"{label}, {term}")
         else:
             out.append(f"{term} {label}".strip())
     return out or [label]

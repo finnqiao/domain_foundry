@@ -50,19 +50,19 @@ _FIELD_WORDS = {
 # receipts, and legacy JSON keep their original vocabulary.
 _COPY_REPLACEMENTS: tuple[tuple[re.Pattern[str], str], ...] = (
     (
-        re.compile(r"I don't have this one catalogued, so I'll build it out of your words rather than guess\. Say one thing you'd log — exactly how you'd type it\. That becomes the first test of the app\. \(Or say 'skip'\.\)", re.I),
+        re.compile(r"I don't have this one catalogued, so I'll build it out of your words rather than guess\. Say one thing you'd log, exactly how you'd type it\. That becomes the first test of the app\. \(Or say 'skip'\.\)", re.I),
         "Add a note you might write on a normal day. Your words will shape the app.",
     ),
     (
-        re.compile(r"And one more, a different kind of thing\. I'll hold this one back, then replay it once the app exists — so the check is honest\. \(Or say 'skip'\.\)", re.I),
+        re.compile(r"And one more, a different kind of thing\. I'll hold this one back, then replay it once the app exists, so the check is honest\. \(Or say 'skip'\.\)", re.I),
         "Add a different kind of note. This one will check the app after it is built.",
     ),
     (
-        re.compile(r"You skipped the examples, so this is built from your goal's keywords alone and nothing has checked it yet — log a real note and we'll see\.", re.I),
+        re.compile(r"You skipped the examples, so this is built from your goal's keywords alone and nothing has checked it yet\. Log a real note and we'll see\.", re.I),
         "Built from your notes so far. Add a real note and we will see how it fits.",
     ),
     (
-        re.compile(r"No second example, so nothing independent has checked this — log a real note and we'll see\.", re.I),
+        re.compile(r"No second example, so nothing independent has checked this\. Log a real note and we'll see\.", re.I),
         "No second note yet. Add a real note and we will see how it fits.",
     ),
     (
@@ -74,10 +74,10 @@ _COPY_REPLACEMENTS: tuple[tuple[re.Pattern[str], str], ...] = (
         "Research is not available right now. This app is built from your notes. You can add a key later to look for more patterns.",
     ),
     (
-        re.compile(r"Which of these, or say what you want it to do — a chart, photos, a mix board\. Paste a notes folder path to ingest text\. Photos: have your agent read them first, then send the text\.", re.I),
+        re.compile(r"Which of these, or say what you want it to do, like a chart, photos, or a mix board\. Paste a notes folder path to ingest text\. Photos: have your agent read them first, then send the text\.", re.I),
         "Choose any that fit, or describe it in your own words. You can also add notes from a local folder. Images need their text pasted here.",
     ),
-    (re.compile(r"\s*\(suggested\)", re.I), " — closest to what you described"),
+    (re.compile(r"\s*\(suggested\)", re.I), ", closest to what you described"),
     (re.compile(r"chart how inputs lead to outcomes", re.I), "compare changes over time"),
     (re.compile(r"a gallery of the photos", re.I), "keep photos with each note"),
     (re.compile(r"a mix board of what worked", re.I), "try variations and remember what worked"),

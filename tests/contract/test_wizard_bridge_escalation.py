@@ -384,8 +384,8 @@ def test_model_recall_is_stamped_as_model_recall_and_never_as_research(
     )
 
     assert status["mode"] == "model_knowledge"
-    assert status["evidence_label"] == "from the model's own knowledge — not verified sources"
-    assert "not verified sources" in turn["message"]
+    assert status["evidence_label"] == "from the model's own knowledge, not from verified sources"
+    assert "not from verified sources" in turn["message"]
 
 
 def test_a_keyless_pack_is_stamped_fallback_demo_and_says_so(workspace) -> None:
@@ -397,7 +397,7 @@ def test_a_keyless_pack_is_stamped_fallback_demo_and_says_so(workspace) -> None:
     )
 
     assert status["mode"] == "fallback_demo"
-    assert status["evidence_label"] == "built from your own words — no research was run"
+    assert status["evidence_label"] == "built from your own words, no research was run"
     assert "No reasoning model is configured" in turn["message"]
     assert "add a key later" in turn["message"]
 

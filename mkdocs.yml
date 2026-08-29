@@ -65,10 +65,7 @@ nav:
       - "How-to: developers": tutorial/howto-technical.md
   - Concepts:
       - Overview: concepts/index.md
-      - Foundry redesign: FOUNDRY_REDESIGN.md
-      - The create-path bar: create-path-bar.md
       - AI remix landscape: remix-landscape.md
-      - Replacement-name slate: name-replacement-slate.md
       - Foundry threat model: concepts/foundry-threat-model.md
       - The ledger: concepts/ledger.md
       - Domain packs: concepts/packs.md
@@ -79,6 +76,7 @@ nav:
       - Architecture: architecture.md
   - Build a pack:
       - Pack authoring guide: PACK_AUTHORING.md
+      - How we write: COPY_RULES.md
       - "Tutorial: remix in an afternoon": tutorial-plant-care.md
       - Custom blocks & remix: CUSTOM_BLOCKS.md
       - Pack gallery: gallery.md

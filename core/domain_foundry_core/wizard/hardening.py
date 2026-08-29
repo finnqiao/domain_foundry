@@ -1,7 +1,7 @@
 """Hardening loop (plan §6.2): plain-language schema edits → migration.
 
 An NL edit is parsed into concrete schema changes, previewed as a pack diff,
-and — on confirm — applied by: rewriting ``schema.yaml``, bumping the pack
+and, once confirmed, applied by: rewriting ``schema.yaml``, bumping the pack
 version, writing + executing an ``ALTER TABLE`` migration, refreshing the
 schema registry, and appending a routing fixture/eval case for the new shape.
 This reuses the §5.7 migration path so hand-edited and generated packs stay
@@ -465,7 +465,7 @@ def _append_fixture(
         new_field = plan.added_columns[0][0] if plan.added_columns else (
             plan.renamed_columns[0][1] if plan.renamed_columns else "field"
         )
-        fixture_text = f"{base_text} — noting the {new_field.replace('_', ' ')}"
+        fixture_text = f"{base_text}, noting the {new_field.replace('_', ' ')}"
         examples.append({
             "text": fixture_text,
             "expect": {"object": plan.object, "operation": "create"},
