@@ -131,3 +131,84 @@ file set and ships its own `cli_<name>.py`.
   `test_stranger_passion_cassettes_are_recorded` and
   `test_seeded_app_opens_with_the_users_history_inside`. These are the
   maintainer's live-recording run, not a code gap.
+
+
+## Open findings for the maintainer
+
+Two things were investigated and deliberately left alone. Both are written up
+here because a quiet "done" would have been the wrong answer.
+
+### 1. `_CRITIQUE_RE` is not dead, and should stay
+
+Lane C reported that `_CRITIQUE_RE` in `wizard/engine.py` was inert after it
+removed the keyword restyler in `looks.py`, and asked for it to be deleted.
+That premise is wrong, and deleting it would have changed behaviour:
+
+- Template path: `looks.py` still does `hints = hints + hinted_jobs(critique)`,
+  and `hero_job` uses those hints to pick the hero, which selects a different
+  `_hero_body`. Measured: the same idea with no critique picks hero
+  `improvement`; with the critique "make it more photos" it picks `media_dex`,
+  which is different HTML. `engine.py` independently adds `hinted_jobs(text)`.
+- Designer path: with a designer model configured, the critique text goes into
+  the payload as `CRITIQUE` with `PREVIOUS_HTML_PRESENT` set.
+
+What Lane C actually removed was the tone and colour guessing, which is the
+half that should have died: colours are chosen on the review page now, never
+guessed from words like "darker". The critique loop that re-picks the hero view
+is the useful half and it survived. No change made.
+
+### 2. The no-key create path never names a field after the interest
+
+Lane F could not close the generic-scaffold route and flagged it as belonging
+to nobody in this kit. Investigated: **it is larger than Lane F reported**, and
+it is the one real gap left in the release story.
+
+- `build_blueprint` is **bypassed entirely** on the wizard's normal path. Its
+  only caller is `_design_and_propose` (the `design_mode: "scaffold"` route).
+  So the archetypes in `blueprint.py` never fire for a wizard create, and
+  neither does `GenericFallbackRefused`. A goal with "a real archetype" still
+  lands on `['name', 'noted_at', 'value', 'notes']` through the wizard.
+- `jobs.py::shortlist_for_ideas` builds the field list **structurally, from job
+  ids only**: `<slug>_name`, `noted_at`, `notes`, plus `photos` / `location` /
+  a measure when the jobs call for them. It never derives a field name from the
+  goal, from the atlas node, or from the user's seed sentences. The shape is
+  generic by construction.
+- This is not an unindexed-goal problem. It is the whole no-key path. Seven
+  goals run through the shipped flow, scored with the eval's own
+  `GENERIC_FIELDS`:
+
+  | goal | specific fields |
+  |---|---|
+  | track my origami | `logged_at` only |
+  | diving | `lat`, `lng` |
+  | rock tumbling batches | none |
+  | metal detecting finds | none |
+  | keep a coffee brewing log | none |
+  | log the board games we play | none |
+  | the REVIEW_8 climbing case | none |
+
+  `"xyzzy plugh foobar"` reaches `test_drive` with
+  `['xyzzy_name', 'noted_at', 'photos', 'notes']`. In the rock-tumbling case
+  the user had already given two seed sentences full of real vocabulary
+  ("split the creek haul into agates and junk", "moved the barrel to stage two
+  grit") and none of it named a field.
+
+**Why nothing was changed.** Two fixes exist. (a) Make `shortlist_for_ideas`
+derive field names from the seed sentences and the atlas node: that is Lane B
+and Lane E work, not a gate. (b) Gate activation on "every field name comes
+from the wizard's own vocabulary" and raise the three-path message otherwise:
+that refuses nearly every no-key create, not the nine unindexed ones, and
+would break tests that pin real behaviour rather than stale copy
+(`test_origami_scaffolds_without_key`,
+`test_picked_idea_compiles_when_analog_is_not_1_to_1`,
+`test_proof_loop_starters_and_new_interest` and the capture-correct-export
+chain after it, all eight REVIEW_8 cases, several atlas tests, and the pinned
+`wizard_*_suite.jsonl` baselines). It is also incoherent as an experience: the
+wizard asks for two seed sentences first, then would answer "seed something you
+keep".
+
+**Recommendation.** Scope this as its own piece of work before the v0.1 tag, as
+(a). Lane F's regrading already refuses to call the current output a success,
+so the held-out numbers are honest today; what is not yet true is the product
+claim that an app is shaped by the interest it was built for. The claims audit
+should carry an entry naming this until it is fixed.
