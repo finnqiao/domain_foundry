@@ -18,7 +18,17 @@ import yaml
 from domain_foundry_core.clock import now_iso
 
 from .loader import DEFAULT_PRINCIPLES, DEFAULT_REGISTRY
-from .models import EntitySpec, FoundrySpec, RelationshipSpec
+from .models import (
+    BESPOKE_ALLOWED_PROPERTIES,
+    BESPOKE_CSS_BUDGET_BYTES,
+    BESPOKE_FORBIDDEN_SUBSTRINGS,
+    DENSITY_SCALE_LABELS,
+    SIGNATURE_ELEMENT_LABELS,
+    TYPOGRAPHY_STACK_LABELS,
+    EntitySpec,
+    FoundrySpec,
+    RelationshipSpec,
+)
 
 _IDENT_RE = re.compile(r"^[a-z][a-z0-9_]{0,62}$")
 _SQL_TYPES = {
@@ -65,9 +75,7 @@ class FoundryCompiler:
         generated_at: str | None = None,
     ) -> BuildArtifact:
         destination = destination.resolve()
-        if destination.exists() and (
-            not destination.is_dir() or any(destination.iterdir())
-        ):
+        if destination.exists() and (not destination.is_dir() or any(destination.iterdir())):
             raise FileExistsError(f"refusing to overwrite existing destination: {destination}")
         destination.parent.mkdir(parents=True, exist_ok=True)
         staging = Path(
@@ -105,6 +113,9 @@ class FoundryCompiler:
                 # can read the tier without knowing the receipt's shape.
                 "evidence_tier": spec.evidence_tier,
                 "evidence_label": spec.evidence_tier_label,
+                # What the build actually rendered, and where each choice came
+                # from. A dropped bespoke layer is recorded here, never silent.
+                "experience": self.experience_plan(spec).for_receipt(),
             }
             (staging / "build-receipt.json").write_text(
                 json.dumps(receipt_payload, indent=2, ensure_ascii=False) + "\n",
@@ -195,7 +206,9 @@ class FoundryCompiler:
                     checks.append(f"{name} IN ({values})")
                 if field.type == "json":
                     json_check = f"json_valid({name})"
-                    checks.append(json_check if field.required else f"{name} IS NULL OR {json_check}")
+                    checks.append(
+                        json_check if field.required else f"{name} IS NULL OR {json_check}"
+                    )
                 suffix = f" CHECK ({' AND '.join(checks)})" if checks else ""
                 columns.append(f"{name} {sql_type}{required}{suffix}")
 
@@ -263,21 +276,68 @@ class FoundryCompiler:
         return "\n".join(lines)
 
     def render_app(self, spec: FoundrySpec) -> str:
+        plan = self.experience_plan(spec)
         app_payload = spec.model_dump(mode="json")
         app_payload["_source_records"] = self.knowledge_snapshot(spec)["sources"]
+        app_payload["_render"] = plan.for_runtime()
         payload = json.dumps(app_payload, ensure_ascii=False).replace("</", "<\\/")
-        template = _APP_TEMPLATE.replace("__TITLE__", _html_text(spec.title))
         runtime = DEFAULT_RUNTIME.read_text(encoding="utf-8").replace("</", "<\\/")
-        return template.replace("__SPEC_JSON__", payload).replace("__RUNTIME_JS__", runtime)
+        document = _DOCUMENT_HEAD + self.render_stylesheet(spec, plan) + _DOCUMENT_TAIL
+        body_attrs = (
+            f'data-world="{_html_text(spec.experience.visual_world.id)}" '
+            f'data-topology="{plan.topology}" data-density="{plan.density_scale}" '
+            f'data-type-stack="{plan.typography_stack}"'
+        )
+        return (
+            document.replace("__TITLE__", _html_text(spec.title))
+            .replace("__BODY_ATTRS__", body_attrs)
+            .replace("__SPEC_JSON__", payload)
+            .replace("__RUNTIME_JS__", runtime)
+        )
+
+    def experience_plan(self, spec: FoundrySpec) -> ExperiencePlan:
+        """Resolve the spec's experience fields into things the build renders.
+
+        Where the spec names a value, that value is used. Where it only
+        describes one in prose, the prose is mapped onto the named set and the
+        mapping is written into the build receipt, so nobody has to guess which
+        it was.
+        """
+        return _resolve_experience(spec)
+
+    def render_stylesheet(self, spec: FoundrySpec, plan: ExperiencePlan | None = None) -> str:
+        """Compose the app's CSS from the parts this build actually needs."""
+        plan = plan or self.experience_plan(spec)
+        parts = [
+            _RESET_CSS,
+            _token_block(plan),
+            _BASE_SHELL_CSS,
+            _DENSITY_CSS[plan.density_scale],
+            _TOPOLOGY_CSS[plan.topology],
+        ]
+        if plan.signature_elements:
+            parts.append(_SIGNATURE_FRAME_CSS)
+            parts.extend(_SIGNATURE_CSS[name] for name in plan.signature_elements)
+        parts.append(_RESPONSIVE_CSS)
+        parts.append(_TOPOLOGY_NARROW_CSS[plan.topology])
+        if plan.signature_elements:
+            parts.append(_SIGNATURE_NARROW_CSS)
+        parts.append(_RESPONSIVE_CLOSE)
+        parts.append(_MOTION_CSS)
+        if plan.bespoke_css:
+            parts.append(plan.bespoke_css)
+        return "".join(parts)
 
     def render_readme(self, spec: FoundrySpec) -> str:
+        parent = spec.remix.parent_spec
+        parentage = f"\n            Forked from {parent}.\n" if parent else ""
         return textwrap.dedent(
             f"""\
             # {spec.title}
 
             This application was compiled from `foundry-spec.json`. Its preview
             and final local application are the same `app.html` artifact.
-
+{parentage}
             Research for this build is **{spec.evidence_tier_label}**.
 
             ## Open
@@ -348,16 +408,428 @@ class FoundryCompiler:
         return "'" + value.replace("'", "''") + "'"
 
 
-def _html_text(value: str) -> str:
-    return (
-        value.replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace('"', "&quot;")
+# ---------------------------------------------------------------------------
+# From spec fields to a rendered app (Lane B2 to B6).
+#
+# The spec writes some of its look as a named value and some of it as a
+# sentence. Both reach pixels. Where only a sentence exists, the words below
+# map it onto the named set, and the receipt records that it was mapped rather
+# than chosen, so nobody reads a guess as a decision.
+# ---------------------------------------------------------------------------
+
+_TYPOGRAPHY_HINTS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("rounded_humanist", ("humanist", "rounded", "friendly", "warm sans", "soft")),
+    ("reading_serif", ("serif", "text face", "reading", "literate", "editorial", "book")),
+    ("data_sans", ("grotesk", "numeral", "condensed", "tabular", "data", "table", "sans")),
+    ("mono_forward", ("monospac", "mono", "terminal", "typewriter", "code")),
+)
+
+_DENSITY_HINTS: dict[str, tuple[str, ...]] = {
+    "airy": ("spacious", "airy", "generous", "singular", "sparse", "roomy", "one at a time"),
+    "bench": ("bench", "working", "balanced", "room to read", "moderate"),
+    "dense": ("dense", "packed", "compact", "scan", "many rows", "tight"),
+}
+
+_SIGNATURE_HINTS: dict[str, tuple[str, ...]] = {
+    "progress_bar": (
+        "progress",
+        "countdown",
+        "remaining",
+        "time left",
+        "timer",
+        "horizon",
+        "interval",
+        "elapsed",
+        "tide",
+    ),
+    "life_list": (
+        "life list",
+        "checklist",
+        "collected",
+        "found",
+        "seen",
+        "tally",
+        "roster",
+        "catalog",
+        "everything you",
+    ),
+    "comparison_strip": ("compare", "comparison", "side by side", "versus", "strip", "formula"),
+    "timeline_rail": ("timeline", "rail", "trail", "chronolog", "history", "sequence", "curve"),
+    "gap_grid": ("grid", "gap", "missing", "slot", "binder", "board", "matrix", "set completion"),
+}
+
+_TOKEN_PROPERTIES: dict[str, str] = {
+    "background": "--bg",
+    "surface": "--surface",
+    "text": "--ink",
+    "muted": "--muted",
+    "accent": "--accent",
+    "accent_alt": "--accent-alt",
+    "border": "--border",
+    "focus": "--focus",
+    "danger": "--danger",
+}
+
+# The only custom properties a bespoke layer may name.
+_BESPOKE_TOKENS = frozenset(
+    {
+        *_TOKEN_PROPERTIES.values(),
+        "--radius",
+        "--shadow",
+        "--gap",
+        "--pad",
+        "--row-pad",
+        "--font-body",
+        "--font-mono",
+        "--span",
+        "--collapse-order",
+        "--tile-span",
+        "--tile-rows",
+    }
+)
+
+_NARROW_WORDS = ("phone", "mobile", "small screen", "narrow", "handheld")
+_PAGED_WORDS = ("paged", "swipe", "carousel", "horizontally", "scroll")
+
+
+@dataclass(frozen=True)
+class ExperiencePlan:
+    """Everything the build decided about how this app looks and behaves."""
+
+    topology: str
+    typography_stack: str
+    typography_source: str
+    density_scale: str
+    density_source: str
+    signature_elements: tuple[str, ...]
+    signature_source: str
+    tokens: dict[str, Any]
+    token_overrides: dict[str, str]
+    collapse: dict[str, dict[str, Any]]
+    keyboard: dict[str, Any]
+    look_id: str | None
+    bespoke_css: str | None
+    bespoke_rejections: tuple[str, ...]
+
+    def for_runtime(self) -> dict[str, Any]:
+        """The half the app's own script needs to build its DOM."""
+        return {
+            "topology": self.topology,
+            "typography_stack": self.typography_stack,
+            "typography_label": TYPOGRAPHY_STACK_LABELS[self.typography_stack],
+            "density_scale": self.density_scale,
+            "density_label": DENSITY_SCALE_LABELS[self.density_scale],
+            "signature_elements": list(self.signature_elements),
+            "signature_labels": [
+                SIGNATURE_ELEMENT_LABELS[name] for name in self.signature_elements
+            ],
+            "collapse": self.collapse,
+            "keyboard": self.keyboard,
+        }
+
+    def for_receipt(self) -> dict[str, Any]:
+        """The half a reader needs to see what was chosen and what was mapped."""
+        return {
+            "topology": self.topology,
+            "typography_stack": self.typography_stack,
+            "typography_stack_from": self.typography_source,
+            "density_scale": self.density_scale,
+            "density_scale_from": self.density_source,
+            "signature_elements": list(self.signature_elements),
+            "signature_elements_from": self.signature_source,
+            "look_id": self.look_id,
+            "token_overrides": dict(self.token_overrides),
+            "bespoke_layer": "rendered" if self.bespoke_css else "none",
+            "bespoke_rejections": list(self.bespoke_rejections),
+        }
+
+
+def _first_hint(text: str, hints: tuple[str, ...]) -> bool:
+    return any(hint in text for hint in hints)
+
+
+def _map_typography(world: Any) -> str:
+    text = f"{world.typography} {world.mood}".casefold()
+    for name, hints in _TYPOGRAPHY_HINTS:
+        if _first_hint(text, hints):
+            return name
+    return "system_default"
+
+
+def _map_density(world: Any) -> str:
+    text = f"{world.density} {world.layout_principle} {world.mood}".casefold()
+    scores = {
+        name: sum(text.count(hint) for hint in hints) for name, hints in _DENSITY_HINTS.items()
+    }
+    best = max(scores.values())
+    if best == 0:
+        return "bench"
+    # Ties break on where the first matching word appears, so the same prose
+    # always resolves to the same scale.
+    candidates = [name for name, score in scores.items() if score == best]
+    if len(candidates) == 1:
+        return candidates[0]
+    positions = {
+        name: min(text.find(hint) for hint in _DENSITY_HINTS[name] if hint in text)
+        for name in candidates
+    }
+    return min(sorted(candidates), key=lambda name: positions[name])
+
+
+def _map_signature_elements(world: Any) -> tuple[str, ...]:
+    text = " ".join(world.signature_elements).casefold()
+    chosen = [name for name, hints in _SIGNATURE_HINTS.items() if _first_hint(text, hints)]
+    return tuple(sorted(chosen))[:5]
+
+
+def _collapse_plan(spec: FoundrySpec) -> dict[str, dict[str, Any]]:
+    """Turn the spec's responsive sentences into an order regions collapse in.
+
+    The sentence about small screens names the parts that come first. Anything
+    it names keeps that order on a narrow screen; anything it does not falls in
+    behind, most important part first.
+    """
+    narrow_lines = [
+        line.casefold()
+        for line in spec.experience.responsive_strategy
+        if _first_hint(line.casefold(), _NARROW_WORDS)
+    ]
+    # One clause is one instruction. A clause that says something is paged
+    # pages the parts that clause names, and nothing else.
+    clauses: list[str] = []
+    for line in narrow_lines:
+        clauses.extend(clause.strip() for clause in re.split(r"[.;]", line) if clause.strip())
+    emphasis_rank = {"primary": 0, "secondary": 1, "support": 2}
+    plan: dict[str, dict[str, Any]] = {}
+    for view in spec.experience.views:
+        mentioned: list[tuple[int, int, str]] = []
+        unmentioned: list[tuple[int, str]] = []
+        paged: set[str] = set()
+        for region in view.regions:
+            words = [
+                word
+                for word in (
+                    *region.title.casefold().split(),
+                    region.kind,
+                    *region.id.replace("_", " ").split(),
+                )
+                if len(word) > 3
+            ]
+            found = False
+            for index, clause in enumerate(clauses):
+                hits = [clause.find(word) for word in words if word in clause]
+                if not hits:
+                    continue
+                found = True
+                mentioned.append((index, min(hits), region.id))
+                if _first_hint(clause, _PAGED_WORDS):
+                    paged.add(region.id)
+                break
+            if not found:
+                unmentioned.append((emphasis_rank[region.emphasis], region.id))
+        order: list[str] = [region_id for *_, region_id in sorted(mentioned)]
+        order.extend(region_id for _, region_id in sorted(unmentioned))
+        for index, region_id in enumerate(order):
+            plan[f"{view.id}:{region_id}"] = {
+                "order": index,
+                "paged": region_id in paged,
+            }
+    return plan
+
+
+def _keyboard_plan(spec: FoundrySpec) -> dict[str, Any]:
+    """Turn the spec's keyboard sentences into keys the app really handles."""
+    lines = [line.casefold() for line in spec.experience.accessibility.keyboard_model]
+    joined = " ".join(lines)
+    if "focus to status" in joined or "focus to the status" in joined:
+        focus_after_capture = "status"
+    elif "returns focus to the changed" in joined or "focus to the changed value" in joined:
+        focus_after_capture = "record"
+    else:
+        focus_after_capture = "main"
+    return {
+        "arrow_navigation": "arrow key" in joined or "arrow keys" in joined,
+        "escape_returns_to_main": "escape" in joined,
+        "space_reveals": "space" in joined and "reveal" in joined,
+        "focus_after_capture": focus_after_capture,
+        "model": list(spec.experience.accessibility.keyboard_model),
+        "patterns": list(spec.experience.accessibility.patterns),
+        "manual_checks": list(spec.experience.accessibility.manual_checks),
+        "target": spec.experience.accessibility.target,
+    }
+
+
+def _resolve_experience(spec: FoundrySpec) -> ExperiencePlan:
+    world = spec.experience.visual_world
+    look = spec.look
+
+    topology = spec.experience.navigation.topology
+    if look and look.topology:
+        topology = look.topology
+
+    if look and look.typography_stack:
+        typography, typography_source = look.typography_stack, "chosen on the review page"
+    elif world.typography_stack:
+        typography, typography_source = world.typography_stack, "named in the spec"
+    else:
+        typography, typography_source = _map_typography(world), "mapped from the spec's description"
+
+    if look and look.density_scale:
+        density, density_source = look.density_scale, "chosen on the review page"
+    elif world.density_scale:
+        density, density_source = world.density_scale, "named in the spec"
+    else:
+        density, density_source = _map_density(world), "mapped from the spec's description"
+
+    if look and look.signature_elements:
+        signature = tuple(dict.fromkeys(look.signature_elements))
+        signature_source = "chosen on the review page"
+    elif world.signature_element_ids:
+        signature = tuple(dict.fromkeys(world.signature_element_ids))
+        signature_source = "named in the spec"
+    else:
+        signature = _map_signature_elements(world)
+        signature_source = "mapped from the spec's description"
+
+    tokens = world.tokens.model_dump(mode="json")
+    overrides = dict(look.token_overrides) if look else {}
+    for name, value in overrides.items():
+        tokens[name] = int(value) if name == "radius_px" else value
+
+    bespoke_layer = (look.bespoke if look and look.bespoke else None) or world.bespoke
+    bespoke_css: str | None = None
+    rejections: tuple[str, ...] = ()
+    if bespoke_layer is not None:
+        bespoke_css, problems = sanitize_bespoke_css(bespoke_layer.css)
+        rejections = tuple(problems)
+
+    return ExperiencePlan(
+        topology=topology,
+        typography_stack=typography,
+        typography_source=typography_source,
+        density_scale=density,
+        density_source=density_source,
+        signature_elements=signature,
+        signature_source=signature_source,
+        tokens=tokens,
+        token_overrides=overrides,
+        collapse=_collapse_plan(spec),
+        keyboard=_keyboard_plan(spec),
+        look_id=look.look_id if look else None,
+        bespoke_css=bespoke_css,
+        bespoke_rejections=rejections,
     )
 
 
-_APP_TEMPLATE = r'''<!doctype html>
+_BESPOKE_SELECTOR_RE = re.compile(r"^[a-z0-9 .\-_\[\]=\"']+$")
+_BESPOKE_VALUE_RE = re.compile(r"^[A-Za-z0-9 .,%#()\-_/+*'\"]+$")
+_BESPOKE_RULE_RE = re.compile(r"([^{}]+)\{([^{}]*)\}")
+_BESPOKE_COLOUR_RE = re.compile(r"#[0-9A-Fa-f]{3,8}\b|\b(?:rgba?|hsla?|color|color-mix)\(")
+_BESPOKE_FONT_SIZE_RE = re.compile(
+    r"var\(--[a-z0-9\-]+\)|(?:0?\.[5-9][0-9]*|[12](?:\.[0-9]+)?|3)(?:rem|em)|(?:[5-9][0-9]|1[0-9]{2})%"
+)
+
+
+def sanitize_bespoke_css(css: str) -> tuple[str | None, list[str]]:
+    """Check a per-app CSS layer against the envelope, all or nothing.
+
+    Anything outside the envelope drops the whole layer. The app is still
+    built, and the reasons are written into the build receipt.
+    """
+    problems: list[str] = []
+    if len(css.encode("utf-8")) > BESPOKE_CSS_BUDGET_BYTES:
+        problems.append(f"the layer is over the {BESPOKE_CSS_BUDGET_BYTES} byte budget")
+    lowered = css.casefold()
+    for banned in BESPOKE_FORBIDDEN_SUBSTRINGS:
+        if banned in lowered:
+            problems.append(f"the layer uses {banned}, which is never allowed")
+    if "@" in css:
+        problems.append("the layer uses an at-rule, and only plain rules are allowed")
+    if "/*" in css or "*/" in css:
+        problems.append("the layer uses a comment, and only plain rules are allowed")
+
+    blocks = _BESPOKE_RULE_RE.findall(css)
+    if not blocks:
+        problems.append("the layer has no complete rule to render")
+    if _BESPOKE_RULE_RE.sub("", css).strip():
+        problems.append("the layer has text outside a rule")
+
+    rules: list[str] = []
+    for raw_selector, body in blocks:
+        selector = " ".join(raw_selector.split())
+        if (
+            "#" in selector
+            or "*" in selector
+            or not _BESPOKE_SELECTOR_RE.match(selector.casefold())
+        ):
+            problems.append(f"the selector '{selector}' is not one a layer may target")
+            continue
+        declarations: list[str] = []
+        for declaration in body.split(";"):
+            if not declaration.strip():
+                continue
+            name, separator, value = declaration.partition(":")
+            name = name.strip().casefold()
+            value = " ".join(value.split())
+            if not separator or not value:
+                problems.append(f"'{declaration.strip()}' is not a property and a value")
+                continue
+            if name not in BESPOKE_ALLOWED_PROPERTIES:
+                problems.append(f"'{name}' is not a property a layer may set")
+                continue
+            if not _BESPOKE_VALUE_RE.match(value):
+                problems.append(f"the value for '{name}' uses characters a layer may not use")
+                continue
+            if _BESPOKE_COLOUR_RE.search(value):
+                problems.append(f"'{name}' sets a colour directly; use one of the app's tokens")
+                continue
+            for token in re.findall(r"var\(\s*(--[a-z0-9\-]+)", value):
+                if token not in _BESPOKE_TOKENS:
+                    problems.append(f"'{token}' is not one of the app's tokens")
+            if name == "font-size" and not _BESPOKE_FONT_SIZE_RE.fullmatch(value):
+                problems.append("font-size has to stay inside the app's type scale")
+                continue
+            declarations.append(f"{name}: {value};")
+        if declarations:
+            scoped = selector if selector.startswith(".app") else f".app {selector}"
+            rules.append(f"    {scoped} {{ {' '.join(declarations)} }}\n")
+
+    if problems:
+        return None, sorted(dict.fromkeys(problems))
+    if not rules:
+        return None, ["the layer had nothing to render"]
+    return "".join(rules), []
+
+
+def _token_block(plan: ExperiencePlan) -> str:
+    lines = ["    :root {"]
+    for name, custom_property in _TOKEN_PROPERTIES.items():
+        lines.append(f"      {custom_property}: {plan.tokens[name]};")
+    lines.append(f"      --radius: {plan.tokens['radius_px']}px;")
+    lines.append("      --shadow: 0 14px 40px rgba(32, 28, 22, .12);")
+    lines.append(f"      --font-body: {_TYPOGRAPHY_STACKS[plan.typography_stack]};")
+    lines.append(f"      --font-mono: {_MONO_STACK};")
+    lines.append("      font-family: var(--font-body);")
+    lines.append("    }")
+    return "\n".join(lines) + "\n"
+
+
+def _html_text(value: str) -> str:
+    return (
+        value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+    )
+
+
+# ---------------------------------------------------------------------------
+# The stylesheet, in parts (Lane B1, docs/rebuild-plan-2026-08-28).
+#
+# Every app used to share one CSS string, so every app looked the same. The
+# parts below are composed per build: the shell every app shares, the colour
+# tokens, the layout for the chosen topology, and the narrow-screen and motion
+# rules that close the sheet.
+# ---------------------------------------------------------------------------
+
+_DOCUMENT_HEAD = r"""<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -366,15 +838,12 @@ _APP_TEMPLATE = r'''<!doctype html>
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>__TITLE__</title>
   <style>
-    * { box-sizing: border-box; }
-    :root {
-      --bg: #f3f0e8; --surface: #fffdf8; --ink: #1c1c1a; --muted: #65645f;
-      --accent: #965131; --accent-alt: #315866; --border: #d1c9ba;
-      --focus: #17627c; --danger: #a53a35; --radius: 10px;
-      --shadow: 0 14px 40px rgba(32, 28, 22, .12);
-      font-family: "Avenir Next", "Segoe UI", sans-serif;
-    }
-    html { background: var(--bg); color: var(--ink); }
+"""
+
+_RESET_CSS = r"""    * { box-sizing: border-box; }
+"""
+
+_BASE_SHELL_CSS = r"""    html { background: var(--bg); color: var(--ink); }
     body { margin: 0; min-height: 100vh; background: var(--bg); }
     button, input, select, textarea { font: inherit; }
     button { min-height: 44px; cursor: pointer; }
@@ -426,7 +895,7 @@ _APP_TEMPLATE = r'''<!doctype html>
     .session-card { min-height: 20rem; display: grid; place-items: center; text-align: center; padding: 3rem 1rem; }
     .session-card .cue { font-size: clamp(2.7rem, 9vw, 7rem); line-height: 1; letter-spacing: -.03em; }
     .session-answer { margin-top: 2rem; font-size: 1.15rem; }
-    .measure { font-family: ui-monospace, "SFMono-Regular", monospace; font-variant-numeric: tabular-nums; }
+    .measure { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
     .timeline { border-inline-start: 1px solid var(--accent-alt); padding-inline-start: 1rem; }
     .timeline .record { position: relative; }
     .timeline .record::before { content: ""; position: absolute; width: 9px; height: 9px; border-radius: 50%; background: var(--accent-alt); inset-inline-start: calc(-1rem - 5px); top: 1.1rem; }
@@ -473,13 +942,156 @@ _APP_TEMPLATE = r'''<!doctype html>
     .evidence-item { padding: 1rem 0; border-top: 1px solid var(--border); }
     .evidence-item a { color: var(--accent-alt); }
     .visually-hidden { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
-    body[data-topology="session"] .app { grid-template-columns: 1fr; }
+"""
+
+_TOPOLOGY_CSS: dict[str, str] = {
+    "hub": r"""    body[data-topology="hub"] main { max-width: 100rem; }
+    body[data-topology="hub"] .hub-overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: var(--gap); margin: 2.5rem 0 0; }
+    body[data-topology="hub"] .hub-card { display: grid; align-content: start; gap: .45rem; text-align: start; padding: var(--pad); border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--ink); }
+    body[data-topology="hub"] .hub-card[aria-current="page"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+    body[data-topology="hub"] .hub-card[aria-current="page"] small { color: var(--surface); }
+    body[data-topology="hub"] .hub-card strong { font-size: 1.15rem; }
+    body[data-topology="hub"] .hub-card small { color: var(--muted); line-height: 1.45; }
+    body[data-topology="hub"] .regions { align-items: start; }
+""",
+    "workflow": r"""    body[data-topology="workflow"] .workflow-track { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(20rem, 1fr); gap: var(--gap); overflow-x: auto; padding-bottom: .8rem; align-items: start; }
+    body[data-topology="workflow"] .workflow-stage { display: grid; gap: .8rem; align-content: start; list-style: none; }
+    body[data-topology="workflow"] .workflow-step { display: flex; align-items: center; gap: .6rem; color: var(--muted); font-size: .8rem; }
+    body[data-topology="workflow"] .workflow-index { width: 1.9rem; height: 1.9rem; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); font-variant-numeric: tabular-nums; }
+    body[data-topology="workflow"] .workflow-stage .region { grid-column: auto; height: 100%; }
+    body[data-topology="workflow"] .workflow-track::after { content: ""; }
+""",
+    "split": r"""    body[data-topology="split"] .split { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: var(--gap); align-items: start; }
+    body[data-topology="split"] .split-index, body[data-topology="split"] .split-detail { display: grid; gap: var(--gap); align-content: start; min-width: 0; }
+    body[data-topology="split"] .split-detail { position: sticky; top: 1.5rem; }
+    body[data-topology="split"] .split .region { grid-column: auto; }
+    body[data-topology="split"] .split-detail .region { background: color-mix(in srgb, var(--surface) 93%, var(--accent-alt)); }
+""",
+    "canvas": r"""    body[data-topology="canvas"] .canvas-board { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--gap); align-items: start; }
+    body[data-topology="canvas"] .canvas-tile { grid-column: span var(--tile-span, 3); grid-row: span var(--tile-rows, 1); min-width: 0; }
+    body[data-topology="canvas"] .canvas-tile .region { height: 100%; grid-column: auto; }
+    body[data-topology="canvas"] .canvas-position { display: block; color: var(--muted); font-size: .72rem; font-variant-numeric: tabular-nums; letter-spacing: .08em; text-transform: uppercase; margin-bottom: .35rem; }
+""",
+    "session": r"""    body[data-topology="session"] .app { grid-template-columns: 1fr; }
     body[data-topology="session"] .rail { min-height: auto; position: static; border-right: 0; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: auto 1fr; gap: 2rem; padding: 1rem clamp(1rem, 4vw, 3rem); align-items: center; }
     body[data-topology="session"] .brand { margin: 0; max-width: none; font-size: 1.15rem; }
     body[data-topology="session"] .world, body[data-topology="session"] .rail-foot { display: none; }
     body[data-topology="session"] .view-nav { display: flex; justify-content: flex-end; overflow-x: auto; }
     body[data-topology="session"] main { width: min(1100px, 100%); margin: auto; }
-    @media (max-width: 820px) {
+    body[data-topology="session"] .session-stage { display: grid; gap: var(--gap); }
+""",
+}
+
+# What each topology does when the screen gets narrow. Only the block for the
+# topology this app uses is written into the file.
+_TOPOLOGY_NARROW_CSS: dict[str, str] = {
+    "hub": r"""      body[data-topology="hub"] .hub-overview { grid-template-columns: 1fr; }
+""",
+    "workflow": r"""      body[data-topology="workflow"] .workflow-track { grid-auto-flow: row; grid-auto-columns: auto; overflow-x: visible; }
+""",
+    "split": r"""      body[data-topology="split"] .split { grid-template-columns: 1fr; }
+      body[data-topology="split"] .split-detail { position: static; }
+""",
+    "canvas": r"""      body[data-topology="canvas"] .canvas-board { grid-template-columns: 1fr; }
+      body[data-topology="canvas"] .canvas-tile { grid-column: 1 / -1; }
+""",
+    "session": r"""      body[data-topology="session"] .rail { display: block; padding: 1rem; }
+      body[data-topology="session"] .brand { margin-bottom: .8rem; }
+      body[data-topology="session"] .view-nav { justify-content: flex-start; max-width: calc(100vw - 2rem); }
+""",
+}
+
+# How much room the layout gives each thing. One block per density; only the
+# chosen one is written into the file.
+_DENSITY_CSS: dict[str, str] = {
+    "airy": r"""    html { font-size: 106.25%; }
+    :root { --gap: 1.6rem; --pad: clamp(1.35rem, 3vw, 2.4rem); --row-pad: 1.1rem; }
+    .regions { gap: var(--gap); }
+    .region { padding: var(--pad); }
+    .record { padding-block: var(--row-pad); }
+    .record-list { gap: 1rem; }
+    .view-head { margin-block: 4rem 2.4rem; }
+""",
+    "bench": r"""    :root { --gap: 1.1rem; --pad: clamp(1rem, 2.4vw, 2rem); --row-pad: .85rem; }
+    .regions { gap: var(--gap); }
+    .region { padding: var(--pad); }
+    .record { padding-block: var(--row-pad); }
+    .record-list { gap: .7rem; }
+""",
+    "dense": r"""    html { font-size: 93.75%; }
+    :root { --gap: .6rem; --pad: clamp(.7rem, 1.6vw, 1.15rem); --row-pad: .5rem; }
+    .regions { gap: var(--gap); }
+    .region { padding: var(--pad); }
+    .record { padding-block: var(--row-pad); }
+    .record-list { gap: .35rem; }
+    .region h3 { margin-bottom: .85rem; }
+    .view-head { margin-block: 2.2rem 1.2rem; }
+    .data-table th, .data-table td { padding: .4rem .5rem; }
+""",
+}
+
+# The renderable motifs. A build carries the CSS only for the motifs its spec
+# actually asks for.
+_SIGNATURE_CSS: dict[str, str] = {
+    "progress_bar": r"""    .signature-progress { display: grid; gap: .4rem; width: min(100%, 26rem); margin-top: 1rem; }
+    .signature-progress .bar { height: .6rem; border-radius: 999px; background: color-mix(in srgb, var(--accent) 18%, var(--surface)); border: 1px solid var(--border); overflow: hidden; }
+    .signature-progress .bar span { display: block; height: 100%; background: var(--accent); }
+    .signature-progress .bar-label { color: var(--muted); font-size: .78rem; }
+""",
+    "life_list": r"""    .signature-life-list ol { list-style: none; margin: 0; padding: 0; display: grid; gap: .3rem; }
+    .signature-life-list li { display: flex; justify-content: space-between; gap: .8rem; padding: .35rem 0; border-top: 1px solid var(--border); }
+    .signature-life-list li:first-child { border-top: 0; }
+    .signature-life-list .count { color: var(--muted); font-variant-numeric: tabular-nums; }
+""",
+    "comparison_strip": r"""    .signature-comparison .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--gap); }
+    .signature-comparison .pair > div { min-width: 0; padding: .8rem; border: 1px solid var(--border); border-radius: calc(var(--radius) - 3px); }
+    .signature-comparison .changed { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+""",
+    "timeline_rail": r"""    .signature-timeline ol { list-style: none; margin: 0; padding: 0 0 0 1rem; border-inline-start: 2px solid var(--accent-alt); display: grid; gap: .7rem; }
+    .signature-timeline li { position: relative; }
+    .signature-timeline li::before { content: ""; position: absolute; inset-inline-start: calc(-1rem - 5px); top: .45rem; width: 8px; height: 8px; border-radius: 50%; background: var(--accent-alt); }
+    .signature-timeline time { display: block; color: var(--muted); font-size: .76rem; }
+""",
+    "gap_grid": r"""    .signature-gap-grid .cells { display: grid; grid-template-columns: repeat(auto-fill, minmax(3.4rem, 1fr)); gap: .3rem; }
+    .signature-gap-grid .cell { min-height: 2.4rem; display: grid; place-items: center; border: 1px solid var(--border); border-radius: calc(var(--radius) - 4px); font-size: .74rem; font-variant-numeric: tabular-nums; background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
+    .signature-gap-grid .cell.missing { background: transparent; border-style: dashed; color: var(--muted); }
+""",
+}
+
+_SIGNATURE_FRAME_CSS = r"""    .signature { border: 1px solid var(--border); border-radius: var(--radius); padding: var(--pad); background: var(--surface); }
+    .signature h2 { margin: 0 0 .8rem; font-size: .95rem; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+    .signature-panel { display: grid; gap: var(--gap); align-content: start; }
+    .signature-strip { display: grid; gap: var(--gap); margin-bottom: var(--gap); }
+    .with-signature-panel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem); gap: var(--gap); align-items: start; }
+    .signature-note { color: var(--muted); margin: 0; }
+"""
+
+_SIGNATURE_NARROW_CSS = r"""      .with-signature-panel { grid-template-columns: 1fr; }
+      .signature-comparison .pair { grid-template-columns: 1fr; }
+"""
+
+# Curated system-font stacks. The app never reaches the network, so every stack
+# is a list of faces the machine already has.
+_TYPOGRAPHY_STACKS: dict[str, str] = {
+    "reading_serif": (
+        '"Iowan Old Style", "Palatino Linotype", Palatino, Georgia, '
+        '"Hiragino Mincho ProN", "Yu Mincho", serif'
+    ),
+    "data_sans": (
+        '"Helvetica Neue", "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", system-ui, sans-serif'
+    ),
+    "mono_forward": (
+        'ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace'
+    ),
+    "rounded_humanist": (
+        '"Avenir Next", Avenir, "Segoe UI", ui-rounded, "Hiragino Maru Gothic ProN", sans-serif'
+    ),
+    "system_default": ('system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'),
+}
+
+_MONO_STACK = 'ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace'
+
+_RESPONSIVE_CSS = r"""    @media (max-width: 820px) {
       .app { grid-template-columns: 1fr; min-width: 0; width: 100%; }
       .rail { min-width: 0; width: 100%; max-width: 100vw; min-height: auto; position: static; border-right: 0; border-bottom: 1px solid var(--border); padding: 1rem; overflow: hidden; }
       .brand { max-width: none; margin: 0 0 .3rem; font-size: 1.4rem; }
@@ -493,17 +1105,22 @@ _APP_TEMPLATE = r'''<!doctype html>
       .record dl, .detail-grid { grid-template-columns: 1fr; }
       .workbench { grid-template-columns: 1fr; }
       .workbench aside { border-inline-end: 0; border-bottom: 1px solid var(--border); padding-inline-end: 0; padding-bottom: 1rem; }
-      body[data-topology="session"] .rail { display: block; padding: 1rem; }
-      body[data-topology="session"] .brand { margin-bottom: .8rem; }
-      body[data-topology="session"] .view-nav { justify-content: flex-start; max-width: calc(100vw - 2rem); }
-    }
-    @media (prefers-reduced-motion: no-preference) {
+      .region { order: var(--collapse-order, 50); }
+      .region[data-narrow="paged"] .record-list, .region[data-narrow="paged"] .canvas-grid, .region[data-narrow="paged"] .shelf-grid { grid-auto-flow: column; grid-auto-columns: minmax(13rem, 1fr); grid-template-columns: none; overflow-x: auto; padding-bottom: .5rem; }
+"""
+
+_RESPONSIVE_CLOSE = r"""    }
+"""
+
+_MOTION_CSS = r"""    @media (prefers-reduced-motion: no-preference) {
       .region { animation: resolve-in 420ms cubic-bezier(.16,1,.3,1) both; }
       @keyframes resolve-in { from { opacity: .6; transform: translateY(8px); filter: blur(3px); } to { opacity: 1; transform: none; filter: none; } }
     }
-  </style>
+"""
+
+_DOCUMENT_TAIL = r"""  </style>
 </head>
-<body>
+<body __BODY_ATTRS__>
   <a class="skip" href="#main">Skip to application</a>
   <div id="app"></div>
   <dialog id="capture-dialog" aria-labelledby="capture-title"><div class="dialog-inner" id="capture-content"></div></dialog>
@@ -514,7 +1131,7 @@ __RUNTIME_JS__
   </script>
 </body>
 </html>
-'''
+"""
 
 
 __all__ = ["BuildArtifact", "FoundryCompiler"]

@@ -3,7 +3,7 @@
 Get from a clean machine to a working foundry in a few minutes, using only this
 repo. Target: **under 15 minutes** on a fresh VM (the P8 clean-machine gate).
 
-The public story is the same three weekends — bake log, dive notebook, card
+The public story is the same three weekends: bake log, dive notebook, card
 binder. Click-through: **[Bring the log. Pick a look.](tutorial/end-to-end.html)**.
 This page is the terminal version, then builder extras.
 
@@ -61,7 +61,7 @@ want the suggestion:
 domain-foundry new-domain "i have a log of sourdough bakes" --reply skip --reply "build it"
 ```
 
-`skip` alone is **not** install — it only shows a look.
+`skip` alone does **not** install anything. It only shows a look.
 
 Same shape for the other weekends:
 
@@ -98,13 +98,13 @@ one cheap live call per tier to prove the key works:
 
 ```
 Checking each tier can reach its model:
-  routine  claude-haiku-4-5             ok — reachable
-  sota     claude-opus-5                ok — reachable
+  routine  claude-haiku-4-5             ok, reachable
+  sota     claude-opus-5                ok, reachable
 ```
 
 That probe matters: without it, a wrong key or a renamed model shows up as
-*silence*. Captures keep succeeding, because routing falls back to keyword rules
-— so the failure looks exactly like "I haven't set a key yet".
+*silence*. Captures keep succeeding, because routing falls back to keyword rules,
+so the failure looks exactly like "I haven't set a key yet".
 
 **The two tiers, and why there are two:**
 
@@ -117,7 +117,7 @@ Escalation is automatic (`select_model_tier`): a routing rule can declare
 `tier: sota`, and anything that updates/deletes/merges, reads as a correction,
 comes back below 0.7 confidence, or matches multiple packs escalates on its own.
 
-**Settings resolve in three layers, most specific first** — environment
+**Settings resolve in three layers, most specific first**: environment
 variables, then the config file `setup` wrote (`~/.domain_foundry/config.toml`),
 then the provider's suggestion. So an expert setup that lives in a dotfile keeps
 working untouched:
@@ -146,7 +146,7 @@ key for many models. Export `DEEPSEEK_API_KEY` or `OPENROUTER_API_KEY` and
 
 ## Appendix: add a demonstration pack (ramen / travel)
 
-Packs are **data** — no code. Two showcase packs ship in `packs/`. This is the
+Packs are **data**, with no code. Two showcase packs ship in `packs/`. This is the
 old “install everything” analog, not the weekend wizard:
 
 ```bash
@@ -185,7 +185,7 @@ HERMES_PY="$HOME/.hermes/hermes-agent/venv/bin/python"
 uv pip install --python "$HERMES_PY" -e ./adapters/hermes_agent
 
 # 3) enable plugin + toolset on that profile only (pip plugins are not listed
-#    by `hermes plugins enable` on Hermes 0.14 — edit config.yaml):
+#    by `hermes plugins enable` on Hermes 0.14, so edit config.yaml):
 #    plugins.enabled: [domain_foundry]
 #    platform_toolsets.cli: [..., domain_foundry]
 
@@ -217,6 +217,6 @@ scripts/quickstart_gate.sh
 
 Runs the pack-add + capture path against a throwaway `--home`, activates the food
 + travel packs, captures a single-domain and a cross-domain message, and asserts
-both routed — the automatable core of the 15-minute gate. The manual slice
+both routed. That is the automatable core of the 15-minute gate. The manual slice
 (browser app + hermes-agent capture) is the serve / hermes appendices above.
 The wizard weekend is §3.

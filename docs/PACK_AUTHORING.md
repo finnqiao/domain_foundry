@@ -89,6 +89,102 @@ fallback: unfiled_card
 Set `create` to `confirm` only for genuinely sensitive domains — the wizard's
 privacy question drives this.
 
+## Putting two packs together
+
+Two keys let a pack build on other packs. Both are optional. A pack that uses
+neither loads exactly as it did before they existed.
+
+### `extends`: build on another pack
+
+In `pack.yaml`:
+
+```yaml
+name: travel_food
+extends: travel
+```
+
+You get every object, routing rule, operation, and view the parent has, and
+they run under your tables, not the parent's. `travel_food` gets its own
+`travel_food__trip` table; the travel pack keeps its own.
+
+What happens when both packs say something about the same thing:
+
+| Part | Rule |
+|---|---|
+| Objects | Both packs' objects are there. If both declare the same object, the fields and links merge and yours win per name. Your `title_field` wins when you set one. |
+| Routing rules | Both lists run, yours first. |
+| Routing examples and negatives | Both lists, yours first. |
+| LLM hints | Yours when you write any, otherwise the parent's. |
+| Operations | Merged per object, yours win. |
+| Policy | Yours when you write any rows or UI actions, otherwise the parent's. |
+| Views | Both lists, yours first. A view id you reuse replaces the parent's. |
+| Capabilities | Merged, yours win. |
+| Permissions | Both packs' permissions, added together. |
+| Agent | Yours when you ship an `agent.yaml`, otherwise the parent's, renamed to your pack. |
+
+One parent only. A loop between packs, such as two packs that extend each
+other, is a load error naming both packs.
+
+### `imports`: borrow an object from another pack
+
+```yaml
+imports:
+  - {from: food, object: dining}
+  - {from: food, object: recipe, as: dish}
+```
+
+Nothing is copied. The borrowed records stay in the pack that owns them, in
+that pack's table. What you get is the right to point at them by a short name.
+Use `as` when the name would clash with one of your own objects; a clash you do
+not rename is a load error naming your object and the imported one.
+
+### Links become real foreign keys
+
+A link in `schema.yaml` says a record points at one other record:
+
+```yaml
+objects:
+  timeline_item:
+    links:
+      dining: {to: food.dining, cardinality: many_to_one}
+```
+
+That compiles to a column named after the link with `_uid` on the end, holding
+the other record's `object_uid`, plus a foreign key:
+
+```sql
+dining_uid TEXT,
+FOREIGN KEY (dining_uid) REFERENCES food__dining(object_uid) ON DELETE SET NULL
+```
+
+So the database refuses a pointer to a record that is not there, and deleting
+the record you point at clears the pointer instead of deleting your record.
+
+If the pack you point at is not installed, your pack still loads and the column
+is still there. The foreign key is left off until that pack arrives, because a
+constraint pointing at a missing table would make every write fail. The loader
+records what you are waiting on, and `pack_conformance.py` prints it under
+`composition.waiting_on`.
+
+If the pack you point at *is* installed but has no object by that name, that is
+a load error naming your link, the object you asked for, and the objects that
+pack really has.
+
+Existing databases only ever gain: applying a pack's schema adds columns that
+are missing and never drops or rewrites what is there.
+
+### The `stack` command writes all of this for you
+
+```
+domain-foundry stack travel food
+```
+
+That writes a `travel_food` pack that extends travel, borrows food's `dining`
+object, points travel's `timeline_item` at it, adds one view listing the two
+together, and turns the pack on. It then tells you which column carries the
+pointer and gives you a capture to try. Use `--objects` to say which objects to
+borrow, and `--out` to write the pack somewhere without turning it on.
+
 ## Evolution
 
 Every schema change goes through a migration (§5.7). The hardening loop turns a

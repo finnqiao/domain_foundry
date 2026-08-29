@@ -1,0 +1,296 @@
+# The local interest graph: "if this, then that".
+#
+# Each rule says one thing about the shape of a practice, and what that means
+# the app should be shaped like. The point is that one sentence about a hobby
+# can produce three structurally different app ideas instead of three names for
+# the same log.
+#
+# Every rule here is authored, so every rule cites evidence. The ids in
+# `evidence_ids` are principle ids from `knowledge/principles/` and source ids
+# from `knowledge/source-registry.yaml`. See `knowledge/trait-graph.md` for the
+# reasoning behind each one.
+#
+# `signals` is how detection reads a trait off a brief or a seed. It is never
+# evidence: a detected edge cites the authored rule it fired, and names the seed
+# it was read off. Adding a signal widens what is noticed; it never invents a
+# consequence, because the consequence is fixed here.
+#
+# A file of the same name under ~/.domain_foundry/atlas/ merges over this one,
+# same id wins.
+
+version: 1
+
+rules:
+  - signals:
+      words:
+        - tide
+        - tides
+        - tidal
+        - low tide
+        - high tide
+        - moon
+        - lunar
+        - season
+        - seasonal
+        - migration
+        - bloom
+        - window
+        - forecast
+        - sunrise
+        - sunset
+        - daylight
+      columns:
+        - tide
+        - tide_height
+        - tide_height_m
+        - moon
+        - moon_phase
+        - phase
+        - season
+        - window
+        - sunrise
+        - sunset
+    edge:
+      id: cycle_driven
+      trait: >-
+        The practice runs on a cycle nobody controls: the tide, the moon, the
+        season. You go when it lets you, not when you feel like it.
+      consequence: >-
+        The app is built around time windows. Knowing when to go comes before
+        recording what happened, and the next good window is the first thing on
+        screen.
+      origin: authored
+      topology: session
+      signature_elements:
+        - timeline_rail
+        - progress_bar
+      evidence_ids:
+        - UX-09
+        - UX-01
+
+  - signals:
+      words:
+        - collect
+        - collection
+        - collecting
+        - catalog
+        - catalogue
+        - species
+        - specimen
+        - set
+        - sets
+        - complete
+        - completion
+        - missing
+        - checklist
+        - life list
+        - lifer
+        - variety
+        - edition
+        - card
+        - cards
+      columns:
+        - species
+        - species_name
+        - set
+        - set_number
+        - catalog_number
+        - owned
+        - have
+        - missing
+        - variant
+        - edition
+    edge:
+      id: collected_instances
+      trait: >-
+        There is a known set of things out there and you are working through it.
+        Some you have, most you have not.
+      consequence: >-
+        The app is a catalog split two ways: what you have found, and what is
+        still missing. The gap is the interesting half and it gets its own view.
+      origin: authored
+      topology: split
+      signature_elements:
+        - gap_grid
+        - life_list
+      evidence_ids:
+        - rebrickable_api
+        - pokemon_tcg_api
+        - UX-05
+
+  - signals:
+      words:
+        - practice
+        - practise
+        - drill
+        - drills
+        - lesson
+        - lessons
+        - exercise
+        - technique
+        - repetition
+        - reps
+        - review
+        - study
+        - scale
+        - scales
+        - piece
+        - routine
+      columns:
+        - drill
+        - exercise
+        - reps
+        - duration_min
+        - difficulty
+        - due
+        - reviewed_at
+        - streak
+    edge:
+      id: practiced_skill
+      trait: >-
+        You are getting better at something by doing it over and over, and each
+        sitting has a choice in it: what to work on next.
+      consequence: >-
+        The app runs one session at a time and asks one question at a time.
+        Everything else waits until the session is over.
+      origin: authored
+      topology: session
+      signature_elements:
+        - progress_bar
+      evidence_ids:
+        - anki_scheduler
+        - fsrs4anki
+        - UX-10
+
+  - signals:
+      words:
+        - spot
+        - spots
+        - site
+        - sites
+        - place
+        - places
+        - location
+        - locations
+        - beach
+        - reef
+        - trail
+        - route
+        - park
+        - region
+        - coordinates
+        - map
+      columns:
+        - spot
+        - site
+        - site_name
+        - place
+        - location
+        - latitude
+        - longitude
+        - lat
+        - lon
+        - region
+        - trail
+    edge:
+      id: place_bound
+      trait: >-
+        The same handful of places come up again and again, and what you find
+        depends on which one you are standing in.
+      consequence: >-
+        The app is organised by place. Each one keeps its own history, so you
+        can see what this spot has given you before you go back.
+      origin: authored
+      topology: canvas
+      signature_elements:
+        - timeline_rail
+        - life_list
+      evidence_ids:
+        - UX-09
+        - UX-05
+
+  - signals:
+        # A practice that leaves something behind to look at later.
+      words:
+        - photo
+        - photos
+        - photograph
+        - picture
+        - image
+        - images
+        - shot
+        - shots
+        - roll
+        - scan
+        - recording
+        - video
+        - sketch
+        - print
+      columns:
+        - photo
+        - photos
+        - image
+        - image_path
+        - filename
+        - roll
+        - frame
+        - exposure
+    edge:
+      id: produces_artifacts
+      trait: >-
+        Every time you do this you come home with something to look at: photos,
+        recordings, prints, sketches.
+      consequence: >-
+        The app is a roll of what you made, reviewed a batch at a time with two
+        of them side by side.
+      origin: authored
+      topology: canvas
+      signature_elements:
+        - comparison_strip
+      evidence_ids:
+        - UX-04
+        - UX-06
+
+  - signals:
+      words:
+        - improve
+        - improving
+        - better
+        - progress
+        - faster
+        - stronger
+        - personal best
+        - pb
+        - trend
+        - score
+        - time
+        - times
+        - consistent
+        - consistency
+        - baseline
+      columns:
+        - score
+        - time_sec
+        - weight
+        - reps
+        - pace
+        - rating
+        - result
+        - baseline
+        - target
+    edge:
+      id: improves_over_time
+      trait: >-
+        You are trying to get a number to move, and the only way to know whether
+        it did is to look back at what it was.
+      consequence: >-
+        The app closes a loop: record, compare against what came before, decide
+        what to change. Two records side by side is the main view.
+      origin: authored
+      topology: workflow
+      signature_elements:
+        - comparison_strip
+        - progress_bar
+      evidence_ids:
+        - wger_workout
+        - UX-08

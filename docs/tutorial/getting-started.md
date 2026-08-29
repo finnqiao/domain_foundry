@@ -1,14 +1,14 @@
 # Getting started
 
-**Describe your passion. Talk to it. It becomes permanent, structured, correctable data — on your machine.**
+**Describe your passion. Talk to it. What you say becomes permanent, structured data you can fix later, on your machine.**
 
 The whole loop is one conversation: you say what you already keep, you see what you could build, you pick a look, then you talk to it. Three weekends, same shape:
 
 **[Bring the log. Pick a look.](end-to-end.html)**
 
-1. **Bake log** — “i have a log of sourdough bakes” → options → visualize → the scatter one → ask → fix a number.
-2. **Dive notebook** — animals underwater → field-guide look → build it → a sighting.
-3. **Card binder** — “i collect pokemon cards” → Card dex → denser gallery → build it → Charizard files.
+1. **Bake log**: “i have a log of sourdough bakes” → options → visualize → the scatter one → ask → fix a number.
+2. **Dive notebook**: animals underwater → field-guide look → build it → a sighting.
+3. **Card binder**: “i collect pokemon cards” → Card dex → denser gallery → build it → Charizard files.
 
 Do Case A yourself. The other two tabs are on the same page.
 
@@ -53,7 +53,7 @@ Then say the first line of the bake-log story:
 Claude should relay options (chart / mix board / photos), not pick for you. If you have notebook photos, Claude OCRs them. Foundry files text; paste a notes folder path to ingest it.
 
 > **You:** i want to data visualize all my bakes
-> **Claude:** a look for the bake lab — pick it, change it, or say build it.
+> **Claude:** a look for the bake lab. Pick it, change it, or say build it.
 > **You:** the scatter one
 > **You:** which hydrations actually sprang?
 > **You:** that sunday batard was 78 not 72
@@ -86,7 +86,7 @@ domain-foundry correct "that sunday batard was 78 not 72"
 
 Copy `<session>` from the first command’s JSON. “the scatter one” accepts the look and builds it. On the dive and card weekends, say **build it** after you like the look.
 
-`setup --provider deepseek -y` (or `openrouter` / `anthropic`) skips the questions. Exported `DOMAIN_FOUNDRY_*` vars override the config file — see [CLI quickstart](../QUICKSTART.md).
+`setup --provider deepseek -y` (or `openrouter` / `anthropic`) skips the questions. Exported `DOMAIN_FOUNDRY_*` vars override the config file. See [CLI quickstart](../QUICKSTART.md).
 
 ---
 

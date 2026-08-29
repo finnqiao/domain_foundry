@@ -77,4 +77,63 @@ The looks pipeline and review page (Lane C). The wizard path (P1 merge). New reg
 
 ## Resume notes
 
-(append here)
+### 2026-08-28, session 1: B1 to B6 landed (uncommitted)
+
+**Files touched (all Lane B owned, plus the two generated prototypes):**
+
+- `core/domain_foundry_core/foundry/compiler.py`
+- `core/domain_foundry_core/foundry/runtime.js`
+- `tests/contract/test_foundry_experience_compiler.py` (new)
+- `app/e2e/foundry-goldens.spec.ts`
+- `docs/prototypes/foundry-flow.html`, `docs/prototypes/knowledge-fabric.html` (regenerated with `scripts/build_foundry_prototypes.py`, never hand-edited)
+
+**Naming note for the integrator:** the lane doc names `tests/contract/test_foundry_compiler.py`, but `tests/unit/test_foundry_compiler.py` already exists and pytest refuses two test modules with the same basename when there is no package `__init__.py`. The new file is `tests/contract/test_foundry_experience_compiler.py`.
+
+**B1, break the monolith.** `_APP_TEMPLATE` is gone. The document is now `_DOCUMENT_HEAD` + a composed stylesheet + `_DOCUMENT_TAIL`, and the sheet is assembled from `_RESET_CSS`, a generated token block, `_BASE_SHELL_CSS`, `_DENSITY_CSS[...]`, `_TOPOLOGY_CSS[...]`, the signature-element blocks, `_RESPONSIVE_CSS` + `_TOPOLOGY_NARROW_CSS[...]` + `_RESPONSIVE_CLOSE`, `_MOTION_CSS`, then the bespoke layer. The refactor was proved byte-identical before any behaviour changed: `app.html` sha256 for the three goldens was `1695bf5e...` (card-collector), `a3695f22...` (japanese-study-coach), `10a08d71...` (sourdough-lab) both before and after the split.
+
+**B2, five topologies.** `hub` (landing overview of every view, then the regions), `workflow` (numbered stages in a horizontal track that scrolls inside itself), `split` (persistent index and detail pane), `canvas` (six-column board with numbered position tiles), `session` (the existing single stage). Each has its own CSS block, its own narrow-screen block, and its own DOM branch in `regionsShell()`. A build carries only the block for the topology it uses.
+
+**B3, type, density, motifs.** Five curated system-font stacks and three density scales, both applied through the token block and a density block. Five signature-element renderers (`progress_bar`, `life_list`, `comparison_strip`, `timeline_rail`, `gap_grid`), each reading declared data and saying so plainly when the data it needs is not in that app. Where the spec has only prose, the compiler maps it onto the named vocabulary and the build receipt records `..._from: "mapped from the spec's description"` rather than presenting a guess as a choice. `visual_world.id` now renders as `body[data-world]`; `mood`, `color_strategy`, `layout_principle`, `typography`, `density`, `signature_elements` and `avoid` render in the "Why this app" panel.
+
+**B4, responsive and accessibility.** `responsive_strategy` drives a real collapse order: the small-screen sentence is split into clauses, the regions each clause names keep that order at narrow widths (`--collapse-order`), and a clause that says something is paged marks those regions `data-narrow="paged"`. `accessibility.keyboard_model` drives real keys: arrow navigation between records, Escape back to main, Space to reveal on a session stage, and where focus lands after a capture. `patterns` and `manual_checks` render in the "Why this app" panel. `experience.flows` had no reader either, so it now renders there too as "What you can do here".
+
+**B5, bounded bespoke.** `sanitize_bespoke_css()` enforces the envelope: property allowlist, token-only colours, font-size inside the scale, no at-rules, no comments, no ids, no `*`, nothing outside a rule, the 8 KB budget, and the forbidden substrings from `models.py`. Any violation drops the whole layer, the build still succeeds, and the reasons land in `build-receipt.json` under `experience.bespoke_rejections`. Accepted rules are scoped with a `.app ` prefix. Hostile corpus of 14 cases is parametrised in the test file.
+
+**B6, the SP2 handshake (compiler side).** `FoundrySpec.look` binds: topology, typography stack, density, signature elements, token overrides (into the token block, so the compiled colours are the approved ones) and a bespoke layer. A partly marked look binds only what it says. Lane C's integration test should pass without further compiler work.
+
+**Gates run.**
+
+- Python: 187/187 green across `tests/contract/test_foundry_experience_compiler.py`, `tests/unit/test_foundry_compiler.py`, `tests/unit/test_foundry_audit.py`, `tests/unit/test_contracts_2026_08_28.py`, `tests/contract/test_foundry_cli.py`, `tests/contract/test_app_shell.py`, `tests/contract/test_foundry_http.py`, `tests/unit/test_foundry_bridge_pipeline.py`, `tests/unit/test_foundry_heldout_audit.py`, `tests/unit/test_wizard_foundry_bridge.py`, `tests/unit/test_wizard_looks_payload.py`, `tests/unit/test_foundry_spec.py`, `tests/unit/test_foundry_pipeline.py`. The full suite was not run; six lanes share this tree.
+- Playwright: 15/15 in `app/e2e/foundry-goldens.spec.ts`, including axe (no serious or critical) and no horizontal overflow at 320px for all three goldens in their new layouts.
+- `ruff check` and `ruff format` clean on both touched Python files; `tsc --noEmit` and `eslint` clean on the spec.
+- Hand-checked in Chromium at 1280px and 390px for all three goldens.
+
+**Difference evidence for Lane G.** card-collector: split / data_sans / dense / gap_grid / `data-world="binder-table"`. japanese-study-coach: session / reading_serif / airy / progress_bar + timeline_rail / `data-world="memory-corridor"`. sourdough-lab: hub / rounded_humanist / bench / comparison_strip + timeline_rail / `data-world="fermentation-bench"`. The two stylesheets share 134 of 161 and 167 distinct lines, and the DOM skeletons differ; the Playwright test "two goldens for different interests come out structurally different" asserts both.
+
+**Cross-lane requests.**
+
+- Lane A: the claims-audit allowlist entries for `typography`, `color_strategy`, `layout_principle`, `density`, `signature_elements`, `avoid`, `responsive_strategy`, `accessibility` and `flows` can be deleted; all of them now have readers. `visual_world.id` is read as `body[data-world]`.
+- Integrator: `experience.mode` is a single fixed literal with no reader and nothing to render. Either leave it or drop it from `models.py`; Lane B did not touch the frozen file.
+- Lane G: `build-receipt.json` now carries an `experience` block (topology, stacks, motifs, where each came from, token overrides, bespoke acceptance and rejections). The difference gate can read it instead of parsing HTML.
+
+**Open, not done here.** No golden uses `workflow` or `canvas`, so those two topologies are covered by a structural Playwright test that points a golden's build at them; a real golden or showcase spec for each would be a stronger proof. No bespoke layer ships in any golden, so the bespoke path is covered by tests rather than by a shipped example.
+
+### 2026-08-28, session 2: difference gate closed, two lane requests answered
+
+Same files as session 1, plus `docs/prototypes/*` regenerated again.
+
+**Region kinds reach the DOM.** Every rendered region now carries `data-region-kind` and `data-region-emphasis`. This is the honest fix for the teardown finding that 14 region kinds share 10 renderers: the collapse is now visible in the markup and in a screen reader's view of the page instead of being invisible. The gate reads `['chart', 'timeline']` for sourdough-lab against `['explanation', 'session']` for japanese-study-coach.
+
+**Landmarks: 4 differ, no padding added.** The one change is that the rail element is chosen by topology. In `hub`, `workflow`, `split` and `canvas` the rail sits beside the work and stays an `aside`. In `session` it runs across the top and carries the app's name, so it is a `header`, which is what the session CSS has always made it look like. That is one honest semantic correction, and it moves two counts at once: `aside` (2 against 1) and `header` (1 against 2), on top of `nav` (2 against 1, the hub overview) and `svg` (1 against 0, the chart region). No empty landmark was added anywhere.
+
+**README parentage.** `render_readme` prints `Forked from <parent>.` when `remix.parent_spec` is set, and nothing when it is not. `tests/e2e-foundry/test_fork_e2e.py` is now 9/9.
+
+**Nothing present and unread.** `remix` and `look` both reached the bundle with no reader. Rather than dropping them, the "Why this app" panel gained a "What this app was put together from" section: the parent when there is one, the concept the build came from, `remix.fragments`, `remix.user_decisions`, and when a look was approved, its id, its `borrowed_fragments` and its `notes`. Lane C's borrowed fragments are rendered, not dropped.
+
+**Gates after this session.**
+
+- `.venv/bin/python scripts/foundry_difference_gate.py`: **PASS, 8 of 8**. topology ok, region_kinds ok, landmarks 4 differ, token_distance 23.7, screenshot_desktop 53.3 percent, screenshot_phone 51.5 percent, axe 0, overflow 0.
+- Python: 191/191 green over the same thirteen files as session 1 (four new tests).
+- `tests/e2e-foundry`: 19/22. The three red rows are not Lane B: `test_showcase_gate.py::test_showcase_cassettes_are_recorded`, `test_stranger_passion.py::test_stranger_passion_cassettes_are_recorded` and `test_stranger_passion.py::test_seeded_app_opens_with_the_users_history_inside`, all of which fail with their own message saying they are blocked on Lane E and on recorded cassettes.
+- Playwright: 15/15 in `app/e2e/foundry-goldens.spec.ts`.
+- `ruff check` and `ruff format` clean on both touched Python files.

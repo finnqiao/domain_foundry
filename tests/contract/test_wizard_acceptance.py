@@ -204,12 +204,16 @@ def test_heldout_miss_installs_with_needs_repair_banner(workspace, monkeypatch):
 
 
 def test_acceptance_selects_only_matching_goal_cases(tmp_path):
+    # A goal with a real archetype behind it. `build_blueprint` has no generic
+    # floor any more, so a goal it has never seen refuses rather than scaffolding,
+    # and this test is about case selection rather than about the refusal.
+    goal = "keep a coffee brewing log"
     cases = load_suite(SUITE)
-    selected = select_cases("track my cycling rides", cases)
-    assert [case["id"] for case in selected] == ["ho_cycling_1"]
+    selected = select_cases(goal, cases)
+    assert [case["id"] for case in selected] == ["ho_coffee_1"]
 
     draft = tmp_path / "draft"
-    bp.write_pack(bp.build_blueprint("track my cycling rides"), draft)
+    bp.write_pack(bp.build_blueprint(goal), draft)
     report = acceptance_run(draft, selected)
     assert report["covered"] is True
     assert report["total"] == 1

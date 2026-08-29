@@ -1,0 +1,46 @@
+# Allowlist for scripts/claims_audit.py.
+#
+# Every entry is a promise to delete it. A reason must start with:
+#   "not yet: <lane or milestone>"  the work that will give this a reader,
+#                                   or sweep this page.
+#   "read by <where>"               a real reader that lives outside the two
+#                                   files the audit scans.
+#   "allowed: <why>"                a legitimate permanent exception.
+#
+# Checked 2026-08-28 against the working tree by Lane A.
+
+spec_fields:
+  # --- ExperienceSpec ----------------------------------------------------
+  ExperienceSpec.mode: "allowed: a single-value discriminator kept for forward compatibility"
+
+  # --- ImplementationSpec ------------------------------------------------
+  # targets keeps the standalone_react member so old specs still load, and the
+  # loader turns selecting it into a plain error. See Lane A phase A2.
+  ImplementationSpec.targets: "not yet: P1 WS8, and standalone_react fails closed until then"
+  ImplementationSpec.capabilities: "not yet: Lane B"
+  ImplementationSpec.imports: "not yet: Lane D"
+  ImplementationSpec.exports: "not yet: Lane B"
+  ImplementationSpec.migrations: "not yet: Lane E"
+  ImplementationSpec.permissions: "not yet: Lane B"
+  ImplementationSpec.adapter_seams: "not yet: P1 WS8"
+
+# Pages and modules the copy pass has not reached yet. Lane A phase A3 empties
+# most of this section; after that, an entry here means a page is still
+# off-voice and names who will fix it.
+copy_files:
+  docs/COPY_RULES.md: "allowed: the rules page has to name the words it bans"
+  # The wizard turn copy is a real gap, and Lane A cannot close it alone. The
+  # same sentences are pinned by wizard/release.py copy contracts and by
+  # wizard tests, and wizard/looks.py belongs to Lane C while
+  # wizard/blueprint.py belongs to Lane F. The integrator schedules this sweep
+  # with those two lanes; see the Lane A resume notes.
+  core/domain_foundry_core/wizard/engine.py: "not yet: integrator, wizard copy sweep"
+  core/domain_foundry_core/wizard/release.py: "not yet: integrator, wizard copy sweep"
+  core/domain_foundry_core/wizard/bridge.py: "not yet: integrator, wizard copy sweep"
+  core/domain_foundry_core/wizard/cobuild.py: "not yet: integrator, wizard copy sweep"
+  core/domain_foundry_core/wizard/design.py: "not yet: integrator, wizard copy sweep"
+  core/domain_foundry_core/wizard/escalation.py: "not yet: integrator, wizard copy sweep"
+  core/domain_foundry_core/wizard/hardening.py: "not yet: integrator, wizard copy sweep"
+  core/domain_foundry_core/wizard/jobs.py: "not yet: integrator, wizard copy sweep"
+  core/domain_foundry_core/wizard/shortlist.py: "not yet: integrator, wizard copy sweep"
+  core/domain_foundry_core/wizard/looks.py: "not yet: Lane C owns this file"

@@ -8,7 +8,7 @@ def test_uncoercible_number_drops_field_not_the_row(tmp_path):
 
     api = HarnessAPI(tmp_path)
     api.init()
-    sess = api.new_domain("keep notes on the cocktails I make and drink")
+    sess = api.new_domain("keep a coffee brewing log")
     api.wizard_reply(sess["session_id"], "just a simple log")
 
     class _JunkNumberLLM(LLMProvider):
@@ -20,15 +20,15 @@ def test_uncoercible_number_drops_field_not_the_row(tmp_path):
                 data={
                     "captures": [
                         {
-                            "domain": "cocktails",
-                            "object_type": "entry",
+                            "domain": "coffee",
+                            "object_type": "brew",
                             "operation": "create",
                             "confidence": 0.95,
                             "fields": {
-                                "title": "Margarita",
-                                "amount": "2:1:1",          # not a number
-                                "logged_at": "capture_time",  # schema default token
-                                "notes": "batched for the roof party",
+                                "title": "Ethiopia pourover",
+                                "dose_g": "18:36:2",         # not a number
+                                "brewed_at": "capture_time",  # schema default token
+                                "notes": "second pour ran long",
                             },
                         }
                     ],
@@ -40,12 +40,12 @@ def test_uncoercible_number_drops_field_not_the_row(tmp_path):
             )
 
     api.router.llm = _JunkNumberLLM()
-    api.capture("batched 12 margaritas for the roof party, 2:1:1 with cointreau")
+    api.capture("ethiopia pourover this morning, 18:36:2, second pour ran long")
 
     health = api.health()
     assert health.failed_change_requests == 0, "one bad field must not fail the row"
 
-    rows = api.query(domain="cocktails")
+    rows = api.query(domain="coffee")
     assert len(rows) == 1 and rows[0].status == "applied"
 
 
@@ -58,9 +58,9 @@ def test_health_surfaces_failed_change_requests(tmp_path):
 
     api = HarnessAPI(tmp_path)
     api.init()
-    sess = api.new_domain("keep notes on the cocktails I make and drink")
+    sess = api.new_domain("keep a coffee brewing log")
     api.wizard_reply(sess["session_id"], "just a simple log")
-    api.capture("cocktails log entry: negroni")
+    api.capture("coffee log entry: ethiopia pourover")
 
     conn = sqlite3.connect(tmp_path / "db" / "ledger.sqlite")
     conn.execute(

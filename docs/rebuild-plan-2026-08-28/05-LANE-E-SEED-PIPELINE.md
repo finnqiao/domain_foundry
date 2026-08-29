@@ -80,4 +80,112 @@ Live Google Sheets API or IMAP connections (exports only for v0.1). Schema evolu
 
 ## Resume notes
 
-(append here)
+### 2026-08-28, E1 to E5 landed (uncommitted, integrator to commit)
+
+**E1 readers.** `core/domain_foundry_core/seed/readers.py` plus `seed/models.py`.
+One shape out of every source: `SeedRead` holding `SeedTable` rows and
+`SeedDocument` pages, with `SeedProvenance` stamped at read time. Readers: xlsx,
+csv/tsv, JSON/JSONL, mbox, notes folder (delegates to `ingest.iter_records`),
+saved HTML, and a URL behind `--fetch`. **No new dependency was added.** The xlsx
+reader is stdlib only: `zipfile` plus `xml.etree`, handling the shared string
+table, inline strings, and the 1900 date serial. openpyxl was not added and is
+not needed. Tests: `tests/unit/test_seed_readers.py`, 16 passed.
+
+**E2 mapping inference.** `seed/mapping.py`. Roles are date, place, category,
+quantity, free text, identifier, unmapped. The tidepool fixture maps exactly as
+the story says, and the seven places and nine species come out as repeated lists.
+The ambiguous fixture leaves three columns unmapped at confidence zero and says
+so in the notes. The model call is optional, happens at most once, and is given
+column names plus at most five sample rows; the model may only fill columns the
+rules left open, never overrule them. Tests: `tests/unit/test_seed_mapping.py`,
+14 passed.
+
+**E3 preview and apply.** `seed/preview.py`, `seed/apply.py`, `cli_seed.py`.
+`seed <path>` reads, infers, previews, and writes nothing. `--apply` is the only
+write path, and it goes through `GenericImporter`, so ledger, provenance,
+revisions, and corrections all hold. Applying twice writes zero the second time,
+with a test on it. Every row's `source_ref` is `seed:<seed id>:<object>:<n>` on
+channel `seed-personal` or `seed-public`, which is the row-level marking. Tests:
+`tests/contract/test_seed_pipeline.py`, 20 passed.
+
+**E4 seeds shape the schema.** `seed/brief.py`. `seed_brief_inputs(reads)` returns
+`artifacts` (short lines for `FoundryPipeline.propose(artifacts=...)`) and `seeds`
+(`list[SeedProvenance]` for `ResearchBrief.seeds`). The lines carry counts, column
+names, date ranges, and how many values repeat, never the values themselves; there
+is a test asserting her place and species names never appear. The seed ask ships
+here as `SEED_ASK`, with `declined_seeding()` for the "just build" path. Tests:
+`tests/unit/test_seed_brief.py`, 10 passed.
+
+**E5 SP3 handshake.** The seed side is ready. Test counts for the whole lane:
+60 passed. Regression check on neighbouring machinery: `test_importer.py`,
+`test_capture_first.py`, `test_apply_corrections.py`, `test_ingest.py`,
+`test_apply_engine.py`, `test_corrections_generalize.py`,
+`test_correction_intent.py`, `test_contracts_2026_08_28.py`,
+`test_foundry_pipeline.py`, `test_pack_lifecycle.py`: 77 passed. Lint clean
+(`ruff check` and `ruff format`) on every file touched. The full suite was not
+run, by instruction.
+
+#### What Lane F should call for SP3
+
+```python
+from domain_foundry_core.seed import read_seed, seed_brief_inputs
+
+reads = [
+    read_seed("examples/seed-fixtures/tidepool-log.xlsx"),   # personal_upload
+    read_seed("examples/seed-fixtures/field-guide.html"),    # public_link
+]
+inputs = seed_brief_inputs(reads)
+# inputs.artifacts -> list[str], safe to pass to FoundryPipeline.propose(artifacts=...)
+# inputs.seeds     -> list[SeedProvenance], goes on ResearchBrief.seeds
+# inputs.summaries -> list[SeedSummary], row counts, repeated lists, date range
+```
+
+Guarantees Lane F can lean on:
+
+- A personal upload has `kind="personal_upload"`, `shareable is False`, and
+  `license is None`. It must never appear as a shareable source.
+- A public link has `kind="public_link"`, a `location`, a `retrieved_at`, and
+  `license="unknown until someone checks"`. That is the string research should
+  show until a human reviews it.
+- For traits detected off a seed, `TraitEdge(origin="detected", seed_ids=[...])`
+  takes the ids from `inputs.seeds[i].id`.
+- After `--apply`, `domain_foundry_core.seed.apply.seed_provenances(workspace)`
+  returns every seed in a workspace without re-reading any file, and
+  `load_seed_records(workspace)` adds the channel and the `source_ref` prefix for
+  each one.
+
+#### What Lane G should seed from
+
+`examples/seed-fixtures/` (all committed, all regenerable with
+`python examples/seed-fixtures/build_fixtures.py`, byte-stable):
+
+| File | What it is |
+|---|---|
+| `tidepool-log.xlsx` | The acceptance fixture. 214 rows, columns `Date, Place, Species, Count, Notes`, 7 places, 9 species, 38 visits, dates 2024-04-05 to 2026-06-10. Dates are stored as real spreadsheet serials, notes as inline strings, places and species in the shared string table. |
+| `tidepool-log.csv` | The same 214 rows, the sheets-export path. Reads identically, with a test pinning that. |
+| `tidepool-observations.jsonl` | The same rows as another app's export, with an `id` column. |
+| `tidepool-mail.mbox` | Six messages, for the mail path. |
+| `tidepool-notes/` | Three markdown notes, for the folder path. |
+| `field-guide.html` | The public page fixture: a rocky shore field guide, licence unknown. |
+| `ambiguous.csv` | Four opaque columns, for the honest-gaps test. |
+
+#### Cross-lane requests and things left undone
+
+- **Integrator:** add `"cli_seed"` to `LANE_CLI_MODULES` in
+  `core/domain_foundry_core/cli.py:2157`. That is the only line needed; the verb
+  is tested through `register()` on a bare Typer app.
+- **Integrator:** no `pyproject.toml` change is needed. Nothing was added.
+- **Lane C:** `seed/preview.py` exposes `build_preview(...) -> SeedPreview` and
+  `render_preview(preview, *, renderer=None) -> str`. A renderer is
+  `Callable[[SeedPreview], str]`. Drop yours in at the `renderer` argument and
+  nothing else in the seed pipeline changes. There is a test proving the swap.
+  `seed/` does not import from `review/`.
+- **Not done, needs another lane's file.** E4's second bullet, "the create ask
+  offers seeding inline", could not be wired: the create flow lives in
+  `wizard/` and `cli.py`, which this lane does not own. The copy and the decline
+  check are ready as `domain_foundry_core.seed.brief.SEED_ASK` and
+  `declined_seeding()`. Whoever owns the wizard turn should call those rather
+  than writing the ask again.
+- **A seed needs somewhere to land.** `--apply` writes into an existing pack, so
+  `seed --apply` before the app exists fails with a plain message naming the fix.
+  Seeding an app the same run that builds it is the create-flow wiring above.

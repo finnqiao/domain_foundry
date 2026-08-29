@@ -75,3 +75,81 @@ The compiler internals (Lane B). Direct manipulation inside the built app (WS10,
 ## Resume notes
 
 (append here)
+
+### 2026-08-28, Lane C session 1: C1 through C5 landed
+
+**Done, in order.**
+
+- **C1, the review page generator.** New `core/domain_foundry_core/review/` package:
+  `page.py` (proposal plus HTML), `marks.py` (the `review-marks.json` contract, documented
+  in the module docstring), `binding.py` (atomic write of `FoundrySpec.look`), `vibe.py`
+  (stdlib PNG and CSS colour reading). The page is one static file opened from disk. It
+  cannot write to your disk, so Save hands you `review-marks.json` as a download, and the
+  page says where to move it and what to run. There is a Copy button and a plain text box
+  as the fallback. Each concept card carries the compiled preview in a sandboxed `srcdoc`
+  iframe, the friend pitch, its own layout, type, spacing, colour and signature controls,
+  pin-a-note (mouse and keyboard), and a borrow field. Accessibility: every control has a
+  label, focus is visible, the chosen card says "Chosen" in words, and there is no sideways
+  scroll at 320px (checked in a real browser).
+- **C2, `look` and `look --read`.** `cli_taste.py` exposes `register(app)`. `look` writes the
+  page; `look --read` binds the marks; `look --choose <id> --tokens <file> --topology/--type/
+  --density/--set` produces the identical binding with no browser (a test asserts the two
+  bindings are equal). The binding persists in the spec YAML, so `dump` carries it, and a
+  second `look` run starts from the bound state.
+- **C3, `tokens`.** Prints the palette, type, spacing, and layout in plain words, saying
+  plainly when the spec has not picked one rather than guessing. `--set`, `--type`,
+  `--density`, `--topology`, `--from <file>`, `--page`. Bad hex and unknown token names are
+  refused with a sentence, never a traceback, and nothing is written when they are.
+- **C4, `vibe`.** Reads a palette off a local PNG (`zlib` plus `struct`, 8 bit, not
+  interlaced, colour types 0/2/3/4/6) or off an HTML or CSS file (`re` over declared
+  colours plus `font-family` mapped to the nearest shipped type stack). JPEG is turned away
+  with a way forward. No network, no new dependency, no model call. The proposal is written
+  to `vibe-tokens.json` and filled into the review page marked "nothing is saved yet";
+  keeping it takes `look --read` or `tokens --from`.
+- **C5, the discard path is retired.** `looks.py` no longer writes a mockup nobody opens:
+  `persist_look` now writes the review page plus a `looks.json` that points at it, so the
+  wizard's look becomes something a person can answer with the same Save button and the
+  same marks file. The keyword restyler `_tone_from_critique` (dark / denser / tighter) is
+  deleted; there is one tone, and spacing and colour are controls on the page.
+
+**Counts.** Lane C's own tests: 71 passed. Lane C plus every existing file that imports what
+changed (`test_looks_fallback_reason`, `test_wizard_looks_payload`, `tests/contract/
+test_wizard.py`, `test_wizard_atlas.py`, `test_contracts_2026_08_28`): 157 passed. The full
+suite was deliberately not run: six lanes are working in this tree at once.
+
+**SP2 is green, not pending.** `tests/contract/test_look_binding_compiles.py` marks up a page
+for the sourdough golden, binds, builds through Lane B's compiler, and asserts the built
+`app.html` carries the chosen topology (`workflow`, where the spec's own is `hub`), the token
+override (`--accent: #E39A2D`, with the spec's original accent gone), the type and spacing
+choices, and the borrowed fragment. Lane B's reading side had already landed when this ran.
+
+**Cross-lane requests for the integrator.**
+
+1. `cli.py`: add `"cli_taste"` to `LANE_CLI_MODULES`. Nothing else.
+2. `wizard/engine.py` is owned by no lane, so Lane C did not touch it. It still holds
+   `_CRITIQUE_RE` (engine.py:117) and the up to eight round critique loop that calls
+   `generate_look` again. With `_tone_from_critique` gone, those re-rounds now regenerate the
+   same template, so the loop is inert rather than harmful, but the keyword matcher itself is
+   still in the tree. **Request: delete `_CRITIQUE_RE` and the critique branch in
+   `_handle_looks`, and point that path at the review page instead.** The lane doc lists this
+   under C5; it needs one owner for engine.py.
+3. `tests/contract/test_wizard_atlas.py` pinned the deleted behaviour ("make the gallery
+   denser" produces `repeat(4`). Lane C changed those three assertion lines, and only those,
+   to assert the look still comes back and is still a gallery. Flagging it because that file
+   is not in Lane C's owned list and no lane owns it.
+
+**Known limits, stated plainly.**
+
+- The three cards differ by layout, type, and spacing, seeded from a fixed order documented
+  in `page.py`. The spec carries one `experience`, so the previews cannot differ by concept
+  content until something upstream gives each concept its own views.
+- Preview iframes run with `sandbox="allow-scripts"`, which gives them an opaque origin, so
+  the runtime's local storage read fails and the preview shows its own "stored data could not
+  be read" banner. Nothing typed into a preview is kept, and the page says so. Worth a look
+  if it reads badly to a first time user.
+- Borrowed fragments reach the built bundle inside `foundry-spec.json` and the embedded
+  payload. Nothing in the runtime renders them yet. That is Lane B's surface, and Lane A's
+  claims audit will see it as dead if it stays that way.
+
+**Next if this lane continues.** Nothing in C1 to C5 is outstanding. The open items are the
+three requests above.

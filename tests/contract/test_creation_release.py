@@ -110,7 +110,10 @@ def test_release_does_not_call_an_unfiled_first_note_ready(workspace, monkeypatc
     api = HarnessAPI(workspace.home)
     api.init()
 
-    turn = _choose_first_look(api, api.create_domain("track my lego builds"))
+    # A real archetype. This test is about the first-note gate, not about
+    # breadth, and an unindexed goal now stops earlier with the three-path
+    # message (Lane F) before it can reach the gate being tested.
+    turn = _choose_first_look(api, api.create_domain("keep a coffee brewing log"))
     session_id = turn["session_id"]
     turn = api.wizard_reply(session_id, "skip for now")
     assert turn["state"] == "test_drive"
@@ -122,7 +125,7 @@ def test_release_does_not_call_an_unfiled_first_note_ready(workspace, monkeypatc
     assert "before calling it ready" in blocked["user_message"]
 
 
-def test_release_api_supports_resume_events_and_cancel(workspace, monkeypatch) -> None:
+def test_release_api_supports_resume_and_cancel(workspace, monkeypatch) -> None:
     monkeypatch.setenv("DOMAIN_FOUNDRY_LLM", "heuristic")
     client = TestClient(create_app(workspace.home, enable_drain_loop=False))
 
@@ -136,11 +139,9 @@ def test_release_api_supports_resume_events_and_cancel(workspace, monkeypatch) -
     assert resumed.status_code == 200
     assert resumed.json()["session_id"] == session_id
 
-    events = client.get(f"/api/create/{session_id}/events")
-    assert events.status_code == 200
-    assert events.headers["content-type"].startswith("text/event-stream")
-    assert "event: progress" in events.text
-    assert "event: state" in events.text
+    # The progress stream this test used to assert was removed: nothing in the
+    # app or the CLI ever opened it. Resume carries the same progress inline.
+    assert "progress" in resumed.json()
 
     cancelled = client.post(f"/api/create/{session_id}/cancel")
     assert cancelled.status_code == 200

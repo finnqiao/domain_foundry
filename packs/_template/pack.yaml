@@ -1,9 +1,26 @@
 name: example
 version: 0.1.0
 title: "Example Domain"
-description: "Scaffold pack — replace with your domain."
+description: "Scaffold pack. Replace it with your domain."
 author: "you"
 license: MIT
 core_compat: ">=0.1,<2"
 interpretation: simple
 aliases: []
+
+# Composition. Both keys are optional, and a pack that leaves them out works
+# exactly as it always has.
+#
+# extends: build on another pack. You get every object, routing rule, and view
+# it has, under your own tables, and anything you declare here wins over what
+# it declared. One parent only, and a loop between packs is an error.
+#
+# extends: travel
+#
+# imports: borrow an object from another pack by name. Nothing is copied: the
+# borrowed records stay in the pack that owns them, and your links point at
+# them. Use `as` when the name would clash with one of your own objects.
+#
+# imports:
+#   - {from: food, object: dining}
+#   - {from: food, object: recipe, as: dish}

@@ -52,7 +52,7 @@ for (const [id, title] of OWNED_APPS) {
 
     if (id === "sourdough-lab") {
       await expect(page.locator(".kind-chart svg")).toHaveCount(1);
-      await page.getByRole("button", { name: "Experiment Table" }).click();
+      await page.getByRole("button", { name: "Experiment Table", exact: true }).click();
       await expect(page.locator(".kind-comparison table")).toHaveCount(1);
     } else if (id === "card-collector") {
       await expect(page.locator(".kind-canvas .slot")).toHaveCount(8);
@@ -145,6 +145,150 @@ for (const [id, title] of OWNED_APPS) {
     await expect(page.getByRole("status")).toContainText("history, receipts, spec, and evidence");
   });
 }
+
+// Lane B: the spec's experience fields reach pixels. Each golden asks for a
+// different layout, type stack, density and set of signature elements, so the
+// three apps have to come out structurally different, not just recoloured.
+
+const TOPOLOGY_SHAPE = {
+  hub: ".hub-overview .hub-card",
+  workflow: ".workflow-track .workflow-stage",
+  split: ".split .split-detail",
+  canvas: ".canvas-board .canvas-tile",
+  session: ".session-stage",
+} as const;
+
+const EXPECTED_LOOK = {
+  "sourdough-lab": {
+    topology: "hub",
+    density: "bench",
+    typeStack: "rounded_humanist",
+    signatures: [".signature-comparison", ".signature-timeline"],
+  },
+  "card-collector": {
+    topology: "split",
+    density: "dense",
+    typeStack: "data_sans",
+    signatures: [".signature-gap-grid"],
+  },
+  "japanese-study-coach": {
+    topology: "session",
+    density: "airy",
+    typeStack: "reading_serif",
+    signatures: [".signature-progress", ".signature-timeline"],
+  },
+} as const;
+
+for (const [id, title] of OWNED_APPS) {
+  test(`owned golden app: ${title} renders its own layout, type, density and motifs`, async ({
+    page,
+  }) => {
+    const expected = EXPECTED_LOOK[id];
+    const response = await page.request.get(`/api/foundry/goldens/${id}`);
+    expect(response.ok()).toBe(true);
+    const spec = await response.json();
+    await page.goto("/");
+    await page.setContent(spec.owned_app_html, { waitUntil: "load" });
+
+    await expect(page.locator("body")).toHaveAttribute("data-topology", expected.topology);
+    await expect(page.locator("body")).toHaveAttribute("data-density", expected.density);
+    await expect(page.locator("body")).toHaveAttribute("data-type-stack", expected.typeStack);
+
+    // The layout for this topology, and only this topology.
+    expect(await page.locator(TOPOLOGY_SHAPE[expected.topology]).count()).toBeGreaterThan(0);
+    for (const [name, selector] of Object.entries(TOPOLOGY_SHAPE)) {
+      if (name === expected.topology) continue;
+      expect(await page.locator(selector).count()).toBe(0);
+    }
+
+    for (const selector of expected.signatures) {
+      await expect(page.locator(selector).first()).toBeVisible();
+    }
+
+    // The type stack and the density both reach the page, not just the markup.
+    const applied = await page.evaluate(() => {
+      const root = getComputedStyle(document.documentElement);
+      return {
+        font: root.fontFamily,
+        rootSize: root.fontSize,
+        gap: root.getPropertyValue("--gap").trim(),
+      };
+    });
+    expect(applied.font.length).toBeGreaterThan(0);
+    expect(applied.gap.length).toBeGreaterThan(0);
+
+    // Regions carry the order the spec's small-screen sentence asked for.
+    const orders = await page.evaluate(() =>
+      [...document.querySelectorAll(".region")].map((element) =>
+        (element as HTMLElement).style.getPropertyValue("--collapse-order").trim(),
+      ),
+    );
+    expect(orders.every((value) => value !== "")).toBe(true);
+
+    const accessibility = await new AxeBuilder({ page }).analyze();
+    expect(
+      accessibility.violations.filter((item) => ["serious", "critical"].includes(item.impact ?? "")),
+    ).toEqual([]);
+
+    await page.setViewportSize({ width: 320, height: 800 });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+      ),
+    ).toBe(false);
+  });
+}
+
+// No golden asks for workflow or canvas yet, so these two are checked by
+// pointing a golden's build at them. Only the DOM shape is asserted: the
+// stylesheet in a real build carries the layout for its own topology.
+for (const topology of ["workflow", "canvas"] as const) {
+  test(`owned app topology: ${topology} builds its own structure`, async ({ page }) => {
+    const response = await page.request.get("/api/foundry/goldens/sourdough-lab");
+    expect(response.ok()).toBe(true);
+    const spec = await response.json();
+    const patched = (spec.owned_app_html as string).replaceAll(
+      '"topology": "hub"',
+      `"topology": "${topology}"`,
+    );
+    await page.goto("/");
+    await page.setContent(patched, { waitUntil: "load" });
+
+    expect(await page.locator(TOPOLOGY_SHAPE[topology]).count()).toBeGreaterThan(0);
+    expect(await page.locator(TOPOLOGY_SHAPE.hub).count()).toBe(0);
+    await expect(page.getByRole("heading", { name: "Sourdough Lab", exact: true }).first()).toBeVisible();
+  });
+}
+
+test("two goldens for different interests come out structurally different", async ({ page }) => {
+  const shapes: Array<{ id: string; look: string; skeleton: string }> = [];
+  for (const id of ["card-collector", "japanese-study-coach"]) {
+    const response = await page.request.get(`/api/foundry/goldens/${id}`);
+    expect(response.ok()).toBe(true);
+    const spec = await response.json();
+    await page.goto("/");
+    await page.setContent(spec.owned_app_html, { waitUntil: "load" });
+    const shape = await page.evaluate(() => {
+      const body = document.body;
+      const skeleton = [...document.querySelectorAll("#app *")]
+        .slice(0, 60)
+        .map((element) => `${element.tagName.toLowerCase()}.${element.className}`)
+        .join("|");
+      return {
+        look: [
+          body.dataset.topology,
+          body.dataset.density,
+          body.dataset.typeStack,
+          [...document.querySelectorAll(".signature")].map((item) => item.className).join(","),
+        ].join(" "),
+        skeleton,
+      };
+    });
+    shapes.push({ id, ...shape });
+  }
+  expect(shapes[0].look).not.toBe(shapes[1].look);
+  expect(shapes[0].skeleton).not.toBe(shapes[1].skeleton);
+});
 
 test("owned app corrections preserve history and restore into the exact spec", async ({ page }) => {
   const response = await page.request.get("/api/foundry/goldens/sourdough-lab");

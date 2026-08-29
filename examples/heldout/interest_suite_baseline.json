@@ -1,8 +1,11 @@
 {
+  "_note": "Repinned 2026-08-28 under the Lane F4 grading. The previous baseline read 50/50, and that number was wrong twice over. First, the reader that was supposed to measure how domain-specific a built pack is looked for a 'schema' key that no wizard turn has ever carried, so it returned 'no domain field' for all fifty cases and the quality signal measured nothing. Second, the grading counted a generic log as a pass: whatever the person typed, they got the same handful of fields with a different name on them, and the suite called it success. Both are fixed. A built app whose every field name comes from the wizard's own vocabulary rather than from the interest now scores fail_generic_scaffold. The create path refusing to build, and saying what the user can do instead, scores honest_fail_closed: countable, acceptable, and not a pass, because no app exists. Per-case ratchet is unchanged: no case may end worse than pinned.",
   "n": 50,
-  "pass": 50,
+  "pass": 27,
   "overall": {
-    "pass": 50
+    "fail_generic_scaffold": 22,
+    "pass": 27,
+    "honest_fail_closed": 1
   },
   "fork": {
     "hit": 39,
@@ -10,66 +13,71 @@
   },
   "buckets": {
     "indexed": {
-      "pass": 30
+      "fail_generic_scaffold": 9,
+      "pass": 21
     },
     "collision": {
-      "pass": 10
+      "fail_generic_scaffold": 5,
+      "pass": 5
     },
     "unindexed": {
-      "pass": 10
+      "fail_generic_scaffold": 8,
+      "pass": 1,
+      "honest_fail_closed": 1
     }
   },
+  "honest_fail_closed": 1,
+  "generic_scaffolds": 22,
   "cases": {
-    "01_sourdough": "pass",
-    "02_pokemon": "pass",
+    "01_sourdough": "fail_generic_scaffold",
+    "02_pokemon": "fail_generic_scaffold",
     "03_underwater": "pass",
     "04_birdwatching": "pass",
     "05_houseplants": "pass",
-    "06_coffee": "pass",
-    "07_soccer": "pass",
-    "08_climbing": "pass",
+    "06_coffee": "fail_generic_scaffold",
+    "07_soccer": "fail_generic_scaffold",
+    "08_climbing": "fail_generic_scaffold",
     "09_running": "pass",
     "10_cycling": "pass",
     "11_lifting": "pass",
     "12_recipes": "pass",
-    "13_nutrition": "pass",
+    "13_nutrition": "fail_generic_scaffold",
     "14_dining": "pass",
     "15_japanese": "pass",
     "16_guitar": "pass",
     "17_hiking": "pass",
     "18_film_photo": "pass",
     "19_scuba": "pass",
-    "20_freediving": "pass",
+    "20_freediving": "fail_generic_scaffold",
     "21_knitting": "pass",
     "22_books": "pass",
     "23_meditation": "pass",
     "24_travel": "pass",
     "25_home": "pass",
     "26_origami": "pass",
-    "27_sideproject": "pass",
-    "28_symptoms": "pass",
+    "27_sideproject": "fail_generic_scaffold",
+    "28_symptoms": "fail_generic_scaffold",
     "29_uw_photo": "pass",
     "30_spearfishing": "pass",
-    "31_pokedex_cards": "pass",
+    "31_pokedex_cards": "fail_generic_scaffold",
     "32_whisky": "pass",
-    "33_discard": "pass",
+    "33_discard": "fail_generic_scaffold",
     "34_vinyl": "pass",
-    "35_piano": "pass",
+    "35_piano": "fail_generic_scaffold",
     "36_tasting_menu": "pass",
-    "37_stamps": "pass",
-    "38_aquarium": "pass",
+    "37_stamps": "fail_generic_scaffold",
+    "38_aquarium": "fail_generic_scaffold",
     "39_yoga": "pass",
     "40_cocktails": "pass",
-    "41_lego": "pass",
-    "42_warhammer": "pass",
-    "43_fountainpens": "pass",
-    "44_chess": "pass",
-    "45_hamradio": "pass",
+    "41_lego": "fail_generic_scaffold",
+    "42_warhammer": "fail_generic_scaffold",
+    "43_fountainpens": "fail_generic_scaffold",
+    "44_chess": "fail_generic_scaffold",
+    "45_hamradio": "fail_generic_scaffold",
     "46_bees": "pass",
-    "47_pottery": "pass",
-    "48_trains": "pass",
-    "49_astronomy": "pass",
-    "50_nonsense": "pass"
-  },
-  "_note": "Pinned 2026-08-23 after conversational elicitation landed (offline, DOMAIN_FOUNDRY_LLM=heuristic). 50/50 against the jargon probe, but read it with the held_out figure beside it: the wizard replays a second user sentence it never saw and 0/10 of those file. One elicited sentence buys coverage of sentences sharing its words, not domain understanding. Per-case ratchet: no case may end worse than pinned."
+    "47_pottery": "fail_generic_scaffold",
+    "48_trains": "fail_generic_scaffold",
+    "49_astronomy": "fail_generic_scaffold",
+    "50_nonsense": "honest_fail_closed"
+  }
 }

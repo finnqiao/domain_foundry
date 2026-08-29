@@ -16,19 +16,19 @@ flowchart TD
     POL -->|no match| UF["unfiled card / ledger-only"]
 ```
 
-## L1 — regex rules (zero tokens)
+## L1: regex rules (zero tokens)
 
 Every pack ships ordered, case-insensitive regex `rules` compiled into a single
 L1 matcher. A match nominates an object and applies a `confidence_boost`. When a
 rule fires with high confidence for exactly one object and the message is
-simple, routing stops here — **no LLM call, no tokens spent**.
+simple, routing stops here. **No LLM call, no tokens spent.**
 
 This is why packs must ship **≥8 example utterances and ≥2 negative examples**:
 the examples must all route correctly in dry-run, and the negatives (plausible
-sentences that must *not* route — dev/admin chatter is ideal) guard against
+sentences that must *not* route, and dev/admin chatter is ideal) guard against
 over-eager rules.
 
-## L2 — LLM interpreter (only when needed)
+## L2: LLM interpreter (only when needed)
 
 The interpreter is invoked when L1 is ambiguous, the message is structured, or
 it spans multiple domains. It receives:
@@ -39,7 +39,7 @@ it spans multiple domains. It receives:
 - and pack-authored `llm_hints` for the one or two disambiguations a human
   reader would need.
 
-Its output is **constrained to the structured schema** — the interpreter can
+Its output is **constrained to the structured schema**, so the interpreter can
 only propose objects/fields the pack declared. Captured text can never directly
 trigger tool execution; it can only ever become a *proposal* subject to policy.
 
@@ -51,7 +51,7 @@ Health reports current spend against the cap.
 
 ## Multi-domain fan-out
 
-A single capture can legitimately create rows in more than one domain — e.g.
+A single capture can legitimately create rows in more than one domain, for example
 "dinner at River Station Grill, then heading to Port City in March" fans out into
 a `food.dining` record **and** a `travel.trip`, linked by an explicit
 cross-domain `link`. Fan-out is a first-class routing outcome, not a workaround,

@@ -21,7 +21,7 @@ from typing import Any
 
 from fastapi import Body, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from domain_foundry_core.api.harness import HarnessAPI
@@ -956,22 +956,6 @@ def create_app(
         if str(result.get("error", "")).startswith("unknown wizard session"):
             raise HTTPException(status_code=404, detail=str(result["error"]))
         return result
-
-    @app.get("/api/create/{session_id}/events")
-    def create_events(
-        session_id: str,
-        authorization: str | None = Header(default=None),
-    ) -> StreamingResponse:
-        _auth(authorization)
-        result = api.create_resume(session_id)
-        if str(result.get("error", "")).startswith("unknown wizard session"):
-            raise HTTPException(status_code=404, detail=str(result["error"]))
-
-        def stream() -> Any:
-            yield f"event: progress\ndata: {json.dumps(result.get('progress') or [])}\n\n"
-            yield f"event: state\ndata: {json.dumps({'state': result.get('state'), 'session_id': session_id})}\n\n"
-
-        return StreamingResponse(stream(), media_type="text/event-stream")
 
     @app.get("/api/create/{session_id}/preview", response_model=None)
     def create_preview(

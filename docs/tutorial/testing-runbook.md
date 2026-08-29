@@ -1,6 +1,6 @@
 # End-to-end testing runbook
 
-**Who this is for:** anyone verifying that Domain Foundry works — a contributor
+**Who this is for:** anyone verifying that Domain Foundry works: a contributor
 before a PR, a maintainer before a release, or you, kicking the tires after
 install. **Time:** 2 minutes for the automated pass, ~15 for the full manual sweep.
 
@@ -37,7 +37,7 @@ $ domain-foundry version
 
 ## 1. The 30-second full check
 
-One command runs the whole automated suite — core plus all three harness adapters:
+One command runs the whole automated suite, core plus all three harness adapters:
 
 ```console
 $ python -m pytest tests adapters/mcp/tests adapters/telegram/tests adapters/hermes_agent/tests
@@ -47,7 +47,7 @@ NNN passed, 2 skipped   ← your count will vary; anything failed/errored is a s
 
 **Green means:** the ledger, routing, corrections, ingest, the HTTP endpoints, and
 all three agent harnesses passed their end-to-end contracts. The 2 skips are the
-live-LLM smokes (they need an API key — see §7). If this is green, you can stop
+live-LLM smokes (they need an API key, see §7). If this is green, you can stop
 here; the sections below are for verifying a specific surface by hand.
 
 ---
@@ -119,7 +119,7 @@ byte is identical after ingest).
 
 ## 4. MCP harness (Claude Desktop / Cursor)
 
-Automated — drives the server over real stdio MCP `tools/call`:
+Automated. Drives the server over real stdio MCP `tools/call`:
 
 ```console
 $ python adapters/mcp/tests/test_mcp_e2e.py
@@ -134,7 +134,7 @@ Live check in Claude Desktop: add the config from
 
 ## 5. Telegram harness
 
-Automated — runs the whole conversation against a mock Telegram API, no token:
+Automated. Runs the whole conversation against a mock Telegram API, no token:
 
 ```console
 $ python adapters/telegram/tests/test_telegram_bridge.py
@@ -150,7 +150,7 @@ Live check: create a bot with @BotFather, then from this checkout
 
 ## 6. hermes-agent harness
 
-Automated — drives the adapter's real tool surface:
+Automated. Drives the adapter's real tool surface:
 
 ```console
 $ python adapters/hermes_agent/tests/test_hermes_e2e.py
@@ -184,7 +184,7 @@ $ python scripts/tutorial_snapshots.py
 ALL HARNESSES PROVEN ✅
 ```
 
-Deterministic — anyone gets byte-identical snapshots under
+Deterministic. Anyone gets byte-identical snapshots under
 `docs/tutorial/snapshots/`.
 
 ---

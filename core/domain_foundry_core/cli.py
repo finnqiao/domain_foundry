@@ -30,7 +30,7 @@ app.add_typer(foundry_app, name="foundry")
 
 @mesh_app.callback()
 def mesh_main() -> None:
-    """Domain mesh commands — EXPERIMENTAL.
+    """Domain mesh commands. Experimental.
 
     The durable substrate (journal, inboxes, outbound, DLQ) is tested, but
     expert processes do not run under launchd (`mesh install` is stubbed) and
@@ -38,7 +38,7 @@ def mesh_main() -> None:
     see core/domain_foundry_core/mesh/flags.py.
     """
     typer.secho(
-        "EXPERIMENTAL: mesh registration is config-only — expert processes are "
+        "Experimental: mesh registration only writes config. Expert processes are "
         "not running and launchd install is stubbed.",
         err=True,
         fg=typer.colors.YELLOW,
@@ -131,7 +131,7 @@ def setup_cmd(
     """Bring your own key: pick a provider and models, then pick where to start.
 
     Run it bare for the guided path. Pass flags (or `--show`) if you already
-    know what you want — environment variables keep overriding everything, so an
+    know what you want. Environment variables keep overriding everything, so an
     expert setup that lives in a dotfile needs no config file at all.
     """
     from domain_foundry_core.config import save_llm_config
@@ -266,7 +266,7 @@ def setup_cmd(
     if api_key and not store_key:
         env_hint = api_key_env or "DOMAIN_FOUNDRY_SOTA_API_KEY"
         typer.secho(
-            f"  key not stored — export {env_hint} before capturing",
+            f"  key not stored. Export {env_hint} before capturing",
             fg=typer.colors.YELLOW,
         )
 
@@ -282,7 +282,7 @@ def setup_cmd(
             result = probe_tier(tier, home=home, config=cfg)
             colour = typer.colors.GREEN if result.ok else typer.colors.RED
             typer.secho(
-                f"  {tier:<8} {result.model or '(none)':<28} {result.symbol} — {result.detail}",
+                f"  {tier:<8} {result.model or '(none)':<28} {result.symbol}  {result.detail}",
                 fg=colour,
             )
             failed = failed or not result.ok
@@ -308,7 +308,7 @@ def setup_cmd(
     typer.echo("\nWhere do you want to start?\n")
     for i, (_key, label, _cmd) in enumerate(NEXT_STEPS, start=1):
         typer.echo(f"  {i}. {label}")
-    typer.echo(f"  {len(NEXT_STEPS) + 1}. Nothing — I'll take it from here")
+    typer.echo(f"  {len(NEXT_STEPS) + 1}. Nothing, I'll take it from here")
     pick = typer.prompt("\nChoice", default="1").strip()
     try:
         index = int(pick) - 1
@@ -376,8 +376,8 @@ def capture_cmd(
         typer.echo(describe_capture_receipt(receipt, pack_titles=titles))
     if receipt.llm_error:
         typer.secho(
-            f"warning: model routing failed ({receipt.llm_error}) — captured with "
-            "keyword rules only. Check DOMAIN_FOUNDRY_ROUTINE_/SOTA_ settings.",
+            f"warning: model routing failed ({receipt.llm_error}). Filed with "
+            "keyword rules only. Check your DOMAIN_FOUNDRY_ROUTINE_ and SOTA_ settings.",
             err=True,
             fg=typer.colors.YELLOW,
         )
@@ -404,7 +404,7 @@ def ingest_cmd(
     ),
     interval: float = typer.Option(30.0, "--interval", help="Seconds between --watch scans"),
 ) -> None:
-    """Bolt existing notes/logs onto your foundries — read-only, idempotent.
+    """Add notes and logs you already keep. Nothing at the source is changed.
 
     Reads files you already have and runs each through capture → route. Nothing at
     the source is moved or modified; re-runs skip already-imported entries. Use
@@ -415,7 +415,7 @@ def ingest_cmd(
     if watch:
         from domain_foundry_core.ingest import watch as watch_source
 
-        typer.echo(f"Watching {path} every {interval:g}s — Ctrl-C to stop.")
+        typer.echo(f"Watching {path} every {interval:g}s. Press Ctrl-C to stop.")
         try:
             for report in watch_source(
                 api, path, interval=interval, channel=channel, glob=glob, split=split, only=only
@@ -495,7 +495,7 @@ def import_cmd(
     are idempotent on `source_ref`, and every source row is accounted for as
     imported / skipped / failed so a partial import cannot pass silently.
 
-    Dry-run is the default — it reports where every row would land and writes
+    A dry run is the default. It reports where every row would land and writes
     nothing. Add `--apply` once the reconciliation looks right.
 
     \b
@@ -566,7 +566,7 @@ def import_cmd(
         )
         raise typer.Exit(code=1)
     if not apply:
-        typer.echo("\n(dry run — nothing written. Re-run with --apply to import.)")
+        typer.echo("\n(Dry run, so nothing was written. Re-run with --apply to import.)")
 
 
 @app.command("query")
@@ -777,7 +777,7 @@ def doctor_cmd(
         add_check(
             "Web app present",
             "FAIL",
-            "serve will return JSON — reinstall from a staged wheel",
+            "serve will return JSON. Reinstall from a staged wheel",
         )
 
     try:
@@ -803,7 +803,7 @@ def doctor_cmd(
         add_check(
             "Port availability",
             "FAIL",
-            f"port {port} unavailable — is serve already running? ({exc})",
+            f"port {port} is not available. Is serve already running? ({exc})",
         )
     else:
         add_check("Port availability", "PASS", f"127.0.0.1:{port} is available")
@@ -1481,6 +1481,12 @@ def foundry_propose_cmd(
         "--web-research/--registry-only",
         help="Use Brave discovery when BRAVE_SEARCH_API_KEY is configured",
     ),
+    from_model_knowledge: bool = typer.Option(
+        False,
+        "--from-model-knowledge",
+        help="Build from what the model already knows when no reviewed source covers "
+        "this. Those parts get marked, so you can always tell which is which",
+    ),
 ) -> None:
     """Research an interest and produce three evidence-backed product concepts."""
     from domain_foundry_core.foundry import FoundryPipeline
@@ -1497,11 +1503,14 @@ def foundry_propose_cmd(
         BraveSearchProvider() if web_research and os.environ.get("BRAVE_SEARCH_API_KEY") else None
     )
     try:
-        # No allow_model_knowledge here, deliberately: a user who ran
-        # `foundry propose` asked for a researched specification and gets one or
-        # gets nothing (ADR-010).
+        # Model knowledge is reachable, and only because the user asked for it by
+        # name. Without the flag this still fails closed with the three-path
+        # message, which names what to do next.
         proposed = FoundryPipeline(
-            provider, search=search, meter=_foundry_meter(ctx.obj["home"])
+            provider,
+            search=search,
+            meter=_foundry_meter(ctx.obj["home"]),
+            allow_model_knowledge=from_model_knowledge,
         ).propose(
             goal,
             artifacts=artifact,
@@ -1670,7 +1679,7 @@ def _render_creation_turn(turn: dict, *, details: bool = False) -> None:
     if ideas and turn.get("state") == "fork":
         typer.echo("\nChoose a direction:")
         for index, idea in enumerate(ideas, start=1):
-            marker = " — closest to what you described" if idea.get("highlighted") else ""
+            marker = ", closest to what you described" if idea.get("highlighted") else ""
             typer.echo(f"  {index}  {idea.get('title', 'This direction')}{marker}")
             if idea.get("pitch"):
                 typer.echo(f"     {idea['pitch']}")
@@ -1684,7 +1693,7 @@ def _render_creation_turn(turn: dict, *, details: bool = False) -> None:
         typer.echo("\nStarting points:")
         for index, look in enumerate(looks, start=1):
             pitch = job_label(look.get("hero_job"))
-            typer.echo(f"  {index}  {look.get('title', 'Starting point')} — {pitch}")
+            typer.echo(f"  {index}  {look.get('title', 'Starting point')}: {pitch}")
 
     preview = turn.get("schema_preview")
     if isinstance(preview, dict):
@@ -1984,7 +1993,7 @@ def mesh_install_cmd(
         program_args=["domain-foundry", "--home", str(ws.home), "mesh", "supervise"],
         home=ws.home,
     )
-    typer.echo("# TODO: mesh install — launchd write/load not implemented yet")
+    typer.echo("# TODO: mesh install, launchd write/load not implemented yet")
     typer.echo("# --- concierge.plist ---")
     typer.echo(concierge)
     typer.echo("# --- supervisor.plist ---")
@@ -2153,7 +2162,12 @@ def roamboard_export_feed_cmd(
 # no `register` is a loud error, never a quietly missing verb.
 # ---------------------------------------------------------------------------
 
-LANE_CLI_MODULES: tuple[str, ...] = ()
+LANE_CLI_MODULES: tuple[str, ...] = (
+    "cli_seed",   # Lane E: seed
+    "cli_stack",  # Lane D: stack
+    "cli_fork",   # Lane G: foundry fork
+    "cli_taste",  # Lane C: look, tokens, vibe
+)
 
 
 def register_lane_commands(target: typer.Typer = app) -> tuple[str, ...]:

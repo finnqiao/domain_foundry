@@ -12,7 +12,7 @@ of it. Splitting the two databases means:
 
 - A pack migration can never corrupt the substrate.
 - Substrate integrity checks run without knowing anything about a pack.
-- A future Postgres export is a schema *translation*, not a redesign — because
+- A future Postgres export is a schema *translation*, not a redesign, because
   every id is a ULID and every timestamp is UTC ISO-8601
   ([ADR-003](../adr/ADR-003-ulid-identity.md)).
 
@@ -70,7 +70,7 @@ that produced it, through every correction. The app shell renders this as the
   `entry` via the dedup key; a re-run of the router does not create duplicate
   canonical rows.
 - **Crash recovery.** Approvals apply *exactly once* even across a crash between
-  "resolved" and "executed" — the journal + outbox are the durable source of
+  "resolved" and "executed". The journal and the outbox are the durable source of
   truth, and the projection coordinator converges from durable state on restart.
 
 These properties are locked in by the curated contract-case set (see

@@ -68,4 +68,95 @@ The FoundrySpec side of composition (specs already model relationships; the P1 m
 
 ## Resume notes
 
-(append here)
+### 2026-08-28, D1 through D4 landed
+
+All four phases are done and green. Nothing is committed: the integrator commits.
+
+**Test counts.** Lane gate (my two new files plus every existing pack suite and
+the Gate-1 journey): **103/103 passed**. Broader regression sweep across apply,
+importer, projections, hardening, travel HTTP, api, refile, export, capture,
+app shell, search, curated contract, routing eval, and `tests/security`:
+**64/64 passed**. Wizard, mesh foundation, eval regression, and
+`tests/conformance`: **65/65 passed**. `ruff check` and `ruff format --check`
+clean on every file I touched. I did not run the full suite (six agents share
+this tree).
+
+**Files changed.**
+
+- `core/domain_foundry_core/packs/models.py`: `PackImport`, `ImportedObject`,
+  `link_column()`, `LinkSpec.target_pack/target_object`, manifest `extends` and
+  `imports`, `DomainPack.inherits/imports/soft_dependencies/extends/link_target`.
+- `core/domain_foundry_core/packs/loader.py`: `default_pack_resolver`,
+  `resolver_for_packs`, `_compose`, `_merge_parent`, `_resolve_link_targets`,
+  `_add_link_columns`; `load_pack(..., resolver=)`; referential actions allowed
+  through the migration SQL scan.
+- `core/domain_foundry_core/packs/schema_compiler.py`: `link_columns`,
+  `compile_ddl(..., available_packs=)`, `installed_pack_names`,
+  `_apply_additive_columns`, `uninstall_blockers`.
+- `core/domain_foundry_core/cli_stack.py` (new): the `stack` verb.
+- `scripts/pack_conformance.py`: `composition` check plus prerequisite install.
+- `packs/_template/pack.yaml`, `packs/_template/schema.yaml`: commented examples.
+- `docs/PACK_AUTHORING.md`: new "Putting two packs together" section.
+- `tests/unit/test_pack_composition.py` (new), `tests/contract/test_cli_stack.py` (new).
+
+**Design choices worth knowing.**
+
+- `extends` and `imports` live in `pack.yaml`. Both optional.
+- A link compiles to a `{link}_uid TEXT` column plus
+  `FOREIGN KEY ({link}_uid) REFERENCES {pack}__{object}(object_uid) ON DELETE SET NULL`.
+  The column is a real field on the object, which is how the apply engine writes
+  it without `apply/engine.py` (not mine) changing at all.
+- The FK is emitted only when the target pack is installed in the same database.
+  Otherwise the column is still there and the link is recorded in
+  `pack.soft_dependencies`. Pointing a constraint at a missing table would make
+  every insert fail.
+- `apply_pack_schema` now runs an additive `ALTER TABLE ADD COLUMN` pass before
+  the DDL, so existing databases gain columns and never lose rows.
+- Policy merge: the child's policy when the child declares any rows or UI
+  actions, otherwise the parent's. The lane doc says "policy is child's own";
+  inherit-on-empty is what makes `stack` produce a working pack without copying
+  the parent's policy file. Documented in `PACK_AUTHORING.md`.
+- Inherited links that named the parent pack are retargeted to the child, so
+  `travel_food__timeline_item.trip_uid` references `travel_food__trip`, not
+  `travel__trip`.
+- An inherited `agent.yaml` is renamed to the child pack, because validation
+  requires `agent.name == pack.name`.
+
+**Evidence the join is real.** `stack travel food` installs `travel_food` and
+`sqlite_master` holds:
+
+```sql
+CREATE TABLE travel_food__timeline_item (
+    ...
+    trip_uid TEXT,
+    dining_uid TEXT,
+    FOREIGN KEY (trip_uid) REFERENCES travel_food__trip(object_uid) ON DELETE SET NULL,
+    FOREIGN KEY (dining_uid) REFERENCES food__dining(object_uid) ON DELETE SET NULL
+)
+```
+
+Inserting a `dining_uid` that does not exist raises `IntegrityError`; deleting
+the food dining row clears `dining_uid` and keeps the timeline item.
+
+### Cross-lane requests for the integrator
+
+1. **`core/domain_foundry_core/cli.py`** (integrator-only): add `"cli_stack"` to
+   `LANE_CLI_MODULES`. That is the whole registration. Until then `stack` is
+   importable and tested but not on the CLI.
+2. **`core/domain_foundry_core/packs/registry.py`** (not owned by any lane):
+   `uninstall()` should refuse while other packs' records still point at the
+   pack being removed. The check is written and tested as
+   `schema_compiler.uninstall_blockers(pack_name, self.list(), self.ws.domains_db)`;
+   it returns a list of plain messages and an empty list means go ahead. One
+   call plus a raise is all that is needed. Until that lands, D2's
+   "uninstalling a target pack is blocked" is proved at the function level only,
+   not through `pack uninstall`.
+3. **`docs/PACK_AUTHORING.md`** has six pre-existing em dashes on lines outside
+   my section (35, 47, 59, 60, 70, 89). Lane A owns doc copy, so I left them.
+
+### Known consequence to watch
+
+Every pack with links now gains `{link}_uid` fields, so `field_contract` and
+`schema_registry` rows are wider than before. This is additive and every pack
+suite is green, but a lane asserting an exact field set on a linked object will
+see the new column.

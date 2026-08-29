@@ -10,7 +10,7 @@ reproducible snapshot:
 | **[Telegram](#telegram)** | Texting a bot from your phone | `pip install -e ./adapters/telegram` | `adapters/telegram/tests/test_telegram_bridge.py` |
 | **[hermes-agent](#hermes-agent)** | The hermes-agent runtime | `uv pip install -e ./adapters/hermes_agent` | `adapters/hermes_agent/tests/test_hermes_e2e.py` |
 
-> **Proven means driven end to end** — describe an interest → log → ask → fix —
+> **Proven means driven end to end.** Describe an interest, log, ask, fix,
 > over the real protocol a client speaks. Regenerate snapshots with
 > `python scripts/tutorial_snapshots.py`.
 
@@ -19,7 +19,7 @@ the local server (`domain-foundry serve`); if that server is down, those callers
 fail visibly instead of silently.
 
 To have the model **shape** a new passion (not just a simple log), add a key
-once — `domain-foundry setup --provider deepseek -y` or **Settings** in the app.
+once: `domain-foundry setup --provider deepseek -y`, or **Settings** in the app.
 Same key is used for Ask.
 
 Packages are not on PyPI yet. Install the core from the checkout first
@@ -59,7 +59,7 @@ words first, then files them. The same block works in Cursor and other MCP clien
 Then say the bake-log line: **i have a log of sourdough bakes**. Claude relays
 options and looks. It should not pick for you.
 
-**Proof** — the CI test drives the server over real stdio `tools/call`, exactly as
+**Proof:** the CI test drives the server over real stdio `tools/call`, exactly as
 a client does ([full snapshot](snapshots/mcp.md)): it describes an interest, logs
 a note, asks, and fixes a sentence. The record updates; history is kept.
 
@@ -86,11 +86,11 @@ numeric chat id, to keep the bot private to you.)
 **Run:**
 ```bash
 export TELEGRAM_BOT_TOKEN=<your token>
-export TELEGRAM_ALLOWED_CHAT_IDS=<your chat id>   # optional — private to you
+export TELEGRAM_ALLOWED_CHAT_IDS=<your chat id>   # optional, keeps it private to you
 domain-foundry-telegram
 ```
 
-**Proof** — the CI test runs the whole conversation through the real poller
+**Proof:** the CI test runs the whole conversation through the real poller
 against a mock Telegram API ([full snapshot](snapshots/telegram.md)):
 
 ```text
@@ -126,7 +126,7 @@ uv pip install --python "$HERMES_PY" -e ./adapters/hermes_agent
 #   platform_toolsets.cli: [..., domain_foundry]
 ```
 
-**Proof** — the CI test drives the adapter's own tool objects (`build_tools` over
+**Proof:** the CI test drives the adapter's own tool objects (`build_tools` over
 the in-process client), the exact surface hermes-agent invokes
 ([full snapshot](snapshots/hermes.md)). A live end-to-end run against the
 hermes-agent CLI is available via `scripts/hermes_e2e_smoke.sh`.
@@ -138,7 +138,7 @@ More: [hermes-agent adapter README](https://github.com/finnqiao/domain_foundry/t
 ## Anything else
 
 Any MCP-capable runtime connects through the **MCP** server above with no extra
-work — it is the recommended path for new integrations. Other runtimes can call
+work, and it is the recommended path for new integrations. Other runtimes can call
 the local HTTP API (`domain-foundry serve`) for reads and writes, or embed the
 core library while it passes the conformance suite. Those paths are
 community-supported; the three above are the CI-proven ones.

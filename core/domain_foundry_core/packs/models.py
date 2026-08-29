@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 InterpretationMode = Literal["simple", "structured", "interactive"]
 AutonomyLevel = Literal["auto", "interactive", "review"]
@@ -23,6 +23,27 @@ FieldType = Literal[
 ]
 
 
+class PackImport(BaseModel):
+    """One object borrowed from another pack, declared in ``pack.yaml``.
+
+    The borrowed object keeps its own pack's table. Nothing is copied.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    from_pack: str = Field(validation_alias=AliasChoices("from", "from_pack"))
+    object: str
+    as_name: str | None = Field(default=None, validation_alias=AliasChoices("as", "as_name"))
+
+    @property
+    def local_name(self) -> str:
+        return self.as_name or self.object
+
+    @property
+    def target(self) -> str:
+        return f"{self.from_pack}.{self.object}"
+
+
 class PackManifest(BaseModel):
     name: str
     version: str
@@ -37,6 +58,10 @@ class PackManifest(BaseModel):
     # declarations rather than an escape hatch for arbitrary capabilities.
     # The loader rejects anything outside its allow-list before installation.
     permissions: list[str] = Field(default_factory=list)
+    # Composition (optional, declarative). ``extends`` names one pack this pack
+    # builds on; ``imports`` names objects it borrows from other packs.
+    extends: str | None = None
+    imports: list[PackImport] = Field(default_factory=list)
 
 
 class FieldSpec(BaseModel):
@@ -56,11 +81,40 @@ class LinkSpec(BaseModel):
     to: str
     cardinality: str = "many_to_one"
 
+    @property
+    def target_pack(self) -> str | None:
+        """The pack half of ``to``, or None when the link is same-pack shorthand."""
+        pack, sep, obj = self.to.partition(".")
+        return pack if sep and obj else None
+
+    @property
+    def target_object(self) -> str:
+        pack, sep, obj = self.to.partition(".")
+        return obj if sep and obj else pack
+
+
+def link_column(link_name: str) -> str:
+    """The column that carries a link, holding the target row's ``object_uid``."""
+    return f"{link_name}_uid"
+
 
 class ObjectSpec(BaseModel):
     title_field: str | None = None
     fields: dict[str, FieldSpec] = Field(default_factory=dict)
     links: dict[str, LinkSpec] = Field(default_factory=dict)
+
+
+class ImportedObject(BaseModel):
+    """A resolved :class:`PackImport`. The object stays owned by its own pack."""
+
+    local_name: str
+    pack: str
+    object: str
+    spec: ObjectSpec
+
+    @property
+    def target(self) -> str:
+        return f"{self.pack}.{self.object}"
 
 
 class RoutingRule(BaseModel):
@@ -189,6 +243,11 @@ class DomainPack(BaseModel):
     capabilities: dict[str, dict[str, Any]] = Field(default_factory=dict)
     compatibility: PackCompatibility = Field(default_factory=PackCompatibility)
     agent: AgentSpec | None = None
+    # Composition results, filled in by the loader.
+    inherits: list[str] = Field(default_factory=list)
+    imports: dict[str, ImportedObject] = Field(default_factory=dict)
+    # Link targets in packs that are not installed here. Recorded, not an error.
+    soft_dependencies: list[str] = Field(default_factory=list)
 
     @property
     def name(self) -> str:
@@ -197,3 +256,18 @@ class DomainPack(BaseModel):
     @property
     def version(self) -> str:
         return self.manifest.version
+
+    @property
+    def extends(self) -> str | None:
+        return self.manifest.extends
+
+    def link_target(self, link: LinkSpec) -> tuple[str, str]:
+        """The (pack, object) a link points at, resolving imports and shorthand."""
+        pack = link.target_pack
+        obj = link.target_object
+        if pack is None:
+            imported = self.imports.get(obj)
+            if imported is not None:
+                return imported.pack, imported.object
+            return self.name, obj
+        return pack, obj

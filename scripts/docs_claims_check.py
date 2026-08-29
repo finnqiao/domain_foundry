@@ -17,6 +17,9 @@ ROOT = Path(__file__).resolve().parent.parent
 EXCLUDE_PREFIXES = (
     "docs/adr/",
     "docs/build-plan-2026-08/",
+    # Plan kits record exact pytest counts from lanes in progress. They are
+    # working records for the maintainer, not claims made to a reader.
+    "docs/rebuild-plan-2026-08-28/",
     "docs/launch/",
     "docs/tutorial/snapshots/",
     "docs/concepts/",

@@ -160,7 +160,7 @@ def test_pipeline_refuses_an_unresearched_vertical_without_search() -> None:
     }
     provider = SequenceProvider([plan])
 
-    with pytest.raises(ResearchUnavailable, match="will not present a generic scaffold"):
+    with pytest.raises(ResearchUnavailable, match="Three ways forward"):
         FoundryPipeline(provider).propose(
             "Track competitive cloud sculpting",
             acceptance_tasks=_acceptance_tasks(),

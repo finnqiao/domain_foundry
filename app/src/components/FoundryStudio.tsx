@@ -188,7 +188,7 @@ export function FoundryStudio() {
       {stage === "concepts" && proposal && (
         <section className="foundry-stage" aria-labelledby="concept-heading">
           <div className="foundry-stage-head">
-            <div><p className="foundry-kicker">Three cuts — product concepts</p><h2 id="concept-heading">Choose a loop, then splice deliberately.</h2></div>
+            <div><p className="foundry-kicker">Three product concepts</p><h2 id="concept-heading">Choose a loop, then splice deliberately.</h2></div>
             <p>{proposal.research.desired_outcome}</p>
           </div>
           <div className="foundry-concepts">
@@ -267,14 +267,14 @@ function BriefStage(props: {
         <label>Constraints<textarea maxLength={20000} value={props.constraints} onChange={(event) => props.setConstraints(event.target.value)} placeholder={'One per line\nWorks offline\nPhone capture'} /></label>
       </div>
       <div className="foundry-paper">
-        <p className="foundry-kicker">Two release tasks — authored by you</p>
+        <p className="foundry-kicker">Two release tasks you write yourself</p>
         <div className="foundry-task"><span>01</span><label>What will you do?<input required maxLength={2000} value={props.taskOne} onChange={(event) => props.setTaskOne(event.target.value)} /></label><label>What observable result means it worked?<input required maxLength={2000} value={props.expectedOne} onChange={(event) => props.setExpectedOne(event.target.value)} /></label></div>
         <div className="foundry-task"><span>02</span><label>What will you do?<input required maxLength={2000} value={props.taskTwo} onChange={(event) => props.setTaskTwo(event.target.value)} /></label><label>What observable result means it worked?<input required maxLength={2000} value={props.expectedTwo} onChange={(event) => props.setExpectedTwo(event.target.value)} /></label></div>
         <p className="foundry-provider-note">Your configured model receives this brief and the artifact descriptions. When Brave research is configured, it receives generated search queries. Do not paste API keys, passwords, or other secrets.</p>
         <button className="foundry-action" type="submit" disabled={props.busy}>{props.busy ? "Researching sources and product cuts…" : "Research and propose three cuts"}</button>
       </div>
     </form>
-    <div className="foundry-golden-head"><div><p className="foundry-kicker">Reviewed verticals</p><h3>Inspect the quality bar first.</h3></div><p>These are structurally different applications, not color variants.</p></div>
+    <div className="foundry-golden-head"><div><p className="foundry-kicker">Reviewed verticals</p><h3>Inspect the quality bar first.</h3></div><p>Three different starting points, each already built and reviewed.</p></div>
     <div className="foundry-goldens">{props.goldens.map((item) => <button type="button" key={item.id} onClick={() => props.onGolden(item.id)}><span className="foundry-kicker">{item.topology} · {item.source_count} sources</span><strong>{item.title}</strong><span>{item.desired_outcome}</span><small>{item.entities} entities · {item.views} views · {item.visual_world.name}</small></button>)}</div>
   </section>;
 }

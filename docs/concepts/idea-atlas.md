@@ -1,7 +1,7 @@
 # Idea atlas
 
 The idea atlas is Domain Foundry’s index of **what people actually do** and
-**what is worth building there** — including apps that already exist in the
+**what is worth building there**, including apps that already exist in the
 world, and Foundry-native ideas those apps do not give you.
 
 It is shipped YAML under `atlas/`, not a live crawl. Core stays domain-agnostic:
@@ -31,11 +31,11 @@ atlas. Product name: **idea atlas**.
    stays in that neighborhood instead of rematching the whole atlas.
 4. Each idea gets an **HTML look** (job template always; a stronger model when
    you have a key). Critique it until you’re happy, then accept.
-5. Bundled packs are **analogs** — they install only after a 1:1 idea pick
+5. Bundled packs are **analogs**. They install only after a 1:1 idea pick
    **and** an accepted look. Otherwise `compile_jobs` turns the idea’s jobs into
    objects, views, and capabilities. Then you talk / file / fix as usual.
 6. Residue and corrections can walk a neighbor idea (“you’ve mentioned eight
-   animals — add a species pokedex?”).
+   animals. Add a species pokedex?”).
 
 No-key mode still returns the shipped neighborhood. Experts can add a local
 overlay at `~/.domain_foundry/atlas/` (same ids shadow the shipped graph) and

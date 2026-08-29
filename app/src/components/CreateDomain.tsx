@@ -195,10 +195,10 @@ export function CreateDomain({ onDone }: { onDone: () => void }) {
     <div className="wizard">
       <section className="surface-intro">
         <div>
-          <h1>Create your own</h1>
-          <p className="muted">Start with something you care about. A topic is enough; your notes will shape the app.</p>
+          <h1>Start something quickly</h1>
+          <p className="muted">A quick way to get a place to log things. Name a topic and answer a few questions. For the full build, with research and three concepts to choose from, use the foundry.</p>
         </div>
-        <span className="today-count">A short start</span>
+        <span className="today-count">Quick start</span>
       </section>
 
       {turns.length === 0 && (
@@ -837,7 +837,7 @@ function FailureList({ failures }: { failures: Array<Record<string, unknown>> })
       {failures.map((failure, index) => (
         <li key={index}>
           “{String(failure.text ?? failure.phrase ?? failure.capture ?? "Your note")}”
-          {failure.actual ? ` — ${String(failure.actual)}` : " — needs a clearer place"}
+          {failure.actual ? `: ${String(failure.actual)}` : ": needs a clearer place"}
         </li>
       ))}
     </ul>

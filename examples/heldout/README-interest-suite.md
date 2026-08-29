@@ -87,8 +87,24 @@ filing it badly. Those are distinct failures with distinct fixes.
 
 Every run reports a `held_out` block, and it is the honest companion to `pass`.
 
-At the time of writing the suite is **50/50 on `pass` and 0/10 on `held_out`**.
-Both numbers are true and they measure different things.
+Regraded 2026-08-28. The suite is **27/50 on `pass`, 22 generic scaffolds, 1
+honest fail-closed, and 0/10 on `held_out`**. It used to read 50/50, and that
+number was wrong twice over: the field-specificity reader was looking for a key
+no wizard turn has ever carried, so it measured nothing, and the grading counted
+a generic log as a pass. Both are fixed. See the `_note` at the top of
+`interest_suite_baseline.json`.
+
+The verdicts to know:
+
+- `fail_generic_scaffold`: an app was built, it files the user's sentence, and
+  every field name in it comes from the wizard's own vocabulary rather than from
+  the interest. Whatever the person typed, they got the same app with a
+  different name on it. That is a failure, not a pass.
+- `honest_fail_closed`: the create path declined to build and said what the user
+  can do instead. Countable and acceptable. Not a pass, because no app exists,
+  but worth more than a scaffold.
+
+`pass` and `held_out` are both true and they measure different things.
 
 `jargon` is a probe a human wrote knowing the hobby. The `seed` that shapes the
 design was authored later, by someone who could see that probe — and the newly

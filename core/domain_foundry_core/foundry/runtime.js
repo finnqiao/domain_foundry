@@ -6,6 +6,17 @@
   const MAX_VISIBLE = 100;
   const MAX_BACKUP_BYTES = 10 * 1024 * 1024;
   const spec = JSON.parse(document.getElementById("foundry-spec").textContent);
+  // What the compiler decided about this app's shape. The stylesheet already
+  // carries the matching colours, type, density and layout.
+  const plan = spec._render || {};
+  const topology = plan.topology || spec.experience.navigation.topology;
+  const signatures = plan.signature_elements || [];
+  // In every layout but the session the rail sits beside the work, so it is a
+  // complementary sidebar. In a session it runs across the top and holds the
+  // app's name, so it is the banner.
+  const railTag = topology === "session" ? "header" : "aside";
+  const collapse = plan.collapse || {};
+  const keyboard = plan.keyboard || {};
   const sources = new Map((spec._source_records || []).map((item) => [item.id, item]));
   const entityIds = new Set(spec.domain.entities.map((item) => item.id));
   const storageKey = `foundry-app:${spec.id}:v2`;
@@ -104,23 +115,9 @@
       "Stored data could not be read. The app opened safely without changing that backup.";
   }
 
-  const tokens = spec.experience.visual_world.tokens;
-  const tokenMap = {
-    background: "--bg",
-    surface: "--surface",
-    text: "--ink",
-    muted: "--muted",
-    accent: "--accent",
-    accent_alt: "--accent-alt",
-    border: "--border",
-    focus: "--focus",
-    danger: "--danger",
-  };
-  Object.entries(tokenMap).forEach(([name, property]) =>
-    document.documentElement.style.setProperty(property, tokens[name]),
-  );
-  document.documentElement.style.setProperty("--radius", `${tokens.radius_px}px`);
-  document.body.dataset.topology = spec.experience.navigation.topology;
+  // Colours, radius, type stack, density and topology are compiled into the
+  // stylesheet and the body attributes, so the page is already correct before
+  // this script runs.
 
   function sampleKey(entityId, record) {
     const identity = entity(entityId).identity.map((field) => record[field] ?? "").join("|");
@@ -459,15 +456,286 @@
       items.length > MAX_VISIBLE
         ? `<p class="storage-note">Showing ${MAX_VISIBLE} of ${items.length} records. Complete history remains in export.</p>`
         : "";
+    const narrow = collapse[`${activeViewId}:${regionSpec.id}`] || {};
+    const paged = narrow.paged ? ' data-narrow="paged"' : "";
     return `<section class="region ${esc(regionSpec.emphasis)} kind-${esc(
       regionSpec.kind,
-    )}" style="--span:${regionSpec.span}" aria-labelledby="region-${esc(
+    )}" data-region-kind="${esc(regionSpec.kind)}" data-region-emphasis="${esc(
+      regionSpec.emphasis,
+    )}" style="--span:${regionSpec.span};--collapse-order:${Number(
+      narrow.order ?? 50,
+    )}"${paged} aria-labelledby="region-${esc(
       regionSpec.id,
     )}"><h3 id="region-${esc(regionSpec.id)}">${esc(
       regionSpec.title,
     )}</h3><p class="region-meta">${esc(label(regionSpec.kind))} · ${esc(
       entitySpec.title,
     )}</p>${content}${clipped}</section>`;
+  }
+
+  // --- Signature elements -------------------------------------------------
+  // One renderer per motif the spec asked for. Each reads declared data. When
+  // the data it needs is not in this app, it says so instead of inventing it.
+
+  const signatureNote = (title, message, className) =>
+    `<section class="signature ${className}"><h2>${esc(title)}</h2><p class="signature-note">${esc(
+      message,
+    )}</p></section>`;
+
+  function signatureEntity() {
+    const current = view();
+    const first = current.regions[0];
+    return entity(first.entity);
+  }
+
+  function progressSignature() {
+    const entitySpec = signatureEntity();
+    const items = records(entitySpec.id);
+    const enums = entitySpec.fields.filter(
+      (field) => field.type === "enum" && (field.values || []).length > 1,
+    );
+    // A field that names a stage says more about progress than any enum.
+    const stage =
+      enums.find((field) => /phase|stage|status|state|step|progress|level/.test(field.name)) ||
+      enums[0];
+    const flag = /done|complete|finish|owned|caught|read/.test(
+      entitySpec.fields.find((field) => field.type === "boolean")?.name || "",
+    )
+      ? entitySpec.fields.find((field) => field.type === "boolean")
+      : stage
+        ? null
+        : entitySpec.fields.find((field) => field.type === "boolean");
+    if (!items.length || (!flag && !stage)) {
+      return signatureNote(
+        "Progress",
+        `This app does not declare a field that says when a ${entitySpec.title.toLowerCase()} is finished, so no progress is shown.`,
+        "signature-progress",
+      );
+    }
+    const target = flag ? flag.name : stage.name;
+    const goal = flag ? true : stage.values[stage.values.length - 1];
+    const done = items.filter((record) => record[target] === goal).length;
+    const percent = Math.round((done / items.length) * 100);
+    const text = flag
+      ? `${done} of ${items.length} ${entitySpec.title.toLowerCase()} marked ${label(target)}`
+      : `${done} of ${items.length} ${entitySpec.title.toLowerCase()} reached ${label(
+          String(goal),
+        )}`;
+    return `<section class="signature signature-progress"><h2>Progress</h2><div class="bar" role="img" aria-label="${esc(
+      `${text}, ${percent} percent`,
+    )}"><span style="width:${percent}%"></span></div><p class="bar-label">${esc(text)}</p></section>`;
+  }
+
+  function lifeListSignature() {
+    const entitySpec = signatureEntity();
+    const items = records(entitySpec.id);
+    if (!items.length) {
+      return signatureNote(
+        "Your list so far",
+        `Nothing recorded yet. Add a ${entitySpec.title.toLowerCase()} and it appears here.`,
+        "signature-life-list",
+      );
+    }
+    const counts = new Map();
+    for (const record of items) {
+      const name = String(primaryValue(record, entitySpec));
+      counts.set(name, (counts.get(name) || 0) + 1);
+    }
+    const rows = [...counts.entries()].slice(0, 12);
+    return `<section class="signature signature-life-list"><h2>Your list so far</h2><ol>${rows
+      .map(
+        ([name, count]) =>
+          `<li><span>${esc(name)}</span><span class="count">${count}</span></li>`,
+      )
+      .join("")}</ol><p class="bar-label">${counts.size} different ${esc(
+      entitySpec.title.toLowerCase(),
+    )} recorded.</p></section>`;
+  }
+
+  function comparisonSignature() {
+    const entitySpec = signatureEntity();
+    const items = records(entitySpec.id);
+    if (items.length < 2) {
+      return signatureNote(
+        "Side by side",
+        `Two ${entitySpec.title.toLowerCase()} records are needed before this can compare anything.`,
+        "signature-comparison",
+      );
+    }
+    const [left, right] = items.slice(-2);
+    const fields = entitySpec.fields
+      .filter((field) => left[field.name] !== undefined || right[field.name] !== undefined)
+      .slice(0, 6);
+    const column = (record) =>
+      `<div><strong>${esc(primaryValue(record, entitySpec))}</strong><dl class="detail-grid">${fields
+        .map(
+          (field) =>
+            `<dt>${esc(label(field.name))}</dt><dd${
+              valueText(left[field.name]) === valueText(right[field.name]) ? "" : ' class="changed"'
+            }>${esc(valueText(record[field.name]))}</dd>`,
+        )
+        .join("")}</dl></div>`;
+    return `<section class="signature signature-comparison"><h2>Side by side</h2><div class="pair">${column(
+      left,
+    )}${column(right)}</div><p class="bar-label">The two most recent ${esc(
+      entitySpec.title.toLowerCase(),
+    )} records. Values that differ are marked.</p></section>`;
+  }
+
+  function timelineSignature() {
+    const entitySpec = signatureEntity();
+    const items = records(entitySpec.id);
+    const temporal = temporalField(entitySpec);
+    if (!items.length || !temporal) {
+      return signatureNote(
+        "When things happened",
+        `This app does not declare a date on ${entitySpec.title.toLowerCase()}, so there is nothing to lay out in time.`,
+        "signature-timeline",
+      );
+    }
+    const ordered = [...items]
+      .sort(
+        (a, b) =>
+          (Date.parse(b[temporal.name] || "") || 0) - (Date.parse(a[temporal.name] || "") || 0),
+      )
+      .slice(0, 8);
+    return `<section class="signature signature-timeline"><h2>When things happened</h2><ol>${ordered
+      .map(
+        (record) =>
+          `<li><time datetime="${esc(record[temporal.name] || "")}">${esc(
+            formattedDate(record[temporal.name]),
+          )}</time><span>${esc(primaryValue(record, entitySpec))}</span></li>`,
+      )
+      .join("")}</ol></section>`;
+  }
+
+  function gapGridSignature() {
+    const entitySpec = signatureEntity();
+    const items = records(entitySpec.id);
+    const counter = entitySpec.fields.find(
+      (field) =>
+        ["integer", "text"].includes(field.type) &&
+        /number|position|index|slot|no$/.test(field.name),
+    );
+    const set = entitySpec.fields.find(
+      (field) => field.type === "enum" && (field.values || []).length > 1,
+    );
+    if (counter) {
+      const held = new Set(items.map((record) => String(record[counter.name])));
+      const numbers = [...held]
+        .map((value) => Number(value))
+        .filter((value) => Number.isFinite(value));
+      const highest = numbers.length ? Math.max(...numbers) : held.size;
+      const cells = [];
+      for (let index = 1; index <= Math.min(Math.max(highest, held.size), 60); index += 1) {
+        const filled = held.has(String(index)) || held.has(String(index).padStart(3, "0"));
+        cells.push(
+          `<span class="cell${filled ? "" : " missing"}">${String(index).padStart(2, "0")}</span>`,
+        );
+      }
+      return `<section class="signature signature-gap-grid"><h2>What you have and what is missing</h2><div class="cells">${cells.join(
+        "",
+      )}</div><p class="bar-label">${held.size} of ${cells.length} positions filled, by ${esc(
+        label(counter.name),
+      )}.</p></section>`;
+    }
+    if (set) {
+      const held = new Set(items.map((record) => String(record[set.name])));
+      return `<section class="signature signature-gap-grid"><h2>What you have and what is missing</h2><div class="cells">${(
+        set.values || []
+      )
+        .map(
+          (value) =>
+            `<span class="cell${held.has(String(value)) ? "" : " missing"}">${esc(
+              label(value),
+            )}</span>`,
+        )
+        .join("")}</div><p class="bar-label">${held.size} of ${
+        (set.values || []).length
+      } ${esc(label(set.name))} values recorded.</p></section>`;
+    }
+    return signatureNote(
+      "What you have and what is missing",
+      `This app does not declare a numbered position or a fixed set on ${entitySpec.title.toLowerCase()}, so gaps cannot be shown.`,
+      "signature-gap-grid",
+    );
+  }
+
+  const SIGNATURE_RENDERERS = {
+    progress_bar: progressSignature,
+    life_list: lifeListSignature,
+    comparison_strip: comparisonSignature,
+    timeline_rail: timelineSignature,
+    gap_grid: gapGridSignature,
+  };
+  const HEADER_SIGNATURES = ["progress_bar"];
+  const PANEL_SIGNATURES = ["life_list", "timeline_rail"];
+
+  const signatureGroup = (names) =>
+    names
+      .filter((name) => signatures.includes(name) && SIGNATURE_RENDERERS[name])
+      .map((name) => SIGNATURE_RENDERERS[name]())
+      .join("");
+
+  // --- Topology -----------------------------------------------------------
+  // Five layouts, five different arrangements of the same regions.
+
+  function regionsShell(current) {
+    const parts = current.regions.map(region);
+    if (topology === "hub") {
+      const cards = spec.experience.views
+        .map(
+          (item) =>
+            `<button class="hub-card" type="button" data-view="${esc(item.id)}"${
+              item.id === current.id ? ' aria-current="page"' : ""
+            }><strong>${esc(item.title)}</strong><small>${esc(item.purpose)}</small></button>`,
+        )
+        .join("");
+      return `<nav class="hub-overview" aria-label="Everything in this app">${cards}</nav><div class="regions">${parts.join(
+        "",
+      )}</div>`;
+    }
+    if (topology === "workflow") {
+      return `<ol class="workflow-track">${current.regions
+        .map(
+          (item, index) =>
+            `<li class="workflow-stage" data-stage="${index + 1}"><p class="workflow-step"><span class="workflow-index">${
+              index + 1
+            }</span>Step ${index + 1} of ${current.regions.length}</p>${parts[index]}</li>`,
+        )
+        .join("")}</ol>`;
+    }
+    if (topology === "split") {
+      const detail =
+        parts.slice(1).join("") ||
+        `<div class="empty-state"><p>This view has one region, so there is nothing to show beside it.</p></div>`;
+      return `<div class="split"><div class="split-index">${parts[0]}</div><div class="split-detail">${detail}</div></div>`;
+    }
+    if (topology === "canvas") {
+      return `<div class="canvas-board">${current.regions
+        .map(
+          (item, index) =>
+            `<div class="canvas-tile" style="--tile-span:${Math.max(
+              2,
+              Math.min(6, Math.round(item.span / 2)),
+            )}"><span class="canvas-position">Position ${String(index + 1).padStart(
+              2,
+              "0",
+            )}</span>${parts[index]}</div>`,
+        )
+        .join("")}</div>`;
+    }
+    return `<div class="session-stage">${parts.join("")}</div>`;
+  }
+
+  function viewBody(current) {
+    const strip = signatureGroup(["comparison_strip", "gap_grid"]);
+    const panel = signatureGroup(PANEL_SIGNATURES);
+    const body = `${strip ? `<div class="signature-strip">${strip}</div>` : ""}${regionsShell(
+      current,
+    )}`;
+    if (!panel) return body;
+    return `<div class="with-signature-panel"><div>${body}</div><aside class="signature-panel" aria-label="Alongside this view">${panel}</aside></div>`;
   }
 
   function announce(message, isError = false) {
@@ -497,7 +765,7 @@
       (total, items) => total + items.length,
       0,
     );
-    document.getElementById("app").innerHTML = `<div class="app"><aside class="rail"><div><h2 class="brand">${esc(
+    document.getElementById("app").innerHTML = `<div class="app"><${railTag} class="rail"><div><h2 class="brand">${esc(
       spec.title,
     )}</h2><p class="world">${esc(spec.experience.visual_world.name)}<br>${esc(
       spec.experience.visual_world.mood,
@@ -512,11 +780,11 @@
       spec.spec_version,
     )} · runtime ${RUNTIME_SCHEMA_VERSION}<br>${stored} owned ${
       stored === 1 ? "version" : "versions"
-    }</p></aside><main id="main" tabindex="-1"><header class="topbar"><div><h1>${esc(
+    }</p></${railTag}><main id="main" tabindex="-1"><header class="topbar"><div><h1>${esc(
       spec.title,
     )}</h1><p>${esc(
       spec.research.desired_outcome,
-    )}</p></div><div class="toolbar"><button class="button" id="evidence" type="button">Why this app</button><button class="button" id="export" type="button">Export backup</button><button class="button" id="restore" type="button">Restore backup</button><input class="visually-hidden" id="restore-file" type="file" accept="application/json,.json" aria-label="Choose JSON backup">${
+    )}</p>${signatureGroup(HEADER_SIGNATURES)}</div><div class="toolbar"><button class="button" id="evidence" type="button">Why this app</button><button class="button" id="export" type="button">Export backup</button><button class="button" id="restore" type="button">Restore backup</button><input class="visually-hidden" id="restore-file" type="file" accept="application/json,.json" aria-label="Choose JSON backup">${
       primary
         ? `<button class="button primary" id="primary-action" type="button" data-operation="${esc(
             primary.operation,
@@ -526,9 +794,7 @@
       current.title,
     )}</h2><p>${esc(current.purpose)} ${esc(
       current.layout,
-    )}</p></section><div class="regions">${current.regions
-      .map(region)
-      .join("")}</div><div class="view-actions">${current.actions
+    )}</p></section>${viewBody(current)}<div class="view-actions">${current.actions
       .slice(1)
       .map(
         (action) =>
@@ -536,7 +802,7 @@
             action.id,
           )}" data-operation="${esc(action.operation)}">${esc(action.label)}</button>`,
       )
-      .join("")}</div><p class="status" id="status" role="status" aria-live="polite">${esc(
+      .join("")}</div><p class="status" id="status" tabindex="-1" role="status" aria-live="polite">${esc(
       statusMessage,
     )}</p><p class="error" id="runtime-error" role="alert">${esc(
       errorMessage,
@@ -581,6 +847,65 @@
       .getElementById("restore")
       .addEventListener("click", () => document.getElementById("restore-file").click());
     document.getElementById("restore-file").addEventListener("change", restoreData);
+  }
+
+  // --- Keyboard -----------------------------------------------------------
+  // The spec's keyboard sentences, wired to real keys. Nothing here is on
+  // unless the spec asked for it.
+
+  function focusAfterCapture(entitySpec) {
+    const mode = keyboard.focus_after_capture || "main";
+    if (mode === "status") {
+      document.getElementById("status")?.focus();
+      return;
+    }
+    if (mode === "record") {
+      const key = selected[entitySpec.id];
+      const button = [...document.querySelectorAll("[data-record]")].find(
+        (candidate) =>
+          candidate.dataset.entity === entitySpec.id && candidate.dataset.record === key,
+      );
+      if (button) {
+        button.focus();
+        return;
+      }
+    }
+    document.getElementById("main")?.focus();
+  }
+
+  function installKeyboard() {
+    document.addEventListener("keydown", (event) => {
+      const target = event.target;
+      if (event.key === "Escape" && keyboard.escape_returns_to_main) {
+        if (!document.querySelector("dialog[open]")) document.getElementById("main")?.focus();
+        return;
+      }
+      if (event.key === " " && keyboard.space_reveals) {
+        const onStage =
+          target === document.body || (target instanceof Element && target.id === "main");
+        const button = document.querySelector("[data-reveal]");
+        if (onStage && button && !button.disabled) {
+          event.preventDefault();
+          reveal(button);
+        }
+        return;
+      }
+      if (
+        keyboard.arrow_navigation &&
+        ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)
+      ) {
+        const button = target instanceof Element ? target.closest("[data-record]") : null;
+        if (!button) return;
+        const scope = button.closest(".region") || document;
+        const buttons = [...scope.querySelectorAll("[data-record]")];
+        const step = ["ArrowRight", "ArrowDown"].includes(event.key) ? 1 : -1;
+        const next = buttons[buttons.indexOf(button) + step];
+        if (next) {
+          event.preventDefault();
+          next.focus();
+        }
+      }
+    });
   }
 
   function runAction(action) {
@@ -1035,7 +1360,7 @@
               : `${entitySpec.title} saved locally with an exportable receipt.`;
         errorMessage = "";
         render();
-        document.getElementById("main").focus();
+        focusAfterCapture(entitySpec);
       } catch (error) {
         document.getElementById("form-error").textContent =
           error instanceof Error ? error.message : "The record could not be saved.";
@@ -1044,6 +1369,96 @@
     });
     dialog.showModal();
     dialog.querySelector("input, select, textarea, button")?.focus();
+  }
+
+  const bullets = (items) =>
+    `<ul>${items.map((item) => `<li>${esc(item)}</li>`).join("")}</ul>`;
+
+  function lookSection() {
+    const world = spec.experience.visual_world;
+    return `<div class="evidence-item"><strong>How this app looks</strong><p>${esc(
+      world.name,
+    )}. ${esc(world.mood)}.</p><p>${esc(world.color_strategy)}.</p><p>${esc(
+      world.layout_principle,
+    )}.</p><p>Type: ${esc(world.typography)}. Rendered as ${esc(
+      plan.typography_label || "the app's default type",
+    )}.</p><p>Room: ${esc(world.density)}. Rendered as ${esc(
+      plan.density_label || "a working bench",
+    )}.</p><p>Things that make it itself: ${esc(
+      world.signature_elements.join(", "),
+    )}.</p>${
+      (plan.signature_labels || []).length
+        ? `<p>Built into this app: ${esc((plan.signature_labels || []).join("; "))}.</p>`
+        : ""
+    }<p>Kept out on purpose: ${esc(world.avoid.join(", "))}.</p></div>`;
+  }
+
+  function remixSection() {
+    const remix = spec.remix;
+    const look = spec.look;
+    const parts = [];
+    if (remix.parent_spec) parts.push(`<p>Forked from ${esc(remix.parent_spec)}.</p>`);
+    parts.push(`<p>Built from the ${esc(remix.selected_concept)} idea.</p>`);
+    if (remix.fragments.length) {
+      parts.push(
+        `<p>Pieces kept from the other ideas:</p><ul>${remix.fragments
+          .map(
+            (item) =>
+              `<li>${esc(item.fragment)}, from ${esc(item.from_concept)}. ${esc(item.reason)}</li>`,
+          )
+          .join("")}</ul>`,
+      );
+    }
+    parts.push(`<p>What you decided:</p>${bullets(remix.user_decisions)}`);
+    if (look) {
+      parts.push(`<p>You approved the ${esc(look.look_id)} look.</p>`);
+      if ((look.borrowed_fragments || []).length) {
+        parts.push(
+          `<p>Pieces you asked to bring over:</p><ul>${look.borrowed_fragments
+            .map(
+              (item) =>
+                `<li>${esc(item.piece)}, from ${esc(item.from_concept)}.${
+                  item.reason ? ` ${esc(item.reason)}` : ""
+                }</li>`,
+            )
+            .join("")}</ul>`,
+        );
+      }
+      if ((look.notes || []).length) {
+        parts.push(`<p>What you wrote on the review page:</p>${bullets(look.notes)}`);
+      }
+    }
+    return `<div class="evidence-item"><strong>What this app was put together from</strong>${parts.join(
+      "",
+    )}</div>`;
+  }
+
+  function flowSection() {
+    const flows = spec.experience.flows.filter((flow) =>
+      flow.steps.some((step) => step.view === activeViewId),
+    );
+    const shown = flows.length ? flows : spec.experience.flows;
+    return `<div class="evidence-item"><strong>What you can do here</strong>${shown
+      .map(
+        (flow) =>
+          `<p>${esc(flow.title)}. Starts when ${esc(flow.trigger)}. ${esc(
+            flow.steps.map((step) => step.result).join(" Then "),
+          )} You end with ${esc(flow.success)}</p>`,
+      )
+      .join("")}</div>`;
+  }
+
+  function accessSection() {
+    const access = spec.experience.accessibility;
+    return `<div class="evidence-item"><strong>How this app was checked</strong><p>It is built to meet ${esc(
+      access.target,
+    )}.</p><p>Patterns it follows:</p>${bullets(
+      access.patterns,
+    )}<p>What the keyboard does:</p>${bullets(
+      access.keyboard_model,
+    )}<p>Checks a person still has to do by hand:</p>${bullets(
+      access.manual_checks,
+    )}<p>On a small screen:</p>${bullets(spec.experience.responsive_strategy)}</div>`;
   }
 
   function openEvidence() {
@@ -1058,7 +1473,7 @@
     if (!derivations.length) derivations = spec.derivations;
     const citationIds = new Set(derivations.flatMap((item) => item.evidence_ids));
     const citations = spec.evidence.filter((item) => citationIds.has(item.id));
-    document.getElementById("evidence-content").innerHTML = `<div class="dialog-head"><div><h2 id="evidence-title">Why this app</h2><p>Material decisions trace to reviewed evidence or an explicit user choice.</p></div><button class="icon-button" type="button" data-close aria-label="Close">Close</button></div>${derivations
+    document.getElementById("evidence-content").innerHTML = `<div class="dialog-head"><div><h2 id="evidence-title">Why this app</h2><p>Material decisions trace to reviewed evidence or an explicit user choice.</p></div><button class="icon-button" type="button" data-close aria-label="Close">Close</button></div>${lookSection()}${remixSection()}${flowSection()}${accessSection()}${derivations
       .map(
         (item) =>
           `<div class="evidence-item"><strong>${esc(
@@ -1171,5 +1586,6 @@
     }
   }
 
+  installKeyboard();
   render();
 })();

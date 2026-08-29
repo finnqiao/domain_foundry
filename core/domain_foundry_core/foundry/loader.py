@@ -55,6 +55,45 @@ def knowledge_ids(
     return source_ids, principle_ids
 
 
+# Build targets a spec may name and the foundry can actually produce. The
+# `standalone_react` member stays in the model so older specs still load and
+# round-trip, but choosing it fails here with a plain sentence instead of
+# building something the repo cannot build. See the rebuild plan, Lane A2.
+BUILDABLE_TARGETS = frozenset({"foundry_runtime"})
+
+UNBUILDABLE_TARGET_MESSAGE = {
+    "standalone_react": (
+        "This spec asks to be built as a standalone React app, which is not "
+        "available yet. Change the target to foundry_runtime to build the app "
+        "you own."
+    )
+}
+
+
+def check_targets_are_buildable(spec: FoundrySpec, label: str = "this spec") -> None:
+    """Fail closed when nothing in the target list can be built.
+
+    A spec may still list ``standalone_react`` alongside ``foundry_runtime``:
+    that spec builds, because the runtime target is there. A spec that names
+    only unbuildable targets stops here with a sentence a person can act on,
+    rather than quietly building something else.
+    """
+
+    targets = list(spec.implementation.targets)
+    if any(target in BUILDABLE_TARGETS for target in targets):
+        return
+    message = next(
+        (
+            UNBUILDABLE_TARGET_MESSAGE[target]
+            for target in targets
+            if target in UNBUILDABLE_TARGET_MESSAGE
+        ),
+        f"This spec asks for {', '.join(targets)}, which is not available yet. "
+        "Change the target to foundry_runtime to build the app you own.",
+    )
+    raise ValueError(f"{label}: {message}")
+
+
 def load_foundry_spec(
     path: Path,
     *,
@@ -62,6 +101,7 @@ def load_foundry_spec(
     principles_dir: Path = DEFAULT_PRINCIPLES,
 ) -> FoundrySpec:
     spec = FoundrySpec.model_validate(_mapping(path))
+    check_targets_are_buildable(spec, str(path))
     known_sources, known_principles = knowledge_ids(registry_path, principles_dir)
     known_sources.update(source.id for source in spec.source_snapshots)
     missing_sources = set(spec.source_ids) - known_sources
@@ -98,4 +138,10 @@ def dump_foundry_spec(spec: FoundrySpec, path: Path) -> None:
         raise
 
 
-__all__ = ["dump_foundry_spec", "knowledge_ids", "load_foundry_spec", "load_golden_specs"]
+__all__ = [
+    "check_targets_are_buildable",
+    "dump_foundry_spec",
+    "knowledge_ids",
+    "load_foundry_spec",
+    "load_golden_specs",
+]

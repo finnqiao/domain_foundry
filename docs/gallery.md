@@ -1,7 +1,7 @@
 # Passion gallery
 
 The **[idea atlas](concepts/idea-atlas.md)** is the library of what’s out there
-(topics and app ideas). Bundled packs are **compiled outcomes** — analogs you
+(topics and app ideas). Bundled packs are **compiled outcomes**, analogs you
 can install in one shot when you already know you want the kitchen-sink version.
 
 Saying “food” in create-a-domain does **not** dump the Food Lab pack. It opens
@@ -37,7 +37,7 @@ domain-foundry capture "dinner at River Station Grill, then heading to Port City
 
 ### :material-flower: `plants`
 
-Watering, repotting, and plant notes. Good first passion — also the subject of the
+Watering, repotting, and plant notes. A good first passion, and also the subject of the
 [remix-in-an-afternoon tutorial](tutorial-plant-care.md).
 
 ```bash
@@ -93,7 +93,7 @@ domain-foundry new-domain "I want to track my climbing sessions"
 |---|---|---|
 | `running` | `run` | distance/pace/route |
 | `reading` | `book` + `session` | pages/rating |
-| `coffee` | `brew` | dose/ratio/method — wizard can scaffold this today |
+| `coffee` | `brew` | dose/ratio/method, and the wizard can scaffold this today |
 | `climbing` | `session` + `route` | grade enums with `allow_other` |
 | `garden` | `bed` + `task` | seasonal; complements `plants` |
 | `workouts` | `workout` | sets/reps |
@@ -101,7 +101,7 @@ domain-foundry new-domain "I want to track my climbing sessions"
 | `practice` | `session` | instrument minutes + focus |
 
 Held-out synthetic packs for `coffee` and `climbing` live under
-`examples/heldout/packs/` for evals — they are not installed by
+`examples/heldout/packs/` for evals. They are not installed by
 `pack add coffee` / `pack add climbing`.
 
 To propose one, open a **pack submission** issue with the manifest, ≥8 routing

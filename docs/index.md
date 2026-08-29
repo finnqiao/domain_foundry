@@ -15,8 +15,8 @@ and build receipt.
     names, but those names are not reserved; the `Domain-Foundry` GitHub
     organization is occupied. A live US application for the exact mark covers
     directly overlapping software services, so the current name is
-    release-blocked pending rename, rights agreement, or qualified clearance —
-    see [ADR-005](adr/ADR-005-name-decision.md).
+    release-blocked pending rename, rights agreement, or qualified clearance.
+    See [ADR-005](adr/ADR-005-name-decision.md).
 
 ## What you get
 
@@ -39,7 +39,7 @@ and build receipt.
 - :material-source-fork: **[AI remix landscape](remix-landscape.md)**
 
     Sekai, Rosebud, Lovable, Replit, Bolt, Base44, v0, Websim, Magic Patterns,
-    Onlook, and Dyad—compared by what “remix” actually preserves.
+    Onlook, and Dyad, compared by what “remix” actually preserves.
 
 - :material-book-open-page-variant: **[Bring the log. Pick a look.](tutorial/end-to-end.html)**
 
@@ -70,13 +70,13 @@ and build receipt.
 
 ## Under the hood (for builders)
 
-- **Python core** (`domain-foundry-core`) — storage, filing, corrections, views.
-- **FoundrySpec compiler** — evidence, product alternatives, workload-derived
+- **Python core** (`domain-foundry-core`): storage, filing, corrections, views.
+- **FoundrySpec compiler**: evidence, product alternatives, workload-derived
   schema, domain experience, exact owned app, and proof receipt.
-- **Local server** — `domain-foundry serve` hosts the app and the shared API.
-- **React app shell** — remixable blocks driven by the interest you just built.
-- **SQLite × 2** — append-only history + typed records on disk.
-- **Front doors** — Claude/Cursor (MCP), Telegram, hermes-agent (each proven in CI).
+- **Local server**: `domain-foundry serve` hosts the app and the shared API.
+- **React app shell**: remixable blocks driven by the interest you just built.
+- **SQLite × 2**: append-only history plus typed records on disk.
+- **Front doors**: Claude/Cursor (MCP), Telegram, hermes-agent (each proven in CI).
 
 Builder deep-dives: [Concepts](concepts/index.md) · [Architecture](architecture.md) ·
 [Authoring guide](PACK_AUTHORING.md).

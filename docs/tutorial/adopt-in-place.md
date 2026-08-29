@@ -1,16 +1,16 @@
 # Bolt it onto your existing setup
 
 Domain Foundry is a **layer, not a rewrite.** You almost certainly already have a
-setup — a Hermes agent, an Obsidian vault, folders of notes, log files. Domain
+setup: a Hermes agent, an Obsidian vault, folders of notes, log files. Domain
 Foundry sits on top and pulls what you choose into typed foundries. It never
 moves, edits, or cancels anything you already do.
 
 Three things you'll do, in any order:
 
-1. **Install alongside** — nothing existing is touched.
-2. **Point it at notes/logs you already have** — read-only, and let it
+1. **Install alongside.** Nothing existing is touched.
+2. **Point it at notes and logs you already have.** It reads them only, and lets it
    file them into the right foundry (or a particular one).
-3. **Add it to your Hermes** — an additive plugin, so new captures flow in too.
+3. **Add it to your Hermes.** It is an additive plugin, so new captures flow in too.
 
 ---
 
@@ -44,7 +44,7 @@ Same loop, spoken: options → a look → build it. Walk it as a story:
 **[Bring the log. Pick a look.](end-to-end.html)**.
 
 Then point `ingest` at an existing folder or file. **Preview first with
-`--dry-run`** — it reads your files and shows where each note *would* land,
+`--dry-run`.** It reads your files and shows where each note *would* land,
 writing nothing:
 
 ```console
@@ -79,17 +79,17 @@ $ domain-foundry ingest ~/Notes/baking
   written, moved, or renamed. (Verified in CI: `tests/unit/test_ingest.py`
   asserts every source byte is unchanged after an ingest.)
 - **Idempotent.** Captures are keyed on `(channel, source_ref)`, so re-running is
-  a safe no-op — import a folder daily on a cron without fear of duplicates.
+  a safe no-op, so you can import a folder daily on a cron without duplicates.
 - **Never dropped.** A note that doesn't match any active foundry waits in
   Inbox, not a deletion.
 
 **Let it pick, or aim at one foundry.** By default each note files into
-whichever active interest fits best — that's the `--dry-run` preview
+whichever active interest fits best. That is what the `--dry-run` preview
 above. Want everything in one place instead? Activate just that foundry and
 ingest; matching notes land there, the rest wait in Inbox for later.
 
-**Logs vs notes.** `--split file` (default) makes one capture per file — right for
-notes. `--split lines` makes one per line — right for append-only journals and
+**Logs vs notes.** `--split file` (default) makes one capture per file, which is right for
+notes. `--split lines` makes one per line, which is right for append-only journals and
 logs. Narrow what's read with `--glob '*.md'` and cap a first run with `--limit`.
 
 **Keep it in sync.** `--watch` re-scans on an interval and pulls in only what's
@@ -97,7 +97,7 @@ new (idempotency does the rest):
 
 ```console
 $ domain-foundry ingest ~/Notes/baking --watch --interval 30
-Watching ~/Notes/baking every 30s — Ctrl-C to stop.
+Watching ~/Notes/baking every 30s. Press Ctrl-C to stop.
 scan: +3 new, 0 unchanged, by_domain={'sourdough': 3}
 scan: +0 new, 3 unchanged, by_domain={}
 scan: +1 new, 3 unchanged, by_domain={'sourdough': 1}   ← you added a note
@@ -105,7 +105,7 @@ scan: +1 new, 3 unchanged, by_domain={'sourdough': 1}   ← you added a note
 
 ## 3. Structured sources (a database or export)
 
-If the data already has columns — a SQLite table, a JSON/JSONL export — use the
+If the data already has columns, like a SQLite table or a JSON/JSONL export, use the
 mapping-driven importer instead of free-text ingest. A short YAML maps source
 rows to a foundry's objects and fields; dry-run is the default:
 
@@ -125,12 +125,12 @@ domain-foundry import -m my_mapping.yaml --sqlite ~/old-app.sqlite --apply
 ```
 
 Every source row is accounted for as imported / skipped / failed, and the command
-**exits non-zero if any row is unaccounted for** — a partial import cannot pass
+**exits non-zero if any row is unaccounted for**, so a partial import cannot pass
 quietly. Add `--markdown` for a readable reconciliation, `--detail` for
 per-record outcomes:
 
 ```
-# Reconciliation — legacy-sqlite-trips
+# Reconciliation: legacy-sqlite-trips
 - source_total: 3
 - would_import: 2
 - skipped_invalid: 1
@@ -141,7 +141,7 @@ per-record outcomes:
 - `hermes:travel:trip:3` (skipped_invalid): missing required fields: name
 ```
 
-Your database is opened with a `mode=ro` URI and never written to — not even by
+Your database is opened with a `mode=ro` URI and never written to, not even by
 `--apply`, which only writes into Domain Foundry's own workspace. Re-runs are
 idempotent on `source_ref`, so importing twice skips what is already there.
 
@@ -151,7 +151,7 @@ and see `domain-foundry import --help` for every field. This is how three years
 of real Hermes data was migrated in place.
 
 > Prefer to drive it from Python? The same engine is
-> `domain_foundry_core.migrations.importers` — `GenericImporter`,
+> `domain_foundry_core.migrations.importers`: `GenericImporter`,
 > `SqliteTableSource`, `FixtureSource`, `load_mapping`.
 
 ## 4. Add it to your existing Hermes
@@ -175,7 +175,7 @@ there. Either way your existing tools, skills, and config are untouched.
 ## 5. Reuse definition folders you already keep
 
 If you maintain interest definitions somewhere already (a private repo, a shared
-folder), point Domain Foundry at them without moving anything — a same-named
+folder), point Domain Foundry at them without moving anything. A same-named
 folder in your overlay wins over the bundled one:
 
 ```bash
@@ -191,7 +191,7 @@ domain-foundry pack list        # includes your overlay
 - Never opens your private databases anything but read-only.
 - Never edits your Hermes config, profiles, skills, or default gateway.
 - Never files a note into a foundry above your confidence policy without a
-  review — and never silently drops one.
+  review, and never silently drops one.
 
 ## No terminal? Use "Add a source" in the app
 
@@ -202,7 +202,7 @@ each note would land (it writes nothing), then **Pull in** when it looks right.
 ![Add a source, inside the app: paste a folder, preview where notes land, pull in](snapshots/img/spa_sources.png)
 
 It calls the local `POST /api/ingest/preview` (read-only) and `POST /api/ingest`
-endpoints — the same non-destructive, idempotent engine as the CLI, so previews
+endpoints. It is the same non-destructive, idempotent engine as the CLI, so previews
 and re-runs behave identically. (A standalone `/sources` page is also served for
 older installs; the in-app path is **Settings → Sources**.)
 

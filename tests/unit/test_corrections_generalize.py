@@ -34,11 +34,11 @@ class _FieldPickerLLM(LLMProvider):
             data = {
                 "captures": [
                     {
-                        "domain": "cocktails",
+                        "domain": "coffee",
                         "object_type": "entry",
                         "operation": "create",
                         "confidence": 0.95,
-                        "fields": {"title": "espresso martini", "rating": "low"},
+                        "fields": {"title": "espresso", "rating": "low"},
                     }
                 ],
                 "unmatched_text": None,
@@ -52,27 +52,27 @@ class _FieldPickerLLM(LLMProvider):
 
 
 @pytest.fixture
-def cocktails(tmp_path):
+def coffee(tmp_path):
     api = HarnessAPI(tmp_path)
     api.init()
-    sess = api.new_domain("keep notes on the cocktails I make and drink")
+    sess = api.new_domain("keep a coffee brewing log")
     api.wizard_reply(sess["session_id"], "just a simple log")
     return api
 
 
 def _seed(api: HarnessAPI, llm: LLMProvider) -> None:
     api.router.llm = llm
-    api.capture("the espresso martini I ordered was way too sweet")
+    api.capture("the espresso I pulled was way too sweet")
 
 
-def test_nl_correction_amends_a_generated_domain(cocktails, monkeypatch):
+def test_nl_correction_amends_a_generated_domain(coffee, monkeypatch):
     llm = _FieldPickerLLM({"rating": "medium"})
-    _seed(cocktails, llm)
+    _seed(coffee, llm)
     monkeypatch.setattr(
         "domain_foundry_core.llm.provider.get_default_provider", lambda **kw: llm
     )
 
-    receipt = cocktails.correct("actually the espresso martini was medium, not low")
+    receipt = coffee.correct("actually the espresso was medium, not low")
 
     assert receipt["error"] is None, receipt
     assert receipt["applied"] is True
@@ -80,14 +80,14 @@ def test_nl_correction_amends_a_generated_domain(cocktails, monkeypatch):
     assert receipt["eval_case_id"]
 
 
-def test_unresolvable_correction_reports_error_not_success(cocktails, monkeypatch):
+def test_unresolvable_correction_reports_error_not_success(coffee, monkeypatch):
     llm = _FieldPickerLLM({})  # model can't tell which field either
-    _seed(cocktails, llm)
+    _seed(coffee, llm)
     monkeypatch.setattr(
         "domain_foundry_core.llm.provider.get_default_provider", lambda **kw: llm
     )
 
-    receipt = cocktails.correct("hmm, that one wasn't quite right")
+    receipt = coffee.correct("hmm, that one wasn't quite right")
 
     assert receipt["applied"] is False
     assert "could not tell which field" in (receipt["error"] or "")

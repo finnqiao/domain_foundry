@@ -289,7 +289,7 @@ def _unresearched_plan() -> ResearchPlan:
 
 
 def test_retrieval_still_fails_closed_by_default() -> None:
-    with pytest.raises(ResearchUnavailable, match="will not present a generic scaffold"):
+    with pytest.raises(ResearchUnavailable, match="Three ways forward"):
         KnowledgeRetriever().retrieve(_unresearched_plan())
 
 
@@ -418,17 +418,19 @@ def test_the_default_pipeline_still_fails_closed_on_an_unresearched_interest() -
     pipeline = FoundryPipeline(provider)
 
     assert pipeline.allow_model_knowledge is False
-    with pytest.raises(ResearchUnavailable, match="will not present a generic scaffold"):
+    with pytest.raises(ResearchUnavailable, match="Three ways forward"):
         pipeline.propose("Track competitive cloud sculpting", acceptance_tasks=_acceptance_tasks())
 
 
-def test_the_propose_cli_never_opts_into_model_recall() -> None:
-    """ADR-010: `foundry propose` keeps its hard gate.
+def test_the_propose_cli_never_reaches_model_recall_silently() -> None:
+    """Model knowledge is only ever reached because the user asked for it.
 
-    A user who explicitly asked for a researched specification gets one or gets
-    nothing. If a future change wants to surface model recall on the command
-    line it needs a deliberate decision and a rewrite of this test, not a
-    keyword argument that slips in with something else.
+    The rebuild gives an out-of-corpus interest three real ways forward, and one
+    of them is building from model knowledge with marking. So the CLI is allowed
+    to pass ``allow_model_knowledge`` now, on one condition: the value has to be
+    something the user typed. A literal ``True`` compiled into the command would
+    reach recall for people who never chose it, which is the exact thing the
+    original hard gate existed to stop.
     """
     path = Path(__file__).resolve().parents[2] / "core" / "domain_foundry_core" / "cli.py"
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
@@ -437,7 +439,11 @@ def test_the_propose_cli_never_opts_into_model_recall() -> None:
         for node in ast.walk(tree)
         if isinstance(node, ast.keyword) and node.arg == "allow_model_knowledge"
     ]
-    assert not passed, "the foundry CLI must not enable model recall"
+    for node in passed:
+        assert not isinstance(node.value, ast.Constant), (
+            "the foundry CLI may only enable model recall from a user-supplied option, "
+            "never from a constant"
+        )
 
 
 # --------------------------------------------------------------------------- #

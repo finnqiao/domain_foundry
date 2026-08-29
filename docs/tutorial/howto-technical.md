@@ -56,8 +56,8 @@ domain-foundry wizard reply <session> "build it"
 The ledger, L1/L2 filing, and YAML definitions live in
 [Concepts](../concepts/index.md). Sketch below if you want it on this page.
 
-Data lives at `~/.domain_foundry` (override with `--home` or `DOMAIN_FOUNDRY_HOME`)
-— two SQLite files: `ledger.sqlite` (captures, corrections, cost) and
+Data lives at `~/.domain_foundry` (override with `--home` or `DOMAIN_FOUNDRY_HOME`).
+There are two SQLite files: `ledger.sqlite` (captures, corrections, cost) and
 `domains.sqlite` (typed rows). Open them with any SQLite browser; there's no magic.
 
 Install the other tested adapters when you need them:
@@ -102,14 +102,14 @@ Four invariants worth internalizing:
 ## Routing & LLM backends
 
 L1 is deterministic keyword rules (no cost). L2 escalates to an LLM only on
-ambiguity. Bring your own key — any OpenAI-compatible endpoint works, plus the
+ambiguity. Bring your own key. Any OpenAI-compatible endpoint works, plus the
 Anthropic Messages API.
 
 Settings resolve **env > config file > provider default**, so pick whichever
 layer suits you. Env only, as before:
 
 ```bash
-# DeepSeek (native API — cheapest per capture; design uses deepseek-v4-pro)
+# DeepSeek (native API; design uses deepseek-v4-pro)
 export DEEPSEEK_API_KEY=...
 export DOMAIN_FOUNDRY_LLM=live
 domain-foundry setup --provider deepseek -y
@@ -134,15 +134,15 @@ domain-foundry setup --show                     # resolved values + their source
 
 `setup --provider deepseek` writes routine=`deepseek-v4-flash` and
 sota=`deepseek-v4-pro` against `https://api.deepseek.com`. Mix tiers if you
-want a stronger designer than your everyday router — env vars win over the file.
+want a stronger designer than your everyday router. Env vars win over the file.
 
-With no key it runs the heuristic router (deterministic, keyword-only) — great for
-tests, limited for free-text. A daily cost guard caps spend
-(`DOMAIN_FOUNDRY_DAILY_COST_CAP`, default `$0.25`).
+With no key it runs the heuristic router (deterministic, keyword-only). That is
+great for tests and limited for free-text. A daily guard caps model spend
+(`DOMAIN_FOUNDRY_DAILY_COST_CAP`, default `0.25`).
 
-One key is enough. Routing has two tiers — `routine` for ordinary captures and
+One key is enough. Routing has two tiers: `routine` for ordinary captures and
 `sota` for ambiguous ones (a capture that matches no keyword rule, which is every
-capture into a brand-new domain) — and a tier with no key of its own falls back to
+capture into a brand-new domain). A tier with no key of its own falls back to
 whichever tier is configured. Set `DOMAIN_FOUNDRY_SOTA_*` separately only when you
 want a stronger model on the hard calls; any OpenAI-compatible base URL works
 there too, not just Anthropic's.
@@ -150,7 +150,7 @@ there too, not just Anthropic's.
 ### Per-model request shape (Anthropic)
 
 Anthropic's request shape varies by model, and getting it wrong is a 400 that the
-router swallows into keyword routing — so it is resolved from a capability table
+router swallows into keyword routing, so it is resolved from a capability table
 (`llm/providers.py`) rather than guessed:
 
 | | `temperature` | `output_config.effort` |
@@ -241,18 +241,18 @@ python -m pytest tests adapters/mcp/tests adapters/telegram/tests adapters/herme
 # → full suite green, 2 skipped   (the skips are live-LLM smokes; see the runbook §9)
 ```
 
-Full verification — every surface, with expected output and troubleshooting — is
+Full verification, every surface with expected output and troubleshooting, is
 in the **[end-to-end testing runbook](testing-runbook.md)**. Regenerate the proof
 snapshots any time with `python scripts/tutorial_snapshots.py`.
 
-## Extend it — where the seams are
+## Extend it: where the seams are
 
 | Want to… | Look at |
 |---|---|
 | Add an LLM provider | `core/domain_foundry_core/llm/provider.py` |
 | Change routing / tiers | `core/domain_foundry_core/routing/router.py` |
 | Add an ingest source type | `core/domain_foundry_core/ingest.py` (unstructured) or `migrations/importers/source.py` (structured) |
-| Add an agent runtime | mirror an adapter in `adapters/` — wrap `HarnessAPI`, ship a CI e2e test |
+| Add an agent runtime | mirror an adapter in `adapters/`: wrap `HarnessAPI`, ship a CI e2e test |
 | Add an app block/view | `app/src/blocks/` (+ `/api/blocks/<domain>/…`) |
 | New projection target | `core/domain_foundry_core/projections/` |
 

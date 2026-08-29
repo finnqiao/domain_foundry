@@ -1,7 +1,7 @@
 # Corrections
 
 A correction is a **one-message, plain-language fix** to the canonical record.
-It is the primary way the system gets better over time — and the reason
+It is the primary way the system gets better over time, and the reason
 "provably improving" is one of the six promises.
 
 ## What a correction does
@@ -20,13 +20,13 @@ Say `that bake was 80% hydration not 75` and the harness:
 
 1. Resolves **which** object you mean and **what** intent you have (amend a
    field, move to another object, merge duplicates, undo, mark-wrong).
-2. Writes a **new `object_revision`** and supersedes the old one — the value
+2. Writes a **new `object_revision`** and supersedes the old one. The value
    changes but the history is preserved (`hydration: 75 → 80`).
 3. Logs a `correction_event`.
 4. Appends to the **few-shot bank** so the interpreter learns from your phrasing.
 5. Backfills an **`eval_case`** so the fix becomes a regression test.
 
-Every mutation goes through `capture()` / `correct()` — there is **no privileged
+Every mutation goes through `capture()` / `correct()`. There is **no privileged
 write path**. The app shell and every adapter use the same surface.
 
 ## Correction intents

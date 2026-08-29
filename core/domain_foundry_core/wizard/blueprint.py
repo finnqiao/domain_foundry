@@ -2,8 +2,15 @@
 
 The blueprint is a plain (JSON-serializable) dict so wizard sessions persist
 trivially. `build_blueprint` picks a rich archetype when the goal matches a
-known passion, otherwise falls back to a generic activity-log builder that
-still produces a pack which routes its own examples.
+known passion. When nothing matches, it refuses.
+
+There used to be a fallback here: a five-field generic log built from the
+literal words of the goal, one `entry` object with title, logged_at, rating,
+amount and notes. It looked like success and it was not. Whatever the person
+typed, they got the same app with a different name on it, and nothing in the
+output said so. An honest refusal that names what the user can do instead is
+worth more than a scaffold presented as an answer, so the fallback is gone and
+`GenericFallbackRefused` took its place.
 
 Everything the generator emits obeys the pack authoring style guide
 (`docs/PACK_AUTHORING.md`): snake_case fields, explicit units, enums biased to
@@ -17,6 +24,23 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+
+from domain_foundry_core.foundry.research import THREE_PATHS, three_path_message
+
+
+class GenericFallbackRefused(RuntimeError):
+    """No archetype matched this goal, and a generic log is not an answer.
+
+    Carries the three on-ramps, so whatever catches this has a real sentence to
+    show the user: seed something you keep, seed a page you trust, or build from
+    model knowledge with marking.
+    """
+
+    def __init__(self, goal: str) -> None:
+        super().__init__(three_path_message(goal))
+        self.goal = goal
+        self.paths: tuple[str, str, str] = THREE_PATHS
+
 
 # Words that never help name a domain / never belong in routing keywords.
 _STOPWORDS = {
@@ -356,62 +380,6 @@ def match_starter_pack(goal: str) -> dict[str, Any] | None:
     return best[1] if best else None
 
 
-def _generic_spec(goal: str) -> dict[str, Any]:
-    kws = keywords(goal)
-    subject = kws[0] if kws else "journal"
-    domain = slugify(subject)
-    # Build routing keywords from the top goal words (+ light plural handling).
-    kw_terms: list[str] = []
-    for w in kws[:4]:
-        kw_terms.append(re.escape(w))
-        if not w.endswith("s"):
-            kw_terms.append(re.escape(w) + "s")
-    if not kw_terms:
-        kw_terms = ["log", "logged", "entry"]
-    rule_match = "(" + "|".join(dict.fromkeys(kw_terms)) + r"|\blog\b|\bentry\b)"
-
-    title_kw = subject.capitalize()
-    examples = [
-        (f"logged {subject} today", "entry"),
-        (f"{subject} went really well", "entry"),
-        (f"made progress on {subject}", "entry"),
-        (f"notes on today's {subject}", "entry"),
-        (f"tracking {subject} this week", "entry"),
-        (f"another {subject} entry", "entry"),
-        (f"{subject} update for the record", "entry"),
-        (f"recorded a {subject} session", "entry"),
-        (f"quick {subject} note", "entry"),
-        (f"{subject} milestone reached", "entry"),
-        (f"reflecting on {subject}", "entry"),
-        (f"{subject} log entry", "entry"),
-    ]
-    return {
-        "keys": [],
-        "domain": domain,
-        "title": f"{title_kw} Log",
-        "description": f"A place to log your {subject}.",
-        "interpretation": "simple",
-        "icon": "🗒️",
-        "objects": {
-            "entry": {
-                "title_field": "title",
-                "fields": {
-                    "title": {"type": "text", "required": True},
-                    "logged_at": {"type": "datetime", "required": True, "default": "capture_time"},
-                    "rating": {"type": "enum", "values": ["low", "medium", "high"], "allow_other": True},
-                    "amount": {"type": "number"},
-                    "notes": {"type": "text", "long": True},
-                },
-                "operations": ["create", "update", "correct", "delete"],
-            }
-        },
-        "rules": [{"match": rule_match, "object": "entry", "confidence_boost": 0.1}],
-        "examples": examples,
-        "hints": f"Each entry is one {subject} observation or session.",
-        "unit_options": {},
-    }
-
-
 def _safe_negatives(spec: dict[str, Any]) -> list[str]:
     compiled = [re.compile(r["match"], re.IGNORECASE) for r in spec["rules"]]
     out: list[str] = []
@@ -559,8 +527,16 @@ def _blueprint_from(spec: dict[str, Any], goal: str) -> dict[str, Any]:
 
 
 def build_blueprint(goal: str) -> dict[str, Any]:
-    """Return a provisional pack blueprint (JSON-serializable) for a goal."""
-    spec = find_archetype(goal) or _generic_spec(goal)
+    """Return a provisional pack blueprint (JSON-serializable) for a goal.
+
+    Raises ``GenericFallbackRefused`` when no archetype matches. There is no
+    generic floor any more: a goal this module has never seen is something the
+    research path has to answer, or something the user gets an honest sentence
+    about. It is not something to paper over with a log.
+    """
+    spec = find_archetype(goal)
+    if spec is None:
+        raise GenericFallbackRefused(goal)
     return _blueprint_from(spec, goal)
 
 

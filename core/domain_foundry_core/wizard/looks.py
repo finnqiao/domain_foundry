@@ -2,6 +2,11 @@
 
 Looks are generated from idea + jobs + optional samples, never from a hobby
 name in core. Templates are keyed by job id.
+
+A look used to be written to disk as a mockup nobody ever opened again, and the
+only way to change one was to type a word the code happened to recognise. Both
+of those are gone. A look now lands as a review page a person marks up, and the
+marks come back through `look --read` as the binding the build reads.
 """
 
 from __future__ import annotations
@@ -34,6 +39,21 @@ _JOB_PRIORITY = (
 )
 
 _SAFE_ID = re.compile(r"[^a-zA-Z0-9._-]+")
+
+# One tone. Colours, spacing, and type are changed on the review page, by a
+# person picking them, never by the code guessing at words like "darker".
+LOOK_TONE: dict[str, str | int] = {
+    "scheme": "light",
+    "ink": "#18211f",
+    "muted": "#64706b",
+    "paper": "#f7f7f1",
+    "line": "#d9dfd7",
+    "accent": "#087f72",
+    "chart_h": "150px",
+    "gallery_cols": "3",
+    "gallery_gap": "8px",
+    "tile_n": 6,
+}
 
 
 def hero_job(jobs: list[str] | None, *, hints: list[str] | None = None) -> str:
@@ -92,13 +112,7 @@ def generate_look(
     if not html_page or "<" not in html_page:
         if llm is not None and fallback_reason is None:
             fallback_reason = "empty_llm_html"
-        html_page = template_html(
-            idea,
-            hero=hero,
-            samples=samples,
-            critique=critique,
-            round=round,
-        )
+        html_page = template_html(idea, hero=hero, samples=samples, round=round)
         model = "template"
     return {
         "idea_id": idea.get("id") or "",
@@ -113,16 +127,28 @@ def generate_look(
 
 
 def persist_look(root: Path, look: dict[str, Any]) -> Path:
+    """Write the look out as a review page, and say where it went.
+
+    Nothing here writes a mockup that only gets looked at once. The page this
+    writes is the same review page `look` writes, so the same Save button, the
+    same `review-marks.json`, and the same `look --read` finish the job.
+    """
+
+    from domain_foundry_core.review.page import proposal_from_look, render_review_page
+
     root.mkdir(parents=True, exist_ok=True)
     idea_id = _SAFE_ID.sub("_", str(look.get("idea_id") or "look"))
-    path = root / f"{idea_id}.html"
-    path.write_text(str(look.get("html") or ""), encoding="utf-8")
+    page = root / "review.html"
+    page.write_text(render_review_page(proposal_from_look(look)), encoding="utf-8")
     meta = {k: v for k, v in look.items() if k != "html"}
     (root / "looks.json").write_text(
-        json.dumps({"latest": idea_id, **meta}, indent=2, ensure_ascii=False) + "\n",
+        json.dumps(
+            {"latest": idea_id, "review_page": page.name, **meta}, indent=2, ensure_ascii=False
+        )
+        + "\n",
         encoding="utf-8",
     )
-    return path
+    return page
 
 
 def template_html(
@@ -130,7 +156,6 @@ def template_html(
     *,
     hero: str,
     samples: str = "",
-    critique: str = "",
     round: int = 1,
 ) -> str:
     title = html.escape(str(idea.get("title") or "Look"))
@@ -141,7 +166,7 @@ def template_html(
         analog = html.escape(str(worlds[0].get("name") or ""))
     example = str(idea.get("example") or "")
     rows = _sample_rows(example, samples, idea)
-    tone = _tone_from_critique(critique)
+    tone = LOOK_TONE
     body = _hero_body(hero, title, rows, tone)
     analog_line = f'<p class="analog">Oriented like {analog}</p>' if analog else ""
     return f"""<!doctype html>
@@ -188,37 +213,6 @@ def template_html(
 </body>
 </html>
 """
-
-
-def _tone_from_critique(critique: str) -> dict[str, str | int]:
-    low = (critique or "").lower()
-    dark = any(w in low for w in ("dark", "darker", "dim"))
-    dense = any(w in low for w in ("dense", "denser", "tighter", "more chart"))
-    if dark:
-        return {
-            "scheme": "dark",
-            "ink": "#e7edea",
-            "muted": "#93a69e",
-            "paper": "#0e1512",
-            "line": "#24322d",
-            "accent": "#3fbe99",
-            "chart_h": "190px" if dense else "150px",
-            "gallery_cols": "4" if dense else "3",
-            "gallery_gap": "4px" if dense else "8px",
-            "tile_n": 8 if dense else 6,
-        }
-    return {
-        "scheme": "light",
-        "ink": "#18211f",
-        "muted": "#64706b",
-        "paper": "#f7f7f1",
-        "line": "#d9dfd7",
-        "accent": "#087f72",
-        "chart_h": "190px" if dense else "150px",
-        "gallery_cols": "4" if dense else "3",
-        "gallery_gap": "4px" if dense else "8px",
-        "tile_n": 8 if dense else 6,
-    }
 
 
 def _sample_rows(example: str, blob: str, idea: dict[str, Any]) -> list[str]:

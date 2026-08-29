@@ -215,10 +215,14 @@ def test_pokemon_cards_offers_card_set_and_pull_then_files(workspace, monkeypatc
     assert "gallery" in html
     assert "repeat(3" in html
 
+    # Asking in words no longer restyles the look by guessing at keywords like
+    # "denser" (Lane C, C5). The look still comes back and stays a gallery; how
+    # much room it gives each thing is now a control on the review page, and it
+    # reaches the build through `look --read`.
     crit = api.wizard_reply(fork["session_id"], "make the gallery denser")
     assert crit["state"] == "looks"
     crit_html = " ".join(L.get("html") or "" for L in crit.get("looks") or []).lower()
-    assert "repeat(4" in crit_html or 'data-dense="1"' in crit_html
+    assert "gallery" in crit_html
 
     live = api.wizard_reply(fork["session_id"], "build it")
     assert live["state"] in {"test_drive", "repair"}

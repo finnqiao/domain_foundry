@@ -5,3 +5,18 @@ objects:
       title: {type: text, required: true}
       body: {type: text, long: true}
       noted_at: {type: datetime, required: true, default: capture_time}
+
+    # Links. A link says a record of this object points at one record of
+    # another object. Each link becomes a real column named after it with
+    # `_uid` on the end, holding the other record's id, plus a foreign key.
+    # The database then refuses a pointer to a record that is not there, and
+    # clears the pointer if that record is deleted.
+    #
+    # Point at another object in this pack:
+    # links:
+    #   parent: {to: example.note, cardinality: many_to_one}
+    #
+    # Point at an object in another pack. Name the pack, or import the object
+    # in pack.yaml and use the short name:
+    # links:
+    #   dining: {to: food.dining, cardinality: many_to_one}

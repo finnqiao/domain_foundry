@@ -7,6 +7,7 @@ import json
 import os
 import re
 import shutil
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +21,7 @@ from domain_foundry_core.packs.models import (
     AgentSpec,
     DomainPack,
     FieldSpec,
+    ImportedObject,
     LinkSpec,
     ObjectSpec,
     PackCompatibility,
@@ -31,7 +33,9 @@ from domain_foundry_core.packs.models import (
     RoutingRule,
     RoutingSpec,
     UIActionSpec,
+    link_column,
 )
+from domain_foundry_core.paths import default_home, overlay_pack_dirs
 
 REQUIRED_FILES = (
     "pack.yaml",
@@ -124,6 +128,10 @@ CAPABILITY_VERSIONS = {
 }
 
 _NAME_RE = re.compile(r"^[a-z][a-z0-9_]{1,62}$")
+_REFERENTIAL_ACTION_RE = re.compile(
+    r"\bON\s+(?:DELETE|UPDATE)\s+(?:SET\s+NULL|SET\s+DEFAULT|CASCADE|RESTRICT|NO\s+ACTION)\b",
+    re.IGNORECASE,
+)
 
 
 class PackValidationError(ValueError):
@@ -146,25 +154,88 @@ def _parse_field(raw: dict[str, Any]) -> FieldSpec:
     return FieldSpec.model_validate(raw)
 
 
-def load_pack(root: Path, *, validate: bool = True) -> DomainPack:
+PackDirResolver = Callable[[str], "Path | None"]
+
+
+def load_pack(
+    root: Path,
+    *,
+    validate: bool = True,
+    resolver: PackDirResolver | None = None,
+) -> DomainPack:
     """Load one declarative pack and normalize parser failures.
 
     A pack is an untrusted directory.  Keeping all parser/model failures under
     ``PackValidationError`` gives CLI, registry, and conformance callers one
     truthful error contract instead of leaking a YAML/Pydantic traceback.
+
+    ``resolver`` maps a pack name to its directory.  It is only consulted when
+    the pack declares ``extends`` or ``imports``; a pack that declares neither
+    loads exactly as it did before composition existed.
     """
     raw_root = Path(root).expanduser()
     if raw_root.is_symlink():
         raise PackValidationError(["pack root must not be a symlink"])
     try:
-        return _load_pack(root, validate=validate)
+        return _load_pack(root, validate=validate, resolver=resolver)
     except PackValidationError:
         raise
     except Exception as exc:  # noqa: BLE001 - convert hostile pack input
         raise PackValidationError([f"invalid pack: {type(exc).__name__}: {exc}"]) from exc
 
 
-def _load_pack(root: Path, *, validate: bool = True) -> DomainPack:
+def default_pack_resolver(root: Path | None = None) -> PackDirResolver:
+    """Find a named pack next to ``root``, in the workspace, or in the bundle.
+
+    Search order: sibling directories of ``root``, the workspace packs
+    directory, any DOMAIN_FOUNDRY_PACKS_PATH overlay, then the bundled packs.
+    """
+
+    def _search_paths() -> list[Path]:
+        paths: list[Path] = []
+        if root is not None:
+            paths.append(Path(root).resolve().parent)
+        paths.append(default_home() / "packs")
+        paths.extend(overlay_pack_dirs())
+        paths.append(bundled_packs_root())
+        return paths
+
+    def _resolve(name: str) -> Path | None:
+        for base in _search_paths():
+            try:
+                candidate = base / name
+            except (OSError, ValueError):
+                continue
+            if candidate.is_dir() and (candidate / "pack.yaml").is_file():
+                return candidate
+        return None
+
+    return _resolve
+
+
+def resolver_for_packs(packs: dict[str, Path]) -> PackDirResolver:
+    """A resolver over an explicit ``{pack name: directory}`` map."""
+
+    def _resolve(name: str) -> Path | None:
+        return packs.get(name)
+
+    return _resolve
+
+
+def _describe_search(root: Path) -> str:
+    return (
+        f"looked next to {root.parent}, in {default_home() / 'packs'}, "
+        f"and in {bundled_packs_root()}"
+    )
+
+
+def _load_pack(
+    root: Path,
+    *,
+    validate: bool = True,
+    resolver: PackDirResolver | None = None,
+    chain: tuple[str, ...] = (),
+) -> DomainPack:
     root = root.resolve()
     if not root.is_dir():
         raise PackValidationError([f"pack directory not found: {root}"])
@@ -198,10 +269,7 @@ def _load_pack(root: Path, *, validate: bool = True) -> DomainPack:
             fname: _parse_field(fbody if isinstance(fbody, dict) else {"type": "text"})
             for fname, fbody in raw_fields.items()
         }
-        links = {
-            lname: LinkSpec.model_validate(lbody)
-            for lname, lbody in raw_links.items()
-        }
+        links = {lname: LinkSpec.model_validate(lbody) for lname, lbody in raw_links.items()}
         objects[obj_name] = ObjectSpec(
             title_field=body.get("title_field"),
             fields=fields,
@@ -220,9 +288,7 @@ def _load_pack(root: Path, *, validate: bool = True) -> DomainPack:
     negatives: list[RoutingExample | dict[str, Any]] = []
     for n in routing_raw.get("negative_examples") or []:
         if isinstance(n, dict):
-            negatives.append(
-                RoutingExample(text=n.get("text", ""), expect=n.get("expect") or {})
-            )
+            negatives.append(RoutingExample(text=n.get("text", ""), expect=n.get("expect") or {}))
         else:
             negatives.append(RoutingExample(text=str(n)))
     routing = RoutingSpec(
@@ -243,10 +309,7 @@ def _load_pack(root: Path, *, validate: bool = True) -> DomainPack:
     policy = PolicySpec(
         defaults=[PolicyRow.model_validate(r) for r in (policy_raw.get("defaults") or [])],
         fallback=str(policy_raw.get("fallback") or "unfiled_card"),
-        ui_actions=[
-            UIActionSpec.model_validate(r)
-            for r in (policy_raw.get("ui_actions") or [])
-        ],
+        ui_actions=[UIActionSpec.model_validate(r) for r in (policy_raw.get("ui_actions") or [])],
     )
 
     proj_path = root / "projections.yaml"
@@ -265,9 +328,7 @@ def _load_pack(root: Path, *, validate: bool = True) -> DomainPack:
     capabilities = capabilities_raw.get("capabilities") or {}
     if not isinstance(capabilities, dict):
         raise PackValidationError(["capabilities must be a mapping"])
-    compatibility = PackCompatibility.model_validate(
-        capabilities_raw.get("compatibility") or {}
-    )
+    compatibility = PackCompatibility.model_validate(capabilities_raw.get("compatibility") or {})
 
     agent: AgentSpec | None = None
     agent_path = root / "agent.yaml"
@@ -292,9 +353,257 @@ def _load_pack(root: Path, *, validate: bool = True) -> DomainPack:
         compatibility=compatibility,
         agent=agent,
     )
+    pack = _compose(pack, resolver=resolver, chain=chain)
+    _resolve_link_targets(pack, resolver=resolver)
+    _add_link_columns(pack)
     if validate:
         validate_pack(pack)
     return pack
+
+
+# ---------------------------------------------------------------------------
+# Composition: extends and imports (docs/PACK_AUTHORING.md)
+# ---------------------------------------------------------------------------
+
+
+def _compose(
+    pack: DomainPack,
+    *,
+    resolver: PackDirResolver | None,
+    chain: tuple[str, ...],
+) -> DomainPack:
+    """Resolve ``extends`` and ``imports`` against other packs on disk."""
+    if pack.manifest.extends is None and not pack.manifest.imports:
+        return pack
+    if pack.name in chain:
+        loop = " extends ".join([*chain, pack.name])
+        raise PackValidationError([f"pack composition goes in a circle: {loop}"])
+    resolve = resolver or default_pack_resolver(pack.root)
+    next_chain = (*chain, pack.name)
+
+    if pack.manifest.extends is not None:
+        parent_name = pack.manifest.extends
+        if parent_name == pack.name:
+            raise PackValidationError([f"pack {pack.name} cannot extend itself"])
+        parent_dir = resolve(parent_name)
+        if parent_dir is None:
+            raise PackValidationError(
+                [
+                    f"pack {pack.name} extends {parent_name}, but {parent_name} is not "
+                    f"installed here; {_describe_search(pack.root)}"
+                ]
+            )
+        parent = _load_pack(parent_dir, validate=False, resolver=resolve, chain=next_chain)
+        pack = _merge_parent(parent, pack)
+
+    for spec in pack.manifest.imports:
+        local = spec.local_name
+        if spec.from_pack == pack.name:
+            raise PackValidationError([f"pack {pack.name} cannot import {spec.target} from itself"])
+        if local in pack.objects:
+            raise PackValidationError(
+                [
+                    f"pack {pack.name} imports {spec.target} as {local!r}, but "
+                    f"{pack.name} already has an object called {local!r}; "
+                    f"give the import a different name with `as`"
+                ]
+            )
+        if local in pack.imports:
+            other = pack.imports[local].target
+            raise PackValidationError(
+                [
+                    f"pack {pack.name} imports two objects under the name {local!r}: "
+                    f"{other} and {spec.target}"
+                ]
+            )
+        source_dir = resolve(spec.from_pack)
+        if source_dir is None:
+            raise PackValidationError(
+                [
+                    f"pack {pack.name} imports {spec.target}, but pack "
+                    f"{spec.from_pack} is not installed here; "
+                    f"{_describe_search(pack.root)}"
+                ]
+            )
+        source = _load_pack(source_dir, validate=False, resolver=resolve, chain=next_chain)
+        if spec.object not in source.objects:
+            known = ", ".join(sorted(source.objects)) or "nothing"
+            raise PackValidationError(
+                [
+                    f"pack {pack.name} imports {spec.target}, but pack "
+                    f"{spec.from_pack} has no object called {spec.object!r}; "
+                    f"it has {known}"
+                ]
+            )
+        pack.imports[local] = ImportedObject(
+            local_name=local,
+            pack=source.name,
+            object=spec.object,
+            spec=source.objects[spec.object],
+        )
+    return pack
+
+
+def _resolve_link_targets(pack: DomainPack, *, resolver: PackDirResolver | None) -> None:
+    """Check every cross-pack link and record the ones we cannot check yet.
+
+    A link into a pack that is installed here must name an object that pack
+    really has.  A link into a pack that is not installed is recorded as a soft
+    dependency: the pack still loads, and the compiler leaves the foreign key
+    off until the other pack arrives.
+    """
+    wanted: dict[str, list[tuple[str, str, str]]] = {}
+    for object_name, obj in pack.objects.items():
+        for link_name, link in obj.links.items():
+            target_pack, target_object = pack.link_target(link)
+            if target_pack == pack.name:
+                continue
+            wanted.setdefault(target_pack, []).append((object_name, link_name, target_object))
+    if not wanted:
+        return
+    resolve = resolver or default_pack_resolver(pack.root)
+    errors: list[str] = []
+    soft: list[str] = []
+    for target_pack, uses in sorted(wanted.items()):
+        source_dir = resolve(target_pack)
+        if source_dir is None:
+            for _object_name, _link_name, target_object in uses:
+                soft.append(f"{target_pack}.{target_object}")
+            continue
+        try:
+            other = _load_pack(source_dir, validate=False, resolver=resolve, chain=(pack.name,))
+        except PackValidationError:
+            for _object_name, _link_name, target_object in uses:
+                soft.append(f"{target_pack}.{target_object}")
+            continue
+        for object_name, link_name, target_object in uses:
+            if target_object not in other.objects:
+                known = ", ".join(sorted(other.objects)) or "nothing"
+                errors.append(
+                    f"{object_name}.{link_name} points at "
+                    f"{target_pack}.{target_object}, but pack {target_pack} has no "
+                    f"object called {target_object!r}; it has {known}"
+                )
+    if errors:
+        raise PackValidationError(errors)
+    pack.soft_dependencies = sorted(set([*pack.soft_dependencies, *soft]))
+
+
+def _merge_parent(parent: DomainPack, child: DomainPack) -> DomainPack:
+    """Fold a parent pack into its child. The child wins on every key."""
+    objects: dict[str, ObjectSpec] = {}
+    for name, obj in parent.objects.items():
+        objects[name] = obj.model_copy(deep=True)
+    for name, obj in child.objects.items():
+        base = objects.get(name)
+        if base is None:
+            objects[name] = obj
+            continue
+        objects[name] = ObjectSpec(
+            title_field=obj.title_field or base.title_field,
+            fields={**base.fields, **obj.fields},
+            links={**base.links, **obj.links},
+        )
+
+    # The parent's objects are the child's objects now, so a link the parent
+    # wrote as "parent.thing" has to point at the child's copy of that table.
+    ancestors = {parent.name, *parent.inherits}
+    for obj in objects.values():
+        for link_name, link in list(obj.links.items()):
+            target_pack, target_object = link.target_pack, link.target_object
+            if target_pack in ancestors and target_object in objects:
+                obj.links[link_name] = link.model_copy(
+                    update={"to": f"{child.name}.{target_object}"}
+                )
+
+    routing = RoutingSpec(
+        rules=[*child.routing.rules, *parent.routing.rules],
+        examples=[*child.routing.examples, *parent.routing.examples],
+        negative_examples=[
+            *child.routing.negative_examples,
+            *parent.routing.negative_examples,
+        ],
+        llm_hints=child.routing.llm_hints or parent.routing.llm_hints,
+    )
+
+    operations = {**parent.operations, **child.operations}
+
+    # Policy is the child's own when the child declares one; a child that
+    # declares no policy keeps the parent's.
+    policy = child.policy
+    if not child.policy.defaults and not child.policy.ui_actions:
+        policy = parent.policy.model_copy(deep=True)
+
+    parent_app = dict(parent.projections.app or {})
+    child_app = dict(child.projections.app or {})
+    views = [*(child_app.get("views") or []), *(parent_app.get("views") or [])]
+    seen_view_ids: set[str] = set()
+    merged_views: list[Any] = []
+    for view in views:
+        view_id = str(view.get("id")) if isinstance(view, dict) else None
+        if view_id is not None:
+            if view_id in seen_view_ids:
+                continue
+            seen_view_ids.add(view_id)
+        merged_views.append(view)
+    app = {**parent_app, **child_app}
+    if merged_views:
+        app["views"] = merged_views
+    projections = ProjectionsSpec(
+        app=app,
+        markdown={**(parent.projections.markdown or {}), **(child.projections.markdown or {})},
+    )
+
+    manifest = child.manifest.model_copy(deep=True)
+    manifest.permissions = sorted(
+        set(parent.manifest.permissions) | set(child.manifest.permissions)
+    )
+
+    # An inherited agent takes the child's name: the agent manifest belongs to
+    # whichever pack is being loaded, and every pack's agent is named after it.
+    agent = child.agent
+    if agent is None and parent.agent is not None:
+        agent = parent.agent.model_copy(deep=True)
+        agent.name = child.name
+
+    return DomainPack(
+        root=child.root,
+        manifest=manifest,
+        objects=objects,
+        routing=routing,
+        operations=operations,
+        policy=policy,
+        projections=projections,
+        capabilities={**parent.capabilities, **child.capabilities},
+        compatibility=child.compatibility,
+        agent=agent,
+        inherits=[*parent.inherits, parent.name],
+        imports=dict(parent.imports),
+        soft_dependencies=list(parent.soft_dependencies),
+    )
+
+
+def _add_link_columns(pack: DomainPack) -> None:
+    """Give every link a real column so the schema can carry a foreign key.
+
+    The column holds the target row's ``object_uid``.  It is a normal field
+    from here on, so the apply engine writes it and the compiler emits it.
+    """
+    for object_name, obj in pack.objects.items():
+        for link_name in list(obj.links):
+            column = link_column(link_name)
+            existing = obj.fields.get(column)
+            if existing is not None and not getattr(existing, "_link_column", False):
+                if existing.type != "text":
+                    raise PackValidationError(
+                        [
+                            f"{object_name}.{link_name} needs a column called "
+                            f"{column!r}, but {object_name} already declares a "
+                            f"{existing.type} field with that name; rename one of them"
+                        ]
+                    )
+                continue
+            obj.fields[column] = FieldSpec(type="text")
 
 
 def validate_pack(pack: DomainPack) -> None:
@@ -366,9 +675,7 @@ def validate_pack(pack: DomainPack) -> None:
     if len(pack.routing.examples) < 8:
         errors.append(f"need ≥8 routing examples, found {len(pack.routing.examples)}")
     if len(pack.routing.negative_examples) < 2:
-        errors.append(
-            f"need ≥2 negative examples, found {len(pack.routing.negative_examples)}"
-        )
+        errors.append(f"need ≥2 negative examples, found {len(pack.routing.negative_examples)}")
 
     for i, rule in enumerate(pack.routing.rules):
         try:
@@ -407,8 +714,7 @@ def validate_pack(pack: DomainPack) -> None:
         for field in action.fields:
             if field not in field_names:
                 errors.append(
-                    f"policy.ui_actions[{i}] field {field!r} not in "
-                    f"{action.object_type} schema"
+                    f"policy.ui_actions[{i}] field {field!r} not in {action.object_type} schema"
                 )
         if len(action.fields) != len(set(action.fields)):
             errors.append(f"policy.ui_actions[{i}] fields must be unique")
@@ -421,9 +727,7 @@ def validate_pack(pack: DomainPack) -> None:
                 errors.append(f"{obj_name}.{fname}: enum requires values")
 
     if pack.agent is not None and pack.agent.name and pack.agent.name != pack.name:
-        errors.append(
-            f"agent.name {pack.agent.name!r} must match pack name {pack.name!r}"
-        )
+        errors.append(f"agent.name {pack.agent.name!r} must match pack name {pack.name!r}")
 
     _validate_policy_relationships(pack, errors)
     _validate_projection_relationships(pack, errors)
@@ -452,8 +756,14 @@ def _validate_pack_tree(root: Path, errors: list[str]) -> None:
                 path = current_path / name
                 suffix = path.suffix.lower()
                 if suffix in FORBIDDEN_PACK_SUFFIXES:
-                    errors.append(f"executable pack content is not allowed: {path.relative_to(root)}")
-                if suffix and suffix not in KNOWN_DATA_SUFFIXES and path.name not in KNOWN_DATA_FILES:
+                    errors.append(
+                        f"executable pack content is not allowed: {path.relative_to(root)}"
+                    )
+                if (
+                    suffix
+                    and suffix not in KNOWN_DATA_SUFFIXES
+                    and path.name not in KNOWN_DATA_FILES
+                ):
                     # Binary media may be useful as a gallery fixture, so this
                     # is a warning-level omission rather than a rejection. The
                     # executable suffix deny-list above remains strict.
@@ -505,21 +815,27 @@ def _validate_schema_relationships(pack: DomainPack, errors: list[str]) -> None:
                 errors.append(f"invalid field name {object_name}.{field_name!r}")
             if field.min is not None and field.max is not None and field.min > field.max:
                 errors.append(f"{object_name}.{field_name}: min must not exceed max")
-            if field.type == "enum" and field.values and len(field.values) != len(set(field.values)):
+            if (
+                field.type == "enum"
+                and field.values
+                and len(field.values) != len(set(field.values))
+            ):
                 errors.append(f"{object_name}.{field_name}: enum values must be unique")
         for link_name, link in obj.links.items():
             if not _NAME_RE.match(link_name):
                 errors.append(f"invalid link name {object_name}.{link_name!r}")
-            target_domain, _, target_object = link.to.partition(".")
-            if target_object and target_domain != pack.name:
-                # Cross-pack links are declarative references; the target pack
-                # is validated independently by its own registry entry.
-                continue
-            target_object = target_object or target_domain
-            if target_object not in pack.objects:
+            target_domain, target_object = pack.link_target(link)
+            if target_domain != pack.name:
+                # Cross-pack links are resolved at load time against the packs
+                # installed here (see _resolve_link_targets); a target pack that
+                # is not installed is a recorded soft dependency, not an error.
+                pass
+            elif target_object not in pack.objects:
                 errors.append(f"{object_name}.{link_name}: link target {link.to!r} not in schema")
             if link.cardinality not in {"one_to_one", "one_to_many", "many_to_one", "many_to_many"}:
-                errors.append(f"{object_name}.{link_name}: invalid cardinality {link.cardinality!r}")
+                errors.append(
+                    f"{object_name}.{link_name}: invalid cardinality {link.cardinality!r}"
+                )
 
 
 def _validate_policy_relationships(pack: DomainPack, errors: list[str]) -> None:
@@ -529,9 +845,17 @@ def _validate_policy_relationships(pack: DomainPack, errors: list[str]) -> None:
     for index, row in enumerate(pack.policy.defaults):
         if row.action not in allowed_actions:
             errors.append(f"policy.defaults[{index}] has unknown action {row.action!r}")
-        if row.operation is not None and row.operation not in ALLOWED_OPERATIONS and row.operation != "*":
+        if (
+            row.operation is not None
+            and row.operation not in ALLOWED_OPERATIONS
+            and row.operation != "*"
+        ):
             errors.append(f"policy.defaults[{index}] has unknown operation {row.operation!r}")
-        if row.object_type is not None and row.object_type not in pack.objects and row.object_type != "*":
+        if (
+            row.object_type is not None
+            and row.object_type not in pack.objects
+            and row.object_type != "*"
+        ):
             errors.append(f"policy.defaults[{index}] object {row.object_type!r} not in schema")
         if row.min_confidence is not None and not 0 <= row.min_confidence <= 1:
             errors.append(f"policy.defaults[{index}] min_confidence must be between 0 and 1")
@@ -570,7 +894,9 @@ def _validate_projection_relationships(pack: DomainPack, errors: list[str]) -> N
         block = str(view.get("block") or "list")
         if block not in ALLOWED_PROJECTION_BLOCKS:
             errors.append(f"projections.app.views[{index}] block {block!r} is not a core block")
-        targets = view.get("objects") or ([] if view.get("object") is None else [view.get("object")])
+        targets = view.get("objects") or (
+            [] if view.get("object") is None else [view.get("object")]
+        )
         global_block = block in {"capture_feed", "review_queue", "quiz_stats"}
         if not isinstance(targets, list) or (not targets and not global_block):
             errors.append(f"projections.app.views[{index}] must declare object or objects")
@@ -583,15 +909,21 @@ def _validate_projection_relationships(pack: DomainPack, errors: list[str]) -> N
             errors.append(f"projections.app.views[{index}] config must be a mapping")
             config = {}
         if block == "gallery" and str(config.get("gallery") or "") not in gallery_ids:
-            errors.append(f"projections.app.views[{index}] gallery is not declared by media capability")
+            errors.append(
+                f"projections.app.views[{index}] gallery is not declared by media capability"
+            )
         if block == "compare" and str(config.get("comparison") or "") not in compare_ids:
-            errors.append(f"projections.app.views[{index}] comparison is not declared by compare capability")
+            errors.append(
+                f"projections.app.views[{index}] comparison is not declared by compare capability"
+            )
         if len(targets) == 1 and targets[0] in pack.objects:
             fields = set(pack.objects[targets[0]].fields)
             for key in ("date_field", "group_by", "media_field", "status_field"):
                 value = config.get(key)
                 if value is not None and value not in fields:
-                    errors.append(f"projections.app.views[{index}] {key} {value!r} not in {targets[0]} schema")
+                    errors.append(
+                        f"projections.app.views[{index}] {key} {value!r} not in {targets[0]} schema"
+                    )
             for key in ("columns", "facets"):
                 values = config.get(key) or []
                 if not isinstance(values, list):
@@ -599,22 +931,32 @@ def _validate_projection_relationships(pack: DomainPack, errors: list[str]) -> N
                 else:
                     for value in values:
                         if value not in fields and value not in derived_ids:
-                            errors.append(f"projections.app.views[{index}] {key} field {value!r} not declared")
+                            errors.append(
+                                f"projections.app.views[{index}] {key} field {value!r} not declared"
+                            )
             for measure_index, measure in enumerate(config.get("measures") or []):
                 if not isinstance(measure, dict):
-                    errors.append(f"projections.app.views[{index}] measures[{measure_index}] must be a mapping")
+                    errors.append(
+                        f"projections.app.views[{index}] measures[{measure_index}] must be a mapping"
+                    )
                     continue
                 field = measure.get("field")
                 if field not in fields and field not in derived_ids:
-                    errors.append(f"projections.app.views[{index}] measure field {field!r} not declared")
+                    errors.append(
+                        f"projections.app.views[{index}] measure field {field!r} not declared"
+                    )
             for action_index, action in enumerate(config.get("actions") or []):
                 if not isinstance(action, dict):
-                    errors.append(f"projections.app.views[{index}] actions[{action_index}] must be a mapping")
+                    errors.append(
+                        f"projections.app.views[{index}] actions[{action_index}] must be a mapping"
+                    )
                     continue
                 operation = action.get("operation")
                 action_fields = action.get("fields") or []
                 if not pack.policy.allows_ui_action(
-                    object_type=targets[0], operation=str(operation), fields={str(f): None for f in action_fields}
+                    object_type=targets[0],
+                    operation=str(operation),
+                    fields={str(f): None for f in action_fields},
                 ):
                     errors.append(
                         f"projections.app.views[{index}] action {operation!r}/{action_fields!r} is not policy-declared"
@@ -659,7 +1001,9 @@ def _validate_agent_relationships(pack: DomainPack, errors: list[str]) -> None:
     ):
         declaration = pack.capabilities.get(capability_name) or {}
         if declaration and declaration.get(key) and declaration[key] not in ids:
-            errors.append(f"{capability_name} capability references unknown {key} {declaration[key]!r}")
+            errors.append(
+                f"{capability_name} capability references unknown {key} {declaration[key]!r}"
+            )
 
 
 def _validate_migration_files(pack: DomainPack, errors: list[str]) -> None:
@@ -681,7 +1025,9 @@ def _validate_migration_files(pack: DomainPack, errors: list[str]) -> None:
             errors.append(f"cannot read migration {path.name}: {exc}")
             continue
         for statement in _sql_statements(text):
-            normalized = re.sub(r"^\s*(?:--[^\n]*\n|/\*.*?\*/\s*)*", "", statement, flags=re.DOTALL).strip()
+            normalized = re.sub(
+                r"^\s*(?:--[^\n]*\n|/\*.*?\*/\s*)*", "", statement, flags=re.DOTALL
+            ).strip()
             if not normalized:
                 continue
             # The compiler prefixes generated migrations with this harmless
@@ -689,9 +1035,20 @@ def _validate_migration_files(pack: DomainPack, errors: list[str]) -> None:
             # while allowing the compiler's own output to round-trip.
             if re.fullmatch(r"PRAGMA\s+foreign_keys\s*=\s*ON", normalized, re.IGNORECASE):
                 continue
-            if not re.match(r"^(?:CREATE\s+(?:TABLE|INDEX)|ALTER\s+TABLE)\b", normalized, re.IGNORECASE):
+            if not re.match(
+                r"^(?:CREATE\s+(?:TABLE|INDEX)|ALTER\s+TABLE)\b", normalized, re.IGNORECASE
+            ):
                 errors.append(f"migration {path.name} contains a non-declarative statement")
-            if re.search(r"\b(DROP|DELETE|UPDATE|INSERT|REPLACE|ATTACH|DETACH|VACUUM)\b", normalized, re.IGNORECASE):
+            # A foreign key's referential action spells out what happens when
+            # the row it points at goes away.  Those fixed phrases are part of
+            # the constraint, not a statement that deletes or updates anything,
+            # so take them out before looking for destructive verbs.
+            scanned = _REFERENTIAL_ACTION_RE.sub(" ", normalized)
+            if re.search(
+                r"\b(DROP|DELETE|UPDATE|INSERT|REPLACE|ATTACH|DETACH|VACUUM)\b",
+                scanned,
+                re.IGNORECASE,
+            ):
                 errors.append(f"migration {path.name} contains a destructive or external SQL verb")
 
 
@@ -763,14 +1120,18 @@ def _replay_routing_examples(pack: DomainPack, errors: list[str]) -> None:
         matching = [hit for hit in result.hits if hit.object_type == expected_object]
         if expected_object and not matching:
             errors.append(f"routing.examples[{index}] does not route to {expected_object!r}")
-        if expected_object in pack.objects and expected_operation not in pack.operations.get(expected_object, []):
+        if expected_object in pack.objects and expected_operation not in pack.operations.get(
+            expected_object, []
+        ):
             errors.append(
                 f"routing.examples[{index}] operation {expected_operation!r} is not allowed for {expected_object!r}"
             )
         if expected_object in pack.objects:
-            for field in (expected.get("fields") or {}):
+            for field in expected.get("fields") or {}:
                 if field not in pack.objects[expected_object].fields:
-                    errors.append(f"routing.examples[{index}] field {field!r} not in {expected_object} schema")
+                    errors.append(
+                        f"routing.examples[{index}] field {field!r} not in {expected_object} schema"
+                    )
 
     for index, raw in enumerate(pack.routing.negative_examples):
         example = raw if isinstance(raw, RoutingExample) else RoutingExample.model_validate(raw)
@@ -798,9 +1159,7 @@ def _sql_statements(text: str) -> list[str]:
     return text.split(";")
 
 
-def _validate_derived_metrics(
-    spec: dict[str, Any], pack: DomainPack, errors: list[str]
-) -> None:
+def _validate_derived_metrics(spec: dict[str, Any], pack: DomainPack, errors: list[str]) -> None:
     object_type = spec.get("object")
     if object_type not in pack.objects:
         errors.append(f"derived_metrics object {object_type!r} not in schema")

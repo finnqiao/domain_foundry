@@ -34,7 +34,7 @@ Two invariants hold everywhere:
    queued for review, parked as an unfiled card, or retained ledger-only. There
    is no silent loss.
 
-Everything else — packs, routing tiers, policy gates, projections, evals — is in
+Everything else (packs, routing tiers, policy gates, projections, evals) is in
 service of those two invariants while staying local-first and honest about
 uncertainty.
 

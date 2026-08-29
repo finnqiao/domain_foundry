@@ -23,8 +23,38 @@
 #  14. name audit          — public coordinates have fresh, honestly scoped evidence
 #  15. foundry audit       — three goldens, reproducible compiler, schema, owned app
 #  16. held-out leak check — the protected interest set has not been tuned into
+#  17. claims audit       — spec fields have readers, copy rules hold, README claims
+#                           name a proof that exists (rebuild plan Lane A, release proof 5)
+
+# Rebuild gates (--rebuild-gates), the five-proof release gate from
+# docs/rebuild-plan-2026-08-28/00-OVERVIEW.md:
+#  R1. showcase gate    - the pipeline produces a showcase-caliber spec unaided
+#  R2. difference gate  - two apps for different passions are really different
+#  R3. fork E2E         - a fork records its parent end to end
+#  R4. stranger passion - a seeded out-of-corpus passion gives an honest app
+#  (Proof 5, the claims audit, is check 17 above and always runs.)
+#
+# They are off by default because several are red on purpose while the rebuild
+# lanes land, and a red rebuild gate must not block the standing release audit.
+# Turn them on with:
+#
+#   scripts/release_audit.sh --rebuild-gates
+#
+# Every one runs in cassette replay, so it gives the same answer every time. A
+# gate with no cassette fails and says how to record one; none of them fall back
+# to the offline keyword scaffold. Once all four are green, drop the flag and
+# run them always.
 
 set -uo pipefail
+
+REBUILD_GATES=0
+for arg in "$@"; do
+  case "$arg" in
+    --rebuild-gates) REBUILD_GATES=1 ;;
+    -h|--help) echo "usage: release_audit.sh [--rebuild-gates]"; exit 0 ;;
+    *) echo "unknown option: $arg" >&2; echo "usage: release_audit.sh [--rebuild-gates]" >&2; exit 2 ;;
+  esac
+done
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
@@ -92,6 +122,7 @@ else
 fi
 
 run "docs claims check" python scripts/docs_claims_check.py
+run "claims audit"      python scripts/claims_audit.py
 run "knowledge audit"   python scripts/knowledge_audit.py
 run "dependency license audit" python scripts/dependency_license_audit.py --verify-source-texts
 run "provider compatibility" python scripts/provider_compatibility_audit.py
@@ -135,6 +166,15 @@ if command -v domain-foundry >/dev/null 2>&1; then
   run "eval corpus replay" domain-foundry eval --full --min-accuracy 0.9
 else
   bad "eval corpus replay (domain-foundry CLI missing; install .[dev])"
+fi
+
+if [ "$REBUILD_GATES" -eq 1 ]; then
+  echo
+  echo "-- rebuild gates (docs/rebuild-plan-2026-08-28) --"
+  run "R1 showcase gate"    python scripts/build_showcase.py --all --gate
+  run "R2 difference gate"  python scripts/foundry_difference_gate.py
+  run "R3 fork E2E"         python -m pytest tests/e2e-foundry/test_fork_e2e.py -q
+  run "R4 stranger passion" python -m pytest tests/e2e-foundry/test_stranger_passion.py -q
 fi
 
 echo
