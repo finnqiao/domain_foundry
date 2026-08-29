@@ -9,6 +9,7 @@ proved.
 
 from __future__ import annotations
 
+import re
 from collections.abc import Sequence
 from typing import Annotated, Any, Literal
 
@@ -59,6 +60,166 @@ EVIDENCE_TIER_LABELS: dict[str, str] = {
 SOLE_CONCEPT_DECISION = "wizard-auto: sole concept"
 
 
+# ---------------------------------------------------------------------------
+# Rebuild contracts, 2026-08-28 (docs/rebuild-plan-2026-08-28/00-OVERVIEW.md).
+#
+# Phase 0 lands every type the seven lanes code against, so the lanes can run in
+# parallel without editing this file again. After Phase 0 this module is frozen
+# for the rebuild kit: a lane that needs a change files it with the integrator.
+# ---------------------------------------------------------------------------
+
+# The five layouts. Named here so Lane B, Lane C, and Lane F can all refer to
+# the same set instead of repeating the literal.
+NavigationTopology = Literal["hub", "workflow", "split", "canvas", "session"]
+
+# A named, curated system-font stack. The owned app has no network, so a stack
+# is a list of fonts already on the machine, never a download.
+TypographyStack = Literal[
+    "reading_serif",
+    "data_sans",
+    "mono_forward",
+    "rounded_humanist",
+    "system_default",
+]
+
+TYPOGRAPHY_STACK_LABELS: dict[str, str] = {
+    "reading_serif": "a serif made for reading long entries",
+    "data_sans": "a compact sans for tables and numbers",
+    "mono_forward": "a monospace look for logs and codes",
+    "rounded_humanist": "a soft, friendly sans",
+    "system_default": "whatever your device already uses",
+}
+
+# How much room the layout gives each thing.
+DensityScale = Literal["airy", "bench", "dense"]
+
+DENSITY_SCALE_LABELS: dict[str, str] = {
+    "airy": "lots of room, one thing at a time",
+    "bench": "a working bench: room to read, room to act",
+    "dense": "packed, for scanning many rows at once",
+}
+
+# The bounded vocabulary of renderable motifs. Lane B ships one runtime
+# renderer per member; anything outside this set is prose for nobody.
+SignatureElement = Literal[
+    "progress_bar",
+    "life_list",
+    "comparison_strip",
+    "timeline_rail",
+    "gap_grid",
+]
+
+SIGNATURE_ELEMENT_LABELS: dict[str, str] = {
+    "progress_bar": "a bar across the top showing how much time or progress is left",
+    "life_list": "a side panel listing everything you have found so far",
+    "comparison_strip": "a strip that puts two records side by side",
+    "timeline_rail": "a rail down the side showing when things happened",
+    "gap_grid": "a grid that shows what you have and what is still missing",
+}
+
+# Where a seeded record came from. Personal uploads never leave the machine.
+SeedSourceKind = Literal["personal_upload", "public_link"]
+
+SEED_SOURCE_LABELS: dict[str, str] = {
+    "personal_upload": "something you keep: a file, a folder, an export",
+    "public_link": "a page you pointed at",
+}
+
+# The bespoke CSS envelope (Lane B5). The sanitizer lives in the compiler; the
+# budget and the allowlist live here so the audit and the tests share one truth.
+BESPOKE_CSS_BUDGET_BYTES = 8_192
+
+BESPOKE_ALLOWED_PROPERTIES: frozenset[str] = frozenset(
+    {
+        "align-items",
+        "align-self",
+        "aspect-ratio",
+        "background",
+        "background-color",
+        "border",
+        "border-bottom",
+        "border-color",
+        "border-left",
+        "border-radius",
+        "border-right",
+        "border-style",
+        "border-top",
+        "border-width",
+        "box-shadow",
+        "color",
+        "column-gap",
+        "display",
+        "flex",
+        "flex-direction",
+        "flex-wrap",
+        "font-size",
+        "font-style",
+        "font-variant-numeric",
+        "font-weight",
+        "gap",
+        "grid-area",
+        "grid-auto-flow",
+        "grid-column",
+        "grid-row",
+        "grid-template-areas",
+        "grid-template-columns",
+        "grid-template-rows",
+        "justify-content",
+        "justify-self",
+        "letter-spacing",
+        "line-height",
+        "margin",
+        "margin-block",
+        "margin-bottom",
+        "margin-inline",
+        "margin-left",
+        "margin-right",
+        "margin-top",
+        "max-width",
+        "min-height",
+        "min-width",
+        "opacity",
+        "order",
+        "outline",
+        "outline-offset",
+        "overflow",
+        "padding",
+        "padding-block",
+        "padding-bottom",
+        "padding-inline",
+        "padding-left",
+        "padding-right",
+        "padding-top",
+        "position",
+        "row-gap",
+        "text-align",
+        "text-decoration",
+        "text-transform",
+        "width",
+    }
+)
+
+# Anything on this list ends a build's bespoke layer, no exceptions. The layer
+# is dropped, the rejection is written into the receipt, and the build carries
+# on without it.
+BESPOKE_FORBIDDEN_SUBSTRINGS: tuple[str, ...] = (
+    "@import",
+    "url(",
+    "expression(",
+    "javascript:",
+    "</style",
+    "<script",
+    "\\",
+    "behavior:",
+    "-moz-binding",
+    "image-set(",
+    "element(",
+)
+
+# A spec id, and therefore a fork parent reference (Lane G4).
+SPEC_ID_PATTERN = r"^[a-z][a-z0-9-]{0,119}$"
+
+
 def evidence_tier_label(tier: str | None) -> str:
     """Copy a pack or a UI can show verbatim. Never guesses upward."""
     if not tier:
@@ -70,6 +231,131 @@ class SpecPart(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+class BespokeLayer(SpecPart):
+    """Per-app CSS the model may write, inside an envelope the compiler checks.
+
+    The compiler is the enforcer. This type records what was asked for; a layer
+    that breaks the envelope is rejected at build time and the rejection is
+    written into the receipt, so a dropped layer is never silent.
+    """
+
+    css: str = Field(min_length=1, max_length=BESPOKE_CSS_BUDGET_BYTES)
+    rationale: UserText
+    scope: Literal["app"] = "app"
+
+    @model_validator(mode="after")
+    def stays_inside_the_envelope(self) -> BespokeLayer:
+        lowered = self.css.casefold()
+        for banned in BESPOKE_FORBIDDEN_SUBSTRINGS:
+            if banned in lowered:
+                raise ValueError(f"bespoke css may not contain {banned!r}")
+        if len(self.css.encode("utf-8")) > BESPOKE_CSS_BUDGET_BYTES:
+            raise ValueError(f"bespoke css is over the {BESPOKE_CSS_BUDGET_BYTES} byte budget")
+        return self
+
+
+class BorrowedFragment(SpecPart):
+    """A named piece the user liked in one concept and wants in another."""
+
+    from_concept: str = Field(min_length=1, max_length=120)
+    piece: UserText
+    reason: UserText | None = None
+
+
+class LookBinding(SpecPart):
+    """What the user approved on the review page, in a shape the build reads.
+
+    This is the answer to the discarded-mockup problem: Lane C writes it, Lane B
+    compiles it. Every field is optional except the look it came from, so a
+    partly marked page still binds what it does say.
+    """
+
+    look_id: str = Field(min_length=1, max_length=120)
+    concept_id: str | None = Field(default=None, max_length=120)
+    topology: NavigationTopology | None = None
+    typography_stack: TypographyStack | None = None
+    density_scale: DensityScale | None = None
+    token_overrides: dict[str, str] = Field(default_factory=dict, max_length=20)
+    signature_elements: list[SignatureElement] = Field(default_factory=list, max_length=5)
+    borrowed_fragments: list[BorrowedFragment] = Field(default_factory=list, max_length=10)
+    bespoke: BespokeLayer | None = None
+    notes: list[UserText] = Field(default_factory=list, max_length=40)
+    approved_at: str | None = Field(default=None, max_length=40)
+
+    @model_validator(mode="after")
+    def overrides_are_real_tokens(self) -> LookBinding:
+        known = set(VisualTokens.model_fields)
+        unknown = set(self.token_overrides) - known
+        if unknown:
+            raise ValueError(f"unknown token overrides: {sorted(unknown)}")
+        for name, value in self.token_overrides.items():
+            if name == "radius_px":
+                if not value.isdigit() or not 0 <= int(value) <= 24:
+                    raise ValueError("radius_px must be a whole number from 0 to 24")
+                continue
+            if not re.fullmatch(r"#[0-9A-Fa-f]{6}", value):
+                raise ValueError(f"{name} must be a colour like #E39A2D, got {value!r}")
+        return self
+
+
+class SeedProvenance(SpecPart):
+    """Where one seeded batch of records came from, and whether it can travel.
+
+    The rule the whole sharing line rests on: shapes and public links can
+    travel, your records never do. A personal upload is not shareable, and
+    setting it so is a validation error rather than a setting someone can flip.
+    """
+
+    id: str = Field(min_length=1, max_length=120)
+    kind: SeedSourceKind
+    label: UserText
+    location: str | None = Field(default=None, max_length=2_000)
+    retrieved_at: str | None = Field(default=None, max_length=40)
+    license: str | None = Field(default=None, max_length=200)
+    row_count: int | None = Field(default=None, ge=0)
+    columns: list[str] = Field(default_factory=list, max_length=200)
+
+    @property
+    def shareable(self) -> bool:
+        """Only a public link can ever be offered for sharing."""
+
+        return self.kind == "public_link"
+
+    @model_validator(mode="after")
+    def personal_stays_home(self) -> SeedProvenance:
+        if self.kind == "personal_upload" and self.license is not None:
+            raise ValueError("a personal upload does not carry a license; it is the user's own")
+        if self.kind == "public_link" and not self.location:
+            raise ValueError("a public link must record where it came from")
+        return self
+
+
+class TraitEdge(SpecPart):
+    """One "if this, then that" rule: a trait of a practice, and what it means
+    the app should be shaped like.
+
+    Authored edges cite the knowledge base. Detected edges name the seed they
+    were read off. Neither may claim both origins at once.
+    """
+
+    id: str = Field(min_length=1, max_length=120)
+    trait: UserText
+    consequence: UserText
+    origin: Literal["authored", "detected"] = "authored"
+    topology: NavigationTopology | None = None
+    signature_elements: list[SignatureElement] = Field(default_factory=list, max_length=5)
+    evidence_ids: list[str] = Field(default_factory=list, max_length=20)
+    seed_ids: list[str] = Field(default_factory=list, max_length=20)
+
+    @model_validator(mode="after")
+    def says_where_it_came_from(self) -> TraitEdge:
+        if self.origin == "authored" and not self.evidence_ids:
+            raise ValueError("an authored trait edge must cite evidence")
+        if self.origin == "detected" and not (self.seed_ids or self.evidence_ids):
+            raise ValueError("a detected trait edge must name the seed it was read off")
+        return self
+
+
 class ResearchBrief(SpecPart):
     interest: str
     desired_outcome: str
@@ -79,6 +365,10 @@ class ResearchBrief(SpecPart):
     open_questions: list[str] = Field(default_factory=list)
     usage_context: list[str] = Field(min_length=1)
     first_value: str
+    # What the user already keeps, seeded in through Lane E.
+    seeds: list[SeedProvenance] = Field(default_factory=list, max_length=50)
+    # What the shape of the practice implies about the shape of the app (Lane F).
+    traits: list[TraitEdge] = Field(default_factory=list, max_length=30)
 
 
 class EvidenceCitation(SpecPart):
@@ -188,9 +478,19 @@ class RemixFragment(SpecPart):
 
 class RemixSelection(SpecPart):
     selected_concept: str = Field(min_length=1, max_length=120)
+    # The spec this one was forked from. `fork` (Lane G4) is the only writer;
+    # everything else leaves it alone.
     parent_spec: str | None = Field(default=None, max_length=240)
     fragments: list[RemixFragment] = Field(default_factory=list, max_length=10)
     user_decisions: list[UserText] = Field(min_length=1, max_length=10)
+
+    @model_validator(mode="after")
+    def parent_is_a_spec_id(self) -> RemixSelection:
+        if self.parent_spec is not None and not re.fullmatch(SPEC_ID_PATTERN, self.parent_spec):
+            raise ValueError(
+                f"parent_spec must be a spec id like 'sourdough-lab', got {self.parent_spec!r}"
+            )
+        return self
 
 
 class FieldSpec(SpecPart):
@@ -303,6 +603,14 @@ class VisualWorld(SpecPart):
     signature_elements: list[str] = Field(min_length=2)
     avoid: list[str] = Field(min_length=1)
     tokens: VisualTokens
+    # The renderable half of the three prose fields above. Lane B reads these;
+    # where they are absent it maps the prose onto them and says so.
+    typography_stack: TypographyStack | None = None
+    density_scale: DensityScale | None = None
+    signature_element_ids: list[SignatureElement] = Field(default_factory=list, max_length=5)
+    # Per-app CSS inside a checked envelope (Lane B5). Optional: a spec without
+    # one builds exactly as it did before.
+    bespoke: BespokeLayer | None = None
 
 
 class VisualTokens(SpecPart):
@@ -319,7 +627,7 @@ class VisualTokens(SpecPart):
 
 
 class NavigationSpec(SpecPart):
-    topology: Literal["hub", "workflow", "split", "canvas", "session"]
+    topology: NavigationTopology
     primary_view: str
     persistent_regions: list[str] = Field(default_factory=list)
 
@@ -477,6 +785,9 @@ class FoundrySpec(SpecPart):
     implementation: ImplementationSpec
     evaluation: EvaluationSpec
     derivations: list[Derivation] = Field(min_length=4)
+    # What the user approved on the review page (Lane C). Absent until they
+    # approve one; present, it binds the build.
+    look: LookBinding | None = None
 
     @model_validator(mode="after")
     def references_are_closed(self) -> FoundrySpec:
@@ -554,15 +865,15 @@ class FoundrySpec(SpecPart):
         if len(index_ids) != len(self.domain.indexes):
             raise ValueError("index ids must be unique")
         for relationship in self.domain.relationships:
-            self._require_entities(
-                entity_by_id, relationship.from_entity, relationship.to_entity
-            )
+            self._require_entities(entity_by_id, relationship.from_entity, relationship.to_entity)
         for constraint in self.domain.constraints:
             self._require_entities(entity_by_id, constraint.entity)
             fields = {field.name for field in entity_by_id[constraint.entity].fields}
             missing = set(constraint.fields) - fields
             if missing:
-                raise ValueError(f"constraint {constraint.id} uses unknown fields {sorted(missing)}")
+                raise ValueError(
+                    f"constraint {constraint.id} uses unknown fields {sorted(missing)}"
+                )
         for index in self.domain.indexes:
             self._require_entities(entity_by_id, index.entity)
             fields = {field.name for field in entity_by_id[index.entity].fields}
@@ -643,9 +954,27 @@ class FoundrySpec(SpecPart):
 
 
 __all__ = [
+    "BESPOKE_ALLOWED_PROPERTIES",
+    "BESPOKE_CSS_BUDGET_BYTES",
+    "BESPOKE_FORBIDDEN_SUBSTRINGS",
+    "DENSITY_SCALE_LABELS",
     "EVIDENCE_TIER_LABELS",
+    "SEED_SOURCE_LABELS",
+    "SIGNATURE_ELEMENT_LABELS",
     "SOLE_CONCEPT_DECISION",
+    "SPEC_ID_PATTERN",
+    "TYPOGRAPHY_STACK_LABELS",
+    "BespokeLayer",
+    "BorrowedFragment",
+    "DensityScale",
     "EvidenceTier",
     "FoundrySpec",
+    "LookBinding",
+    "NavigationTopology",
+    "SeedProvenance",
+    "SeedSourceKind",
+    "SignatureElement",
+    "TraitEdge",
+    "TypographyStack",
     "evidence_tier_label",
 ]

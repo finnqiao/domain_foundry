@@ -2144,5 +2144,38 @@ def roamboard_export_feed_cmd(
         typer.echo(text)
 
 
+# ---------------------------------------------------------------------------
+# Lane command registry (docs/rebuild-plan-2026-08-28/00-OVERVIEW.md, Phase 0).
+#
+# Lanes never add logic to this file. Each lane ships its own
+# `cli_<name>.py` module exposing `register(app)`, and the integrator adds one
+# line to the tuple below at a sync point. A module that fails to import or has
+# no `register` is a loud error, never a quietly missing verb.
+# ---------------------------------------------------------------------------
+
+LANE_CLI_MODULES: tuple[str, ...] = ()
+
+
+def register_lane_commands(target: typer.Typer = app) -> tuple[str, ...]:
+    """Attach every registered lane module's verbs to the CLI."""
+
+    import importlib
+
+    attached: list[str] = []
+    for module_name in LANE_CLI_MODULES:
+        module = importlib.import_module(f"domain_foundry_core.{module_name}")
+        register = getattr(module, "register", None)
+        if register is None:
+            raise RuntimeError(
+                f"{module_name} is registered as a lane CLI module but has no register(app)"
+            )
+        register(target)
+        attached.append(module_name)
+    return tuple(attached)
+
+
+register_lane_commands()
+
+
 if __name__ == "__main__":
     app()
