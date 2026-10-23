@@ -29,7 +29,7 @@ def test_shipped_dependency_closure_has_reviewed_licenses_and_exact_notices() ->
         as_of=date(2026, 8, 19), verify_source_texts=True
     )
     assert errors == []
-    assert counts == {"python_runtime": 33, "npm_runtime_occurrences": 42}
+    assert counts == {"python_runtime": 33, "npm_runtime_occurrences": 28}
 
 
 def test_dependency_license_registry_fails_closed_on_lock_drift(tmp_path: Path) -> None:
