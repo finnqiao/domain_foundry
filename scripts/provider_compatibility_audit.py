@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 
 import yaml
 
+from domain_foundry_core.llm.budget import BudgetAdmissionError, exact_price
 from domain_foundry_core.llm.providers import all_providers
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,6 +29,7 @@ REQUIRED_FIELDS = {
     "routine_model",
     "sota_model",
     "official_sources",
+    "prices_usd_per_million",
 }
 
 
@@ -117,6 +119,34 @@ def audit(*, as_of: date | None = None, path: Path = REGISTRY_PATH) -> list[str]
                     f"{provider_id}.{field} documents {row.get(field)!r}; "
                     f"executable default is {getattr(spec, field)!r}"
                 )
+        prices = row.get("prices_usd_per_million")
+        models = {row.get("routine_model"), row.get("sota_model")}
+        if not isinstance(prices, dict) or set(prices) != models:
+            errors.append(f"{provider_id}: prices must cover both documented model defaults")
+            continue
+        suffix = "/v1/messages" if provider_id == "anthropic" else "/chat/completions"
+        endpoint = str(row["base_url"]).rstrip("/") + suffix
+        for model, documented in prices.items():
+            try:
+                executable_price = exact_price(model, endpoint)
+            except (BudgetAdmissionError, ValueError) as exc:
+                errors.append(f"{provider_id}.{model}: live admission unavailable: {exc}")
+                continue
+            expected = [executable_price.input_per_million, executable_price.output_per_million]
+            if documented != expected:
+                errors.append(f"{provider_id}.{model}: executable pricing differs from evidence")
+        aliases = row.get("live_aliases", {})
+        if not isinstance(aliases, dict):
+            errors.append(f"{provider_id}: live_aliases must be a mapping")
+            continue
+        for alias, canonical in aliases.items():
+            try:
+                if not isinstance(alias, str) or not isinstance(canonical, str):
+                    errors.append(f"{provider_id}: live aliases must map model strings")
+                elif canonical not in models or exact_price(alias, endpoint) != exact_price(canonical, endpoint):
+                    errors.append(f"{provider_id}.{alias}: live alias differs from evidence")
+            except (BudgetAdmissionError, ValueError):
+                errors.append(f"{provider_id}.{alias}: live alias unavailable")
     return errors
 
 

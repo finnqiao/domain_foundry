@@ -1,19 +1,27 @@
 schema_version: 1
-reviewed_at: "2026-08-19"
+reviewed_at: "2026-10-26"
 freshness_days: 30
 providers:
   - id: anthropic
     base_url: https://api.anthropic.com
     routine_model: claude-haiku-4-5
     sota_model: claude-opus-5
+    prices_usd_per_million:
+      claude-haiku-4-5: [1.0, 5.0]
+      claude-opus-5: [5.0, 25.0]
     official_sources:
       - https://platform.claude.com/docs/en/about-claude/models/overview
       - https://platform.claude.com/docs/en/about-claude/model-deprecations
+      - https://platform.claude.com/docs/en/about-claude/pricing
 
   - id: openai
     base_url: https://api.openai.com/v1
     routine_model: gpt-5.6-luna
     sota_model: gpt-5.6-sol
+    # Retain the higher pre-promotion Sol snapshot, not the temporary $4/$20.
+    prices_usd_per_million:
+      gpt-5.6-luna: [0.2, 1.2]
+      gpt-5.6-sol: [5.0, 30.0]
     official_sources:
       - https://developers.openai.com/api/docs/models/gpt-5.6-luna
       - https://developers.openai.com/api/docs/models/gpt-5.6-sol
@@ -21,8 +29,15 @@ providers:
 
   - id: deepseek
     base_url: https://api.deepseek.com
-    routine_model: deepseek-v4-flash
+    routine_model: deepseek-flash
     sota_model: deepseek-v4-pro
+    # Peak uncached rates also apply to the documented retired-Flash redirect.
+    # deepseek-chat/reasoner were discontinued; they are not live aliases.
+    prices_usd_per_million:
+      deepseek-flash: [0.3, 1.2]
+      deepseek-v4-pro: [1.32, 3.96]
+    live_aliases:
+      deepseek-v4-flash: deepseek-flash
     official_sources:
       - https://api-docs.deepseek.com/updates/
       - https://api-docs.deepseek.com/quick_start/pricing/
@@ -33,7 +48,16 @@ providers:
     base_url: https://openrouter.ai/api/v1
     routine_model: z-ai/glm-5.2
     sota_model: anthropic/claude-opus-5
+    # Maxima across 34 GLM and 11 Opus endpoint records read on review date.
+    # Includes fast/regional routes and Opus 1h cache writes ($20 input).
+    # No off-peak or cache-read discounts assumed.
+    # Other gateway models have no reviewed live rate and fail closed.
+    prices_usd_per_million:
+      z-ai/glm-5.2: [2.31, 8.0]
+      anthropic/claude-opus-5: [20.0, 50.0]
     official_sources:
       - https://openrouter.ai/z-ai/glm-5.2
       - https://openrouter.ai/anthropic/claude-opus-5
       - https://openrouter.ai/docs/guides/overview/models
+      - https://openrouter.ai/api/v1/models/z-ai/glm-5.2/endpoints
+      - https://openrouter.ai/api/v1/models/anthropic/claude-opus-5/endpoints

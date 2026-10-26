@@ -60,6 +60,11 @@ class LedgerCostMeter:
     def allow(self) -> bool:
         return self.guard.allow_llm(tier=FOUNDRY_COST_TIER)
 
+    def observe_accounted(self, cost_usd: float) -> None:
+        """Update this run's UI receipt without inserting another ledger row."""
+        self.spent_usd += cost_usd
+        self.rows += 1
+
     def record(
         self,
         *,

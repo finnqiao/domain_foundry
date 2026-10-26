@@ -195,7 +195,7 @@ def probe_tier(
     )
 
     settings = resolve_tier_settings(tier, home=home, config=config)
-    provider = _build_tier_provider(tier, settings)
+    provider = _build_tier_provider(tier, settings, home=home)
     if isinstance(provider, HeuristicProvider):
         return ProbeResult(
             tier=tier,

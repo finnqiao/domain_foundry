@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import re
 from collections import Counter
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Literal
@@ -556,9 +557,7 @@ def load_seed_mapping(path: Path) -> SeedMapping:
         lists=lists,
         notes=[str(n) for n in (raw.get("notes") or [])],
         channel=str(raw.get("channel") or "seed-personal"),
-        inferred_by=raw.get("inferred_by")
-        if raw.get("inferred_by") in {"rules", "rules+model"}
-        else "rules",
+        inferred_by="rules+model" if raw.get("inferred_by") == "rules+model" else "rules",
     )
 
 
@@ -595,7 +594,7 @@ def _key(value: CellValue) -> str:
     return str(value).strip().casefold()
 
 
-def _mostly(values: list[CellValue], predicate: Any, threshold: float = 0.9) -> bool:
+def _mostly(values: Sequence[CellValue], predicate: Any, threshold: float = 0.9) -> bool:
     if not values:
         return False
     hits = sum(1 for v in values if predicate(v))

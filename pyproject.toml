@@ -127,6 +127,7 @@ include = ["core", "tests"]
 # phantom "could not be resolved" errors for domain_foundry_roamboard alone.
 extraPaths = [
   "core",
+  "scripts",
   "adapters/hermes_agent/src",
   "adapters/roamboard/src",
   "adapters/mcp/src",

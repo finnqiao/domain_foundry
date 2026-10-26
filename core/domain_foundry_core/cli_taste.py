@@ -250,13 +250,13 @@ def tokens_cmd(
     from_file: Path = typer.Option(
         None, "--from", help=f"A settings file, such as the {VIBE_FILENAME} that vibe writes"
     ),
-    type_stack: str = typer.Option(
+    type_stack: str | None = typer.Option(
         None, "--type", help=f"One of: {', '.join(TYPOGRAPHY_STACK_LABELS)}"
     ),
-    density: str = typer.Option(
+    density: str | None = typer.Option(
         None, "--density", help=f"One of: {', '.join(DENSITY_SCALE_LABELS)}"
     ),
-    topology: str = typer.Option(None, "--topology", help=f"One of: {', '.join(TOPOLOGY_LABELS)}"),
+    topology: str | None = typer.Option(None, "--topology", help=f"One of: {', '.join(TOPOLOGY_LABELS)}"),
     page: bool = typer.Option(False, "--page", help="Write a review page to change these by eye"),
     out: Path = typer.Option(None, "--out", help="Where that page goes"),
 ) -> None:

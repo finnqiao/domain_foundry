@@ -110,10 +110,10 @@ _PROVIDERS: tuple[ProviderSpec, ...] = (
         base_url="https://api.deepseek.com",
         api_key_envs=("DOMAIN_FOUNDRY_ROUTINE_API_KEY", "DEEPSEEK_API_KEY"),
         canonical_key_env="DEEPSEEK_API_KEY",
-        routine_model="deepseek-v4-flash",
+        routine_model="deepseek-flash",
         sota_model="deepseek-v4-pro",
         signup_url="https://platform.deepseek.com/api_keys",
-        notes="Cheapest per capture; weaker on json_schema adherence.",
+        notes="Flash handles routine work; Pro handles schema and design work.",
     ),
     ProviderSpec(
         id="openrouter",

@@ -31,15 +31,21 @@ def test_xlsx_dates_come_back_as_dates_not_serial_numbers():
     hands the rest of the pipeline five-digit integers."""
 
     read = read_seed(FIXTURES / "tidepool-log.xlsx")
-    dates = [row.values["Date"] for row in read.primary_table.rows]
-
-    assert all(isinstance(value, str) and len(value) == 10 for value in dates)
+    table = read.primary_table
+    assert table is not None
+    dates: list[str] = []
+    for row in table.rows:
+        value = row.values["Date"]
+        assert isinstance(value, str) and len(value) == 10
+        dates.append(value)
     assert min(dates) == "2024-04-05"
 
 
 def test_xlsx_reads_both_shared_and_inline_strings():
     read = read_seed(FIXTURES / "tidepool-log.xlsx")
-    rows = read.primary_table.rows
+    table = read.primary_table
+    assert table is not None
+    rows = table.rows
 
     # Places live in the shared string table; notes are written inline.
     assert {str(r.values["Place"]) for r in rows if r.values["Place"]}
@@ -53,6 +59,8 @@ def test_csv_and_xlsx_agree_row_for_row():
     from_xlsx = read_seed(FIXTURES / "tidepool-log.xlsx").primary_table
     from_csv = read_seed(FIXTURES / "tidepool-log.csv").primary_table
 
+    assert from_csv is not None
+    assert from_xlsx is not None
     assert from_csv.columns == from_xlsx.columns
     assert from_csv.row_count == from_xlsx.row_count
     assert [r.values for r in from_csv.rows] == [r.values for r in from_xlsx.rows]
@@ -62,13 +70,16 @@ def test_jsonl_export_reads_as_rows():
     read = read_seed(FIXTURES / "tidepool-observations.jsonl")
 
     assert read.row_count == TIDEPOOL_ROWS
-    assert "species" in read.primary_table.columns
+    table = read.primary_table
+    assert table is not None
+    assert "species" in table.columns
 
 
 def test_mbox_gives_subject_date_and_body():
     read = read_seed(FIXTURES / "tidepool-mail.mbox")
 
     table = read.primary_table
+    assert table is not None
     assert table.columns == ["message_id", "date", "sender", "subject", "body"]
     assert table.row_count == 6
     assert all(row.values["subject"] for row in table.rows)
@@ -79,7 +90,9 @@ def test_notes_folder_goes_through_the_existing_ingest_scan():
     read = read_seed(FIXTURES / "tidepool-notes")
 
     assert read.row_count == 3
-    assert read.primary_table.columns == ["note_ref", "text"]
+    table = read.primary_table
+    assert table is not None
+    assert table.columns == ["note_ref", "text"]
     assert read.provenance.kind == "personal_upload"
 
 
