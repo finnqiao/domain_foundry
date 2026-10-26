@@ -540,26 +540,9 @@ def test_an_unmetered_pipeline_is_unchanged() -> None:
 
 
 def _ledger(path: Path) -> Path:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(path)
-    conn.execute(
-        """
-        CREATE TABLE cost_ledger (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            day TEXT NOT NULL,
-            provider TEXT NOT NULL,
-            model TEXT,
-            input_tokens INTEGER NOT NULL,
-            output_tokens INTEGER NOT NULL,
-            cost_usd REAL NOT NULL,
-            entry_id TEXT,
-            created_at TEXT NOT NULL,
-            tier TEXT
-        )
-        """
-    )
-    conn.commit()
-    conn.close()
+    from domain_foundry_core.ledger.migrate import ensure_migrated
+
+    ensure_migrated(path, "ledger")
     return path
 
 

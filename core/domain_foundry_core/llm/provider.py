@@ -28,6 +28,8 @@ from typing import Any, Literal
 import httpx
 
 from domain_foundry_core.config import LLMConfig, TierSettings, load_llm_config
+from domain_foundry_core.llm.budget import MAX_OUTPUT_TOKENS
+from domain_foundry_core.llm.budget import post_json as budgeted_post_json
 from domain_foundry_core.llm.providers import (
     anthropic_request_caps,
     get_provider,
@@ -67,6 +69,9 @@ class TokenUsage:
     model: str | None = None
     tier: str | None = None
     provider: str | None = None
+    accounted: bool = False
+    replayed: bool = False
+    accounted_cost_usd: float | None = None
 
     @property
     def total_tokens(self) -> int:
@@ -242,6 +247,8 @@ def _usage_from_openai(payload: dict[str, Any], *, model: str, tier: str | None)
         model=model,
         tier=tier,
         provider="openai_compatible",
+        accounted=payload.get("_domain_foundry_accounted") is True,
+        accounted_cost_usd=payload.get("_domain_foundry_cost_usd"),
     )
 
 
@@ -253,6 +260,8 @@ def _usage_from_anthropic(payload: dict[str, Any], *, model: str, tier: str | No
         model=model,
         tier=tier,
         provider="anthropic",
+        accounted=payload.get("_domain_foundry_accounted") is True,
+        accounted_cost_usd=payload.get("_domain_foundry_cost_usd"),
     )
 
 
@@ -266,7 +275,9 @@ class OpenAICompatibleProvider(LLMProvider):
         api_key: str | None = None,
         default_model: str | None = None,
         default_tier: str = "routine",
+        home: Path | None = None,
     ) -> None:
+        self.budget_home = home
         self.base_url = (
             base_url
             or os.environ.get("DOMAIN_FOUNDRY_LLM_BASE_URL")
@@ -309,6 +320,7 @@ class OpenAICompatibleProvider(LLMProvider):
                 {"role": "user", "content": user},
             ],
         }
+        body["max_completion_tokens" if is_openai_base(self.base_url) else "max_tokens"] = MAX_OUTPUT_TOKENS
         if deepseek_api:
             # V4 defaults to thinking. Keep the high-volume path fast and make
             # the stronger design/correction tier's intent explicit.
@@ -327,14 +339,12 @@ class OpenAICompatibleProvider(LLMProvider):
             body["response_format"] = {"type": "json_object"}
 
         try:
-            r = httpx.post(
+            payload = budgeted_post_json(
                 f"{self.base_url}/chat/completions",
                 headers={"Authorization": f"Bearer {self.api_key}"},
-                json=body,
-                timeout=self.timeout,
+                body=body, timeout=self.timeout, home=self.budget_home,
+                tier=resolved_tier, dialect="openai_compatible",
             )
-            r.raise_for_status()
-            payload = r.json()
             content = payload["choices"][0]["message"]["content"]
             return CompletionResult(
                 data=_parse_json_content(content),
@@ -351,14 +361,12 @@ class OpenAICompatibleProvider(LLMProvider):
                 {"role": "user", "content": user},
             ]
             try:
-                r = httpx.post(
+                payload = budgeted_post_json(
                     f"{self.base_url}/chat/completions",
                     headers={"Authorization": f"Bearer {self.api_key}"},
-                    json=body,
-                    timeout=self.timeout,
+                    body=body, timeout=self.timeout, home=self.budget_home,
+                    tier=resolved_tier, dialect="openai_compatible",
                 )
-                r.raise_for_status()
-                payload = r.json()
                 content = payload["choices"][0]["message"]["content"]
                 return CompletionResult(
                     data=_parse_json_content(content),
@@ -380,7 +388,9 @@ class AnthropicProvider(LLMProvider):
         api_key: str | None = None,
         default_model: str | None = None,
         effort: str | None = None,
+        home: Path | None = None,
     ) -> None:
+        self.budget_home = home
         self.base_url = (
             base_url
             or os.environ.get("DOMAIN_FOUNDRY_SOTA_BASE_URL")
@@ -455,14 +465,11 @@ class AnthropicProvider(LLMProvider):
         }
 
         def _post(payload_body: dict[str, Any]) -> CompletionResult:
-            r = httpx.post(
-                f"{self.base_url}/v1/messages",
-                headers=headers,
-                json=payload_body,
-                timeout=90.0,
+            payload = budgeted_post_json(
+                f"{self.base_url}/v1/messages", headers=headers,
+                body=payload_body, timeout=90.0, home=self.budget_home,
+                tier=resolved_tier, dialect="anthropic",
             )
-            r.raise_for_status()
-            payload = r.json()
             # A safety classifier can decline with HTTP 200 and no content;
             # surface that as an error rather than an empty-JSON parse failure.
             if payload.get("stop_reason") == "refusal":
@@ -556,8 +563,8 @@ class TieredLLMProvider(LLMProvider):
 
         self.routine_model = routine_settings.model or DEFAULT_ROUTINE_MODEL
         self.sota_model = sota_settings.model or DEFAULT_SOTA_MODEL
-        self.routine = routine or _build_tier_provider("routine", routine_settings)
-        self.sota = sota or _build_tier_provider("sota", sota_settings)
+        self.routine = routine or _build_tier_provider("routine", routine_settings, home=home)
+        self.sota = sota or _build_tier_provider("sota", sota_settings, home=home)
 
     def complete_json(
         self,
@@ -677,7 +684,7 @@ def resolve_tier_settings(
     )
 
 
-def _build_tier_provider(tier: str, settings: TierSettings) -> LLMProvider:
+def _build_tier_provider(tier: str, settings: TierSettings, *, home: Path | None = None) -> LLMProvider:
     """Build the client for a tier, or the heuristic when it has no key."""
     if not settings.api_key:
         return HeuristicProvider()
@@ -689,7 +696,7 @@ def _build_tier_provider(tier: str, settings: TierSettings) -> LLMProvider:
     )
     if is_anthropic_base(base):
         return AnthropicProvider(
-            base_url=base, api_key=settings.api_key, default_model=model
+            base_url=base, api_key=settings.api_key, default_model=model, home=home
         )
     # Anything that is not an Anthropic host speaks the OpenAI-compatible shape.
     # This is what makes "point the sota tier at OpenRouter" work instead of
@@ -699,6 +706,7 @@ def _build_tier_provider(tier: str, settings: TierSettings) -> LLMProvider:
         api_key=settings.api_key,
         default_model=model,
         default_tier=tier,
+        home=home,
     )
 
 
@@ -829,10 +837,10 @@ class CassetteProvider(LLMProvider):
         # Pure replay: serve from cassette when present.
         if self.mode == "replay" and cached_data is not None:
             self.hits += 1
+            replay_usage = cached_usage or TokenUsage(model=model, tier=tier, provider="cassette")
             return CompletionResult(
                 data=cached_data,
-                usage=cached_usage
-                or TokenUsage(model=model, tier=tier, provider="cassette"),
+                usage=replace(replay_usage, accounted=True, replayed=True, accounted_cost_usd=0.0),
             )
 
         self.misses += 1
@@ -991,7 +999,7 @@ def get_default_provider(
         inner = tiered if tiered.has_live_keys() else HeuristicProvider()
     else:
         # Legacy single OpenAI-compatible endpoint
-        inner = OpenAICompatibleProvider()
+        inner = OpenAICompatibleProvider(home=home)
         if not inner.api_key:
             inner = HeuristicProvider()
     if cassette_dir is not None:

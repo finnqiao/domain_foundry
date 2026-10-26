@@ -22,6 +22,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from domain_foundry_core.atlas.traits import detect_traits, structural_options
 from domain_foundry_core.clock import now_iso
+from domain_foundry_core.llm.budget import budget_scope
 from domain_foundry_core.llm.provider import CompletionResult, LLMProvider
 from domain_foundry_core.security.redact import contains_potential_secret
 
@@ -593,16 +594,21 @@ class FoundryPipeline:
         user = json.dumps(payload, ensure_ascii=False, sort_keys=True)
         self._preflight(stage, receipts)
         try:
-            result = self.llm.complete_json(
-                system=system,
-                user=user,
-                schema=schema.model_json_schema(),
-                tier="sota",
-            )
+            with budget_scope("foundry", getattr(self.meter, "guard", None)):
+                result = self.llm.complete_json(
+                    system=system,
+                    user=user,
+                    schema=schema.model_json_schema(),
+                    tier="sota",
+                )
             schema.model_validate(result.data)
         except Exception as exc:
             raise PipelineError(f"{stage} stage failed validation: {exc}") from exc
-        if self.meter is not None:
+        if self.meter is not None and result.usage.accounted and not result.usage.replayed:
+            observe = getattr(self.meter, "observe_accounted", None)
+            if observe is not None:
+                observe(result.usage.accounted_cost_usd or 0.0)
+        if self.meter is not None and not result.usage.accounted:
             self.meter.record(
                 stage=stage,
                 provider=result.usage.provider or getattr(self.llm, "name", None),

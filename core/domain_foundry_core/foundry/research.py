@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import Annotated, Protocol
 from urllib.parse import urlparse
 
-import httpx
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -491,60 +490,22 @@ class BraveSearchProvider:
         self.timeout = timeout
 
     def search(self, query: str, *, count: int = 5) -> list[ResearchCandidate]:
-        if not self.api_key:
-            raise ResearchUnavailable(
-                ResearchPlan(
-                    interest=query,
-                    desired_outcome="Research the requested product",
-                    practice_hypotheses=["Unknown practice", "Unknown artifacts"],
-                    queries=[query, f"{query} open source", f"{query} data model"],
-                    vertical_keywords=["research", "domain"],
-                    artifact_questions=["What artifacts already exist?"],
-                ),
-                "BRAVE_SEARCH_API_KEY is not configured.",
-            )
-        response = httpx.get(
-            self.endpoint,
-            headers={
-                "Accept": "application/json",
-                "X-Subscription-Token": self.api_key,
-            },
-            params={"q": query, "count": max(1, min(count, 10)), "safesearch": "moderate"},
-            timeout=self.timeout,
+        # A configured API key is not a spend authorization or a price quote.
+        # Reviewed local corpus retrieval remains available; paid discovery is
+        # deliberately unavailable until per-request pricing and reservations
+        # are implemented and independently verified.
+        raise ResearchUnavailable(
+            ResearchPlan(
+                interest=query,
+                desired_outcome="Research the requested product",
+                practice_hypotheses=["Unknown practice", "Unknown artifacts"],
+                queries=[query, f"{query} open source", f"{query} data model"],
+                vertical_keywords=["research", "domain"],
+                artifact_questions=["What artifacts already exist?"],
+            ),
+            "Paid Brave research is disabled pending verified per-request budget controls; "
+            "use the reviewed local corpus or a reviewed source packet.",
         )
-        response.raise_for_status()
-        results = (response.json().get("web") or {}).get("results") or []
-        candidates: list[ResearchCandidate] = []
-        retrieved = now_iso().split("T", 1)[0]
-        for result in results:
-            url = str(result.get("url") or "")
-            parsed = urlparse(url)
-            if parsed.scheme != "https" or not parsed.hostname:
-                continue
-            source_id = "web_" + hashlib.sha256(url.encode("utf-8")).hexdigest()[:16]
-            excerpt = re.sub(r"<[^>]+>", " ", str(result.get("description") or ""))
-            excerpt = re.sub(r"\s+", " ", excerpt).strip()[:1200]
-            candidates.append(
-                ResearchCandidate(
-                    source=SourceSnapshot(
-                        id=source_id,
-                        title=str(result.get("title") or parsed.hostname)[:240],
-                        publisher=parsed.hostname,
-                        url=url,
-                        kind="web_search_result",
-                        tier="product_reference",
-                        license="unknown-reference",
-                        allowed_uses=["reference_facts", "paraphrase"],
-                        status="reference_only",
-                        retrieved_at=retrieved,
-                        freshness_days=90,
-                        topics=list(_terms(query))[:8] or ["research"],
-                    ),
-                    excerpt=excerpt,
-                    query=query,
-                )
-            )
-        return candidates
 
 
 def _terms(value: str) -> set[str]:
