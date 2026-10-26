@@ -41,7 +41,7 @@ def provider(kind, model=None):
 
 def response(kind, url, *, usage=True, valid=True):
     text = "{}" if valid else "this is not json"
-    body = (
+    body: dict[str, object] = (
         {"choices": [{"message": {"content": text}}]}
         if kind == "openai"
         else {"content": [{"type": "text", "text": text}]}
