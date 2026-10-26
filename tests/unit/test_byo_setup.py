@@ -101,7 +101,7 @@ def test_network_provider_defaults_are_current() -> None:
     providers = {provider.id: provider for provider in all_providers()}
     assert providers["openai"].routine_model == "gpt-5.6-luna"
     assert providers["openai"].sota_model == "gpt-5.6-sol"
-    assert providers["deepseek"].routine_model == "deepseek-v4-flash"
+    assert providers["deepseek"].routine_model == "deepseek-flash"
     assert providers["deepseek"].sota_model == "deepseek-v4-pro"
     assert providers["deepseek"].base_url == "https://api.deepseek.com"
 
@@ -225,7 +225,7 @@ def test_env_beats_config_file(tmp_path: Path, clean_env: None, monkeypatch) -> 
 def test_config_file_beats_registry_default(tmp_path: Path, clean_env: None) -> None:
     save_llm_config(build_config(provider_id="deepseek"), tmp_path)
     routine = resolve_tier_settings("routine", home=tmp_path)
-    assert routine.model == "deepseek-v4-flash"
+    assert routine.model == "deepseek-flash"
     assert routine.base_url == "https://api.deepseek.com"
     # The sota tier follows the chosen provider, not a hard-coded Anthropic default.
     assert resolve_tier_settings("sota", home=tmp_path).model == "deepseek-v4-pro"

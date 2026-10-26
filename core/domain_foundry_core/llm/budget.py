@@ -16,7 +16,13 @@ from urllib.parse import urlsplit
 
 import httpx
 
-from domain_foundry_core.llm.pricing import _ALIASES, _MODEL_PRICING, ModelPrice
+from domain_foundry_core.llm.pricing import (
+    _ALIASES,
+    _DEEPSEEK_LIVE_MODELS,
+    _MODEL_PRICING,
+    _OPENROUTER_PRICING,
+    ModelPrice,
+)
 from domain_foundry_core.paths import Workspace
 
 MAX_OUTPUT_TOKENS = 8192
@@ -67,12 +73,16 @@ def exact_price(model: str, url: str) -> ModelPrice:
     host = endpoint.hostname
     if ((host == "api.openai.com" and (not model.startswith("gpt-") or "/" in model))
             or (host == "api.anthropic.com" and (not model.startswith("claude-") or "/" in model))
-            or (host == "api.deepseek.com" and (not model.startswith("deepseek-") or "/" in model))
-            or (host in {"openrouter.ai", "eu.openrouter.ai", "us.openrouter.ai"} and model not in _ALIASES)):
+            or (host == "api.deepseek.com" and (model not in _DEEPSEEK_LIVE_MODELS))
+            or (host in {"openrouter.ai", "eu.openrouter.ai", "us.openrouter.ai"} and model not in _OPENROUTER_PRICING)):
         raise BudgetAdmissionError("Model/provider pricing pair unavailable; no request sent")
     # Never infer rates from an arbitrary provider prefix or model suffix.
     key = _ALIASES.get(model, model)
-    rates = _MODEL_PRICING.get(key)
+    rates = (
+        _OPENROUTER_PRICING.get(model)
+        if host in {"openrouter.ai", "eu.openrouter.ai", "us.openrouter.ai"}
+        else _MODEL_PRICING.get(key)
+    )
     if rates is None or any(not math.isfinite(v) or v < 0 for v in rates) or not any(rates):
         raise BudgetAdmissionError('Exact model pricing unavailable; no request sent')
     return ModelPrice(*rates)

@@ -156,7 +156,7 @@ def test_pricing_glm_openrouter_alias():
     cost = estimate_cost_usd(
         model="z-ai/glm-5.2", input_tokens=1_000_000, output_tokens=0
     )
-    assert abs(cost - 0.798) < 1e-9
+    assert abs(cost - 2.31) < 1e-9
     assert estimate_cost_usd(model="z-ai/glm-5.2", input_tokens=33, output_tokens=25) > 0
 
     assert tier_for_model("z-ai/glm-5.2") == "routine"
@@ -173,7 +173,7 @@ def test_pricing_deepseek_and_claude():
     cost = estimate_cost_usd(
         model="deepseek-v4-flash", input_tokens=1_000_000, output_tokens=0
     )
-    assert abs(cost - 0.14) < 1e-9
+    assert abs(cost - 0.30) < 1e-9
 
     cost_sota = estimate_cost_usd(
         model="claude-sonnet-4-6", input_tokens=1_000_000, output_tokens=0

@@ -29,3 +29,37 @@ A hold may be released only when dispatch is proven not to have occurred. Timeou
 - Modified production code passes focused Ruff; cost/provider/budget pass targeted Pyright. Independent tests are included under tests/security with formatting/import cleanup only, retaining their assertions.
 
 Before activation: independently review integration, initialize/migrate a disposable workspace, run the browser/release gates with their prerequisites, verify current provider pricing/account caps, and exercise the intended workflows in staging. Keep deployment and any live paid smoke call separately authorized. Existing dependency remediation is a separate concern.
+
+## 2026-10-26 snapshot reconciliation
+
+The current provider defaults and documented request contracts were reviewed against
+primary documentation and unauthenticated model metadata. No paid probe or account
+credentials were used; this is documented compatibility, not a live-provider receipt.
+The 30-day release-evidence expiry remains in force, and the audit now also compares
+the executable admission prices and documented live aliases with the reviewed record.
+
+- [DeepSeek pricing](https://api-docs.deepseek.com/quick_start/pricing/) and
+  [change log](https://api-docs.deepseek.com/updates/) identify `deepseek-flash` as
+  the current Flash request model. New default selections use it. The documented
+  `deepseek-v4-flash` redirect uses the same peak uncached $0.30/$1.20 rates per
+  million input/output tokens; Pro uses $1.32/$3.96. Discontinued `deepseek-chat`
+  and `deepseek-reasoner` retain historical receipt rates but deny live dispatch.
+- OpenRouter's public endpoint metadata for
+  [GLM 5.2](https://openrouter.ai/api/v1/models/z-ai/glm-5.2/endpoints) (34 routes)
+  and [Opus 5](https://openrouter.ai/api/v1/models/anthropic/claude-opus-5/endpoints)
+  (11 routes) is more conservative than the model page's advertised entry price.
+  GLM admission uses the maxima $2.31/$8.00. Opus uses $20/$50, including the
+  highest input cache-write and fast/regional output prices. Gateway prices are
+  separate from first-party prices. Other gateway models and variants deny live
+  dispatch until their route prices are reviewed.
+- [Anthropic pricing](https://platform.claude.com/docs/en/about-claude/pricing)
+  and [deprecations](https://platform.claude.com/docs/en/about-claude/model-deprecations)
+  still document the existing Haiku 4.5 / Opus 5 defaults. OpenAI's documented
+  [Luna](https://developers.openai.com/api/docs/models/gpt-5.6-luna) rate is unchanged;
+  the higher existing [Sol](https://developers.openai.com/api/docs/models/gpt-5.6-sol)
+  snapshot is retained instead of reducing admission for a temporary promotion.
+
+These rates are conservative local estimates and may reduce availability under
+existing small budgets. No budgets or holds were relaxed. Account fees, other
+consumers and future price changes remain outside a provider-account cap proof.
+Unknown or unverified endpoint/model combinations still fail closed.

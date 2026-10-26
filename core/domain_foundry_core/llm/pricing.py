@@ -1,6 +1,7 @@
 """Per-model token pricing for cost metering (Phase 1).
 
-Rates are USD per 1M tokens, snapshotted from provider docs (2026-08).
+Rates are USD per 1M tokens. Current defaults were reviewed on 2026-10-26;
+legacy entries remain for historical receipts, not automatic live admission.
 """
 
 from __future__ import annotations
@@ -12,8 +13,9 @@ _MODEL_PRICING: dict[str, tuple[float, float]] = {
     # DeepSeek (routine tier) — api-docs.deepseek.com
     "deepseek-chat": (0.14, 0.28),
     "deepseek-reasoner": (0.14, 0.28),
-    "deepseek-v4-flash": (0.14, 0.28),
-    "deepseek-v4-pro": (0.435, 0.87),
+    # Peak, uncached rates; never assume off-peak or a cache hit.
+    "deepseek-flash": (0.30, 1.20),
+    "deepseek-v4-pro": (1.32, 3.96),
     # Anthropic Claude — platform.claude.com pricing.
     # Haiku is the suggested *routine* model, the rest are sota candidates.
     "claude-haiku-4-5": (1.00, 5.00),
@@ -35,13 +37,15 @@ _MODEL_PRICING: dict[str, tuple[float, float]] = {
     "gpt-4o-mini": (0.15, 0.60),
     "gpt-4o": (2.50, 10.00),
     # Z.ai GLM (routine tier via OpenRouter) — openrouter.ai pricing
-    "glm-5.2": (0.798, 2.508),
+    # Maximum prompt/completion rates across all public OpenRouter endpoints.
+    "glm-5.2": (2.31, 8.00),
 }
 
-# Alias map: strip provider prefixes / date suffixes loosely
+# Exact documented aliases. Legacy normalization below is for receipts only.
 _ALIASES: dict[str, str] = {
     "deepseek/deepseek-chat": "deepseek-chat",
-    "deepseek/deepseek-v4-flash": "deepseek-v4-flash",
+    "deepseek-v4-flash": "deepseek-flash",
+    "deepseek/deepseek-v4-flash": "deepseek-flash",
     "anthropic/claude-sonnet-4-6": "claude-sonnet-4-6",
     "anthropic/claude-opus-4-8": "claude-opus-4-8",
     "anthropic/claude-opus-5": "claude-opus-5",
@@ -49,6 +53,16 @@ _ALIASES: dict[str, str] = {
     "anthropic/claude-haiku-4-5": "claude-haiku-4-5",
     "z-ai/glm-5.2": "glm-5.2",
 }
+
+# Live gateway rates cannot inherit first-party or historical model prices.
+# Reviewed against unauthenticated /api/v1/models/{author}/{slug}/endpoints
+# on 2026-10-26, including fast/regional routes and cache-write input rates.
+_OPENROUTER_PRICING: dict[str, tuple[float, float]] = {
+    "z-ai/glm-5.2": (2.31, 8.00),
+    "anthropic/claude-opus-5": (20.00, 50.00),
+}
+# Retired deepseek-chat/reasoner remain above only to interpret old receipts.
+_DEEPSEEK_LIVE_MODELS = frozenset({"deepseek-flash", "deepseek-v4-flash", "deepseek-v4-pro"})
 
 # Claude families that sit on the routine side when chosen for it. Everything
 # else Claude-shaped is treated as sota. Only used to attribute *legacy*

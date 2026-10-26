@@ -40,7 +40,7 @@ from domain_foundry_core.llm.providers import (
 
 ModelTier = Literal["routine", "sota"]
 
-DEFAULT_ROUTINE_MODEL = "deepseek-v4-flash"
+DEFAULT_ROUTINE_MODEL = "deepseek-flash"
 DEFAULT_SOTA_MODEL = "claude-opus-5"
 DEFAULT_ROUTINE_BASE_URL = "https://api.deepseek.com"
 DEFAULT_SOTA_BASE_URL = "https://api.anthropic.com"
