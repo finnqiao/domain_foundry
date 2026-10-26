@@ -5,7 +5,7 @@ export async function openCreateYourOwn(page: Page) {
   await page.getByRole("button", { name: "Your passions", exact: true }).click();
   await page.getByRole("button", { name: "Create your own" }).click();
   await expect(page).toHaveURL(/\/create$/);
-  await expect(page.getByRole("heading", { name: "Create your own" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Start something quickly", exact: true })).toBeVisible();
 }
 
 export async function openSourdough(page: Page) {
