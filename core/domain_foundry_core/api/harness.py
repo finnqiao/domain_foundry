@@ -202,6 +202,7 @@ class HarnessAPI:
         from domain_foundry_core.ask.executor import execute
         from domain_foundry_core.ask.planner import fallback_plan, plan_ask
         from domain_foundry_core.ask.schema import build_catalog
+        from domain_foundry_core.llm.budget import budget_scope
         from domain_foundry_core.llm.pricing import estimate_cost_usd
         from domain_foundry_core.llm.provider import (
             get_default_provider,
@@ -232,12 +233,15 @@ class HarnessAPI:
             nonlocal total_cost, model
             if usage is None:
                 return
-            cost = estimate_cost_usd(
-                model=usage.model,
-                input_tokens=usage.input_tokens,
-                output_tokens=usage.output_tokens,
-            )
-            if cost > 0:
+            if usage.accounted:
+                cost = usage.accounted_cost_usd or 0.0
+            else:
+                cost = estimate_cost_usd(
+                    model=usage.model,
+                    input_tokens=usage.input_tokens,
+                    output_tokens=usage.output_tokens,
+                )
+            if cost > 0 and not usage.accounted:
                 guard.record(
                     provider=usage.provider or getattr(llm, "name", "llm"),
                     model=usage.model,
@@ -257,9 +261,10 @@ class HarnessAPI:
 
         if use_llm:
             try:
-                plan, usage = plan_ask(
-                    question, catalog, llm, tier="routine", domain=domain
-                )
+                with budget_scope("routine", guard):
+                    plan, usage = plan_ask(
+                        question, catalog, llm, tier="routine", domain=domain
+                    )
                 record_usage(usage, default_tier="routine")
             except Exception:
                 plan = None
@@ -267,9 +272,10 @@ class HarnessAPI:
                 # independently gated so the retry cannot bypass the cap.
                 if guard.allow_llm(tier="sota"):
                     try:
-                        plan, usage = plan_ask(
-                            question, catalog, llm, tier="sota", domain=domain
-                        )
+                        with budget_scope("sota", guard):
+                            plan, usage = plan_ask(
+                                question, catalog, llm, tier="sota", domain=domain
+                            )
                         record_usage(usage, default_tier="sota")
                     except Exception:
                         plan = None
@@ -285,7 +291,8 @@ class HarnessAPI:
         answer = None
         if use_llm and guard.allow_llm(tier="routine"):
             try:
-                answer, usage = compose_answer(question, result, llm, tier="routine")
+                with budget_scope("routine", guard):
+                    answer, usage = compose_answer(question, result, llm, tier="routine")
                 record_usage(usage, default_tier="routine")
             except Exception:
                 # A read-only extractive response is safer than surfacing a

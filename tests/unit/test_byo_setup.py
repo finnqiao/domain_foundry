@@ -68,6 +68,16 @@ _KEY_ENVS = (
 )
 
 
+@pytest.fixture(autouse=True)
+def isolated_billing_ledger(tmp_path: Path, monkeypatch):
+    """All HTTP fixtures bill only a migrated temporary synthetic ledger."""
+    from domain_foundry_core.ledger.migrate import ensure_migrated
+    ensure_migrated(tmp_path / "db" / "ledger.sqlite", "ledger")
+    monkeypatch.setenv("DOMAIN_FOUNDRY_HOME", str(tmp_path))
+    for name in ("DOMAIN_FOUNDRY_DAILY_COST_CAP", "DOMAIN_FOUNDRY_ROUTINE_COST_CAP", "DOMAIN_FOUNDRY_SOTA_COST_CAP"):
+        monkeypatch.setenv(name, "100")
+
+
 @pytest.fixture
 def clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
     """No inherited provider config — otherwise a dev machine's real key leaks in."""
@@ -443,7 +453,7 @@ def test_401_does_not_retry(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_refusal_is_surfaced_not_parsed(monkeypatch: pytest.MonkeyPatch) -> None:
     """A classifier decline is HTTP 200 with no content — do not read it as JSON."""
-    cap = _Capture(body={"stop_reason": "refusal", "content": [], "usage": {}})
+    cap = _Capture(body={"stop_reason": "refusal", "content": [], "usage": {"input_tokens": 5, "output_tokens": 0}})
     monkeypatch.setattr(httpx, "post", cap)
     with pytest.raises(LLMError, match="refusal"):
         AnthropicProvider(api_key="sk", default_model="claude-opus-5").complete_json(

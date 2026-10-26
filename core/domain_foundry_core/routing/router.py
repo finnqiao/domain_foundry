@@ -9,6 +9,7 @@ from typing import Any
 
 from domain_foundry_core.clock import now_iso
 from domain_foundry_core.interpret.fewshot import load_fewshot_bank
+from domain_foundry_core.llm.budget import budget_scope
 from domain_foundry_core.llm.pricing import estimate_cost_usd
 from domain_foundry_core.llm.provider import (
     HeuristicProvider,
@@ -148,7 +149,7 @@ class Router:
         )
         status, tier = self._finalize_status(spans, clarification)
         self._persist(entry_id, text, spans, status, tier, interpreter, clarification)
-        if cost > 0 and usage is not None:
+        if cost > 0 and usage is not None and not usage.accounted:
             self.cost.record(
                 provider=usage.provider or getattr(self.llm, "name", "llm"),
                 model=usage.model,
@@ -158,7 +159,7 @@ class Router:
                 entry_id=entry_id,
                 tier=usage.tier or model_tier,
             )
-        elif cost > 0:
+        elif cost > 0 and usage is None:
             self.cost.record(
                 provider=getattr(self.llm, "name", "llm"),
                 model=None,
@@ -261,21 +262,25 @@ class Router:
         raw: dict[str, Any]
         if use_llm:
             try:
-                result = self.llm.complete_json(
-                    system=system,
-                    user=user,
-                    schema=ROUTE_SCHEMA,
-                    tier=model_tier,
-                )
+                with budget_scope(model_tier, self.cost):
+                    result = self.llm.complete_json(
+                        system=system,
+                        user=user,
+                        schema=ROUTE_SCHEMA,
+                        tier=model_tier,
+                    )
                 raw = result.data
                 usage = result.usage
                 usage.tier = usage.tier or model_tier
                 interpreter = getattr(self.llm, "name", "llm")
-                cost = estimate_cost_usd(
-                    model=usage.model,
-                    input_tokens=usage.input_tokens,
-                    output_tokens=usage.output_tokens,
-                )
+                if usage.accounted:
+                    cost = usage.accounted_cost_usd or 0.0
+                else:
+                    cost = estimate_cost_usd(
+                        model=usage.model,
+                        input_tokens=usage.input_tokens,
+                        output_tokens=usage.output_tokens,
+                    )
             except Exception as exc:
                 # Never fail a capture on a model problem — but never hide it
                 # either: a silent fallback looks identical to "no key set",
